@@ -21,7 +21,7 @@ export default function Dashboard() {
   const totalCostBasis = activeEquipment.reduce((sum, e) => sum + e.totalCostBasis, 0);
   const totalCOGS = activeEquipment.reduce((sum, e) => sum + e.cogsAllocatedCost, 0);
   const totalOverhead = activeEquipment.reduce((sum, e) => sum + e.overheadAllocatedCost, 0);
-  const totalReplacementValue = activeEquipment.reduce((sum, e) => sum + e.replacementCostNew, 0);
+  const totalReplacementValue = activeEquipment.reduce((sum, e) => sum + e.replacementCostUsed, 0);
   
   const agingEquipment = activeEquipment.filter(e => e.estimatedYearsLeft <= 1);
   
@@ -65,7 +65,7 @@ export default function Dashboard() {
           <MetricCard
             title="Replacement Value"
             value={formatCurrency(totalReplacementValue)}
-            subtitle="Current market value"
+            subtitle="Inflation-adjusted estimate"
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           />
         </div>
