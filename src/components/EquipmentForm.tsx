@@ -27,7 +27,7 @@ const financingTypes: { value: FinancingType; label: string }[] = [
 
 const defaultFormData: Omit<Equipment, 'id'> = {
   name: '', // Will be auto-generated
-  category: 'Truck / Vehicle',
+  category: 'Commercial Vehicle',
   status: 'Active',
   make: '',
   model: '',
