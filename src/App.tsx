@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { EquipmentProvider } from "@/contexts/EquipmentContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import EquipmentList from "./pages/EquipmentList";
@@ -20,55 +21,57 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <EquipmentProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              } />
-              <Route path="/equipment" element={
-                <ProtectedRoute>
-                  <EquipmentList />
-                </ProtectedRoute>
-              } />
-              <Route path="/categories" element={
-                <ProtectedRoute>
-                  <CategoryLifespans />
-                </ProtectedRoute>
-              } />
-              <Route path="/export" element={
-                <ProtectedRoute>
-                  <LMNExport />
-                </ProtectedRoute>
-              } />
-              <Route path="/buy-vs-rent" element={
-                <ProtectedRoute>
-                  <BuyVsRentAnalysis />
-                </ProtectedRoute>
-              } />
-              <Route path="/cashflow" element={
-                <ProtectedRoute>
-                  <CashflowAnalysis />
-                </ProtectedRoute>
-              } />
-              <Route path="/definitions" element={
-                <ProtectedRoute>
-                  <Definitions />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </EquipmentProvider>
-      </AuthProvider>
-    </TooltipProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <AuthProvider>
+          <EquipmentProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                } />
+                <Route path="/equipment" element={
+                  <ProtectedRoute>
+                    <EquipmentList />
+                  </ProtectedRoute>
+                } />
+                <Route path="/categories" element={
+                  <ProtectedRoute>
+                    <CategoryLifespans />
+                  </ProtectedRoute>
+                } />
+                <Route path="/export" element={
+                  <ProtectedRoute>
+                    <LMNExport />
+                  </ProtectedRoute>
+                } />
+                <Route path="/buy-vs-rent" element={
+                  <ProtectedRoute>
+                    <BuyVsRentAnalysis />
+                  </ProtectedRoute>
+                } />
+                <Route path="/cashflow" element={
+                  <ProtectedRoute>
+                    <CashflowAnalysis />
+                  </ProtectedRoute>
+                } />
+                <Route path="/definitions" element={
+                  <ProtectedRoute>
+                    <Definitions />
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </EquipmentProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
