@@ -302,18 +302,29 @@ export function calculateCashflowProjection(
     });
   }
   
-  // Find stabilization point (when all payments end)
-  const stabilizationPoint = projection.find(p => p.activePayments === 0);
+  // Find the actual latest payoff date among all financed items with future payoffs
+  let latestPayoffDate: string | null = null;
+  for (const item of financedItems) {
+    if (item.cashflow.payoffDate) {
+      const payoffDate = new Date(item.cashflow.payoffDate);
+      if (payoffDate > now) {
+        if (!latestPayoffDate || payoffDate > new Date(latestPayoffDate)) {
+          latestPayoffDate = item.cashflow.payoffDate;
+        }
+      }
+    }
+  }
+  
   const itemsCurrentlyMakingPayments = financedItems.filter(item => {
     if (!item.cashflow.payoffDate) return false;
     return new Date(item.cashflow.payoffDate) > now;
   });
   
   const stabilization: CashflowStabilization = {
-    stabilizationDate: stabilizationPoint ? stabilizationPoint.date : null,
+    stabilizationDate: latestPayoffDate,
     stabilizedNetCashflow: totalAnnualRecovery,
-    yearsUntilStabilization: stabilizationPoint 
-      ? stabilizationPoint.year - currentYear 
+    yearsUntilStabilization: latestPayoffDate 
+      ? new Date(latestPayoffDate).getFullYear() - currentYear 
       : 0,
     itemsWithActivePayments: itemsCurrentlyMakingPayments.length,
   };
