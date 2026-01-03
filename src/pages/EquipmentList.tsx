@@ -3,6 +3,8 @@ import { useEquipment } from '@/contexts/EquipmentContext';
 import { Layout } from '@/components/Layout';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EquipmentForm } from '@/components/EquipmentForm';
+import { EquipmentImport } from '@/components/EquipmentImport';
+import { EquipmentImportReview } from '@/components/EquipmentImportReview';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,9 +28,28 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, Upload } from 'lucide-react';
 import { Equipment, EquipmentStatus } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
+
+interface ExtractedEquipment {
+  make: string;
+  model: string;
+  year: number | null;
+  serialVin: string | null;
+  purchaseDate: string | null;
+  purchasePrice: number | null;
+  salesTax: number | null;
+  freightSetup: number | null;
+  financingType: 'owned' | 'financed' | 'leased' | null;
+  depositAmount: number | null;
+  financedAmount: number | null;
+  monthlyPayment: number | null;
+  termMonths: number | null;
+  buyoutAmount: number | null;
+  confidence: 'high' | 'medium' | 'low';
+  notes: string | null;
+}
 
 const statuses: EquipmentStatus[] = ['Active', 'Sold', 'Retired', 'Lost'];
 
@@ -42,6 +63,18 @@ export default function EquipmentList() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => 
     new Set(categoryDefaults.map(c => c.category))
   );
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [extractedEquipment, setExtractedEquipment] = useState<ExtractedEquipment[]>([]);
+
+  const handleEquipmentExtracted = (equipment: ExtractedEquipment[]) => {
+    setExtractedEquipment(equipment);
+    setIsReviewOpen(true);
+  };
+
+  const handleImportComplete = () => {
+    setExtractedEquipment([]);
+  };
 
   const filteredEquipment = useMemo(() => {
     return calculatedEquipment.filter(equipment => {
@@ -127,10 +160,16 @@ export default function EquipmentList() {
               Manage your equipment fleet and allocations
             </p>
           </div>
-          <Button onClick={handleAddNew} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Equipment
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsImportOpen(true)} className="gap-2">
+              <Upload className="h-4 w-4" />
+              Import from Documents
+            </Button>
+            <Button onClick={handleAddNew} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Equipment
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -301,6 +340,21 @@ export default function EquipmentList() {
           onOpenChange={setIsFormOpen}
           equipment={editingEquipment}
           onSubmit={handleFormSubmit}
+        />
+
+        {/* Import Dialog */}
+        <EquipmentImport
+          open={isImportOpen}
+          onOpenChange={setIsImportOpen}
+          onEquipmentExtracted={handleEquipmentExtracted}
+        />
+
+        {/* Import Review Dialog */}
+        <EquipmentImportReview
+          open={isReviewOpen}
+          onOpenChange={setIsReviewOpen}
+          extractedEquipment={extractedEquipment}
+          onComplete={handleImportComplete}
         />
       </div>
     </Layout>
