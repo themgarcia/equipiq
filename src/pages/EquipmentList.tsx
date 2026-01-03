@@ -142,6 +142,9 @@ export default function EquipmentList() {
                   <TableHead className="table-header-cell text-right">
                     <span className="text-warning">COGS $</span>
                   </TableHead>
+                  <TableHead className="table-header-cell text-right">
+                    <span className="text-warning">OH $</span>
+                  </TableHead>
                   <TableHead className="table-header-cell text-right">Years Left</TableHead>
                   <TableHead className="table-header-cell text-right">Replacement</TableHead>
                   <TableHead className="table-header-cell w-[50px]"></TableHead>
@@ -150,7 +153,7 @@ export default function EquipmentList() {
               <TableBody>
                 {filteredEquipment.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                       No equipment found. Add your first piece of equipment to get started.
                     </TableCell>
                   </TableRow>
@@ -180,6 +183,9 @@ export default function EquipmentList() {
                       </TableCell>
                       <TableCell className="text-right font-mono-nums bg-field-calculated">
                         {formatCurrency(equipment.cogsAllocatedCost)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums bg-field-calculated">
+                        {formatCurrency(equipment.overheadAllocatedCost)}
                       </TableCell>
                       <TableCell className="text-right font-mono-nums">
                         <span className={equipment.estimatedYearsLeft <= 1 ? 'text-warning font-semibold' : ''}>

@@ -84,6 +84,8 @@ export interface LMNExportData {
   usefulLife: number;
   cogsPercent: number;
   overheadPercent: number;
+  cogsAllocatedCost: number;
+  overheadAllocatedCost: number;
 }
 
 // Buy vs. Rent Analysis

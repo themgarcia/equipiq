@@ -74,6 +74,18 @@ const columns: ColumnConfig[] = [
     format: (v) => String(v),
     align: 'right'
   },
+  { 
+    key: 'cogsAllocatedCost', 
+    label: 'COGS $', 
+    format: (v) => String(v),
+    align: 'right'
+  },
+  { 
+    key: 'overheadAllocatedCost', 
+    label: 'OH $', 
+    format: (v) => String(v),
+    align: 'right'
+  },
 ];
 
 export default function LMNExport() {
@@ -143,6 +155,8 @@ export default function LMNExport() {
         e.data.usefulLife,
         e.data.cogsPercent,
         e.data.overheadPercent,
+        e.data.cogsAllocatedCost,
+        e.data.overheadAllocatedCost,
       ].join(','))
     ].join('\n');
 
@@ -162,6 +176,7 @@ export default function LMNExport() {
     if (key === 'equipmentName') return String(value);
     if (key === 'usefulLife') return String(value);
     if (key === 'cogsPercent' || key === 'overheadPercent') return `${value}%`;
+    if (key === 'cogsAllocatedCost' || key === 'overheadAllocatedCost') return formatCurrency(value as number);
     return formatCurrency(value as number);
   };
 
