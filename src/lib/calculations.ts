@@ -29,9 +29,14 @@ export function calculateEquipment(
   const currentYear = new Date().getFullYear();
   const estimatedYearsLeft = Math.max(0, estimatedEndOfLifeYear - currentYear);
   
+  // Replacement Cost - use provided value, or fall back to total cost basis
+  const replacementCostUsed = equipment.replacementCostNew > 0 
+    ? equipment.replacementCostNew 
+    : totalCostBasis;
+  
   // Resale
   const defaultResalePercent = categoryDefaults.defaultResalePercent;
-  const expectedResaleDefault = (defaultResalePercent / 100) * equipment.replacementCostNew;
+  const expectedResaleDefault = (defaultResalePercent / 100) * replacementCostUsed;
   const expectedResaleUsed = equipment.expectedResaleOverride ?? expectedResaleDefault;
   
   // ROI (if sold)
@@ -52,6 +57,7 @@ export function calculateEquipment(
     defaultResalePercent,
     expectedResaleDefault,
     expectedResaleUsed,
+    replacementCostUsed,
     roiPercent,
   };
 }
@@ -63,7 +69,7 @@ export function toLMNExport(equipment: EquipmentCalculated): LMNExportData {
     equipmentName: `${equipment.category} - ${equipment.name}`,
     purchasePrice: equipment.purchasePrice,
     additionalPurchaseFees: additionalFees,
-    replacementValue: equipment.replacementCostNew,
+    replacementValue: equipment.replacementCostUsed,
     expectedValueAtEndOfLife: equipment.expectedResaleUsed,
     usefulLife: equipment.usefulLifeUsed,
     cogsPercent: equipment.cogsPercent,
