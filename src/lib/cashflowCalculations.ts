@@ -6,7 +6,16 @@
  * They do NOT affect equipment pricing, Buy vs Rent, or LMN exports.
  */
 
-import { Equipment, EquipmentCalculated, EquipmentCashflow, PaybackTimelinePoint, PortfolioCashflow } from '@/types/equipment';
+import { 
+  Equipment, 
+  EquipmentCalculated, 
+  EquipmentCashflow, 
+  PaybackTimelinePoint, 
+  PortfolioCashflow,
+  CashflowProjectionPoint,
+  CashflowStabilization
+} from '@/types/equipment';
+import { addMonths, format } from 'date-fns';
 
 /**
  * Calculate cashflow metrics for a single equipment item.
@@ -68,6 +77,16 @@ export function calculateEquipmentCashflow(
     }
   }
   
+  // Calculate payoff date
+  let payoffDate: string | null = null;
+  if (equipment.financingType === 'owned') {
+    payoffDate = null; // Already paid in full
+  } else if (equipment.financingStartDate && equipment.termMonths > 0) {
+    const startDate = new Date(equipment.financingStartDate);
+    const endDate = addMonths(startDate, equipment.termMonths);
+    payoffDate = format(endDate, 'yyyy-MM-dd');
+  }
+  
   return {
     annualCashOutflow,
     paymentsCompleted,
@@ -77,6 +96,7 @@ export function calculateEquipmentCashflow(
     annualEconomicRecovery,
     annualSurplusShortfall,
     cashflowStatus,
+    payoffDate,
   };
 }
 
@@ -195,4 +215,108 @@ export function calculatePaybackTimeline(
   }
   
   return { timeline, paybackMonth };
+}
+
+/**
+ * Calculate cashflow projection over time showing when payments end.
+ * Returns yearly projections and stabilization info.
+ */
+export function calculateCashflowProjection(
+  items: Array<{ equipment: Equipment; calculated: EquipmentCalculated; cashflow: EquipmentCashflow }>
+): { projection: CashflowProjectionPoint[]; stabilization: CashflowStabilization } {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  
+  // Filter to active items with financing (non-owned)
+  const activeItems = items.filter(item => item.equipment.status === 'Active');
+  const financedItems = activeItems.filter(item => 
+    item.equipment.financingType !== 'owned' && 
+    item.cashflow.payoffDate !== null
+  );
+  
+  // Total annual recovery stays constant (economic recovery through pricing)
+  const totalAnnualRecovery = activeItems.reduce(
+    (sum, item) => sum + item.cashflow.annualEconomicRecovery, 
+    0
+  );
+  
+  // Build projection for next 10 years
+  const projection: CashflowProjectionPoint[] = [];
+  let lastPayoffYear = currentYear;
+  
+  for (let yearOffset = 0; yearOffset <= 10; yearOffset++) {
+    const year = currentYear + yearOffset;
+    const yearStart = new Date(year, 0, 1);
+    const yearEnd = new Date(year, 11, 31);
+    
+    // Find items that are still making payments in this year
+    const itemsWithPayments = financedItems.filter(item => {
+      if (!item.cashflow.payoffDate) return false;
+      const payoffDate = new Date(item.cashflow.payoffDate);
+      return payoffDate > yearStart;
+    });
+    
+    // Find items that pay off during this year
+    const itemsPayingOff = financedItems.filter(item => {
+      if (!item.cashflow.payoffDate) return false;
+      const payoffDate = new Date(item.cashflow.payoffDate);
+      return payoffDate >= yearStart && payoffDate <= yearEnd;
+    });
+    
+    // Calculate annual payments for this year (prorated for items paying off mid-year)
+    let annualPayments = 0;
+    for (const item of activeItems) {
+      if (item.equipment.financingType === 'owned') continue;
+      if (!item.cashflow.payoffDate) {
+        annualPayments += item.cashflow.annualCashOutflow;
+        continue;
+      }
+      
+      const payoffDate = new Date(item.cashflow.payoffDate);
+      if (payoffDate <= yearStart) {
+        // Already paid off before this year
+        continue;
+      } else if (payoffDate >= yearEnd) {
+        // Full year of payments
+        annualPayments += item.cashflow.annualCashOutflow;
+      } else {
+        // Partial year - prorate
+        const monthsInYear = payoffDate.getMonth() + 1;
+        annualPayments += (item.equipment.monthlyPayment * monthsInYear);
+      }
+    }
+    
+    // Track when last item pays off
+    if (itemsWithPayments.length > 0) {
+      lastPayoffYear = year;
+    }
+    
+    const events = itemsPayingOff.map(item => `${item.equipment.name} paid off`);
+    
+    projection.push({
+      year,
+      date: format(new Date(year, 0, 1), 'yyyy-MM-dd'),
+      netAnnualCashflow: totalAnnualRecovery - annualPayments,
+      activePayments: itemsWithPayments.length,
+      events,
+    });
+  }
+  
+  // Find stabilization point (when all payments end)
+  const stabilizationPoint = projection.find(p => p.activePayments === 0);
+  const itemsCurrentlyMakingPayments = financedItems.filter(item => {
+    if (!item.cashflow.payoffDate) return false;
+    return new Date(item.cashflow.payoffDate) > now;
+  });
+  
+  const stabilization: CashflowStabilization = {
+    stabilizationDate: stabilizationPoint ? stabilizationPoint.date : null,
+    stabilizedNetCashflow: totalAnnualRecovery,
+    yearsUntilStabilization: stabilizationPoint 
+      ? stabilizationPoint.year - currentYear 
+      : 0,
+    itemsWithActivePayments: itemsCurrentlyMakingPayments.length,
+  };
+  
+  return { projection, stabilization };
 }
