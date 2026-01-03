@@ -72,9 +72,7 @@ export interface EquipmentCalculated extends Equipment {
 
 // LMN Export format
 export interface LMNExportData {
-  itemName: string;
-  category: EquipmentCategory;
-  status: EquipmentStatus;
+  equipmentName: string; // Format: "Category - Item Name"
   purchasePrice: number;
   additionalPurchaseFees: number;
   replacementValue: number;
