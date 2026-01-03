@@ -325,6 +325,10 @@ export default function CashflowAnalysis() {
                 Equipment pricing is based on useful-life amortization. Financing structure, loan terms, and deposits 
                 are for cashflow visibility only — two identical machines will always price the same regardless of how they were financed.
               </p>
+              <p className="mt-2 text-xs border-t pt-2 border-muted-foreground/20">
+                <strong>Note:</strong> This analysis does not include balloon payments, lease buyouts, or residual value recovery. 
+                Only regular monthly payments and annual pricing recovery are shown.
+              </p>
             </div>
           </div>
         </div>
