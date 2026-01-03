@@ -1,8 +1,14 @@
-import { Equipment, EquipmentCalculated, LMNExportData } from '@/types/equipment';
-import { getCategoryDefaults } from '@/data/categoryDefaults';
+import { Equipment, EquipmentCalculated, LMNExportData, CategoryDefaults } from '@/types/equipment';
+import { getCategoryDefaults as getStaticCategoryDefaults } from '@/data/categoryDefaults';
 
-export function calculateEquipment(equipment: Equipment): EquipmentCalculated {
-  const categoryDefaults = getCategoryDefaults(equipment.category);
+export function calculateEquipment(
+  equipment: Equipment, 
+  categoryDefaultsOverrides?: CategoryDefaults[]
+): EquipmentCalculated {
+  // Use overrides if provided, otherwise fall back to static defaults
+  const categoryDefaults = categoryDefaultsOverrides 
+    ? (categoryDefaultsOverrides.find(c => c.category === equipment.category) || getStaticCategoryDefaults(equipment.category))
+    : getStaticCategoryDefaults(equipment.category);
   
   // Total Cost Basis
   const totalCostBasis = 

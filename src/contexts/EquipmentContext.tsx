@@ -79,7 +79,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const calculatedEquipment = equipment.map(e => calculateEquipment(e));
+  const calculatedEquipment = equipment.map(e => calculateEquipment(e, categoryDefaultsState));
 
   const fetchEquipment = useCallback(async () => {
     if (!user) {
