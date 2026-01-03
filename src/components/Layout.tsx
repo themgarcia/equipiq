@@ -7,7 +7,8 @@ import {
   FileSpreadsheet, 
   BookOpen,
   ChevronRight,
-  Anvil
+  Anvil,
+  Scale
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Equipment', href: '/equipment', icon: Package },
   { name: 'Category Lifespans', href: '/categories', icon: Clock },
   { name: 'LMN Export', href: '/export', icon: FileSpreadsheet },
+  { name: 'Buy vs. Rent', href: '/buy-vs-rent', icon: Scale },
   { name: 'Definitions', href: '/definitions', icon: BookOpen },
 ];
 

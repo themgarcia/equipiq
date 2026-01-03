@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import EquipmentList from "./pages/EquipmentList";
 import CategoryLifespans from "./pages/CategoryLifespans";
 import LMNExport from "./pages/LMNExport";
+import BuyVsRentAnalysis from "./pages/BuyVsRentAnalysis";
 import Definitions from "./pages/Definitions";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/equipment" element={<EquipmentList />} />
             <Route path="/categories" element={<CategoryLifespans />} />
             <Route path="/export" element={<LMNExport />} />
+            <Route path="/buy-vs-rent" element={<BuyVsRentAnalysis />} />
             <Route path="/definitions" element={<Definitions />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

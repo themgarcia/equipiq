@@ -81,3 +81,48 @@ export interface LMNExportData {
   cogsPercent: number;
   overheadPercent: number;
 }
+
+// Buy vs. Rent Analysis
+export interface BuyVsRentInput {
+  category: EquipmentCategory;
+  description: string;
+  purchasePrice: number;
+  usefulLife: number;
+  resaleValue: number;
+  rentalRateDaily: number;
+  rentalRateWeekly?: number;
+  rentalRateMonthly?: number;
+  usageDaysPerYear: number;
+  annualMaintenance: number;
+  annualInsurance: number;
+  annualStorage: number;
+  annualOperating: number;
+}
+
+export interface OwnershipBreakdown {
+  depreciation: number;
+  maintenance: number;
+  insurance: number;
+  storage: number;
+  operating: number;
+}
+
+export interface YearComparison {
+  year: number;
+  ownCumulative: number;
+  rentCumulative: number;
+  savings: number;
+}
+
+export type BuyVsRentRecommendation = 'BUY' | 'RENT' | 'CLOSE_CALL';
+
+export interface BuyVsRentResult {
+  annualOwnershipCost: number;
+  ownershipBreakdown: OwnershipBreakdown;
+  annualRentalCost: number;
+  breakEvenDays: number;
+  recommendation: BuyVsRentRecommendation;
+  annualSavings: number;
+  totalSavingsOverLife: number;
+  yearByYearComparison: YearComparison[];
+}
