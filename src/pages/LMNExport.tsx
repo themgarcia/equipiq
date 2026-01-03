@@ -91,7 +91,7 @@ const columns: ColumnConfig[] = [
 export default function LMNExport() {
   const { calculatedEquipment } = useEquipment();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [copiedColumn, setCopiedColumn] = useState<ColumnKey | null>(null);
+  const [copiedCell, setCopiedCell] = useState<string | null>(null);
 
   const activeEquipment = calculatedEquipment.filter(e => e.status === 'Active');
   const exportData = useMemo(() => 
@@ -119,22 +119,12 @@ export default function LMNExport() {
     }
   };
 
-  const copyColumn = async (columnKey: ColumnKey) => {
-    const dataToUse = selectedIds.size > 0 
-      ? exportData.filter(e => selectedIds.has(e.id))
-      : exportData;
+  const copyCell = async (id: string, columnKey: ColumnKey, value: LMNExportData[ColumnKey]) => {
+    const cellId = `${id}-${columnKey}`;
+    await navigator.clipboard.writeText(String(value));
     
-    const values = dataToUse.map(e => String(e.data[columnKey]));
-    await navigator.clipboard.writeText(values.join('\n'));
-    
-    setCopiedColumn(columnKey);
-    setTimeout(() => setCopiedColumn(null), 2000);
-    
-    const column = columns.find(c => c.key === columnKey);
-    toast({
-      title: 'Column copied',
-      description: `${dataToUse.length} ${column?.label || columnKey} values copied`,
-    });
+    setCopiedCell(cellId);
+    setTimeout(() => setCopiedCell(null), 1500);
   };
 
   const exportCSV = () => {
@@ -204,11 +194,10 @@ export default function LMNExport() {
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6 flex items-start gap-3">
           <FileSpreadsheet className="h-5 w-5 text-primary mt-0.5" />
           <div>
-            <h3 className="font-semibold mb-1">Per-Column Copy for LMN</h3>
+            <h3 className="font-semibold mb-1">Copy Values for LMN</h3>
             <p className="text-sm text-muted-foreground">
               LMN requires pasting one field at a time. Click the <Copy className="h-3 w-3 inline mx-1" /> 
-              button on any column header to copy all values in that column. 
-              Select specific rows using checkboxes to copy only those items.
+              button next to any value to copy it to your clipboard.
             </p>
           </div>
         </div>
@@ -230,22 +219,7 @@ export default function LMNExport() {
                       key={col.key} 
                       className={`table-header-cell ${col.align === 'right' ? 'text-right' : ''}`}
                     >
-                      <div className={`flex items-center gap-2 ${col.align === 'right' ? 'justify-end' : ''}`}>
-                        <span>{col.label}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 hover:bg-primary/10"
-                          onClick={() => copyColumn(col.key)}
-                          title={`Copy all ${col.label} values`}
-                        >
-                          {copiedColumn === col.key ? (
-                            <Check className="h-3 w-3 text-success" />
-                          ) : (
-                            <Copy className="h-3 w-3" />
-                          )}
-                        </Button>
-                      </div>
+                      {col.label}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -266,14 +240,35 @@ export default function LMNExport() {
                           onCheckedChange={() => toggleSelect(id)}
                         />
                       </TableCell>
-                      {columns.map(col => (
-                        <TableCell 
-                          key={col.key}
-                          className={`${col.align === 'right' ? 'text-right font-mono-nums' : ''} ${col.key === 'equipmentName' ? 'font-medium' : ''}`}
-                        >
-                          {formatCellValue(col.key, data[col.key])}
-                        </TableCell>
-                      ))}
+                      {columns.map(col => {
+                        const cellId = `${id}-${col.key}`;
+                        const isCopied = copiedCell === cellId;
+                        return (
+                          <TableCell 
+                            key={col.key}
+                            className={`${col.align === 'right' ? 'text-right' : ''} ${col.key === 'equipmentName' ? 'font-medium' : ''}`}
+                          >
+                            <div className={`flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
+                              <span className={col.align === 'right' ? 'font-mono-nums' : ''}>
+                                {formatCellValue(col.key, data[col.key])}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 opacity-0 group-hover:opacity-100 hover:bg-primary/10 shrink-0"
+                                onClick={() => copyCell(id, col.key, data[col.key])}
+                                title="Copy value"
+                              >
+                                {isCopied ? (
+                                  <Check className="h-3 w-3 text-success" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        );
+                      })}
                     </TableRow>
                   ))
                 )}
