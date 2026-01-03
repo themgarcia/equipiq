@@ -296,6 +296,8 @@ export function calculateCashflowProjection(
     projection.push({
       year,
       date: format(new Date(year, 0, 1), 'yyyy-MM-dd'),
+      annualRecovery: totalAnnualRecovery,
+      annualPayments,
       netAnnualCashflow: totalAnnualRecovery - annualPayments,
       activePayments: itemsWithPayments.length,
       events,
