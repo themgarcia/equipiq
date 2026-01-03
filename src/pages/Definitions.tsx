@@ -411,25 +411,104 @@ export default function Definitions() {
               <AccordionContent className="pb-6">
                 <div className="prose prose-sm max-w-none text-muted-foreground pl-11">
                   {def.content.split('\n\n').map((paragraph, i) => {
+                    // Helper function to parse inline bold formatting
+                    const parseInlineFormatting = (text: string): React.ReactNode => {
+                      if (!text.includes('**')) return text;
+                      const parts = text.split('**');
+                      return parts.map((part, idx) => 
+                        idx % 2 === 1 ? <strong key={idx} className="text-foreground">{part}</strong> : part
+                      );
+                    };
+
+                    // Detect markdown table (lines with | separators)
+                    if (paragraph.includes('|') && paragraph.includes('|---')) {
+                      const rows = paragraph.split('\n').filter(row => row.trim() && !row.includes('|---'));
+                      if (rows.length > 0) {
+                        const headerCells = rows[0].split('|').map(c => c.trim()).filter(c => c);
+                        const dataRows = rows.slice(1);
+                        
+                        return (
+                          <div key={i} className="mb-4 overflow-x-auto">
+                            <table className="text-sm border-collapse w-full">
+                              <thead>
+                                <tr className="border-b border-border">
+                                  {headerCells.map((h, j) => (
+                                    <th key={j} className="px-3 py-2 text-left font-medium text-foreground">{h}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {dataRows.map((row, j) => {
+                                  const cells = row.split('|').map(c => c.trim()).filter(c => c);
+                                  return (
+                                    <tr key={j} className="border-b border-muted">
+                                      {cells.map((cell, k) => (
+                                        <td key={k} className="px-3 py-2">{parseInlineFormatting(cell)}</td>
+                                      ))}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        );
+                      }
+                    }
+
+                    // Check for content with indented sub-bullets
+                    if (paragraph.includes('\n   - ') || paragraph.includes('\n  - ')) {
+                      const lines = paragraph.split('\n');
+                      return (
+                        <div key={i} className="mb-3">
+                          {lines.map((line, j) => {
+                            // Indented sub-bullet (3 or 2 spaces before -)
+                            if (line.match(/^   - /) || line.match(/^  - /)) {
+                              return (
+                                <div key={j} className="ml-6 flex items-start gap-2">
+                                  <span className="text-muted-foreground">◦</span>
+                                  <span>{parseInlineFormatting(line.replace(/^   - |^  - /, ''))}</span>
+                                </div>
+                              );
+                            }
+                            // Regular bullet
+                            if (line.startsWith('- ')) {
+                              return (
+                                <div key={j} className="flex items-start gap-2">
+                                  <span className="text-muted-foreground">•</span>
+                                  <span>{parseInlineFormatting(line.replace('- ', ''))}</span>
+                                </div>
+                              );
+                            }
+                            // Numbered item
+                            if (line.match(/^\d+\.\s/)) {
+                              return (
+                                <p key={j} className="font-medium text-foreground mb-1">
+                                  {parseInlineFormatting(line)}
+                                </p>
+                              );
+                            }
+                            // Other text (headings, etc.)
+                            if (line.trim()) {
+                              return <p key={j} className="mb-1">{parseInlineFormatting(line)}</p>;
+                            }
+                            return null;
+                          })}
+                        </div>
+                      );
+                    }
+
                     // Check for mixed content: heading followed by bullets
                     if (paragraph.includes('\n- ')) {
                       const lines = paragraph.split('\n');
                       const headingLine = lines[0];
                       const bulletLines = lines.filter(line => line.startsWith('- '));
                       
-                      // Render heading with bold parsing
-                      const headingParts = headingLine.split('**');
-                      
                       return (
                         <div key={i} className="mb-3">
-                          <p className="mb-2">
-                            {headingParts.map((part, j) => 
-                              j % 2 === 1 ? <strong key={j} className="text-foreground">{part}</strong> : part
-                            )}
-                          </p>
+                          <p className="mb-2">{parseInlineFormatting(headingLine)}</p>
                           <ul className="list-disc list-inside space-y-1 ml-4">
                             {bulletLines.map((item, j) => (
-                              <li key={j}>{item.replace('- ', '')}</li>
+                              <li key={j}>{parseInlineFormatting(item.replace('- ', ''))}</li>
                             ))}
                           </ul>
                         </div>
@@ -441,18 +520,18 @@ export default function Definitions() {
                       return (
                         <ul key={i} className="list-disc list-inside mb-3 space-y-1">
                           {paragraph.split('\n').map((item, j) => (
-                            <li key={j}>{item.replace('- ', '')}</li>
+                            <li key={j}>{parseInlineFormatting(item.replace('- ', ''))}</li>
                           ))}
                         </ul>
                       );
                     }
                     
                     // Numbered list
-                    if (paragraph.startsWith('1. ')) {
+                    if (paragraph.match(/^1\.\s/)) {
                       return (
                         <ol key={i} className="list-decimal list-inside mb-3 space-y-1">
                           {paragraph.split('\n').map((item, j) => (
-                            <li key={j}>{item.replace(/^\d+\. /, '')}</li>
+                            <li key={j}>{parseInlineFormatting(item.replace(/^\d+\.\s/, ''))}</li>
                           ))}
                         </ol>
                       );
@@ -460,13 +539,8 @@ export default function Definitions() {
                     
                     // Regular paragraph with bold text parsing
                     if (paragraph.includes('**')) {
-                      const parts = paragraph.split('**');
                       return (
-                        <p key={i} className="mb-3">
-                          {parts.map((part, j) => 
-                            j % 2 === 1 ? <strong key={j} className="text-foreground">{part}</strong> : part
-                          )}
-                        </p>
+                        <p key={i} className="mb-3">{parseInlineFormatting(paragraph)}</p>
                       );
                     }
                     
