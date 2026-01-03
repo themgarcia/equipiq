@@ -54,9 +54,7 @@ export function toLMNExport(equipment: EquipmentCalculated): LMNExportData {
   const additionalFees = equipment.salesTax + equipment.freightSetup + equipment.otherCapEx;
   
   return {
-    itemName: equipment.name,
-    category: equipment.category,
-    status: equipment.status,
+    equipmentName: `${equipment.category} - ${equipment.name}`,
     purchasePrice: equipment.purchasePrice,
     additionalPurchaseFees: additionalFees,
     replacementValue: equipment.replacementCostNew,
