@@ -5,7 +5,7 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
-import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale, Shield, TrendingUp } from 'lucide-react';
+import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale, Shield, TrendingUp, Wallet } from 'lucide-react';
 
 const definitions = [
   {
@@ -258,6 +258,106 @@ This ensures your replacement cost estimates stay current without manual updates
 - It's high enough to keep values realistic over time
 
 **The benefit:** You never have to remember to update replacement costs. Whether you entered a value 3 years ago or the system calculated it from your purchase, it automatically stays current.
+    `.trim(),
+  },
+  {
+    id: 'financing-cashflow',
+    icon: Wallet,
+    title: 'Financing & Cashflow Analysis',
+    content: `
+**Financing information is for cashflow visibility only — it does NOT change equipment pricing.**
+
+This is a critical distinction. Two identical machines will always price the same regardless of how they were financed. Here's why:
+
+**Equipment pricing is based on:**
+- Replacement value ÷ useful life = annual cost to recover
+- This ensures you're pricing jobs to replace equipment when the time comes
+- Financing structure doesn't change what the equipment is worth or how long it lasts
+
+**What financing DOES affect:**
+- How much cash leaves your business each month
+- When you'll have fully paid off the equipment
+- Your ability to manage multiple purchases simultaneously
+
+**Financing Types:**
+- **Owned**: Paid in full at purchase. No ongoing payments.
+- **Financed**: Loan or financing agreement with monthly payments.
+- **Leased**: Equipment lease, often with a buyout option at the end.
+
+**Cashflow Analysis shows:**
+- **Annual Pricing Recovery**: How much value you recover through job pricing
+- **Annual Financing Payments**: How much cash leaves for loan/lease payments
+- **Surplus/Shortfall**: Whether recovery exceeds payments (surplus) or falls short (shortfall)
+
+**Status Indicators:**
+- **Green (Surplus)**: Pricing recovery exceeds payments by >10%
+- **Yellow (Neutral)**: Recovery and payments are within 10% of each other
+- **Red (Shortfall)**: Payments exceed recovery by >10%
+
+**Important:** A shortfall status does NOT mean you made a bad decision. It means your cashflow is temporarily tighter than your recovery rate. This is normal for new equipment purchases — the payback timeline shows when you'll catch up.
+    `.trim(),
+  },
+  {
+    id: 'payback-timeline',
+    icon: TrendingUp,
+    title: 'Understanding the Payback Timeline',
+    content: `
+**The Payback Timeline shows when cumulative pricing recovery catches up to cumulative cash spent.**
+
+This is purely informational — it does NOT recommend buying, selling, or refinancing.
+
+**How it works:**
+- **Cumulative Cash Outlay**: Deposit + all payments made to date
+- **Cumulative Pricing Recovery**: How much value has been "recovered" through job pricing
+- **Payback Point**: The month when recovery first exceeds outlay
+
+**Example scenario:**
+
+You buy a $60,000 machine with $10,000 down and $1,200/month for 48 months.
+- Month 0: $10,000 cash out, $0 recovered
+- Month 12: $24,400 cash out, maybe $10,000 recovered (depends on useful life)
+- Month 36: $53,200 cash out, recovery catching up
+- Payback might occur around month 42-48
+
+**Why this matters:**
+- Helps you understand the "cash pressure" period after a purchase
+- Shows why you might feel cash-tight even when pricing is correct
+- Reminds you that recovery happens over the useful life, not the loan term
+
+**What it does NOT tell you:**
+- Whether you should have financed differently
+- Whether to refinance or pay off early
+- Whether the purchase was a good decision
+
+Those are business decisions that depend on factors beyond this calculation.
+    `.trim(),
+  },
+  {
+    id: 'annual-economic-recovery',
+    icon: Calculator,
+    title: 'Annual Economic Recovery',
+    content: `
+**Annual Economic Recovery = Replacement Value ÷ Useful Life**
+
+This represents how much equipment value is "recovered" through job pricing each year.
+
+**Example:**
+- Replacement value: $60,000
+- Useful life: 10 years
+- Annual recovery: $6,000/year
+
+**This is the same as the annual depreciation used in LMN pricing.**
+
+When you compare this to your annual financing payments, you can see:
+- If recovery > payments: You're pricing enough to cover cash outflow AND build equity
+- If recovery < payments: Your cash outflow exceeds what you're recovering through pricing
+
+**Why the difference happens:**
+- Financing terms are often shorter than useful life (5-year loan vs 10-year life)
+- Front-loaded payments mean cash pressure early, relief later
+- Deposits are immediate cash out, but recovery spreads over years
+
+**The key insight:** A temporary shortfall is normal. What matters is that over the full useful life, you recover the full replacement value through pricing.
     `.trim(),
   },
 ];

@@ -1,5 +1,7 @@
 export type EquipmentStatus = 'Active' | 'Sold' | 'Retired' | 'Lost';
 
+export type FinancingType = 'owned' | 'financed' | 'leased';
+
 export type EquipmentCategory = 
   | 'Excavation'
   | 'Mini Skid / Compact Power Carrier'
@@ -58,6 +60,15 @@ export interface Equipment {
   // Disposal
   saleDate?: string;
   salePrice?: number;
+  
+  // Financing (cashflow visibility only - does NOT affect pricing)
+  financingType: FinancingType;
+  depositAmount: number;
+  financedAmount: number;
+  monthlyPayment: number;
+  termMonths: number;
+  buyoutAmount: number;
+  financingStartDate?: string;
 }
 
 // Calculated fields (derived from Equipment)
@@ -131,4 +142,32 @@ export interface BuyVsRentResult {
   annualSavings: number;
   totalSavingsOverLife: number;
   yearByYearComparison: YearComparison[];
+}
+
+// Cashflow Analysis Types (informational only - does NOT affect pricing)
+export interface EquipmentCashflow {
+  annualCashOutflow: number;           // monthly payment × 12
+  paymentsCompleted: number;           // months since financing start
+  totalCashOutlaidToDate: number;      // deposit + payments made
+  remainingPayments: number;           // term - completed
+  remainingCashObligations: number;    // remaining × monthly + buyout
+  annualEconomicRecovery: number;      // replacementCostUsed ÷ usefulLife
+  annualSurplusShortfall: number;      // recovery - outflow
+  cashflowStatus: 'surplus' | 'neutral' | 'shortfall';
+}
+
+export interface PortfolioCashflow {
+  totalAnnualRecovery: number;
+  totalAnnualPayments: number;
+  netAnnualCashflow: number;
+  totalDeposits: number;
+  totalRemainingObligations: number;
+  overallStatus: 'surplus' | 'neutral' | 'shortfall';
+}
+
+export interface PaybackTimelinePoint {
+  month: number;
+  cumulativeOutlay: number;
+  cumulativeRecovery: number;
+  netPosition: number;
 }
