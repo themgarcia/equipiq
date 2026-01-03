@@ -163,10 +163,11 @@ export default function EquipmentList() {
                       <TableCell>
                         <div>
                           <p className="font-medium">{equipment.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {equipment.make} {equipment.model} • {equipment.year}
-                            {equipment.assetId && ` • ${equipment.assetId}`}
-                          </p>
+                          {equipment.assetId && (
+                            <p className="text-xs text-muted-foreground">
+                              {equipment.assetId}
+                            </p>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>

@@ -118,9 +118,15 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     try {
+      // Ensure name is generated from year/make/model
+      const equipmentWithName = {
+        ...newEquipment,
+        name: `${newEquipment.year} ${newEquipment.make.trim()} ${newEquipment.model.trim()}`,
+      };
+
       const { data, error } = await supabase
         .from('equipment')
-        .insert(equipmentToDb(newEquipment, user.id))
+        .insert(equipmentToDb(equipmentWithName, user.id))
         .select()
         .single();
 
@@ -129,7 +135,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       setEquipment(prev => [dbToEquipment(data), ...prev]);
       toast({
         title: "Equipment added",
-        description: `${newEquipment.name} has been added to your inventory.`,
+        description: `${equipmentWithName.name} has been added to your inventory.`,
       });
     } catch (error: any) {
       toast({
@@ -144,27 +150,36 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     try {
+      // Find current equipment to merge with updates for name generation
+      const currentEquipment = equipment.find(e => e.id === id);
+      if (!currentEquipment) return;
+
+      const mergedData = { ...currentEquipment, ...updates };
+      // Regenerate name from year/make/model
+      const generatedName = `${mergedData.year} ${mergedData.make.trim()} ${mergedData.model.trim()}`;
+      const updatesWithName = { ...updates, name: generatedName };
+
       // Convert updates to DB format
       const dbUpdates: Record<string, any> = {};
-      if (updates.name !== undefined) dbUpdates.name = updates.name;
-      if (updates.category !== undefined) dbUpdates.category = updates.category;
-      if (updates.status !== undefined) dbUpdates.status = updates.status;
-      if (updates.assetId !== undefined) dbUpdates.asset_id = updates.assetId || null;
-      if (updates.make !== undefined) dbUpdates.make = updates.make;
-      if (updates.model !== undefined) dbUpdates.model = updates.model;
-      if (updates.year !== undefined) dbUpdates.year = updates.year;
-      if (updates.serialVin !== undefined) dbUpdates.serial_vin = updates.serialVin || null;
-      if (updates.purchaseDate !== undefined) dbUpdates.purchase_date = updates.purchaseDate;
-      if (updates.purchasePrice !== undefined) dbUpdates.purchase_price = updates.purchasePrice;
-      if (updates.salesTax !== undefined) dbUpdates.sales_tax = updates.salesTax;
-      if (updates.freightSetup !== undefined) dbUpdates.freight_setup = updates.freightSetup;
-      if (updates.otherCapEx !== undefined) dbUpdates.other_cap_ex = updates.otherCapEx;
-      if (updates.cogsPercent !== undefined) dbUpdates.cogs_percent = updates.cogsPercent;
-      if (updates.usefulLifeOverride !== undefined) dbUpdates.useful_life_override = updates.usefulLifeOverride || null;
-      if (updates.replacementCostNew !== undefined) dbUpdates.replacement_cost_new = updates.replacementCostNew;
-      if (updates.expectedResaleOverride !== undefined) dbUpdates.expected_resale_override = updates.expectedResaleOverride || null;
-      if (updates.saleDate !== undefined) dbUpdates.sale_date = updates.saleDate || null;
-      if (updates.salePrice !== undefined) dbUpdates.sale_price = updates.salePrice || null;
+      dbUpdates.name = generatedName;
+      if (updatesWithName.category !== undefined) dbUpdates.category = updatesWithName.category;
+      if (updatesWithName.status !== undefined) dbUpdates.status = updatesWithName.status;
+      if (updatesWithName.assetId !== undefined) dbUpdates.asset_id = updatesWithName.assetId || null;
+      if (updatesWithName.make !== undefined) dbUpdates.make = updatesWithName.make;
+      if (updatesWithName.model !== undefined) dbUpdates.model = updatesWithName.model;
+      if (updatesWithName.year !== undefined) dbUpdates.year = updatesWithName.year;
+      if (updatesWithName.serialVin !== undefined) dbUpdates.serial_vin = updatesWithName.serialVin || null;
+      if (updatesWithName.purchaseDate !== undefined) dbUpdates.purchase_date = updatesWithName.purchaseDate;
+      if (updatesWithName.purchasePrice !== undefined) dbUpdates.purchase_price = updatesWithName.purchasePrice;
+      if (updatesWithName.salesTax !== undefined) dbUpdates.sales_tax = updatesWithName.salesTax;
+      if (updatesWithName.freightSetup !== undefined) dbUpdates.freight_setup = updatesWithName.freightSetup;
+      if (updatesWithName.otherCapEx !== undefined) dbUpdates.other_cap_ex = updatesWithName.otherCapEx;
+      if (updatesWithName.cogsPercent !== undefined) dbUpdates.cogs_percent = updatesWithName.cogsPercent;
+      if (updatesWithName.usefulLifeOverride !== undefined) dbUpdates.useful_life_override = updatesWithName.usefulLifeOverride || null;
+      if (updatesWithName.replacementCostNew !== undefined) dbUpdates.replacement_cost_new = updatesWithName.replacementCostNew;
+      if (updatesWithName.expectedResaleOverride !== undefined) dbUpdates.expected_resale_override = updatesWithName.expectedResaleOverride || null;
+      if (updatesWithName.saleDate !== undefined) dbUpdates.sale_date = updatesWithName.saleDate || null;
+      if (updatesWithName.salePrice !== undefined) dbUpdates.sale_price = updatesWithName.salePrice || null;
 
       const { error } = await supabase
         .from('equipment')
@@ -175,7 +190,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       setEquipment(prev => 
-        prev.map(e => e.id === id ? { ...e, ...updates } : e)
+        prev.map(e => e.id === id ? { ...e, ...updatesWithName } : e)
       );
       toast({
         title: "Equipment updated",
@@ -188,7 +203,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
         variant: "destructive",
       });
     }
-  }, [user, toast]);
+  }, [user, equipment, toast]);
 
   const deleteEquipment = useCallback(async (id: string) => {
     if (!user) return;
