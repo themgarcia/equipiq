@@ -19,13 +19,6 @@ export type EquipmentCategory =
   | 'Trailer'
   | 'Vehicle (Commercial)'
   | 'Vehicle (Light-Duty)';
-  | 'Loader (Large / Wheel)'
-  | 'Loader (Mid-Size)'
-  | 'Loader (Mini-Skid)'
-  | 'Loader (Skid / CTL)'
-  | 'Shop / Other'
-  | 'Snow Equipment'
-  | 'Trailer';
 
 export interface CategoryDefaults {
   category: EquipmentCategory;
