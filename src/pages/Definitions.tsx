@@ -5,9 +5,49 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
-import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale } from 'lucide-react';
+import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale, Shield } from 'lucide-react';
 
 const definitions = [
+  {
+    id: 'core-philosophy',
+    icon: Shield,
+    title: 'Core Philosophy',
+    content: `
+**This app is built for planning and pricing discipline, not accounting.**
+
+The assumptions here are designed to protect your margin and ensure equipment costs are recovered through jobs. Here's what that means:
+
+**Defaults protect margin, not assume best-case behavior**
+- We use conservative estimates so you're never caught short
+- If equipment lasts longer or sells for more, that's profit upside
+- If things go worse than expected, you're still covered
+
+**Equipment should be mostly paid down through jobs**
+- Your job pricing should recover the vast majority of equipment cost
+- Don't depend on resale to make the numbers work
+- Resale value above our defaults is treated as bonus profit
+
+**Useful life means competitive life, not mechanical life**
+- A machine that "still runs" isn't necessarily profitable
+- We track how long equipment stays competitive and reliable
+- When in doubt, we lean toward the longest defensible value
+
+**When in doubt, useful life should lean toward the longest defensible value**
+- This protects your pricing from being artificially inflated
+- It assumes you'll maintain equipment well
+- But it doesn't assume perfect conditions
+
+**What this app is NOT:**
+- Tax depreciation software
+- Accounting or financial reporting
+- A replacement for your accountant
+
+**What this app IS:**
+- A planning tool for equipment decisions
+- A way to feed accurate data into LMN
+- A system for protecting your margins
+    `.trim(),
+  },
   {
     id: 'cost-basis',
     icon: DollarSign,
@@ -154,8 +194,13 @@ These are **operational planning numbers**, not accounting numbers. Your account
 
 **How it calculates ownership costs:**
 - Depreciation = (Purchase Price - Resale Value) ÷ Useful Life
-- Plus annual maintenance, insurance, storage, and operating costs
+- Plus annual maintenance and insurance costs
 - This gives your total annual cost of owning the equipment
+
+**Why fuel/operating costs aren't included:**
+- You pay fuel whether you buy or rent
+- It doesn't change the comparison
+- Same goes for operator labor
 
 **How it calculates rental costs:**
 - Daily rate × days used per year

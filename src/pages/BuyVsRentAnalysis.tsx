@@ -31,25 +31,14 @@ import { categoryDefaults, getCategoryDefaults } from '@/data/categoryDefaults';
 import { calculateBuyVsRent, formatCurrency, formatDays } from '@/lib/buyVsRentCalculations';
 import { cn } from '@/lib/utils';
 
-const categories: EquipmentCategory[] = [
-  'Excavation',
-  'Skid Steer / Loader',
-  'Truck / Vehicle',
-  'Heavy Compaction Equipment',
-  'Light Compaction Equipment',
-  'Commercial Mowers',
-  'Handheld Power Tools',
-  'Large Demo & Specialty Tools',
-  'Trailer',
-  'Snow Equipment',
-  'Shop / Other',
-];
+// Derive categories from categoryDefaults
+const categories: EquipmentCategory[] = categoryDefaults.map(c => c.category);
 
 const defaultInput: BuyVsRentInput = {
   category: 'Excavation',
   description: '',
   purchasePrice: 50000,
-  usefulLife: 7,
+  usefulLife: 10,
   resaleValue: 12500,
   rentalRateDaily: 350,
   rentalRateWeekly: undefined,
@@ -57,8 +46,6 @@ const defaultInput: BuyVsRentInput = {
   usageDaysPerYear: 100,
   annualMaintenance: 2000,
   annualInsurance: 750,
-  annualStorage: 0,
-  annualOperating: 1500,
 };
 
 export default function BuyVsRentAnalysis() {
@@ -82,7 +69,6 @@ export default function BuyVsRentAnalysis() {
       category,
       usefulLife: defaults.defaultUsefulLife,
       resaleValue,
-      rentalRateDaily: defaults.typicalDailyRental,
       annualMaintenance: maintenance,
       annualInsurance: insurance,
     }));
@@ -318,6 +304,9 @@ export default function BuyVsRentAnalysis() {
                         onChange={(e) => updateField('annualMaintenance', Number(e.target.value))}
                       />
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Default: {getCategoryDefaults(input.category).maintenancePercent}% of purchase price
+                    </p>
                   </div>
                   <div>
                     <Label htmlFor="insurance">Insurance</Label>
@@ -331,32 +320,9 @@ export default function BuyVsRentAnalysis() {
                         onChange={(e) => updateField('annualInsurance', Number(e.target.value))}
                       />
                     </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="storage">Storage/Parking</Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="storage"
-                        type="number"
-                        className="pl-9"
-                        value={input.annualStorage || ''}
-                        onChange={(e) => updateField('annualStorage', Number(e.target.value))}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="operating">Operating (fuel, etc.)</Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="operating"
-                        type="number"
-                        className="pl-9"
-                        value={input.annualOperating || ''}
-                        onChange={(e) => updateField('annualOperating', Number(e.target.value))}
-                      />
-                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Default: {getCategoryDefaults(input.category).insurancePercent}% of purchase price
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -433,14 +399,6 @@ export default function BuyVsRentAnalysis() {
                         <div className="flex justify-between">
                           <span>Insurance:</span>
                           <span>{formatCurrency(result.ownershipBreakdown.insurance)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Storage:</span>
-                          <span>{formatCurrency(result.ownershipBreakdown.storage)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Operating:</span>
-                          <span>{formatCurrency(result.ownershipBreakdown.operating)}</span>
                         </div>
                       </div>
                     </CardContent>

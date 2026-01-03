@@ -10,16 +10,12 @@ export function calculateBuyVsRent(input: BuyVsRentInput): BuyVsRentResult {
     depreciation,
     maintenance: input.annualMaintenance,
     insurance: input.annualInsurance,
-    storage: input.annualStorage,
-    operating: input.annualOperating,
   };
 
   const annualOwnershipCost = 
     depreciation + 
     input.annualMaintenance + 
-    input.annualInsurance + 
-    input.annualStorage + 
-    input.annualOperating;
+    input.annualInsurance;
 
   // Calculate optimal rental cost (use best rate available)
   const annualRentalCost = calculateOptimalRentalCost(input);

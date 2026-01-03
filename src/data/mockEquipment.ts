@@ -22,7 +22,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '2',
     name: 'Bobcat S650 Skid Steer',
-    category: 'Skid Steer / Loader',
+    category: 'Skid Steer (Standard)',
     status: 'Active',
     assetId: 'SSL-001',
     make: 'Bobcat',
@@ -94,7 +94,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '6',
     name: 'Stihl BR 800 Backpack Blower',
-    category: 'Handheld Power Tools',
+    category: 'Handheld Lawn Equipment',
     status: 'Active',
     make: 'Stihl',
     model: 'BR 800 C-E',
