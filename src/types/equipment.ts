@@ -161,6 +161,8 @@ export interface EquipmentCashflow {
 export interface CashflowProjectionPoint {
   year: number;
   date: string;
+  annualRecovery: number;              // constant annual recovery (through job pricing)
+  annualPayments: number;              // decreasing annual payments as items pay off
   netAnnualCashflow: number;
   activePayments: number;              // count of items still making payments
   events: string[];                    // e.g., ["Truck paid off", "Mini Skid paid off"]

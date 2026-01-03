@@ -45,7 +45,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, AreaChart, Area, Tooltip } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, AreaChart, Area, Tooltip, ComposedChart } from 'recharts';
 
 type StatusFilter = 'all' | 'surplus' | 'neutral' | 'shortfall';
 type FinancingFilter = 'all' | 'owned' | 'financed' | 'leased';
@@ -457,17 +457,17 @@ export default function CashflowAnalysis() {
                   Cashflow Projection
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Net annual cashflow as equipment financing ends over time
+                  As equipment pays off, payments decrease while recovery stays constant
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="h-[250px]">
+                <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={projection} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                       <defs>
-                        <linearGradient id="colorCashflow" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        <linearGradient id="colorNetCashflow" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.1}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -480,9 +480,17 @@ export default function CashflowAnalysis() {
                         tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                         className="text-xs"
                         tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        domain={[0, 'auto']}
                       />
                       <Tooltip 
-                        formatter={(value: number) => [formatCurrency(value), 'Net Cashflow']}
+                        formatter={(value: number, name: string) => {
+                          const labels: Record<string, string> = {
+                            annualRecovery: 'Annual Recovery',
+                            annualPayments: 'Annual Payments',
+                            netAnnualCashflow: 'Net Cashflow'
+                          };
+                          return [formatCurrency(value), labels[name] || name];
+                        }}
                         labelFormatter={(label) => `Year ${label}`}
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--card))', 
@@ -490,13 +498,32 @@ export default function CashflowAnalysis() {
                           borderRadius: '8px'
                         }}
                       />
+                      {/* Green line for Annual Recovery (constant) */}
+                      <Line 
+                        type="monotone" 
+                        dataKey="annualRecovery" 
+                        stroke="hsl(142, 76%, 36%)" 
+                        strokeWidth={2}
+                        dot={false}
+                        name="annualRecovery"
+                      />
+                      {/* Red/Orange line for Annual Payments (decreasing) */}
+                      <Line 
+                        type="monotone" 
+                        dataKey="annualPayments" 
+                        stroke="hsl(0, 84%, 60%)" 
+                        strokeWidth={2}
+                        dot={false}
+                        name="annualPayments"
+                      />
+                      {/* Shaded area for net cashflow (the gap) */}
                       <Area 
                         type="monotone" 
                         dataKey="netAnnualCashflow" 
-                        stroke="hsl(var(--primary))" 
-                        strokeWidth={2}
+                        stroke="none"
                         fillOpacity={1} 
-                        fill="url(#colorCashflow)" 
+                        fill="url(#colorNetCashflow)" 
+                        name="netAnnualCashflow"
                       />
                       {/* Add reference lines for payoff events */}
                       {projection.filter(p => p.events.length > 0).map((p) => (
@@ -512,16 +539,37 @@ export default function CashflowAnalysis() {
                   </ResponsiveContainer>
                 </div>
                 
-                {/* Payoff Events Legend */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {projection.filter(p => p.events.length > 0).flatMap(p => 
-                    p.events.map((event, i) => (
-                      <Badge key={`${p.year}-${i}`} variant="outline" className="text-xs">
-                        {p.year}: {event}
-                      </Badge>
-                    ))
-                  )}
+                {/* Legend */}
+                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-0.5 bg-green-600"></div>
+                    <span className="text-muted-foreground">Annual Recovery (from job pricing)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-0.5 bg-red-500"></div>
+                    <span className="text-muted-foreground">Annual Payments (financing)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-3 bg-green-600/30 rounded-sm"></div>
+                    <span className="text-muted-foreground">Net Cashflow (the gap)</span>
+                  </div>
                 </div>
+                
+                {/* Payoff Events */}
+                {projection.some(p => p.events.length > 0) && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-xs text-muted-foreground mb-2">Payoff events:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {projection.filter(p => p.events.length > 0).flatMap(p => 
+                        p.events.map((event, i) => (
+                          <Badge key={`${p.year}-${i}`} variant="outline" className="text-xs">
+                            {p.year}: {event}
+                          </Badge>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
