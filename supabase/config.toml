@@ -1,1 +1,4 @@
 project_id = "xmiozlzflqpcgmghckem"
+
+[functions.parse-equipment-docs]
+verify_jwt = true
