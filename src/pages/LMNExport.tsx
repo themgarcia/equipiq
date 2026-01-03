@@ -13,16 +13,18 @@ import {
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
-import { Copy, Download, Check, FileSpreadsheet } from 'lucide-react';
+import { Copy, Download, Check, FileSpreadsheet, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { LMNExportData } from '@/types/equipment';
 
 type ColumnKey = keyof LMNExportData;
+type SortDirection = 'asc' | 'desc';
 
 interface ColumnConfig {
   key: ColumnKey;
   label: string;
   format: (value: LMNExportData[ColumnKey]) => string;
   align: 'left' | 'right';
+  sortType: 'string' | 'number';
 }
 
 const columns: ColumnConfig[] = [
@@ -30,61 +32,71 @@ const columns: ColumnConfig[] = [
     key: 'equipmentName', 
     label: 'Equipment Name', 
     format: (v) => String(v),
-    align: 'left'
+    align: 'left',
+    sortType: 'string'
   },
   { 
     key: 'purchasePrice', 
     label: 'Purchase Price', 
     format: (v) => String(v),
-    align: 'right'
+    align: 'right',
+    sortType: 'number'
   },
   { 
     key: 'additionalPurchaseFees', 
     label: "Add'l Fees", 
     format: (v) => String(v),
-    align: 'right'
+    align: 'right',
+    sortType: 'number'
   },
   { 
     key: 'replacementValue', 
     label: 'Replacement', 
     format: (v) => String(v),
-    align: 'right'
+    align: 'right',
+    sortType: 'number'
   },
   { 
     key: 'expectedValueAtEndOfLife', 
     label: 'End Value', 
     format: (v) => String(v),
-    align: 'right'
+    align: 'right',
+    sortType: 'number'
   },
   { 
     key: 'usefulLife', 
     label: 'Life (yrs)', 
     format: (v) => String(v),
-    align: 'right'
+    align: 'right',
+    sortType: 'number'
   },
   { 
     key: 'cogsPercent', 
     label: 'COGS %', 
     format: (v) => String(v),
-    align: 'right'
+    align: 'right',
+    sortType: 'number'
   },
   { 
     key: 'overheadPercent', 
     label: 'OH %', 
     format: (v) => String(v),
-    align: 'right'
+    align: 'right',
+    sortType: 'number'
   },
   { 
     key: 'cogsAllocatedCost', 
     label: 'COGS $', 
     format: (v) => String(v),
-    align: 'right'
+    align: 'right',
+    sortType: 'number'
   },
   { 
     key: 'overheadAllocatedCost', 
     label: 'OH $', 
     format: (v) => String(v),
-    align: 'right'
+    align: 'right',
+    sortType: 'number'
   },
 ];
 
@@ -92,12 +104,49 @@ export default function LMNExport() {
   const { calculatedEquipment } = useEquipment();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<ColumnKey>('equipmentName');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const activeEquipment = calculatedEquipment.filter(e => e.status === 'Active');
-  const exportData = useMemo(() => 
-    activeEquipment.map(e => ({ id: e.id, data: toLMNExport(e) })),
-    [activeEquipment]
-  );
+  
+  const exportData = useMemo(() => {
+    const data = activeEquipment.map(e => ({ id: e.id, data: toLMNExport(e) }));
+    
+    const columnConfig = columns.find(c => c.key === sortColumn);
+    if (!columnConfig) return data;
+    
+    return [...data].sort((a, b) => {
+      const aVal = a.data[sortColumn];
+      const bVal = b.data[sortColumn];
+      
+      let comparison = 0;
+      if (columnConfig.sortType === 'string') {
+        comparison = String(aVal).localeCompare(String(bVal));
+      } else {
+        comparison = (Number(aVal) || 0) - (Number(bVal) || 0);
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [activeEquipment, sortColumn, sortDirection]);
+
+  const handleSort = (columnKey: ColumnKey) => {
+    if (sortColumn === columnKey) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(columnKey);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (columnKey: ColumnKey) => {
+    if (sortColumn !== columnKey) {
+      return <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-3 w-3 text-primary" />
+      : <ArrowDown className="h-3 w-3 text-primary" />;
+  };
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -197,7 +246,7 @@ export default function LMNExport() {
             <h3 className="font-semibold mb-1">Copy Values for LMN</h3>
             <p className="text-sm text-muted-foreground">
               LMN requires pasting one field at a time. Click the <Copy className="h-3 w-3 inline mx-1" /> 
-              button next to any value to copy it to your clipboard.
+              button next to any value to copy it to your clipboard. Click column headers to sort.
             </p>
           </div>
         </div>
@@ -217,9 +266,13 @@ export default function LMNExport() {
                   {columns.map(col => (
                     <TableHead 
                       key={col.key} 
-                      className={`table-header-cell ${col.align === 'right' ? 'text-right' : ''}`}
+                      className={`table-header-cell cursor-pointer hover:bg-muted/70 transition-colors ${col.align === 'right' ? 'text-right' : ''}`}
+                      onClick={() => handleSort(col.key)}
                     >
-                      {col.label}
+                      <div className={`flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
+                        <span>{col.label}</span>
+                        {getSortIcon(col.key)}
+                      </div>
                     </TableHead>
                   ))}
                 </TableRow>

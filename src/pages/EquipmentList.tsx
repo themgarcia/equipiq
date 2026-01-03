@@ -21,21 +21,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import { Equipment, EquipmentCategory, EquipmentStatus } from '@/types/equipment';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { Equipment, EquipmentStatus } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
 
-const categories: EquipmentCategory[] = ['All' as EquipmentCategory, ...categoryDefaults.map(c => c.category)];
 const statuses: EquipmentStatus[] = ['Active', 'Sold', 'Retired', 'Lost'];
 
 export default function EquipmentList() {
   const { calculatedEquipment, addEquipment, updateEquipment, deleteEquipment } = useEquipment();
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState<Equipment | undefined>();
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => 
+    new Set(categoryDefaults.map(c => c.category))
+  );
 
   const filteredEquipment = useMemo(() => {
     return calculatedEquipment.filter(equipment => {
@@ -43,12 +49,47 @@ export default function EquipmentList() {
         equipment.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
         equipment.model.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesCategory = categoryFilter === 'All' || equipment.category === categoryFilter;
       const matchesStatus = statusFilter === 'All' || equipment.status === statusFilter;
       
-      return matchesSearch && matchesCategory && matchesStatus;
+      return matchesSearch && matchesStatus;
     });
-  }, [calculatedEquipment, searchQuery, categoryFilter, statusFilter]);
+  }, [calculatedEquipment, searchQuery, statusFilter]);
+
+  // Group equipment by category (already alphabetically sorted in categoryDefaults)
+  const groupedEquipment = useMemo(() => {
+    const groups: Record<string, typeof filteredEquipment> = {};
+    
+    // Initialize groups in alphabetical order from categoryDefaults
+    categoryDefaults.forEach(cat => {
+      groups[cat.category] = [];
+    });
+    
+    // Populate groups
+    filteredEquipment.forEach(equipment => {
+      if (groups[equipment.category]) {
+        groups[equipment.category].push(equipment);
+      } else {
+        // Handle any uncategorized equipment
+        if (!groups['Other']) groups['Other'] = [];
+        groups['Other'].push(equipment);
+      }
+    });
+    
+    // Filter out empty categories
+    return Object.entries(groups).filter(([_, items]) => items.length > 0);
+  }, [filteredEquipment]);
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
 
   const handleAddNew = () => {
     setEditingEquipment(undefined);
@@ -103,17 +144,6 @@ export default function EquipmentList() {
               className="pl-9"
             />
           </div>
-          
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map(cat => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[140px]">
@@ -128,112 +158,135 @@ export default function EquipmentList() {
           </Select>
         </div>
 
-        {/* Table */}
-        <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="table-header-cell">Name / Details</TableHead>
-                  <TableHead className="table-header-cell">Category</TableHead>
-                  <TableHead className="table-header-cell">Status</TableHead>
-                  <TableHead className="table-header-cell text-right">Cost Basis</TableHead>
-                  <TableHead className="table-header-cell text-right">COGS %</TableHead>
-                  <TableHead className="table-header-cell text-right">
-                    <span className="text-warning">COGS $</span>
-                  </TableHead>
-                  <TableHead className="table-header-cell text-right">
-                    <span className="text-warning">OH $</span>
-                  </TableHead>
-                  <TableHead className="table-header-cell text-right">Years Left</TableHead>
-                  <TableHead className="table-header-cell text-right">Replacement</TableHead>
-                  <TableHead className="table-header-cell w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredEquipment.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                      No equipment found. Add your first piece of equipment to get started.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredEquipment.map(equipment => (
-                    <TableRow key={equipment.id} className="group hover:bg-muted/30">
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{equipment.name}</p>
-                          {equipment.assetId && (
-                            <p className="text-xs text-muted-foreground">
-                              {equipment.assetId}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">{equipment.category}</span>
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={equipment.status} />
-                      </TableCell>
-                      <TableCell className="text-right font-mono-nums">
-                        {formatCurrency(equipment.totalCostBasis)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono-nums">
-                        {formatPercent(equipment.cogsPercent)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono-nums bg-field-calculated">
-                        {formatCurrency(equipment.cogsAllocatedCost)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono-nums bg-field-calculated">
-                        {formatCurrency(equipment.overheadAllocatedCost)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono-nums">
-                        <span className={equipment.estimatedYearsLeft <= 1 ? 'text-warning font-semibold' : ''}>
-                          {equipment.estimatedYearsLeft}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-mono-nums">
-                        {formatCurrency(equipment.replacementCostNew)}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 opacity-0 group-hover:opacity-100"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(equipment)}>
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDelete(equipment.id)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+        {/* Category Groups */}
+        <div className="space-y-4">
+          {groupedEquipment.length === 0 ? (
+            <div className="bg-card border rounded-lg p-8 text-center text-muted-foreground">
+              No equipment found. Add your first piece of equipment to get started.
+            </div>
+          ) : (
+            groupedEquipment.map(([category, items]) => (
+              <Collapsible
+                key={category}
+                open={expandedCategories.has(category)}
+                onOpenChange={() => toggleCategory(category)}
+              >
+                <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
+                  <CollapsibleTrigger className="w-full px-4 py-3 flex items-center justify-between bg-muted/50 hover:bg-muted/70 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <ChevronDown 
+                        className={`h-4 w-4 transition-transform ${
+                          expandedCategories.has(category) ? '' : '-rotate-90'
+                        }`} 
+                      />
+                      <span className="font-semibold">{category}</span>
+                      <span className="text-sm text-muted-foreground">
+                        ({items.length} {items.length === 1 ? 'item' : 'items'})
+                      </span>
+                    </div>
+                    <span className="text-sm font-mono-nums text-muted-foreground">
+                      {formatCurrency(items.reduce((sum, e) => sum + e.totalCostBasis, 0))}
+                    </span>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/30">
+                            <TableHead className="table-header-cell">Name / Details</TableHead>
+                            <TableHead className="table-header-cell">Status</TableHead>
+                            <TableHead className="table-header-cell text-right">Cost Basis</TableHead>
+                            <TableHead className="table-header-cell text-right">COGS %</TableHead>
+                            <TableHead className="table-header-cell text-right">
+                              <span className="text-warning">COGS $</span>
+                            </TableHead>
+                            <TableHead className="table-header-cell text-right">
+                              <span className="text-warning">OH $</span>
+                            </TableHead>
+                            <TableHead className="table-header-cell text-right">Years Left</TableHead>
+                            <TableHead className="table-header-cell text-right">Replacement</TableHead>
+                            <TableHead className="table-header-cell w-[50px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {items.map(equipment => (
+                            <TableRow key={equipment.id} className="group hover:bg-muted/30">
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium">{equipment.name}</p>
+                                  {equipment.assetId && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {equipment.assetId}
+                                    </p>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <StatusBadge status={equipment.status} />
+                              </TableCell>
+                              <TableCell className="text-right font-mono-nums">
+                                {formatCurrency(equipment.totalCostBasis)}
+                              </TableCell>
+                              <TableCell className="text-right font-mono-nums">
+                                {formatPercent(equipment.cogsPercent)}
+                              </TableCell>
+                              <TableCell className="text-right font-mono-nums bg-field-calculated">
+                                {formatCurrency(equipment.cogsAllocatedCost)}
+                              </TableCell>
+                              <TableCell className="text-right font-mono-nums bg-field-calculated">
+                                {formatCurrency(equipment.overheadAllocatedCost)}
+                              </TableCell>
+                              <TableCell className="text-right font-mono-nums">
+                                <span className={equipment.estimatedYearsLeft <= 1 ? 'text-warning font-semibold' : ''}>
+                                  {equipment.estimatedYearsLeft}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right font-mono-nums">
+                                {formatCurrency(equipment.replacementCostNew)}
+                              </TableCell>
+                              <TableCell>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEdit(equipment)}>
+                                      <Pencil className="h-4 w-4 mr-2" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleDelete(equipment.id)}
+                                      className="text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            ))
+          )}
         </div>
 
         {/* Summary */}
         <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
           <p>
-            Showing {filteredEquipment.length} of {calculatedEquipment.length} items
+            Showing {filteredEquipment.length} of {calculatedEquipment.length} items in {groupedEquipment.length} categories
           </p>
           <p>
             Total Cost Basis: <span className="font-mono-nums font-medium text-foreground">
