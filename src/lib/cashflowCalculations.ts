@@ -102,8 +102,14 @@ export function calculatePortfolioCashflow(
   
   const netAnnualCashflow = totalAnnualRecovery - totalAnnualPayments;
   
+  // For owned equipment, use total cost basis; for financed/leased, use deposit
   const totalDeposits = activeItems.reduce(
-    (sum, item) => sum + item.equipment.depositAmount, 
+    (sum, item) => {
+      const effectiveDeposit = item.equipment.financingType === 'owned'
+        ? item.calculated.totalCostBasis
+        : item.equipment.depositAmount;
+      return sum + effectiveDeposit;
+    }, 
     0
   );
   

@@ -171,16 +171,33 @@ function PaybackDialog({ equipment, calculated, open, onOpenChange }: PaybackDia
           {/* Key metrics */}
           <div className="grid grid-cols-3 gap-4">
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground">Total Deposit</p>
-              <p className="text-lg font-semibold">{formatCurrency(equipment.depositAmount)}</p>
+              <p className="text-xs text-muted-foreground">
+                {equipment.financingType === 'owned' ? 'Paid in Full' : 'Total Deposit'}
+              </p>
+              <p className="text-lg font-semibold">
+                {equipment.financingType === 'owned' 
+                  ? formatCurrency(calculated.totalCostBasis)
+                  : formatCurrency(equipment.depositAmount)
+                }
+              </p>
             </div>
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-xs text-muted-foreground">Monthly Payment</p>
-              <p className="text-lg font-semibold">{formatCurrency(equipment.monthlyPayment)}</p>
+              <p className="text-lg font-semibold">
+                {equipment.financingType === 'owned' 
+                  ? '—'
+                  : formatCurrency(equipment.monthlyPayment)
+                }
+              </p>
             </div>
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-xs text-muted-foreground">Term</p>
-              <p className="text-lg font-semibold">{equipment.termMonths} months</p>
+              <p className="text-lg font-semibold">
+                {equipment.financingType === 'owned' 
+                  ? '—'
+                  : `${equipment.termMonths} months`
+                }
+              </p>
             </div>
           </div>
         </div>
@@ -335,7 +352,7 @@ export default function CashflowAnalysis() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Wallet className="h-4 w-4" />
-                Cash Tied in Deposits
+                Total Cash Invested
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -343,7 +360,7 @@ export default function CashflowAnalysis() {
                 {formatCurrency(portfolioSummary.totalDeposits)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Down payments already made
+                Paid in full + deposits
               </p>
             </CardContent>
           </Card>
