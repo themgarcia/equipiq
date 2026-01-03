@@ -2,11 +2,15 @@ export type EquipmentStatus = 'Active' | 'Sold' | 'Retired' | 'Lost';
 
 export type EquipmentCategory = 
   | 'Excavation'
-  | 'Skid Steer / Loader'
+  | 'Mini Skid / Compact Power Carrier'
+  | 'Skid Steer (Standard)'
+  | 'Compact Track Loader'
+  | 'Large Loader'
   | 'Truck / Vehicle'
   | 'Heavy Compaction Equipment'
   | 'Light Compaction Equipment'
   | 'Commercial Mowers'
+  | 'Handheld Lawn Equipment'
   | 'Handheld Power Tools'
   | 'Large Demo & Specialty Tools'
   | 'Trailer'
@@ -95,16 +99,12 @@ export interface BuyVsRentInput {
   usageDaysPerYear: number;
   annualMaintenance: number;
   annualInsurance: number;
-  annualStorage: number;
-  annualOperating: number;
 }
 
 export interface OwnershipBreakdown {
   depreciation: number;
   maintenance: number;
   insurance: number;
-  storage: number;
-  operating: number;
 }
 
 export interface YearComparison {
