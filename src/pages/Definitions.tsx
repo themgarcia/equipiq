@@ -5,7 +5,7 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
-import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator } from 'lucide-react';
+import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale } from 'lucide-react';
 
 const definitions = [
   {
@@ -143,6 +143,39 @@ This app is designed to feed data into LMN's **Owned Equipment Calculator**. Her
 These are **operational planning numbers**, not accounting numbers. Your accountant handles the IRS. This app helps you run a profitable business.
 
 **When in doubt:** Talk to your accountant about depreciation and taxes. Use this app to plan equipment purchases and understand your true costs.
+    `.trim(),
+  },
+  {
+    id: 'buy-vs-rent',
+    icon: Scale,
+    title: 'Understanding the Buy vs. Rent Analysis',
+    content: `
+**The Buy vs. Rent calculator** helps you decide whether to purchase or rent equipment based on your expected usage.
+
+**How it calculates ownership costs:**
+- Depreciation = (Purchase Price - Resale Value) ÷ Useful Life
+- Plus annual maintenance, insurance, storage, and operating costs
+- This gives your total annual cost of owning the equipment
+
+**How it calculates rental costs:**
+- Daily rate × days used per year
+- If weekly or monthly rates are provided, it finds the cheapest combination
+
+**The break-even point** is the number of days per year where owning and renting cost the same. If you use equipment more than the break-even, buying saves money. Less than break-even, renting saves money.
+
+**The 15% buffer zone:**
+- If your usage is within 15% of break-even, you'll see "Close Call"
+- This is because small changes in assumptions could flip the recommendation
+- In close call situations, consider convenience, availability, and reliability
+
+**What the calculator doesn't capture:**
+- Availability (will rental equipment be available when you need it?)
+- Convenience (is pickup/return time a factor?)
+- Reliability (do you trust rental equipment quality?)
+- Tax implications (depreciation benefits of ownership)
+- Opportunity cost of capital tied up in equipment
+
+Use the calculator as a starting point, then apply your judgment for factors the numbers can't capture.
     `.trim(),
   },
 ];
