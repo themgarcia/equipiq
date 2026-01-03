@@ -29,7 +29,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '2',
     name: 'Bobcat S650 Skid Steer',
-    category: 'Skid Steer (Standard)',
+    category: 'Loader (Skid / CTL)',
     status: 'Active',
     assetId: 'SSL-001',
     make: 'Bobcat',
@@ -53,7 +53,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '3',
     name: 'Ford F-350 Crew Cab',
-    category: 'Truck / Vehicle',
+    category: 'Commercial Vehicle',
     status: 'Active',
     assetId: 'TRK-001',
     make: 'Ford',
@@ -78,7 +78,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '4',
     name: 'Wacker Neuson DPU6555 Plate',
-    category: 'Heavy Compaction Equipment',
+    category: 'Compaction (Heavy)',
     status: 'Active',
     assetId: 'CMP-001',
     make: 'Wacker Neuson',
@@ -102,7 +102,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '5',
     name: 'Exmark Lazer Z X-Series 60"',
-    category: 'Commercial Mowers',
+    category: 'Lawn (Commercial)',
     status: 'Active',
     assetId: 'MOW-001',
     make: 'Exmark',
@@ -127,7 +127,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '6',
     name: 'Stihl BR 800 Backpack Blower',
-    category: 'Handheld Lawn Equipment',
+    category: 'Lawn (Handheld)',
     status: 'Active',
     make: 'Stihl',
     model: 'BR 800 C-E',
