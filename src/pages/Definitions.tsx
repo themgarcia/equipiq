@@ -285,9 +285,9 @@ This is a critical distinction. Two identical machines will always price the sam
 - **Leased**: Equipment lease, often with a buyout option at the end.
 
 **Cashflow Analysis shows:**
-- **Annual Pricing Recovery**: How much value you recover through job pricing
-- **Annual Financing Payments**: How much cash leaves for loan/lease payments
-- **Surplus/Shortfall**: Whether recovery exceeds payments (surplus) or falls short (shortfall)
+- **Current Annual Recovery**: How much value you're recovering through job pricing right now
+- **Current Annual Payments**: How much cash is currently leaving for loan/lease payments
+- **Current Net Cashflow**: Whether recovery exceeds payments (surplus) or falls short (shortfall)
 
 **Status Indicators:**
 - **Green (Surplus)**: Pricing recovery exceeds payments by >10%

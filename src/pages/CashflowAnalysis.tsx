@@ -335,7 +335,7 @@ export default function CashflowAnalysis() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Annual Pricing Recovery
+                Current Annual Recovery
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -343,7 +343,7 @@ export default function CashflowAnalysis() {
                 {formatCurrency(portfolioSummary.totalAnnualRecovery)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Value recovered through job pricing
+                Value being recovered through job pricing
               </p>
             </CardContent>
           </Card>
@@ -352,7 +352,7 @@ export default function CashflowAnalysis() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <TrendingDown className="h-4 w-4" />
-                Annual Financing Payments
+                Current Annual Payments
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -360,7 +360,7 @@ export default function CashflowAnalysis() {
                 {formatCurrency(portfolioSummary.totalAnnualPayments)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Cash leaving for financing
+                Cash currently leaving for financing
               </p>
             </CardContent>
           </Card>
@@ -369,7 +369,7 @@ export default function CashflowAnalysis() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 {getStatusIcon(portfolioSummary.overallStatus)}
-                Net Annual Cashflow
+                Current Net Cashflow
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -407,7 +407,7 @@ export default function CashflowAnalysis() {
         {stabilization.itemsWithActivePayments > 0 && (
           <div className="mb-6 space-y-4">
             {/* Stabilization Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -427,23 +427,6 @@ export default function CashflowAnalysis() {
                       ? `${stabilization.yearsUntilStabilization} year${stabilization.yearsUntilStabilization !== 1 ? 's' : ''} from now`
                       : 'Already stabilized'
                     }
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    Stabilized Net Cashflow
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-green-600">
-                    +{formatCurrency(stabilization.stabilizedNetCashflow)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    When all payments complete
                   </p>
                 </CardContent>
               </Card>
