@@ -16,6 +16,12 @@ export function calculateEquipmentCashflow(
   equipment: Equipment,
   calculated: EquipmentCalculated
 ): EquipmentCashflow {
+  // For owned equipment, the "deposit" is the total cost basis (cash paid upfront)
+  // For financed/leased, use the actual deposit amount
+  const effectiveDeposit = equipment.financingType === 'owned'
+    ? calculated.totalCostBasis
+    : equipment.depositAmount;
+  
   // Annual cash outflow = monthly payment × 12
   const annualCashOutflow = equipment.monthlyPayment * 12;
   
@@ -30,7 +36,7 @@ export function calculateEquipmentCashflow(
   }
   
   // Total cash outlaid to date = deposit + (payments completed × monthly payment)
-  const totalCashOutlaidToDate = equipment.depositAmount + (paymentsCompleted * equipment.monthlyPayment);
+  const totalCashOutlaidToDate = effectiveDeposit + (paymentsCompleted * equipment.monthlyPayment);
   
   // Remaining payments
   const remainingPayments = Math.max(0, equipment.termMonths - paymentsCompleted);
@@ -142,6 +148,11 @@ export function calculatePaybackTimeline(
 ): { timeline: PaybackTimelinePoint[]; paybackMonth: number | null } {
   const timeline: PaybackTimelinePoint[] = [];
   
+  // For owned equipment, the "deposit" is the total cost basis (cash paid upfront)
+  const effectiveDeposit = equipment.financingType === 'owned'
+    ? calculated.totalCostBasis
+    : equipment.depositAmount;
+  
   // Monthly recovery = annual recovery ÷ 12
   const monthlyRecovery = calculated.usefulLifeUsed > 0 
     ? calculated.replacementCostUsed / calculated.usefulLifeUsed / 12 
@@ -156,7 +167,7 @@ export function calculatePaybackTimeline(
   for (let month = 0; month <= maxMonths; month++) {
     // Cumulative cash outlay: deposit + payments made up to this month
     const paymentsThisMonth = Math.min(month, equipment.termMonths);
-    const cumulativeOutlay = equipment.depositAmount + (paymentsThisMonth * equipment.monthlyPayment);
+    const cumulativeOutlay = effectiveDeposit + (paymentsThisMonth * equipment.monthlyPayment);
     
     // Cumulative recovery
     const cumulativeRecovery = month * monthlyRecovery;
