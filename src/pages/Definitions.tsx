@@ -411,16 +411,32 @@ export default function Definitions() {
               <AccordionContent className="pb-6">
                 <div className="prose prose-sm max-w-none text-muted-foreground pl-11">
                   {def.content.split('\n\n').map((paragraph, i) => {
-                    if (paragraph.startsWith('**') && paragraph.includes('**')) {
-                      const parts = paragraph.split('**');
+                    // Check for mixed content: heading followed by bullets
+                    if (paragraph.includes('\n- ')) {
+                      const lines = paragraph.split('\n');
+                      const headingLine = lines[0];
+                      const bulletLines = lines.filter(line => line.startsWith('- '));
+                      
+                      // Render heading with bold parsing
+                      const headingParts = headingLine.split('**');
+                      
                       return (
-                        <p key={i} className="mb-3">
-                          {parts.map((part, j) => 
-                            j % 2 === 1 ? <strong key={j} className="text-foreground">{part}</strong> : part
-                          )}
-                        </p>
+                        <div key={i} className="mb-3">
+                          <p className="mb-2">
+                            {headingParts.map((part, j) => 
+                              j % 2 === 1 ? <strong key={j} className="text-foreground">{part}</strong> : part
+                            )}
+                          </p>
+                          <ul className="list-disc list-inside space-y-1 ml-4">
+                            {bulletLines.map((item, j) => (
+                              <li key={j}>{item.replace('- ', '')}</li>
+                            ))}
+                          </ul>
+                        </div>
                       );
                     }
+                    
+                    // Pure bullet list (starts with -)
                     if (paragraph.startsWith('- ')) {
                       return (
                         <ul key={i} className="list-disc list-inside mb-3 space-y-1">
@@ -430,6 +446,8 @@ export default function Definitions() {
                         </ul>
                       );
                     }
+                    
+                    // Numbered list
                     if (paragraph.startsWith('1. ')) {
                       return (
                         <ol key={i} className="list-decimal list-inside mb-3 space-y-1">
@@ -439,6 +457,20 @@ export default function Definitions() {
                         </ol>
                       );
                     }
+                    
+                    // Regular paragraph with bold text parsing
+                    if (paragraph.includes('**')) {
+                      const parts = paragraph.split('**');
+                      return (
+                        <p key={i} className="mb-3">
+                          {parts.map((part, j) => 
+                            j % 2 === 1 ? <strong key={j} className="text-foreground">{part}</strong> : part
+                          )}
+                        </p>
+                      );
+                    }
+                    
+                    // Plain paragraph
                     return <p key={i} className="mb-3">{paragraph}</p>;
                   })}
                 </div>
