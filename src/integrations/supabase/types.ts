@@ -14,16 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      equipment: {
+        Row: {
+          asset_id: string | null
+          category: string
+          cogs_percent: number
+          created_at: string
+          expected_resale_override: number | null
+          freight_setup: number
+          id: string
+          make: string
+          model: string
+          name: string
+          other_cap_ex: number
+          purchase_date: string
+          purchase_price: number
+          replacement_cost_new: number
+          sale_date: string | null
+          sale_price: number | null
+          sales_tax: number
+          serial_vin: string | null
+          status: string
+          updated_at: string
+          useful_life_override: number | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          asset_id?: string | null
+          category: string
+          cogs_percent?: number
+          created_at?: string
+          expected_resale_override?: number | null
+          freight_setup?: number
+          id?: string
+          make: string
+          model: string
+          name: string
+          other_cap_ex?: number
+          purchase_date: string
+          purchase_price?: number
+          replacement_cost_new?: number
+          sale_date?: string | null
+          sale_price?: number | null
+          sales_tax?: number
+          serial_vin?: string | null
+          status?: string
+          updated_at?: string
+          useful_life_override?: number | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          asset_id?: string | null
+          category?: string
+          cogs_percent?: number
+          created_at?: string
+          expected_resale_override?: number | null
+          freight_setup?: number
+          id?: string
+          make?: string
+          model?: string
+          name?: string
+          other_cap_ex?: number
+          purchase_date?: string
+          purchase_price?: number
+          replacement_cost_new?: number
+          sale_date?: string | null
+          sale_price?: number | null
+          sales_tax?: number
+          serial_vin?: string | null
+          status?: string
+          updated_at?: string
+          useful_life_override?: number | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +272,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

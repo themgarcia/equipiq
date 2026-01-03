@@ -8,9 +8,20 @@ import {
   BookOpen,
   ChevronRight,
   Anvil,
-  Scale
+  Scale,
+  LogOut,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface LayoutProps {
   children: ReactNode;
@@ -27,6 +38,9 @@ const navigation = [
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const { user, signOut } = useAuth();
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
   return (
     <div className="min-h-screen bg-background">
@@ -72,8 +86,40 @@ export function Layout({ children }: LayoutProps) {
             })}
           </nav>
 
-          {/* Footer */}
-          <div className="border-t border-sidebar-border p-4">
+          {/* User Menu & Footer */}
+          <div className="border-t border-sidebar-border p-4 space-y-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start gap-3 h-auto py-2 px-3 text-left hover:bg-sidebar-accent/50"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-primary/20">
+                    <User className="h-4 w-4 text-sidebar-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">
+                      {displayName}
+                    </p>
+                    <p className="text-xs text-sidebar-foreground/50 truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem disabled className="text-muted-foreground">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile (coming soon)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut} className="text-destructive">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <p className="text-xs text-sidebar-foreground/50">
               Designed for contractors.
               <br />
