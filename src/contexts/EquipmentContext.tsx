@@ -44,6 +44,14 @@ function dbToEquipment(record: any): Equipment {
     expectedResaleOverride: record.expected_resale_override ? Number(record.expected_resale_override) : undefined,
     saleDate: record.sale_date || undefined,
     salePrice: record.sale_price ? Number(record.sale_price) : undefined,
+    // Financing fields (cashflow visibility only)
+    financingType: record.financing_type || 'owned',
+    depositAmount: Number(record.deposit_amount) || 0,
+    financedAmount: Number(record.financed_amount) || 0,
+    monthlyPayment: Number(record.monthly_payment) || 0,
+    termMonths: Number(record.term_months) || 0,
+    buyoutAmount: Number(record.buyout_amount) || 0,
+    financingStartDate: record.financing_start_date || undefined,
   };
 }
 
@@ -71,6 +79,14 @@ function equipmentToDb(equipment: Omit<Equipment, 'id'>, userId: string) {
     expected_resale_override: equipment.expectedResaleOverride || null,
     sale_date: equipment.saleDate || null,
     sale_price: equipment.salePrice || null,
+    // Financing fields (cashflow visibility only)
+    financing_type: equipment.financingType || 'owned',
+    deposit_amount: equipment.depositAmount || 0,
+    financed_amount: equipment.financedAmount || 0,
+    monthly_payment: equipment.monthlyPayment || 0,
+    term_months: equipment.termMonths || 0,
+    buyout_amount: equipment.buyoutAmount || 0,
+    financing_start_date: equipment.financingStartDate || null,
   };
 }
 
@@ -183,6 +199,14 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (updatesWithName.expectedResaleOverride !== undefined) dbUpdates.expected_resale_override = updatesWithName.expectedResaleOverride || null;
       if (updatesWithName.saleDate !== undefined) dbUpdates.sale_date = updatesWithName.saleDate || null;
       if (updatesWithName.salePrice !== undefined) dbUpdates.sale_price = updatesWithName.salePrice || null;
+      // Financing fields
+      if (updatesWithName.financingType !== undefined) dbUpdates.financing_type = updatesWithName.financingType;
+      if (updatesWithName.depositAmount !== undefined) dbUpdates.deposit_amount = updatesWithName.depositAmount;
+      if (updatesWithName.financedAmount !== undefined) dbUpdates.financed_amount = updatesWithName.financedAmount;
+      if (updatesWithName.monthlyPayment !== undefined) dbUpdates.monthly_payment = updatesWithName.monthlyPayment;
+      if (updatesWithName.termMonths !== undefined) dbUpdates.term_months = updatesWithName.termMonths;
+      if (updatesWithName.buyoutAmount !== undefined) dbUpdates.buyout_amount = updatesWithName.buyoutAmount;
+      if (updatesWithName.financingStartDate !== undefined) dbUpdates.financing_start_date = updatesWithName.financingStartDate || null;
 
       const { error } = await supabase
         .from('equipment')

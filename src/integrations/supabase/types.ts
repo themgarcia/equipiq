@@ -17,14 +17,20 @@ export type Database = {
       equipment: {
         Row: {
           asset_id: string | null
+          buyout_amount: number
           category: string
           cogs_percent: number
           created_at: string
+          deposit_amount: number
           expected_resale_override: number | null
+          financed_amount: number
+          financing_start_date: string | null
+          financing_type: string
           freight_setup: number
           id: string
           make: string
           model: string
+          monthly_payment: number
           name: string
           other_cap_ex: number
           purchase_date: string
@@ -36,6 +42,7 @@ export type Database = {
           sales_tax: number
           serial_vin: string | null
           status: string
+          term_months: number
           updated_at: string
           useful_life_override: number | null
           user_id: string
@@ -43,14 +50,20 @@ export type Database = {
         }
         Insert: {
           asset_id?: string | null
+          buyout_amount?: number
           category: string
           cogs_percent?: number
           created_at?: string
+          deposit_amount?: number
           expected_resale_override?: number | null
+          financed_amount?: number
+          financing_start_date?: string | null
+          financing_type?: string
           freight_setup?: number
           id?: string
           make: string
           model: string
+          monthly_payment?: number
           name: string
           other_cap_ex?: number
           purchase_date: string
@@ -62,6 +75,7 @@ export type Database = {
           sales_tax?: number
           serial_vin?: string | null
           status?: string
+          term_months?: number
           updated_at?: string
           useful_life_override?: number | null
           user_id: string
@@ -69,14 +83,20 @@ export type Database = {
         }
         Update: {
           asset_id?: string | null
+          buyout_amount?: number
           category?: string
           cogs_percent?: number
           created_at?: string
+          deposit_amount?: number
           expected_resale_override?: number | null
+          financed_amount?: number
+          financing_start_date?: string | null
+          financing_type?: string
           freight_setup?: number
           id?: string
           make?: string
           model?: string
+          monthly_payment?: number
           name?: string
           other_cap_ex?: number
           purchase_date?: string
@@ -88,6 +108,7 @@ export type Database = {
           sales_tax?: number
           serial_vin?: string | null
           status?: string
+          term_months?: number
           updated_at?: string
           useful_life_override?: number | null
           user_id?: string

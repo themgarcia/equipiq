@@ -12,6 +12,7 @@ import EquipmentList from "./pages/EquipmentList";
 import CategoryLifespans from "./pages/CategoryLifespans";
 import LMNExport from "./pages/LMNExport";
 import BuyVsRentAnalysis from "./pages/BuyVsRentAnalysis";
+import CashflowAnalysis from "./pages/CashflowAnalysis";
 import Definitions from "./pages/Definitions";
 import NotFound from "./pages/NotFound";
 
@@ -50,6 +51,11 @@ const App = () => (
               <Route path="/buy-vs-rent" element={
                 <ProtectedRoute>
                   <BuyVsRentAnalysis />
+                </ProtectedRoute>
+              } />
+              <Route path="/cashflow" element={
+                <ProtectedRoute>
+                  <CashflowAnalysis />
                 </ProtectedRoute>
               } />
               <Route path="/definitions" element={

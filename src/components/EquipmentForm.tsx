@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Equipment, EquipmentCategory, EquipmentStatus } from '@/types/equipment';
+import { Equipment, EquipmentCategory, EquipmentStatus, FinancingType } from '@/types/equipment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, Info } from 'lucide-react';
 import { categoryDefaults } from '@/data/categoryDefaults';
 
 interface EquipmentFormProps {
@@ -16,6 +18,12 @@ interface EquipmentFormProps {
 
 const categories: EquipmentCategory[] = categoryDefaults.map(c => c.category);
 const statuses: EquipmentStatus[] = ['Active', 'Sold', 'Retired', 'Lost'];
+
+const financingTypes: { value: FinancingType; label: string }[] = [
+  { value: 'owned', label: 'Owned' },
+  { value: 'financed', label: 'Financed' },
+  { value: 'leased', label: 'Leased' },
+];
 
 const defaultFormData: Omit<Equipment, 'id'> = {
   name: '', // Will be auto-generated
@@ -32,6 +40,14 @@ const defaultFormData: Omit<Equipment, 'id'> = {
   cogsPercent: 80,
   replacementCostNew: 0,
   replacementCostAsOfDate: undefined,
+  // Financing defaults
+  financingType: 'owned',
+  depositAmount: 0,
+  financedAmount: 0,
+  monthlyPayment: 0,
+  termMonths: 0,
+  buyoutAmount: 0,
+  financingStartDate: undefined,
 };
 
 export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: EquipmentFormProps) {
@@ -39,6 +55,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
     equipment ? { ...equipment } : { ...defaultFormData }
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [financingOpen, setFinancingOpen] = useState(false);
 
   const handleChange = (field: keyof Equipment, value: string | number | undefined) => {
     setFormData(prev => {
@@ -347,6 +364,117 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
               </div>
             </div>
           )}
+
+          {/* Financing (Cashflow Visibility Only) */}
+          <Collapsible open={financingOpen} onOpenChange={setFinancingOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full py-2 group">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                Financing (Cashflow Visibility Only)
+              </h3>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${financingOpen ? 'rotate-180' : ''}`} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-2">
+              {/* Disclaimer */}
+              <div className="bg-muted/50 border rounded-lg p-3">
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <span>Financing and deposits affect cashflow only. They do not change equipment pricing.</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="financingType">Financing Type</Label>
+                  <Select 
+                    value={formData.financingType} 
+                    onValueChange={(v) => handleChange('financingType', v as FinancingType)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {financingTypes.map(ft => (
+                        <SelectItem key={ft.value} value={ft.value}>{ft.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="financingStartDate">Financing Start Date</Label>
+                  <Input
+                    id="financingStartDate"
+                    type="date"
+                    value={formData.financingStartDate || formData.purchaseDate}
+                    onChange={(e) => handleChange('financingStartDate', e.target.value)}
+                    disabled={formData.financingType === 'owned'}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Defaults to purchase date</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="depositAmount">Deposit / Down Payment ($)</Label>
+                  <Input
+                    id="depositAmount"
+                    type="number"
+                    value={formData.depositAmount || ''}
+                    onChange={(e) => handleChange('depositAmount', parseFloat(e.target.value) || 0)}
+                    disabled={formData.financingType === 'owned'}
+                    placeholder="0"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="financedAmount">Financed Amount ($)</Label>
+                  <Input
+                    id="financedAmount"
+                    type="number"
+                    value={formData.financedAmount || ''}
+                    onChange={(e) => handleChange('financedAmount', parseFloat(e.target.value) || 0)}
+                    disabled={formData.financingType === 'owned'}
+                    placeholder="0"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="monthlyPayment">Monthly Payment ($)</Label>
+                  <Input
+                    id="monthlyPayment"
+                    type="number"
+                    value={formData.monthlyPayment || ''}
+                    onChange={(e) => handleChange('monthlyPayment', parseFloat(e.target.value) || 0)}
+                    disabled={formData.financingType === 'owned'}
+                    placeholder="0"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="termMonths">Term (months)</Label>
+                  <Input
+                    id="termMonths"
+                    type="number"
+                    value={formData.termMonths || ''}
+                    onChange={(e) => handleChange('termMonths', parseInt(e.target.value) || 0)}
+                    disabled={formData.financingType === 'owned'}
+                    placeholder="0"
+                  />
+                </div>
+
+                {formData.financingType === 'leased' && (
+                  <div className="col-span-2">
+                    <Label htmlFor="buyoutAmount">Buyout Amount ($)</Label>
+                    <Input
+                      id="buyoutAmount"
+                      type="number"
+                      value={formData.buyoutAmount || ''}
+                      onChange={(e) => handleChange('buyoutAmount', parseFloat(e.target.value) || 0)}
+                      placeholder="End-of-lease purchase option"
+                    />
+                  </div>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

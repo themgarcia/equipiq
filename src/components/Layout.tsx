@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Anvil,
   Scale,
+  Wallet,
   LogOut,
   User
 } from 'lucide-react';
@@ -33,6 +34,7 @@ const navigation = [
   { name: 'LMN Export', href: '/export', icon: FileSpreadsheet },
   { name: 'Category Lifespans', href: '/categories', icon: Clock },
   { name: 'Buy vs. Rent', href: '/buy-vs-rent', icon: Scale },
+  { name: 'Cashflow Analysis', href: '/cashflow', icon: Wallet },
   { name: 'Definitions', href: '/definitions', icon: BookOpen },
 ];
 
