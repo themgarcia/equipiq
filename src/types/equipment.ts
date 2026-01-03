@@ -3,21 +3,22 @@ export type EquipmentStatus = 'Active' | 'Sold' | 'Retired' | 'Lost';
 export type FinancingType = 'owned' | 'financed' | 'leased';
 
 export type EquipmentCategory = 
+  | 'Commercial Vehicle'
+  | 'Compaction (Heavy)'
+  | 'Compaction (Light)'
   | 'Excavation'
-  | 'Mini Skid / Compact Power Carrier'
-  | 'Skid Steer (Standard)'
-  | 'Compact Track Loader'
-  | 'Large Loader'
-  | 'Truck / Vehicle'
-  | 'Heavy Compaction Equipment'
-  | 'Light Compaction Equipment'
-  | 'Commercial Mowers'
-  | 'Handheld Lawn Equipment'
   | 'Handheld Power Tools'
   | 'Large Demo & Specialty Tools'
-  | 'Trailer'
+  | 'Lawn (Commercial)'
+  | 'Lawn (Handheld)'
+  | 'Light-Duty Vehicle'
+  | 'Loader (Large / Wheel)'
+  | 'Loader (Mid-Size)'
+  | 'Loader (Mini-Skid)'
+  | 'Loader (Skid / CTL)'
+  | 'Shop / Other'
   | 'Snow Equipment'
-  | 'Shop / Other';
+  | 'Trailer';
 
 export interface CategoryDefaults {
   category: EquipmentCategory;
