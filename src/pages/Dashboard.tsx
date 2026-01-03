@@ -97,10 +97,15 @@ export default function Dashboard() {
   const replacementCost2Years = replacementIn2Years.reduce((sum, e) => sum + e.replacementCostUsed, 0);
   const replacementCost3Years = replacementIn3Years.reduce((sum, e) => sum + e.replacementCostUsed, 0);
 
-  // Fleet age calculations
-  const currentYear = new Date().getFullYear();
-  const avgFleetAge = activeEquipment.length > 0 
-    ? activeEquipment.reduce((sum, e) => sum + (currentYear - e.year), 0) / activeEquipment.length 
+  // Fleet health calculation - average useful life remaining as percentage
+  const avgUsefulLifeRemainingPercent = activeEquipment.length > 0 
+    ? activeEquipment.reduce((sum, e) => {
+        const totalLife = e.usefulLifeUsed + e.estimatedYearsLeft;
+        const percentRemaining = totalLife > 0 
+          ? (e.estimatedYearsLeft / totalLife) * 100 
+          : 0;
+        return sum + Math.max(0, percentRemaining);
+      }, 0) / activeEquipment.length 
     : 0;
 
   return (
@@ -166,8 +171,8 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalOutstandingDebt)}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Avg Fleet Age</p>
-                <p className="text-2xl font-bold font-mono-nums">{avgFleetAge.toFixed(1)} years</p>
+                <p className="text-sm text-muted-foreground">Avg Useful Life Remaining</p>
+                <p className="text-2xl font-bold font-mono-nums">{avgUsefulLifeRemainingPercent.toFixed(0)}%</p>
               </div>
             </div>
           </CardContent>
