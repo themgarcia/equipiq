@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Equipment, EquipmentCategory, EquipmentStatus, FinancingType } from '@/types/equipment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +56,15 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [financingOpen, setFinancingOpen] = useState(false);
+
+  // Sync form data when dialog opens or equipment changes
+  useEffect(() => {
+    if (open) {
+      setFormData(equipment ? { ...equipment } : { ...defaultFormData });
+      setErrors({});
+      setFinancingOpen(false);
+    }
+  }, [equipment, open]);
 
   const handleChange = (field: keyof Equipment, value: string | number | undefined) => {
     setFormData(prev => {
