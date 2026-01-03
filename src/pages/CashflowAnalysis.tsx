@@ -45,7 +45,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, AreaChart, Area, Tooltip, ComposedChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, Area, Tooltip, ComposedChart } from 'recharts';
 
 type StatusFilter = 'all' | 'surplus' | 'neutral' | 'shortfall';
 type FinancingFilter = 'all' | 'owned' | 'financed' | 'leased';
@@ -463,7 +463,7 @@ export default function CashflowAnalysis() {
               <CardContent>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={projection} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <ComposedChart data={projection} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorNetCashflow" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.4}/>
@@ -480,7 +480,6 @@ export default function CashflowAnalysis() {
                         tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                         className="text-xs"
                         tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                        domain={[0, 'auto']}
                       />
                       <Tooltip 
                         formatter={(value: number, name: string) => {
@@ -535,7 +534,7 @@ export default function CashflowAnalysis() {
                           strokeOpacity={0.5}
                         />
                       ))}
-                    </AreaChart>
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </div>
                 
