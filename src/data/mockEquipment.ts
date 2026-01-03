@@ -53,7 +53,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '3',
     name: 'Ford F-350 Crew Cab',
-    category: 'Commercial Vehicle',
+    category: 'Vehicle (Commercial)',
     status: 'Active',
     assetId: 'TRK-001',
     make: 'Ford',

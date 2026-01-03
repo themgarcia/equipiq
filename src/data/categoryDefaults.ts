@@ -11,14 +11,6 @@ export interface CategoryDefaults {
 
 export const categoryDefaults: CategoryDefaults[] = [
   {
-    category: 'Commercial Vehicle',
-    defaultUsefulLife: 12,
-    defaultResalePercent: 15,
-    notes: 'Purpose-built work trucks: dump trucks, cab-and-chassis, service bodies, landscape trucks. Overbuilt for payload and jobsite use. Longer useful life due to commercial-grade construction.',
-    maintenancePercent: 3.5,
-    insurancePercent: 2.5,
-  },
-  {
     category: 'Compaction (Heavy)',
     defaultUsefulLife: 10,
     defaultResalePercent: 20,
@@ -75,14 +67,6 @@ export const categoryDefaults: CategoryDefaults[] = [
     insurancePercent: 0.5,
   },
   {
-    category: 'Light-Duty Vehicle',
-    defaultUsefulLife: 8,
-    defaultResalePercent: 20,
-    notes: 'Pickups and mixed-use vehicles. High road mileage drives wear. Cycled sooner for reliability and image. Vehicle downtime impacts entire crews.',
-    maintenancePercent: 4,
-    insurancePercent: 2.0,
-  },
-  {
     category: 'Loader (Large / Wheel)',
     defaultUsefulLife: 12,
     defaultResalePercent: 15,
@@ -137,6 +121,22 @@ export const categoryDefaults: CategoryDefaults[] = [
     notes: 'Trailers have simple mechanical systems and low technological obsolescence. Rust and structural degradation end their life, not complexity. Fifteen years is conservative for planning.',
     maintenancePercent: 2,
     insurancePercent: 1.0,
+  },
+  {
+    category: 'Vehicle (Commercial)',
+    defaultUsefulLife: 12,
+    defaultResalePercent: 15,
+    notes: 'Purpose-built work trucks: dump trucks, cab-and-chassis, service bodies, landscape trucks. Overbuilt for payload and jobsite use. Longer useful life due to commercial-grade construction.',
+    maintenancePercent: 3.5,
+    insurancePercent: 2.5,
+  },
+  {
+    category: 'Vehicle (Light-Duty)',
+    defaultUsefulLife: 8,
+    defaultResalePercent: 20,
+    notes: 'Pickups and mixed-use vehicles. High road mileage drives wear. Cycled sooner for reliability and image. Vehicle downtime impacts entire crews.',
+    maintenancePercent: 4,
+    insurancePercent: 2.0,
   }
 ];
 
