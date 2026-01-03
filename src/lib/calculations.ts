@@ -1,6 +1,17 @@
 import { Equipment, EquipmentCalculated, LMNExportData, CategoryDefaults } from '@/types/equipment';
 import { getCategoryDefaults as getStaticCategoryDefaults } from '@/data/categoryDefaults';
 
+const ANNUAL_INFLATION_RATE = 0.03; // 3% annual inflation
+
+function calculateInflationAdjustedCost(
+  originalCost: number, 
+  fromYear: number, 
+  toYear: number
+): number {
+  const years = Math.max(0, toYear - fromYear);
+  return originalCost * Math.pow(1 + ANNUAL_INFLATION_RATE, years);
+}
+
 export function calculateEquipment(
   equipment: Equipment, 
   categoryDefaultsOverrides?: CategoryDefaults[]
@@ -29,10 +40,25 @@ export function calculateEquipment(
   const currentYear = new Date().getFullYear();
   const estimatedYearsLeft = Math.max(0, estimatedEndOfLifeYear - currentYear);
   
-  // Replacement Cost - use provided value, or fall back to total cost basis
-  const replacementCostUsed = equipment.replacementCostNew > 0 
-    ? equipment.replacementCostNew 
-    : totalCostBasis;
+  // Replacement Cost - apply 3% annual inflation
+  let replacementCostUsed: number;
+  let replacementCostSource: 'manual' | 'inflationAdjusted';
+  let inflationYears: number;
+  
+  if (equipment.replacementCostNew > 0) {
+    // Manual entry: inflate from the as-of date (or current year if not set)
+    const asOfYear = equipment.replacementCostAsOfDate 
+      ? new Date(equipment.replacementCostAsOfDate).getFullYear() 
+      : currentYear;
+    inflationYears = Math.max(0, currentYear - asOfYear);
+    replacementCostUsed = calculateInflationAdjustedCost(equipment.replacementCostNew, asOfYear, currentYear);
+    replacementCostSource = 'manual';
+  } else {
+    // Auto-calculated: inflate from purchase year
+    inflationYears = Math.max(0, currentYear - purchaseYear);
+    replacementCostUsed = calculateInflationAdjustedCost(totalCostBasis, purchaseYear, currentYear);
+    replacementCostSource = 'inflationAdjusted';
+  }
   
   // Resale
   const defaultResalePercent = categoryDefaults.defaultResalePercent;
@@ -58,6 +84,8 @@ export function calculateEquipment(
     expectedResaleDefault,
     expectedResaleUsed,
     replacementCostUsed,
+    replacementCostSource,
+    inflationYears,
     roiPercent,
   };
 }

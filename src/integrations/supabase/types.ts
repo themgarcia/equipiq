@@ -29,6 +29,7 @@ export type Database = {
           other_cap_ex: number
           purchase_date: string
           purchase_price: number
+          replacement_cost_as_of_date: string | null
           replacement_cost_new: number
           sale_date: string | null
           sale_price: number | null
@@ -54,6 +55,7 @@ export type Database = {
           other_cap_ex?: number
           purchase_date: string
           purchase_price?: number
+          replacement_cost_as_of_date?: string | null
           replacement_cost_new?: number
           sale_date?: string | null
           sale_price?: number | null
@@ -79,6 +81,7 @@ export type Database = {
           other_cap_ex?: number
           purchase_date?: string
           purchase_price?: number
+          replacement_cost_as_of_date?: string | null
           replacement_cost_new?: number
           sale_date?: string | null
           sale_price?: number | null

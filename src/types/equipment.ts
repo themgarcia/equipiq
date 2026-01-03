@@ -52,6 +52,7 @@ export interface Equipment {
   
   // Replacement & Resale
   replacementCostNew: number;
+  replacementCostAsOfDate?: string;
   expectedResaleOverride?: number;
   
   // Disposal
@@ -72,6 +73,8 @@ export interface EquipmentCalculated extends Equipment {
   expectedResaleDefault: number;
   expectedResaleUsed: number;
   replacementCostUsed: number;
+  replacementCostSource: 'manual' | 'inflationAdjusted';
+  inflationYears: number;
   roiPercent?: number;
 }
 

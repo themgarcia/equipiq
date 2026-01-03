@@ -40,6 +40,7 @@ function dbToEquipment(record: any): Equipment {
     cogsPercent: Number(record.cogs_percent),
     usefulLifeOverride: record.useful_life_override || undefined,
     replacementCostNew: Number(record.replacement_cost_new),
+    replacementCostAsOfDate: record.replacement_cost_as_of_date || undefined,
     expectedResaleOverride: record.expected_resale_override ? Number(record.expected_resale_override) : undefined,
     saleDate: record.sale_date || undefined,
     salePrice: record.sale_price ? Number(record.sale_price) : undefined,
@@ -66,6 +67,7 @@ function equipmentToDb(equipment: Omit<Equipment, 'id'>, userId: string) {
     cogs_percent: equipment.cogsPercent,
     useful_life_override: equipment.usefulLifeOverride || null,
     replacement_cost_new: equipment.replacementCostNew,
+    replacement_cost_as_of_date: equipment.replacementCostAsOfDate || null,
     expected_resale_override: equipment.expectedResaleOverride || null,
     sale_date: equipment.saleDate || null,
     sale_price: equipment.salePrice || null,
@@ -177,6 +179,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (updatesWithName.cogsPercent !== undefined) dbUpdates.cogs_percent = updatesWithName.cogsPercent;
       if (updatesWithName.usefulLifeOverride !== undefined) dbUpdates.useful_life_override = updatesWithName.usefulLifeOverride || null;
       if (updatesWithName.replacementCostNew !== undefined) dbUpdates.replacement_cost_new = updatesWithName.replacementCostNew;
+      if (updatesWithName.replacementCostAsOfDate !== undefined) dbUpdates.replacement_cost_as_of_date = updatesWithName.replacementCostAsOfDate || null;
       if (updatesWithName.expectedResaleOverride !== undefined) dbUpdates.expected_resale_override = updatesWithName.expectedResaleOverride || null;
       if (updatesWithName.saleDate !== undefined) dbUpdates.sale_date = updatesWithName.saleDate || null;
       if (updatesWithName.salePrice !== undefined) dbUpdates.sale_price = updatesWithName.salePrice || null;
