@@ -1,0 +1,92 @@
+import { ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Package, 
+  Clock, 
+  FileSpreadsheet, 
+  BookOpen,
+  ChevronRight,
+  Anvil
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface LayoutProps {
+  children: ReactNode;
+}
+
+const navigation = [
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Equipment', href: '/equipment', icon: Package },
+  { name: 'Category Lifespans', href: '/categories', icon: Clock },
+  { name: 'LMN Export', href: '/export', icon: FileSpreadsheet },
+  { name: 'Definitions', href: '/definitions', icon: BookOpen },
+];
+
+export function Layout({ children }: LayoutProps) {
+  const location = useLocation();
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar">
+        <div className="flex h-full flex-col">
+          {/* Logo */}
+          <div className="flex h-16 items-center gap-3 px-6 border-b border-sidebar-border">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
+              <Anvil className="h-5 w-5 text-sidebar-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-sidebar-foreground">Forge Legacy</h1>
+              <p className="text-xs text-sidebar-foreground/60">Equipment Tracker</p>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 px-3 py-4">
+            {navigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                    isActive
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  )}
+                >
+                  <item.icon className={cn(
+                    'h-5 w-5 flex-shrink-0 transition-colors',
+                    isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70'
+                  )} />
+                  <span className="flex-1">{item.name}</span>
+                  {isActive && (
+                    <ChevronRight className="h-4 w-4 text-sidebar-primary" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Footer */}
+          <div className="border-t border-sidebar-border p-4">
+            <p className="text-xs text-sidebar-foreground/50">
+              Designed for contractors.
+              <br />
+              No accounting expertise required.
+            </p>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="pl-64">
+        <div className="min-h-screen">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}
