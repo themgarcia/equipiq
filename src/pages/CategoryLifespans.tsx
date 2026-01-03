@@ -57,7 +57,7 @@ export default function CategoryLifespans() {
         <div className="bg-info/5 border border-info/20 rounded-lg p-4 mb-6">
           <h3 className="font-semibold text-info mb-2">How these defaults work</h3>
           <p className="text-sm text-muted-foreground">
-            These values are used when you add new equipment. You can override them on individual items.
+            These values apply to all equipment in each category. Individual items with overrides set will use their custom values instead.
             Useful life represents <strong>competitive life</strong> (how long the equipment helps you compete), 
             not mechanical life. Resale percentages are intentionally conservative — any upside is a bonus.
           </p>
@@ -170,7 +170,7 @@ export default function CategoryLifespans() {
 
         {/* Footer Note */}
         <p className="mt-4 text-sm text-muted-foreground">
-          Changes to category defaults only affect new equipment. Existing equipment retains its current values.
+          Changes to category defaults apply to all equipment in that category, except items with individual overrides set.
         </p>
       </div>
     </Layout>
