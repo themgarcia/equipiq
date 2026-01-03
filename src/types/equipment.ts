@@ -3,7 +3,6 @@ export type EquipmentStatus = 'Active' | 'Sold' | 'Retired' | 'Lost';
 export type FinancingType = 'owned' | 'financed' | 'leased';
 
 export type EquipmentCategory = 
-  | 'Commercial Vehicle'
   | 'Compaction (Heavy)'
   | 'Compaction (Light)'
   | 'Excavation'
@@ -11,7 +10,15 @@ export type EquipmentCategory =
   | 'Large Demo & Specialty Tools'
   | 'Lawn (Commercial)'
   | 'Lawn (Handheld)'
-  | 'Light-Duty Vehicle'
+  | 'Loader (Large / Wheel)'
+  | 'Loader (Mid-Size)'
+  | 'Loader (Mini-Skid)'
+  | 'Loader (Skid / CTL)'
+  | 'Shop / Other'
+  | 'Snow Equipment'
+  | 'Trailer'
+  | 'Vehicle (Commercial)'
+  | 'Vehicle (Light-Duty)';
   | 'Loader (Large / Wheel)'
   | 'Loader (Mid-Size)'
   | 'Loader (Mini-Skid)'
