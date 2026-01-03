@@ -154,6 +154,23 @@ export interface EquipmentCashflow {
   annualEconomicRecovery: number;      // replacementCostUsed ÷ usefulLife
   annualSurplusShortfall: number;      // recovery - outflow
   cashflowStatus: 'surplus' | 'neutral' | 'shortfall';
+  payoffDate: string | null;           // date when financing ends
+}
+
+// Cashflow Projection Types
+export interface CashflowProjectionPoint {
+  year: number;
+  date: string;
+  netAnnualCashflow: number;
+  activePayments: number;              // count of items still making payments
+  events: string[];                    // e.g., ["Truck paid off", "Mini Skid paid off"]
+}
+
+export interface CashflowStabilization {
+  stabilizationDate: string | null;
+  stabilizedNetCashflow: number;
+  yearsUntilStabilization: number;
+  itemsWithActivePayments: number;
 }
 
 export interface PortfolioCashflow {

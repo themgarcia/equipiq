@@ -28,20 +28,24 @@ import {
   MinusCircle,
   Info,
   ChevronRight,
+  Calendar,
+  Target,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
 import { 
   calculateEquipmentCashflow, 
   calculatePortfolioCashflow, 
-  calculatePaybackTimeline 
+  calculatePaybackTimeline,
+  calculateCashflowProjection,
 } from '@/lib/cashflowCalculations';
 import { Equipment, EquipmentCalculated, EquipmentCashflow } from '@/types/equipment';
+import { format, isBefore, isAfter } from 'date-fns';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, AreaChart, Area, Tooltip } from 'recharts';
 
 type StatusFilter = 'all' | 'surplus' | 'neutral' | 'shortfall';
 type FinancingFilter = 'all' | 'owned' | 'financed' | 'leased';
@@ -249,6 +253,39 @@ export default function CashflowAnalysis() {
     return calculatePortfolioCashflow(equipmentWithCashflow);
   }, [equipmentWithCashflow]);
   
+  // Calculate cashflow projection
+  const { projection, stabilization } = useMemo(() => {
+    return calculateCashflowProjection(equipmentWithCashflow);
+  }, [equipmentWithCashflow]);
+  
+  // Helper to format payoff date display
+  const getPayoffDateDisplay = (cashflow: EquipmentCashflow, financingType: string) => {
+    if (financingType === 'owned') {
+      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Paid in Full</Badge>;
+    }
+    if (!cashflow.payoffDate) {
+      return <span className="text-muted-foreground">—</span>;
+    }
+    const payoffDate = new Date(cashflow.payoffDate);
+    const now = new Date();
+    if (isBefore(payoffDate, now)) {
+      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Complete</Badge>;
+    }
+    // Color code based on time remaining
+    const monthsLeft = cashflow.remainingPayments;
+    let badgeClass = "bg-muted text-muted-foreground";
+    if (monthsLeft <= 12) {
+      badgeClass = "bg-green-100 text-green-800";
+    } else if (monthsLeft <= 24) {
+      badgeClass = "bg-yellow-100 text-yellow-800";
+    }
+    return (
+      <Badge className={`${badgeClass} hover:${badgeClass}`}>
+        {format(payoffDate, 'MMM yyyy')}
+      </Badge>
+    );
+  };
+  
   if (loading) {
     return (
       <Layout>
@@ -366,6 +403,147 @@ export default function CashflowAnalysis() {
           </Card>
         </div>
         
+        {/* Cashflow Stabilization Section */}
+        {stabilization.itemsWithActivePayments > 0 && (
+          <div className="mb-6 space-y-4">
+            {/* Stabilization Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    All Financing Ends
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">
+                    {stabilization.stabilizationDate 
+                      ? format(new Date(stabilization.stabilizationDate), 'MMM yyyy')
+                      : 'All Paid Off'
+                    }
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stabilization.yearsUntilStabilization > 0 
+                      ? `${stabilization.yearsUntilStabilization} year${stabilization.yearsUntilStabilization !== 1 ? 's' : ''} from now`
+                      : 'Already stabilized'
+                    }
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Target className="h-4 w-4" />
+                    Stabilized Net Cashflow
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-green-600">
+                    +{formatCurrency(stabilization.stabilizedNetCashflow)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    When all payments complete
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Wallet className="h-4 w-4" />
+                    Active Payment Items
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">
+                    {stabilization.itemsWithActivePayments}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Still making payments
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Cashflow Projection Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Cashflow Projection
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Net annual cashflow as equipment financing ends over time
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={projection} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorCashflow" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="year" 
+                        className="text-xs"
+                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      />
+                      <YAxis 
+                        tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                        className="text-xs"
+                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      />
+                      <Tooltip 
+                        formatter={(value: number) => [formatCurrency(value), 'Net Cashflow']}
+                        labelFormatter={(label) => `Year ${label}`}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="netAnnualCashflow" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        fillOpacity={1} 
+                        fill="url(#colorCashflow)" 
+                      />
+                      {/* Add reference lines for payoff events */}
+                      {projection.filter(p => p.events.length > 0).map((p) => (
+                        <ReferenceLine 
+                          key={p.year}
+                          x={p.year} 
+                          stroke="hsl(var(--muted-foreground))" 
+                          strokeDasharray="3 3"
+                          strokeOpacity={0.5}
+                        />
+                      ))}
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                {/* Payoff Events Legend */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {projection.filter(p => p.events.length > 0).flatMap(p => 
+                    p.events.map((event, i) => (
+                      <Badge key={`${p.year}-${i}`} variant="outline" className="text-xs">
+                        {p.year}: {event}
+                      </Badge>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        
         {/* Filters */}
         <div className="flex gap-4 mb-4">
           <div className="flex items-center gap-2">
@@ -408,6 +586,7 @@ export default function CashflowAnalysis() {
                   <TableHead>Equipment</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Financing</TableHead>
+                  <TableHead>Payoff Date</TableHead>
                   <TableHead className="text-right">Annual Recovery</TableHead>
                   <TableHead className="text-right">Annual Payments</TableHead>
                   <TableHead className="text-right">Surplus/Shortfall</TableHead>
@@ -418,7 +597,7 @@ export default function CashflowAnalysis() {
               <TableBody>
                 {filteredEquipment.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       No active equipment matches your filters
                     </TableCell>
                   </TableRow>
@@ -431,6 +610,9 @@ export default function CashflowAnalysis() {
                         <Badge variant="outline" className="capitalize">
                           {eq.financingType}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {getPayoffDateDisplay(cashflow, eq.financingType)}
                       </TableCell>
                       <TableCell className="text-right text-green-600">
                         {formatCurrency(cashflow.annualEconomicRecovery)}
