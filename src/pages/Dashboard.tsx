@@ -429,31 +429,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <div className="bg-muted/30 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground">Avg COGS Allocation</p>
-            <p className="text-2xl font-bold font-mono-nums">
-              {activeEquipment.length > 0 
-                ? Math.round(activeEquipment.reduce((sum, e) => sum + e.cogsPercent, 0) / activeEquipment.length)
-                : 0}%
-            </p>
-          </div>
-          <div className="bg-muted/30 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground">Avg Useful Life</p>
-            <p className="text-2xl font-bold font-mono-nums">
-              {activeEquipment.length > 0 
-                ? (activeEquipment.reduce((sum, e) => sum + e.usefulLifeUsed, 0) / activeEquipment.length).toFixed(1)
-                : 0} yrs
-            </p>
-          </div>
-          <div className="bg-muted/30 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground">Total Categories</p>
-            <p className="text-2xl font-bold font-mono-nums">
-              {new Set(activeEquipment.map(e => e.category)).size}
-            </p>
-          </div>
-        </div>
       </div>
     </Layout>
   );
