@@ -30,8 +30,8 @@ interface LayoutProps {
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Equipment', href: '/equipment', icon: Package },
-  { name: 'Category Lifespans', href: '/categories', icon: Clock },
   { name: 'LMN Export', href: '/export', icon: FileSpreadsheet },
+  { name: 'Category Lifespans', href: '/categories', icon: Clock },
   { name: 'Buy vs. Rent', href: '/buy-vs-rent', icon: Scale },
   { name: 'Definitions', href: '/definitions', icon: BookOpen },
 ];
