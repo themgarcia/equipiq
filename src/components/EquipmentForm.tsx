@@ -31,6 +31,7 @@ const defaultFormData: Omit<Equipment, 'id'> = {
   otherCapEx: 0,
   cogsPercent: 80,
   replacementCostNew: 0,
+  replacementCostAsOfDate: undefined,
 };
 
 export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: EquipmentFormProps) {
@@ -39,8 +40,21 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (field: keyof Equipment, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (field: keyof Equipment, value: string | number | undefined) => {
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Auto-set replacementCostAsOfDate when replacementCostNew is entered/updated
+      if (field === 'replacementCostNew') {
+        if (value && Number(value) > 0) {
+          updated.replacementCostAsOfDate = new Date().toISOString().split('T')[0];
+        } else {
+          updated.replacementCostAsOfDate = undefined;
+        }
+      }
+      
+      return updated;
+    });
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -276,9 +290,9 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
                   type="number"
                   value={formData.replacementCostNew || ''}
                   onChange={(e) => handleChange('replacementCostNew', parseFloat(e.target.value) || 0)}
-                  placeholder="Uses purchase price if empty"
+                  placeholder="Auto-calculated with 3% inflation"
                 />
-                <p className="text-xs text-muted-foreground mt-1">Leave empty to use total cost basis</p>
+                <p className="text-xs text-muted-foreground mt-1">Leave empty for inflation-adjusted estimate</p>
               </div>
 
               <div>

@@ -5,7 +5,7 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
-import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale, Shield } from 'lucide-react';
+import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale, Shield, TrendingUp } from 'lucide-react';
 
 const definitions = [
   {
@@ -221,6 +221,43 @@ These are **operational planning numbers**, not accounting numbers. Your account
 - Opportunity cost of capital tied up in equipment
 
 Use the calculator as a starting point, then apply your judgment for factors the numbers can't capture.
+    `.trim(),
+  },
+  {
+    id: 'inflation-adjusted-replacement',
+    icon: TrendingUp,
+    title: 'Inflation-Adjusted Replacement Cost',
+    content: `
+**All replacement costs are automatically adjusted for inflation at 3% annually.**
+
+This ensures your replacement cost estimates stay current without manual updates. Here's how it works:
+
+**When you DON'T enter a replacement cost:**
+- The system uses your total cost basis (purchase price + tax + freight + other)
+- It inflates this amount from your purchase year to the current year
+- Formula: Replacement Cost = Total Cost Basis × (1.03)^years
+
+**When you DO enter a replacement cost:**
+- Your entered value is treated as the baseline
+- The system captures the date you entered it
+- It inflates from that entry date to the current year
+- This keeps manual entries current as time passes
+
+**Example calculations (3% annual inflation):**
+
+| Scenario | Base Value | From Year | Years | Today's Value |
+|----------|------------|-----------|-------|---------------|
+| Auto (no entry) | $50,000 | 2020 | 6 | $59,703 |
+| Auto (no entry) | $12,000 | 2023 | 3 | $13,113 |
+| Manual entry | $45,000 | Jan 2024 | 2 | $47,732 |
+| Manual entry | $30,000 | Jan 2026 | 0 | $30,000 |
+
+**Why 3%?**
+- This is the historical average inflation rate for equipment
+- It's conservative enough to avoid overestimating
+- It's high enough to keep values realistic over time
+
+**The benefit:** You never have to remember to update replacement costs. Whether you entered a value 3 years ago or the system calculated it from your purchase, it automatically stays current.
     `.trim(),
   },
 ];
