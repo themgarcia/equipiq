@@ -71,6 +71,7 @@ export interface EquipmentCalculated extends Equipment {
   defaultResalePercent: number;
   expectedResaleDefault: number;
   expectedResaleUsed: number;
+  replacementCostUsed: number;
   roiPercent?: number;
 }
 

@@ -55,7 +55,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
     if (formData.cogsPercent < 0 || formData.cogsPercent > 100) {
       newErrors.cogsPercent = 'Must be between 0 and 100';
     }
-    if (formData.replacementCostNew <= 0) newErrors.replacementCostNew = 'Must be greater than 0';
+    // replacementCostNew is optional - we use purchase price as fallback
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -270,14 +270,15 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="replacementCostNew">Replacement Cost (Today) *</Label>
+                <Label htmlFor="replacementCostNew">Replacement Cost (Today)</Label>
                 <Input
                   id="replacementCostNew"
                   type="number"
-                  value={formData.replacementCostNew}
+                  value={formData.replacementCostNew || ''}
                   onChange={(e) => handleChange('replacementCostNew', parseFloat(e.target.value) || 0)}
-                  className={errors.replacementCostNew ? 'border-destructive' : ''}
+                  placeholder="Uses purchase price if empty"
                 />
+                <p className="text-xs text-muted-foreground mt-1">Leave empty to use total cost basis</p>
               </div>
 
               <div>
