@@ -18,7 +18,7 @@ const categories: EquipmentCategory[] = categoryDefaults.map(c => c.category);
 const statuses: EquipmentStatus[] = ['Active', 'Sold', 'Retired', 'Lost'];
 
 const defaultFormData: Omit<Equipment, 'id'> = {
-  name: '',
+  name: '', // Will be auto-generated
   category: 'Truck / Vehicle',
   status: 'Active',
   make: '',
@@ -49,7 +49,6 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
   const validate = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.make.trim()) newErrors.make = 'Make is required';
     if (!formData.model.trim()) newErrors.model = 'Model is required';
     if (formData.purchasePrice <= 0) newErrors.purchasePrice = 'Must be greater than 0';
@@ -65,7 +64,9 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit(formData);
+      // Auto-generate name from Year Make Model
+      const generatedName = `${formData.year} ${formData.make.trim()} ${formData.model.trim()}`;
+      onSubmit({ ...formData, name: generatedName });
       onOpenChange(false);
       setFormData({ ...defaultFormData });
     }
@@ -85,18 +86,6 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
               Identification
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label htmlFor="name">Item Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  placeholder="e.g., Kubota KX040-4 Mini Excavator"
-                  className={errors.name ? 'border-destructive' : ''}
-                />
-                {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
-              </div>
-              
               <div>
                 <Label htmlFor="category">Category *</Label>
                 <Select 
