@@ -62,6 +62,8 @@ export function toLMNExport(equipment: EquipmentCalculated): LMNExportData {
     usefulLife: equipment.usefulLifeUsed,
     cogsPercent: equipment.cogsPercent,
     overheadPercent: equipment.overheadPercent,
+    cogsAllocatedCost: equipment.cogsAllocatedCost,
+    overheadAllocatedCost: equipment.overheadAllocatedCost,
   };
 }
 
