@@ -95,17 +95,19 @@ function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className={cn(
-          "flex h-14 items-center gap-3 px-3",
-          isCollapsed && "justify-center px-2"
+          "flex h-14 items-center px-3",
+          isCollapsed ? "justify-center" : "gap-3"
         )}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary flex-shrink-0">
-            <Anvil className="h-5 w-5 text-sidebar-primary-foreground" />
-          </div>
           {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <h1 className="text-sm font-semibold text-sidebar-foreground truncate">Forge Legacy</h1>
-              <p className="text-xs text-sidebar-foreground/60 truncate">Equipment Tracker</p>
-            </div>
+            <>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary flex-shrink-0">
+                <Anvil className="h-5 w-5 text-sidebar-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-sm font-semibold text-sidebar-foreground truncate">Forge Legacy</h1>
+                <p className="text-xs text-sidebar-foreground/60 truncate">Equipment Tracker</p>
+              </div>
+            </>
           )}
           <SidebarToggleButton />
         </div>
