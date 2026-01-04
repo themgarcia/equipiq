@@ -298,14 +298,14 @@ export default function CashflowAnalysis() {
   
   return (
     <Layout>
-      <div className="p-8 animate-fade-in">
+      <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
         {/* Header */}
         <div className="mb-6">
           <div className="accent-line mb-4" />
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold flex items-center gap-3">
-                <Wallet className="h-8 w-8 text-primary" />
+              <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
+                <Wallet className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                 Cashflow Analysis
               </h1>
               <p className="text-muted-foreground mt-1">
@@ -334,7 +334,7 @@ export default function CashflowAnalysis() {
         </div>
         
         {/* Portfolio Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -411,7 +411,7 @@ export default function CashflowAnalysis() {
         {stabilization.itemsWithActivePayments > 0 && (
           <div className="mb-6 space-y-4">
             {/* Stabilization Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">

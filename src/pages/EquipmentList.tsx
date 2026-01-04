@@ -150,9 +150,9 @@ export default function EquipmentList() {
 
   return (
     <Layout>
-      <div className="p-8 animate-fade-in">
+      <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <div className="accent-line mb-4" />
             <h1 className="text-3xl font-bold">Equipment</h1>
@@ -163,11 +163,13 @@ export default function EquipmentList() {
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsImportOpen(true)} className="gap-2">
               <Upload className="h-4 w-4" />
-              Import from Documents
+              <span className="hidden sm:inline">Import from Documents</span>
+              <span className="sm:hidden">Import</span>
             </Button>
             <Button onClick={handleAddNew} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Equipment
+              <span className="hidden sm:inline">Add Equipment</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </div>
         </div>
@@ -290,7 +292,7 @@ export default function EquipmentList() {
                                     <Button 
                                       variant="ghost" 
                                       size="icon" 
-                                      className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                                      className="h-8 w-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                                     >
                                       <MoreHorizontal className="h-4 w-4" />
                                     </Button>

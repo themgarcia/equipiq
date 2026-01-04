@@ -124,7 +124,7 @@ export default function BuyVsRentAnalysis() {
 
   return (
     <Layout>
-      <div className="p-8 animate-fade-in">
+      <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
         {/* Header */}
         <div className="mb-8">
           <div className="accent-line mb-4" />
@@ -134,7 +134,7 @@ export default function BuyVsRentAnalysis() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
           {/* Input Form */}
           <div className="space-y-6">
             {/* Equipment Details */}
@@ -146,8 +146,8 @@ export default function BuyVsRentAnalysis() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
                     <Label htmlFor="category">Category</Label>
                     <Select 
                       value={input.category} 
@@ -163,7 +163,7 @@ export default function BuyVsRentAnalysis() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <Label htmlFor="description">Description (optional)</Label>
                     <Input
                       id="description"
@@ -194,7 +194,7 @@ export default function BuyVsRentAnalysis() {
                       onChange={(e) => updateField('usefulLife', Number(e.target.value))}
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <Label htmlFor="resaleValue">Expected Resale Value</Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -223,7 +223,7 @@ export default function BuyVsRentAnalysis() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="rentalDaily">Daily Rate *</Label>
                     <div className="relative">
@@ -291,7 +291,7 @@ export default function BuyVsRentAnalysis() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="maintenance">Maintenance/Repairs</Label>
                     <div className="relative">

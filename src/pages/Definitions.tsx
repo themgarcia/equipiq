@@ -365,7 +365,7 @@ When you compare this to your annual financing payments, you can see:
 export default function Definitions() {
   return (
     <Layout>
-      <div className="p-8 animate-fade-in max-w-4xl">
+      <div className="p-4 sm:p-6 lg:p-8 animate-fade-in max-w-4xl">
         {/* Header */}
         <div className="mb-8">
           <div className="accent-line mb-4" />

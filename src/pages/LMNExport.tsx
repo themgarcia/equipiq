@@ -221,9 +221,9 @@ export default function LMNExport() {
 
   return (
     <Layout>
-      <div className="p-8 animate-fade-in">
+      <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <div className="accent-line mb-4" />
             <h1 className="text-3xl font-bold">LMN Export</h1>
@@ -308,7 +308,7 @@ export default function LMNExport() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-5 w-5 opacity-0 group-hover:opacity-100 hover:bg-primary/10 shrink-0"
+                                className="h-5 w-5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-primary/10 shrink-0"
                                 onClick={() => copyCell(id, col.key, data[col.key])}
                                 title="Copy value"
                               >

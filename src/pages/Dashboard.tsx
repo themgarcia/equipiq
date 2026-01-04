@@ -110,7 +110,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="p-8 animate-fade-in">
+      <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
         {/* Header */}
         <div className="mb-8">
           <div className="accent-line mb-4" />
@@ -121,7 +121,7 @@ export default function Dashboard() {
         </div>
 
         {/* Metrics Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           <MetricCard
             title="Total Cost Basis"
             value={formatCurrency(totalCostBasis)}
@@ -161,7 +161,7 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Monthly Obligations</p>
                 <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalMonthlyPayments)}</p>
@@ -179,7 +179,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Category & Replacement Row */}
-        <div className="grid gap-8 lg:grid-cols-2 mb-8">
+        <div className="grid gap-6 sm:gap-8 grid-cols-1 lg:grid-cols-2 mb-8">
           {/* Category Breakdown */}
           <Card>
             <CardHeader>
@@ -348,7 +348,7 @@ export default function Dashboard() {
         )}
 
         {/* Two Column Layout - Aging & Recent */}
-        <div className="grid gap-8 lg:grid-cols-2">
+        <div className="grid gap-6 sm:gap-8 grid-cols-1 lg:grid-cols-2">
           {/* Aging Equipment */}
           <div className="bg-card border rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
