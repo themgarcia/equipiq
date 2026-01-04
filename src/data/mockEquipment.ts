@@ -29,7 +29,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '2',
     name: 'Bobcat S650 Skid Steer',
-    category: 'Loader (Skid / CTL)',
+    category: 'Loader – Skid Steer',
     status: 'Active',
     assetId: 'SSL-001',
     make: 'Bobcat',

@@ -58,10 +58,10 @@ const CATEGORIES: EquipmentCategory[] = [
   'Large Demo & Specialty Tools',
   'Lawn (Commercial)',
   'Lawn (Handheld)',
-  'Loader (Large / Wheel)',
-  'Loader (Mid-Size)',
-  'Loader (Mini-Skid)',
-  'Loader (Skid / CTL)',
+  'Loader – Mid-Size',
+  'Loader – Skid Steer',
+  'Loader – Skid Steer Mini',
+  'Loader – Wheel / Large',
   'Shop / Other',
   'Snow Equipment',
   'Trailer',
@@ -91,13 +91,13 @@ const guessCategory = (make: string, model: string): EquipmentCategory => {
       combined.includes('blower') || combined.includes('chainsaw') || combined.includes('hedge')) {
     return 'Lawn (Handheld)';
   }
-  if (combined.includes('skid') || combined.includes('track loader') || combined.includes('ctl')) {
-    return 'Loader (Skid / CTL)';
-  }
   if (combined.includes('mini skid') || combined.includes('dingo') || combined.includes('mini-skid')) {
-    return 'Loader (Mini-Skid)';
+    return 'Loader – Skid Steer Mini';
   }
-  if (combined.includes('wheel loader')) return 'Loader (Large / Wheel)';
+  if (combined.includes('skid') || combined.includes('track loader') || combined.includes('ctl')) {
+    return 'Loader – Skid Steer';
+  }
+  if (combined.includes('wheel loader')) return 'Loader – Wheel / Large';
   if (combined.includes('excavator') || combined.includes('mini ex') || combined.includes('digger')) {
     // Default to compact; users can adjust if needed
     return 'Excavator – Compact (≤ 6 ton)';
