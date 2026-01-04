@@ -96,7 +96,7 @@ function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <div className={cn(
           "flex h-14 items-center gap-3 px-3",
-          isCollapsed && "justify-center px-0"
+          isCollapsed && "justify-center px-2"
         )}>
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary flex-shrink-0">
             <Anvil className="h-5 w-5 text-sidebar-primary-foreground" />
@@ -107,6 +107,7 @@ function AppSidebar() {
               <p className="text-xs text-sidebar-foreground/60 truncate">Equipment Tracker</p>
             </div>
           )}
+          <SidebarToggleButton />
         </div>
       </SidebarHeader>
 
@@ -190,14 +191,11 @@ function AppSidebar() {
 
           {!isCollapsed && <ThemeToggle />}
 
-          <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
-            {!isCollapsed && (
-              <p className="text-xs text-sidebar-foreground/50">
-                Designed for contractors.
-              </p>
-            )}
-            <SidebarToggleButton />
-          </div>
+          {!isCollapsed && (
+            <p className="text-xs text-sidebar-foreground/50">
+              Designed for contractors.
+            </p>
+          )}
         </div>
       </SidebarFooter>
     </Sidebar>
