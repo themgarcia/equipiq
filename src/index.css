@@ -53,6 +53,13 @@
     --status-retired: 38 92% 50%;
     --status-lost: 0 72% 51%;
 
+    /* Chart colors */
+    --chart-1: 215 50% 23%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 199 89% 48%;
+    --chart-5: 280 65% 60%;
+
     /* Field type colors */
     --field-editable: 210 20% 98%;
     --field-calculated: 38 100% 97%;
@@ -106,6 +113,13 @@
     --sidebar-accent-foreground: 210 40% 96%;
     --sidebar-border: 215 30% 18%;
     --sidebar-ring: 38 92% 50%;
+
+    /* Chart colors - dark mode */
+    --chart-1: 38 92% 50%;
+    --chart-2: 142 71% 50%;
+    --chart-3: 199 89% 55%;
+    --chart-4: 280 65% 65%;
+    --chart-5: 0 72% 55%;
 
     /* Field type colors - dark mode */
     --field-editable: 215 30% 13%;
