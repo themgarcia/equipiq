@@ -4,7 +4,7 @@ export const mockEquipment: Equipment[] = [
   {
     id: '1',
     name: 'Kubota KX040-4 Mini Excavator',
-    category: 'Excavation',
+    category: 'Excavator – Compact (≤ 6 ton)',
     status: 'Active',
     assetId: 'EXC-001',
     make: 'Kubota',

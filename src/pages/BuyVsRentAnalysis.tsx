@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils';
 const categories: EquipmentCategory[] = categoryDefaults.map(c => c.category);
 
 const defaultInput: BuyVsRentInput = {
-  category: 'Excavation',
+  category: 'Excavator – Compact (≤ 6 ton)',
   description: '',
   purchasePrice: 50000,
   usefulLife: 10,

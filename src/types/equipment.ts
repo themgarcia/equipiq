@@ -5,7 +5,9 @@ export type FinancingType = 'owned' | 'financed' | 'leased';
 export type EquipmentCategory = 
   | 'Compaction (Heavy)'
   | 'Compaction (Light)'
-  | 'Excavation'
+  | 'Excavator – Compact (≤ 6 ton)'
+  | 'Excavator – Mid-Size (6–12 ton)'
+  | 'Excavator – Large (12+ ton)'
   | 'Handheld Power Tools'
   | 'Large Demo & Specialty Tools'
   | 'Lawn (Commercial)'

@@ -51,7 +51,9 @@ interface EquipmentImportReviewProps {
 const CATEGORIES: EquipmentCategory[] = [
   'Compaction (Heavy)',
   'Compaction (Light)',
-  'Excavation',
+  'Excavator – Compact (≤ 6 ton)',
+  'Excavator – Mid-Size (6–12 ton)',
+  'Excavator – Large (12+ ton)',
   'Handheld Power Tools',
   'Large Demo & Specialty Tools',
   'Lawn (Commercial)',
@@ -97,7 +99,8 @@ const guessCategory = (make: string, model: string): EquipmentCategory => {
   }
   if (combined.includes('wheel loader')) return 'Loader (Large / Wheel)';
   if (combined.includes('excavator') || combined.includes('mini ex') || combined.includes('digger')) {
-    return 'Excavation';
+    // Default to compact; users can adjust if needed
+    return 'Excavator – Compact (≤ 6 ton)';
   }
   if (combined.includes('compactor') || combined.includes('roller') || combined.includes('plate')) {
     if (combined.includes('walk') || combined.includes('plate') || combined.includes('jumping')) {
