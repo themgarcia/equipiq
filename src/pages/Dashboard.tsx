@@ -97,16 +97,6 @@ export default function Dashboard() {
   const replacementCost2Years = replacementIn2Years.reduce((sum, e) => sum + e.replacementCostUsed, 0);
   const replacementCost3Years = replacementIn3Years.reduce((sum, e) => sum + e.replacementCostUsed, 0);
 
-  // Fleet health calculation - average useful life remaining as percentage
-  const avgUsefulLifeRemainingPercent = activeEquipment.length > 0 
-    ? activeEquipment.reduce((sum, e) => {
-        const totalLife = e.usefulLifeUsed + e.estimatedYearsLeft;
-        const percentRemaining = totalLife > 0 
-          ? (e.estimatedYearsLeft / totalLife) * 100 
-          : 0;
-        return sum + Math.max(0, percentRemaining);
-      }, 0) / activeEquipment.length 
-    : 0;
 
   return (
     <Layout>
@@ -159,21 +149,70 @@ export default function Dashboard() {
               {financedItems.length} financed, {leasedItems.length} leased, {ownedItems.length} owned outright
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+          <CardContent className="space-y-6">
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Monthly Obligations</p>
                 <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalMonthlyPayments)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Annual Financing Cost</p>
+                <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalMonthlyPayments * 12)}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Outstanding Debt</p>
                 <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalOutstandingDebt)}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Avg Useful Life Remaining</p>
-                <p className="text-2xl font-bold font-mono-nums">{avgUsefulLifeRemainingPercent.toFixed(0)}%</p>
+                <p className="text-sm text-muted-foreground">Equity Ratio</p>
+                <p className="text-2xl font-bold font-mono-nums">
+                  {totalCostBasis > 0 ? formatPercent((totalCostBasis - totalOutstandingDebt) / totalCostBasis) : '100%'}
+                </p>
               </div>
             </div>
+
+            {/* Upcoming Payoffs */}
+            {upcomingPayoffs.length > 0 ? (
+              <div className="pt-4 border-t">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="text-sm font-medium">Upcoming Payoffs (next 12 months)</h3>
+                </div>
+                <div className="space-y-2">
+                  {upcomingPayoffs.slice(0, 5).map(item => (
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.make} {item.model} • {formatCurrency(item.monthlyPayment)}/mo
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-sm">
+                          {item.payoffDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.monthsUntilPayoff} months left
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {upcomingPayoffs.length > 5 && (
+                  <p className="text-sm text-muted-foreground text-center mt-3">
+                    +{upcomingPayoffs.length - 5} more items
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="pt-4 border-t">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="text-sm font-medium">Upcoming Payoffs (next 12 months)</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">No upcoming payoffs in the next 12 months</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -306,45 +345,6 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Upcoming Payoffs */}
-        {upcomingPayoffs.length > 0 && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Upcoming Payoffs
-              </CardTitle>
-              <CardDescription>Equipment paying off in the next 12 months</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {upcomingPayoffs.slice(0, 5).map(item => (
-                  <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-sm">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.make} {item.model} • {formatCurrency(item.monthlyPayment)}/mo
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-sm">
-                        {item.payoffDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.monthsUntilPayoff} months left
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {upcomingPayoffs.length > 5 && (
-                <p className="text-sm text-muted-foreground text-center mt-3">
-                  +{upcomingPayoffs.length - 5} more items
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
 
         {/* Two Column Layout - Aging & Recent */}
         <div className="grid gap-6 sm:gap-8 grid-cols-1 lg:grid-cols-2">
