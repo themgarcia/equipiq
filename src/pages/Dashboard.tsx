@@ -133,7 +133,6 @@ export default function Dashboard() {
             value={formatCurrency(totalCOGS)}
             subtitle="Job-related equipment costs"
             icon={<TrendingUp className="h-5 w-5 text-muted-foreground" />}
-            variant="primary"
           />
           <MetricCard
             title="Allocated to Overhead"
