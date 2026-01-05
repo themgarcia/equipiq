@@ -196,7 +196,7 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Import Equipment from Documents</DialogTitle>
           <DialogDescription>
@@ -246,10 +246,15 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
                   key={index}
                   className="flex items-center justify-between gap-2 bg-muted/50 rounded-md px-3 py-2 overflow-hidden"
                 >
-                  <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                    <span className="text-sm truncate max-w-full">{uploadedFile.file.name}</span>
-                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                    <span 
+                      className="text-sm block truncate flex-1 min-w-0" 
+                      title={uploadedFile.file.name}
+                    >
+                      {uploadedFile.file.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
                       ({(uploadedFile.file.size / 1024 / 1024).toFixed(1)}MB)
                     </span>
                   </div>
@@ -270,9 +275,9 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
           )}
 
           {/* Info Box */}
-          <div className="flex gap-2 p-3 bg-muted/50 rounded-md">
+          <div className="flex gap-2 p-3 bg-muted/50 rounded-md min-w-0">
             <AlertCircle className="h-4 w-4 flex-shrink-0 text-muted-foreground mt-0.5" />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground min-w-0 break-words">
               AI will analyze your documents and extract equipment details including make, model, 
               pricing, and financing information. You'll be able to review and edit before importing.
             </p>
@@ -280,9 +285,9 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
 
           {/* Processing Status */}
           {isProcessing && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>{processingStatus}</span>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+              <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+              <span className="truncate min-w-0">{processingStatus}</span>
             </div>
           )}
 
