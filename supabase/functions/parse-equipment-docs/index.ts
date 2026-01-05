@@ -22,6 +22,8 @@ interface ExtractedEquipment {
   buyoutAmount: number | null;
   confidence: 'high' | 'medium' | 'low';
   notes: string | null;
+  suggestedType: 'equipment' | 'attachment';
+  suggestedParentIndex: number | null;
 }
 
 serve(async (req) => {
@@ -64,7 +66,19 @@ Your task is to extract equipment information from the uploaded document. Look f
 
 Be thorough and extract ALL equipment items if the document contains multiple pieces of equipment.
 If a field is not clearly visible in the document, set it to null.
-Set confidence to "high" if the data is clearly legible, "medium" if somewhat unclear, or "low" if you had to make assumptions.`;
+Set confidence to "high" if the data is clearly legible, "medium" if somewhat unclear, or "low" if you had to make assumptions.
+
+ATTACHMENT DETECTION:
+Additionally, identify items that appear to be attachments or accessories rather than primary equipment:
+- Buckets, forks, blades, augers, trenchers, grapples, pallet forks, etc.
+- Items with significantly lower value than the main equipment on the same document
+- Items that share financing terms with a larger piece of equipment (same monthly payment line)
+- Items described as "includes", "with", or "accessory" relative to the main equipment
+- Implements, quick-attach accessories, or add-ons
+
+For each item, set:
+- suggestedType: "equipment" for primary machines (loaders, excavators, trucks, mowers), "attachment" for accessories/implements
+- suggestedParentIndex: If this is an attachment, the 0-based index of the likely parent equipment in this extraction, or null if uncertain`;
 
     const userPrompt = `Please analyze this document and extract all equipment information. Return the data using the extract_equipment function.`;
 
@@ -128,9 +142,18 @@ Set confidence to "high" if the data is clearly legible, "medium" if somewhat un
                           enum: ["high", "medium", "low"],
                           description: "Confidence level of extraction" 
                         },
-                        notes: { type: ["string", "null"], description: "Any additional notes about this item" }
+                        notes: { type: ["string", "null"], description: "Any additional notes about this item" },
+                        suggestedType: {
+                          type: "string",
+                          enum: ["equipment", "attachment"],
+                          description: "Whether this is primary equipment or an attachment/accessory"
+                        },
+                        suggestedParentIndex: {
+                          type: ["number", "null"],
+                          description: "For attachments, the 0-based index of the parent equipment in this extraction"
+                        }
                       },
-                      required: ["make", "model", "confidence"]
+                      required: ["make", "model", "confidence", "suggestedType"]
                     }
                   }
                 },
