@@ -31,6 +31,7 @@ interface ExtractedEquipment {
   notes: string | null;
   suggestedType?: 'equipment' | 'attachment';
   suggestedParentIndex?: number | null;
+  purchaseCondition?: 'new' | 'used' | null;
 }
 
 type DuplicateStatus = 'none' | 'exact' | 'potential';
@@ -99,6 +100,7 @@ const FIELD_LABELS: Record<string, string> = {
   monthlyPayment: 'Monthly Payment',
   termMonths: 'Term (Months)',
   buyoutAmount: 'Buyout Amount',
+  purchaseCondition: 'Purchase Condition',
 };
 
 // Normalize serial/VIN for comparison
@@ -228,7 +230,8 @@ const getUpdatableFields = (existing: Equipment, extracted: Partial<ExtractedEqu
   const fields: UpdatableField[] = [];
   const checkFields: (keyof Equipment)[] = [
     'serialVin', 'purchaseDate', 'purchasePrice', 'salesTax', 'freightSetup',
-    'financingType', 'depositAmount', 'financedAmount', 'monthlyPayment', 'termMonths', 'buyoutAmount'
+    'financingType', 'depositAmount', 'financedAmount', 'monthlyPayment', 'termMonths', 'buyoutAmount',
+    'purchaseCondition'
   ];
 
   for (const field of checkFields) {
@@ -649,6 +652,7 @@ export function EquipmentImportReview({
             monthlyPayment: eq.monthlyPayment || 0,
             termMonths: eq.termMonths || 0,
             buyoutAmount: eq.buyoutAmount || 0,
+            purchaseCondition: (eq.purchaseCondition as 'new' | 'used') || 'new',
           });
           if (newId) {
             importedEquipmentIds.push(newId);

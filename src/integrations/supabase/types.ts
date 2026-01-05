@@ -33,6 +33,7 @@ export type Database = {
           monthly_payment: number
           name: string
           other_cap_ex: number
+          purchase_condition: string
           purchase_date: string
           purchase_price: number
           replacement_cost_as_of_date: string | null
@@ -66,6 +67,7 @@ export type Database = {
           monthly_payment?: number
           name: string
           other_cap_ex?: number
+          purchase_condition?: string
           purchase_date: string
           purchase_price?: number
           replacement_cost_as_of_date?: string | null
@@ -99,6 +101,7 @@ export type Database = {
           monthly_payment?: number
           name?: string
           other_cap_ex?: number
+          purchase_condition?: string
           purchase_date?: string
           purchase_price?: number
           replacement_cost_as_of_date?: string | null

@@ -25,6 +25,7 @@ interface ExtractedEquipment {
   notes: string | null;
   suggestedType: 'equipment' | 'attachment';
   suggestedParentIndex: number | null;
+  purchaseCondition: 'new' | 'used' | null;
 }
 
 serve(async (req) => {
@@ -80,6 +81,7 @@ Your task is to extract equipment information from the uploaded document. Look f
 - Model (model number/name)
 - Year (model year if visible)
 - Serial Number or VIN
+- Purchase Condition: "new" if from a dealer as new equipment, "used" if pre-owned, from auction, certified pre-owned, etc.
 - Purchase Date (invoice/order date)
 - Purchase Price (pre-tax amount for the equipment)
 - Sales Tax (if itemized separately)
@@ -151,6 +153,11 @@ For each item, set:
                         model: { type: "string", description: "Model number or name" },
                         year: { type: ["number", "null"], description: "Model year" },
                         serialVin: { type: ["string", "null"], description: "Serial number or VIN" },
+                        purchaseCondition: {
+                          type: ["string", "null"],
+                          enum: ["new", "used", null],
+                          description: "Whether equipment was purchased new or used"
+                        },
                         purchaseDate: { type: ["string", "null"], description: "Purchase date in YYYY-MM-DD format" },
                         purchasePrice: { type: ["number", "null"], description: "Purchase price before tax" },
                         salesTax: { type: ["number", "null"], description: "Sales tax amount" },

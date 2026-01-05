@@ -70,6 +70,8 @@ function dbToEquipment(record: any): Equipment {
     termMonths: Number(record.term_months) || 0,
     buyoutAmount: Number(record.buyout_amount) || 0,
     financingStartDate: record.financing_start_date || undefined,
+    // Purchase condition
+    purchaseCondition: record.purchase_condition || 'new',
   };
 }
 
@@ -105,6 +107,8 @@ function equipmentToDb(equipment: Omit<Equipment, 'id'>, userId: string) {
     term_months: equipment.termMonths || 0,
     buyout_amount: equipment.buyoutAmount || 0,
     financing_start_date: equipment.financingStartDate || null,
+    // Purchase condition
+    purchase_condition: equipment.purchaseCondition || 'new',
   };
 }
 
@@ -228,6 +232,8 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (updatesWithName.termMonths !== undefined) dbUpdates.term_months = updatesWithName.termMonths;
       if (updatesWithName.buyoutAmount !== undefined) dbUpdates.buyout_amount = updatesWithName.buyoutAmount;
       if (updatesWithName.financingStartDate !== undefined) dbUpdates.financing_start_date = updatesWithName.financingStartDate || null;
+      // Purchase condition
+      if (updatesWithName.purchaseCondition !== undefined) dbUpdates.purchase_condition = updatesWithName.purchaseCondition;
 
       const { error } = await supabase
         .from('equipment')

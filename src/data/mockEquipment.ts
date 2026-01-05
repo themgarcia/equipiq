@@ -25,6 +25,7 @@ export const mockEquipment: Equipment[] = [
     termMonths: 60,
     buyoutAmount: 0,
     financingStartDate: '2021-03-15',
+    purchaseCondition: 'new',
   },
   {
     id: '2',
@@ -49,6 +50,7 @@ export const mockEquipment: Equipment[] = [
     monthlyPayment: 0,
     termMonths: 0,
     buyoutAmount: 0,
+    purchaseCondition: 'used',
   },
   {
     id: '3',
@@ -74,6 +76,7 @@ export const mockEquipment: Equipment[] = [
     termMonths: 48,
     buyoutAmount: 15000,
     financingStartDate: '2022-01-10',
+    purchaseCondition: 'new',
   },
   {
     id: '4',
@@ -98,6 +101,7 @@ export const mockEquipment: Equipment[] = [
     monthlyPayment: 0,
     termMonths: 0,
     buyoutAmount: 0,
+    purchaseCondition: 'new',
   },
   {
     id: '5',
@@ -123,6 +127,7 @@ export const mockEquipment: Equipment[] = [
     termMonths: 36,
     buyoutAmount: 0,
     financingStartDate: '2023-02-28',
+    purchaseCondition: 'new',
   },
   {
     id: '6',
@@ -145,6 +150,7 @@ export const mockEquipment: Equipment[] = [
     monthlyPayment: 0,
     termMonths: 0,
     buyoutAmount: 0,
+    purchaseCondition: 'new',
   },
   {
     id: '7',
@@ -169,6 +175,7 @@ export const mockEquipment: Equipment[] = [
     monthlyPayment: 0,
     termMonths: 0,
     buyoutAmount: 0,
+    purchaseCondition: 'used',
   },
   {
     id: '8',
@@ -192,6 +199,7 @@ export const mockEquipment: Equipment[] = [
     monthlyPayment: 0,
     termMonths: 0,
     buyoutAmount: 0,
+    purchaseCondition: 'new',
   },
   {
     id: '9',
@@ -214,6 +222,7 @@ export const mockEquipment: Equipment[] = [
     monthlyPayment: 0,
     termMonths: 0,
     buyoutAmount: 0,
+    purchaseCondition: 'new',
   },
   {
     id: '10',
@@ -238,5 +247,6 @@ export const mockEquipment: Equipment[] = [
     monthlyPayment: 0,
     termMonths: 0,
     buyoutAmount: 0,
+    purchaseCondition: 'new',
   },
 ];

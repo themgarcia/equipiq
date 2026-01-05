@@ -2,6 +2,8 @@ export type EquipmentStatus = 'Active' | 'Sold' | 'Retired' | 'Lost';
 
 export type FinancingType = 'owned' | 'financed' | 'leased';
 
+export type PurchaseCondition = 'new' | 'used';
+
 export type EquipmentCategory = 
   | 'Compaction (Heavy)'
   | 'Compaction (Light)'
@@ -72,6 +74,9 @@ export interface Equipment {
   termMonths: number;
   buyoutAmount: number;
   financingStartDate?: string;
+  
+  // Purchase condition
+  purchaseCondition: PurchaseCondition;
 }
 
 // Calculated fields (derived from Equipment)
