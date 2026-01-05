@@ -14,7 +14,7 @@ export function EquipIQIcon({ size = 'md', className }: EquipIQIconProps) {
 
   return (
     <img
-      src="/equipiq-icon-v2.png"
+      src="/equipiq-icon-v2.png?v=2"
       alt="equipIQ"
       className={cn(sizeClasses[size], 'rounded', className)}
     />
