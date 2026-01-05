@@ -284,7 +284,7 @@ export default function EquipmentList() {
                                 </span>
                               </TableCell>
                               <TableCell className="w-[120px] text-right font-mono-nums">
-                                {formatCurrency(equipment.replacementCostNew)}
+                                {formatCurrency(equipment.replacementCostUsed)}
                               </TableCell>
                               <TableCell className="w-[50px]">
                                 <DropdownMenu>
