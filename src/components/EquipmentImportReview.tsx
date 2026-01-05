@@ -396,12 +396,18 @@ export function EquipmentImportReview({
         defaultMode = 'update_existing';
       }
       
+      // Compute year fallback from purchase date if year not extracted
+      const purchaseYear = parseDate(eq.purchaseDate)?.getFullYear() ?? null;
+      const yearWasMissing = eq.year === null || eq.year === undefined;
+      const effectiveYear = yearWasMissing && purchaseYear ? purchaseYear : eq.year;
+      
       return {
         ...eq,
         tempId: `import-${index}-${Date.now()}`,
         selected: defaultMode !== 'skip',
         category: eq.suggestedCategory || guessCategory(eq.make, eq.model),
-        yearDefaultedFromPurchase: !eq.year && !!eq.purchaseDate,
+        year: effectiveYear,
+        yearDefaultedFromPurchase: yearWasMissing && purchaseYear !== null,
         duplicateStatus: duplicateCheck.status,
         duplicateReason: duplicateCheck.reason,
         matchedEquipmentId: duplicateCheck.matchedId,
@@ -1001,12 +1007,27 @@ export function EquipmentImportReview({
                       </div>
 
                       <div>
-                        <label className="text-xs text-muted-foreground">Year</label>
+                        <label className="text-xs text-muted-foreground flex items-center gap-1">
+                          Year
+                          {eq.yearDefaultedFromPurchase && (
+                            <span className="inline-flex items-center gap-0.5 text-amber-600" title="Year defaulted from purchase date — please verify">
+                              <AlertTriangle className="h-3 w-3" />
+                              <span className="text-[10px] font-medium">Review</span>
+                            </span>
+                          )}
+                        </label>
                         <Input
                           type="number"
                           value={eq.year || ''}
-                          onChange={(e) => updateEquipmentItem(eq.tempId, 'year', e.target.value ? parseInt(e.target.value) : null)}
-                          className="h-8 text-sm"
+                          onChange={(e) => {
+                            const newYear = e.target.value ? parseInt(e.target.value) : null;
+                            setEditableEquipment(prev => prev.map(item => 
+                              item.tempId === eq.tempId 
+                                ? { ...item, year: newYear, yearDefaultedFromPurchase: false }
+                                : item
+                            ));
+                          }}
+                          className={`h-8 text-sm ${eq.yearDefaultedFromPurchase ? 'border-amber-500/50' : ''}`}
                           placeholder="Year"
                         />
                       </div>
