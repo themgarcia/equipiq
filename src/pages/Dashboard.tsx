@@ -180,7 +180,7 @@ export default function Dashboard() {
                   </TooltipProvider>
                 </div>
                 <p className="text-2xl font-bold font-mono-nums">
-                  {totalCostBasis > 0 ? formatPercent((totalCostBasis - totalOutstandingDebt) / totalCostBasis) : '100%'}
+                  {totalCostBasis > 0 ? formatPercent(((totalCostBasis - totalOutstandingDebt) / totalCostBasis) * 100) : '100%'}
                 </p>
               </div>
             </div>
