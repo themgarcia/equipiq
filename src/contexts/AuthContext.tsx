@@ -3,11 +3,21 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export interface CompanyProfileData {
+  companyName: string;
+  industry: string;
+  fieldEmployees: string;
+  annualRevenue?: string;
+  yearsInBusiness?: number;
+  region?: string;
+  companyWebsite?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, companyData: CompanyProfileData) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -40,7 +50,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string, fullName: string) => {
+  const signUp = useCallback(async (
+    email: string, 
+    password: string, 
+    fullName: string,
+    companyData: CompanyProfileData
+  ) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -50,6 +65,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          company_name: companyData.companyName,
+          industry: companyData.industry,
+          field_employees: companyData.fieldEmployees,
+          annual_revenue: companyData.annualRevenue || null,
+          years_in_business: companyData.yearsInBusiness || null,
+          region: companyData.region || null,
+          company_website: companyData.companyWebsite || null,
         },
       },
     });
