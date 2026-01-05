@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -68,9 +68,14 @@ export default function Profile() {
     },
   });
 
+  const hasLoadedRef = useRef(false);
+
   useEffect(() => {
     async function loadProfile() {
-      if (!user) return;
+      // Only load once on initial mount
+      if (!user || hasLoadedRef.current) return;
+      
+      hasLoadedRef.current = true;
 
       try {
         const { data, error } = await supabase
@@ -88,7 +93,7 @@ export default function Profile() {
             industry: data.industry || '',
             fieldEmployees: data.field_employees || '',
             annualRevenue: data.annual_revenue || '',
-            yearsInBusiness: data.years_in_business || '',
+            yearsInBusiness: data.years_in_business ?? '',
             region: data.region || '',
             companyWebsite: data.company_website || '',
           });
@@ -106,7 +111,7 @@ export default function Profile() {
     }
 
     loadProfile();
-  }, [user, form, toast]);
+  }, [user]);
 
   async function onSubmit(data: ProfileFormData) {
     if (!user) return;
