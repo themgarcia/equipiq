@@ -6,7 +6,6 @@ import {
   Clock, 
   FileSpreadsheet, 
   BookOpen,
-  Anvil,
   Scale,
   Wallet,
   LogOut,
@@ -15,6 +14,7 @@ import {
   PanelLeftClose,
   PanelLeft
 } from 'lucide-react';
+import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -100,9 +100,7 @@ function AppSidebar() {
         )}>
           {!isCollapsed && (
             <>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary flex-shrink-0">
-                <Anvil className="h-5 w-5 text-sidebar-primary-foreground" />
-              </div>
+              <EquipIQIcon size="lg" className="flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <h1 className="text-sm font-semibold text-sidebar-foreground truncate">equipIQ</h1>
                 <p className="text-xs text-sidebar-foreground/60 truncate">Equipment intelligence for contractors</p>
@@ -212,9 +210,7 @@ function PhoneHeader() {
   return (
     <header className="sticky top-0 z-50 h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
-          <Anvil className="h-4 w-4 text-sidebar-primary-foreground" />
-        </div>
+        <EquipIQIcon size="md" className="h-8 w-8" />
         <span className="text-sm font-semibold text-sidebar-foreground">equipIQ</span>
       </div>
       <Sheet>
@@ -227,9 +223,7 @@ function PhoneHeader() {
           <div className="flex h-full flex-col">
             {/* Logo */}
             <div className="flex h-16 items-center gap-3 px-6 border-b border-sidebar-border">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
-                <Anvil className="h-5 w-5 text-sidebar-primary-foreground" />
-              </div>
+              <EquipIQIcon size="lg" />
               <div>
                 <h1 className="text-sm font-semibold text-sidebar-foreground">equipIQ</h1>
                 <p className="text-xs text-sidebar-foreground/60">Equipment intelligence for contractors</p>

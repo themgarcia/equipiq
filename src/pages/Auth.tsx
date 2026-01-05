@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Anvil, Mail, Lock, User } from 'lucide-react';
+import { Mail, Lock, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { EquipIQIcon } from '@/components/EquipIQIcon';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -141,9 +142,7 @@ export default function Auth() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary mb-4">
-            <Anvil className="h-8 w-8 text-primary-foreground" />
-          </div>
+          <EquipIQIcon className="h-14 w-14 mb-4" />
           <h1 className="text-2xl font-bold">equipIQ</h1>
           <p className="text-muted-foreground">Equipment intelligence for contractors</p>
         </div>
