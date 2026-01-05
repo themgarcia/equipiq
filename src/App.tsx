@@ -11,7 +11,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import EquipmentList from "./pages/EquipmentList";
 import CategoryLifespans from "./pages/CategoryLifespans";
-import LMNExport from "./pages/LMNExport";
+import FMSExport from "./pages/FMSExport";
 import BuyVsRentAnalysis from "./pages/BuyVsRentAnalysis";
 import CashflowAnalysis from "./pages/CashflowAnalysis";
 import Definitions from "./pages/Definitions";
@@ -47,7 +47,7 @@ const App = () => (
                 } />
                 <Route path="/export" element={
                   <ProtectedRoute>
-                    <LMNExport />
+                    <FMSExport />
                   </ProtectedRoute>
                 } />
                 <Route path="/buy-vs-rent" element={

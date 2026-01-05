@@ -100,7 +100,7 @@ const columns: ColumnConfig[] = [
   },
 ];
 
-export default function LMNExport() {
+export default function FMSExport() {
   const { calculatedEquipment } = useEquipment();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
@@ -202,7 +202,7 @@ export default function LMNExport() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `lmn-equipment-export-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `fms-equipment-export-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
 
     toast({
@@ -226,9 +226,9 @@ export default function LMNExport() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <div className="accent-line mb-4" />
-            <h1 className="text-3xl font-bold">LMN Export</h1>
+            <h1 className="text-3xl font-bold">FMS Export</h1>
             <p className="text-muted-foreground mt-1">
-              Copy-ready data for LMN's Owned Equipment Calculator
+              Copy-ready data for Field Management Software
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -243,9 +243,9 @@ export default function LMNExport() {
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6 flex items-start gap-3">
           <FileSpreadsheet className="h-5 w-5 text-primary mt-0.5" />
           <div>
-            <h3 className="font-semibold mb-1">Copy Values for LMN</h3>
+            <h3 className="font-semibold mb-1">Copy Values for FMS</h3>
             <p className="text-sm text-muted-foreground">
-              LMN requires pasting one field at a time. Click the <Copy className="h-3 w-3 inline mx-1" /> 
+              Most FMS tools require pasting one field at a time. Click the <Copy className="h-3 w-3 inline mx-1" /> 
               button next to any value to copy it to your clipboard. Click column headers to sort.
             </p>
           </div>
