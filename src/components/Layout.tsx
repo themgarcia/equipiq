@@ -105,7 +105,7 @@ function AppSidebar() {
               </div>
               <div className="flex-1 min-w-0">
                 <h1 className="text-sm font-semibold text-sidebar-foreground truncate">Forge Legacy</h1>
-                <p className="text-xs text-sidebar-foreground/60 truncate">Equipment Tracker</p>
+                <p className="text-xs text-sidebar-foreground/60 truncate">Equipment Intelligence</p>
               </div>
             </>
           )}
@@ -232,7 +232,7 @@ function PhoneHeader() {
               </div>
               <div>
                 <h1 className="text-sm font-semibold text-sidebar-foreground">Forge Legacy</h1>
-                <p className="text-xs text-sidebar-foreground/60">Equipment Tracker</p>
+                <p className="text-xs text-sidebar-foreground/60">Equipment Intelligence</p>
               </div>
             </div>
 

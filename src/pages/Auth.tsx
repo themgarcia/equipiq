@@ -114,7 +114,7 @@ export default function Auth() {
 
         toast({
           title: "Account created!",
-          description: "Welcome to Forge Legacy Equipment Tracker.",
+          description: "Welcome to Forge Legacy Equipment Intelligence.",
         });
       }
     } catch (err) {
@@ -145,7 +145,7 @@ export default function Auth() {
             <Anvil className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-bold">Forge Legacy</h1>
-          <p className="text-muted-foreground">Equipment Tracker</p>
+          <p className="text-muted-foreground">Equipment Intelligence</p>
         </div>
 
         <Card className="shadow-lg">
