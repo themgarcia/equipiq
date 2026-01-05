@@ -4,8 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminModeProvider } from "@/contexts/AdminModeContext";
 import { EquipmentProvider } from "@/contexts/EquipmentContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -15,6 +17,9 @@ import FMSExport from "./pages/FMSExport";
 import BuyVsRentAnalysis from "./pages/BuyVsRentAnalysis";
 import CashflowAnalysis from "./pages/CashflowAnalysis";
 import Definitions from "./pages/Definitions";
+import AdminDashboard from "./pages/AdminDashboard";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,51 +29,66 @@ const App = () => (
     <ThemeProvider>
       <TooltipProvider>
         <AuthProvider>
-          <EquipmentProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/" element={
-                  <ProtectedRoute>
-                    <Index />
-                  </ProtectedRoute>
-                } />
-                <Route path="/equipment" element={
-                  <ProtectedRoute>
-                    <EquipmentList />
-                  </ProtectedRoute>
-                } />
-                <Route path="/categories" element={
-                  <ProtectedRoute>
-                    <CategoryLifespans />
-                  </ProtectedRoute>
-                } />
-                <Route path="/export" element={
-                  <ProtectedRoute>
-                    <FMSExport />
-                  </ProtectedRoute>
-                } />
-                <Route path="/buy-vs-rent" element={
-                  <ProtectedRoute>
-                    <BuyVsRentAnalysis />
-                  </ProtectedRoute>
-                } />
-                <Route path="/cashflow" element={
-                  <ProtectedRoute>
-                    <CashflowAnalysis />
-                  </ProtectedRoute>
-                } />
-                <Route path="/definitions" element={
-                  <ProtectedRoute>
-                    <Definitions />
-                  </ProtectedRoute>
-                } />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </EquipmentProvider>
+          <AdminModeProvider>
+            <EquipmentProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  
+                  {/* Protected routes */}
+                  <Route path="/" element={
+                    <ProtectedRoute>
+                      <Index />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/equipment" element={
+                    <ProtectedRoute>
+                      <EquipmentList />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/categories" element={
+                    <ProtectedRoute>
+                      <CategoryLifespans />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/export" element={
+                    <ProtectedRoute>
+                      <FMSExport />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/buy-vs-rent" element={
+                    <ProtectedRoute>
+                      <BuyVsRentAnalysis />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/cashflow" element={
+                    <ProtectedRoute>
+                      <CashflowAnalysis />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/definitions" element={
+                    <ProtectedRoute>
+                      <Definitions />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Admin routes */}
+                  <Route path="/admin" element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  } />
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </EquipmentProvider>
+          </AdminModeProvider>
         </AuthProvider>
       </TooltipProvider>
     </ThemeProvider>

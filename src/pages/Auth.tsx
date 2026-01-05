@@ -238,6 +238,30 @@ export default function Auth() {
                   : "Already have an account? Sign in"}
               </button>
             </div>
+
+            {/* Legal Links */}
+            <div className="mt-4 text-center">
+              <p className="text-xs text-muted-foreground">
+                By continuing, you agree to our{' '}
+                <a 
+                  href="/terms" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground transition-colors"
+                >
+                  Terms of Service
+                </a>
+                {' '}and{' '}
+                <a 
+                  href="/privacy" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground transition-colors"
+                >
+                  Privacy Policy
+                </a>
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
