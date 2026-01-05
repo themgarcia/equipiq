@@ -71,20 +71,6 @@ const columns: ColumnConfig[] = [
     sortType: 'number'
   },
   { 
-    key: 'cogsPercent', 
-    label: 'COGS %', 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number'
-  },
-  { 
-    key: 'overheadPercent', 
-    label: 'OH %', 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number'
-  },
-  { 
     key: 'cogsAllocatedCost', 
     label: 'COGS $', 
     format: (v) => String(v),
@@ -192,8 +178,6 @@ export default function FMSExport() {
         e.data.replacementValue,
         e.data.expectedValueAtEndOfLife,
         e.data.usefulLife,
-        e.data.cogsPercent,
-        e.data.overheadPercent,
         e.data.cogsAllocatedCost,
         e.data.overheadAllocatedCost,
       ].join(','))
@@ -214,7 +198,7 @@ export default function FMSExport() {
   const formatCellValue = (key: ColumnKey, value: FMSExportData[ColumnKey]) => {
     if (key === 'equipmentName') return String(value);
     if (key === 'usefulLife') return String(value);
-    if (key === 'cogsPercent' || key === 'overheadPercent') return `${value}%`;
+    
     if (key === 'cogsAllocatedCost' || key === 'overheadAllocatedCost') return formatCurrency(value as number);
     return formatCurrency(value as number);
   };
