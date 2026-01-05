@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Equipment, EquipmentCategory, EquipmentStatus, FinancingType } from '@/types/equipment';
+import { Equipment, EquipmentCategory, EquipmentStatus, FinancingType, PurchaseCondition } from '@/types/equipment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,11 @@ const financingTypes: { value: FinancingType; label: string }[] = [
   { value: 'leased', label: 'Leased' },
 ];
 
+const purchaseConditions: { value: PurchaseCondition; label: string }[] = [
+  { value: 'new', label: 'New' },
+  { value: 'used', label: 'Used' },
+];
+
 const defaultFormData: Omit<Equipment, 'id'> = {
   name: '', // Will be auto-generated
   category: 'Vehicle (Commercial)',
@@ -48,6 +53,8 @@ const defaultFormData: Omit<Equipment, 'id'> = {
   termMonths: 0,
   buyoutAmount: 0,
   financingStartDate: undefined,
+  // Purchase condition
+  purchaseCondition: 'new',
 };
 
 export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: EquipmentFormProps) {
@@ -183,13 +190,33 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
               </div>
 
               <div>
-                <Label htmlFor="year">Year</Label>
+                <Label htmlFor="purchaseCondition">Purchase Condition</Label>
+                <Select 
+                  value={formData.purchaseCondition} 
+                  onValueChange={(v) => handleChange('purchaseCondition', v as PurchaseCondition)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {purchaseConditions.map(pc => (
+                      <SelectItem key={pc.value} value={pc.value}>{pc.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="year">Model Year</Label>
                 <Input
                   id="year"
                   type="number"
                   value={formData.year}
                   onChange={(e) => handleChange('year', parseInt(e.target.value))}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.purchaseCondition === 'used' ? 'Year manufactured (may differ from purchase date)' : 'Year manufactured'}
+                </p>
               </div>
 
               <div>
