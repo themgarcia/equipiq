@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { Equipment, EquipmentCalculated, CategoryDefaults, EquipmentDocument } from '@/types/equipment';
+import { Equipment, EquipmentCalculated, CategoryDefaults, EquipmentDocument, EquipmentAttachment } from '@/types/equipment';
 import { categoryDefaults as defaultCategories } from '@/data/categoryDefaults';
 import { calculateEquipment } from '@/lib/calculations';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +20,11 @@ interface EquipmentContextType {
   getDocuments: (equipmentId: string) => Promise<EquipmentDocument[]>;
   uploadDocument: (equipmentId: string, file: File, notes?: string) => Promise<void>;
   deleteDocument: (documentId: string, filePath: string) => Promise<void>;
+  // Attachment management
+  getAttachments: (equipmentId: string) => Promise<EquipmentAttachment[]>;
+  addAttachment: (equipmentId: string, attachment: Omit<EquipmentAttachment, 'id' | 'equipmentId' | 'createdAt'>, photo?: File) => Promise<void>;
+  updateAttachment: (id: string, updates: Partial<Omit<EquipmentAttachment, 'id' | 'equipmentId' | 'createdAt'>>, photo?: File) => Promise<void>;
+  deleteAttachment: (id: string, photoPath?: string) => Promise<void>;
 }
 
 const EquipmentContext = createContext<EquipmentContextType | undefined>(undefined);
@@ -384,6 +389,187 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, toast]);
 
+  // Get attachments for an equipment item
+  const getAttachments = useCallback(async (equipmentId: string): Promise<EquipmentAttachment[]> => {
+    if (!user) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('equipment_attachments')
+        .select('*')
+        .eq('equipment_id', equipmentId)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return (data || []).map(att => ({
+        id: att.id,
+        equipmentId: att.equipment_id,
+        name: att.name,
+        description: att.description || undefined,
+        value: Number(att.value),
+        serialNumber: att.serial_number || undefined,
+        photoPath: att.photo_path || undefined,
+        createdAt: att.created_at,
+      }));
+    } catch (error: any) {
+      console.error('Failed to load attachments:', error);
+      return [];
+    }
+  }, [user]);
+
+  // Add an attachment to an equipment item
+  const addAttachment = useCallback(async (
+    equipmentId: string, 
+    attachment: Omit<EquipmentAttachment, 'id' | 'equipmentId' | 'createdAt'>,
+    photo?: File
+  ): Promise<void> => {
+    if (!user) return;
+
+    try {
+      let photoPath: string | null = null;
+
+      // Upload photo if provided
+      if (photo) {
+        photoPath = `${user.id}/${equipmentId}/attachments/${Date.now()}-${photo.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('equipment-documents')
+          .upload(photoPath, photo);
+
+        if (uploadError) throw uploadError;
+      }
+
+      // Create database record
+      const { error: dbError } = await supabase
+        .from('equipment_attachments')
+        .insert({
+          equipment_id: equipmentId,
+          user_id: user.id,
+          name: attachment.name,
+          description: attachment.description || null,
+          value: attachment.value,
+          serial_number: attachment.serialNumber || null,
+          photo_path: photoPath,
+        });
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Attachment added",
+        description: `${attachment.name} has been added.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to add attachment",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }, [user, toast]);
+
+  // Update an attachment
+  const updateAttachment = useCallback(async (
+    id: string, 
+    updates: Partial<Omit<EquipmentAttachment, 'id' | 'equipmentId' | 'createdAt'>>,
+    photo?: File
+  ): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const dbUpdates: Record<string, any> = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.description !== undefined) dbUpdates.description = updates.description || null;
+      if (updates.value !== undefined) dbUpdates.value = updates.value;
+      if (updates.serialNumber !== undefined) dbUpdates.serial_number = updates.serialNumber || null;
+
+      // Handle photo upload if new photo provided
+      if (photo) {
+        // First get the current attachment to find the equipment_id
+        const { data: currentAtt } = await supabase
+          .from('equipment_attachments')
+          .select('equipment_id, photo_path')
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single();
+
+        if (currentAtt) {
+          // Delete old photo if exists
+          if (currentAtt.photo_path) {
+            await supabase.storage
+              .from('equipment-documents')
+              .remove([currentAtt.photo_path]);
+          }
+
+          // Upload new photo
+          const photoPath = `${user.id}/${currentAtt.equipment_id}/attachments/${Date.now()}-${photo.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from('equipment-documents')
+            .upload(photoPath, photo);
+
+          if (uploadError) throw uploadError;
+          dbUpdates.photo_path = photoPath;
+        }
+      }
+
+      const { error } = await supabase
+        .from('equipment_attachments')
+        .update(dbUpdates)
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Attachment updated",
+        description: "Your changes have been saved.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to update attachment",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }, [user, toast]);
+
+  // Delete an attachment
+  const deleteAttachment = useCallback(async (id: string, photoPath?: string): Promise<void> => {
+    if (!user) return;
+
+    try {
+      // Delete photo from storage if exists
+      if (photoPath) {
+        await supabase.storage
+          .from('equipment-documents')
+          .remove([photoPath]);
+      }
+
+      // Delete database record
+      const { error } = await supabase
+        .from('equipment_attachments')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Attachment deleted",
+        description: "The attachment has been removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to delete attachment",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }, [user, toast]);
+
   return (
     <EquipmentContext.Provider value={{
       equipment,
@@ -398,6 +584,10 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       getDocuments,
       uploadDocument,
       deleteDocument,
+      getAttachments,
+      addAttachment,
+      updateAttachment,
+      deleteAttachment,
     }}>
       {children}
     </EquipmentContext.Provider>

@@ -6,6 +6,7 @@ import { EquipmentForm } from '@/components/EquipmentForm';
 import { EquipmentImport } from '@/components/EquipmentImport';
 import { EquipmentImportReview } from '@/components/EquipmentImportReview';
 import { EquipmentDocuments } from '@/components/EquipmentDocuments';
+import { EquipmentAttachments } from '@/components/EquipmentAttachments';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +30,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, Upload, FileText } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, Upload, FileText, Package } from 'lucide-react';
 import { Equipment, EquipmentStatus } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
 
@@ -71,6 +72,9 @@ export default function EquipmentList() {
   const [documentsOpen, setDocumentsOpen] = useState(false);
   const [documentsEquipmentId, setDocumentsEquipmentId] = useState<string>('');
   const [documentsEquipmentName, setDocumentsEquipmentName] = useState<string>('');
+  const [attachmentsOpen, setAttachmentsOpen] = useState(false);
+  const [attachmentsEquipmentId, setAttachmentsEquipmentId] = useState<string>('');
+  const [attachmentsEquipmentName, setAttachmentsEquipmentName] = useState<string>('');
 
   const handleEquipmentExtracted = (equipment: ExtractedEquipment[], sourceFile?: File) => {
     setExtractedEquipment(equipment);
@@ -87,6 +91,12 @@ export default function EquipmentList() {
     setDocumentsEquipmentId(equipment.id);
     setDocumentsEquipmentName(equipment.name);
     setDocumentsOpen(true);
+  };
+
+  const handleOpenAttachments = (equipment: Equipment) => {
+    setAttachmentsEquipmentId(equipment.id);
+    setAttachmentsEquipmentName(equipment.name);
+    setAttachmentsOpen(true);
   };
 
   const filteredEquipment = useMemo(() => {
@@ -319,6 +329,10 @@ export default function EquipmentList() {
                                                       <FileText className="h-4 w-4 mr-2" />
                                                       Documents
                                                     </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleOpenAttachments(equipment)}>
+                                                      <Package className="h-4 w-4 mr-2" />
+                                                      Attachments
+                                                    </DropdownMenuItem>
                                                     <DropdownMenuItem 
                                                       onClick={() => handleDelete(equipment.id)}
                                                       className="text-destructive"
@@ -383,6 +397,14 @@ export default function EquipmentList() {
           onOpenChange={setDocumentsOpen}
           equipmentId={documentsEquipmentId}
           equipmentName={documentsEquipmentName}
+        />
+
+        {/* Attachments Sheet */}
+        <EquipmentAttachments
+          open={attachmentsOpen}
+          onOpenChange={setAttachmentsOpen}
+          equipmentId={attachmentsEquipmentId}
+          equipmentName={attachmentsEquipmentName}
         />
       </div>
     </Layout>

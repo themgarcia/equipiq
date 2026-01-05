@@ -116,6 +116,50 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment_attachments: {
+        Row: {
+          created_at: string
+          description: string | null
+          equipment_id: string
+          id: string
+          name: string
+          photo_path: string | null
+          serial_number: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          equipment_id: string
+          id?: string
+          name: string
+          photo_path?: string | null
+          serial_number?: string | null
+          user_id: string
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          equipment_id?: string
+          id?: string
+          name?: string
+          photo_path?: string | null
+          serial_number?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_attachments_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment_documents: {
         Row: {
           equipment_id: string

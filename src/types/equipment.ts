@@ -214,3 +214,15 @@ export interface UpdatableField {
   importedValue: any;
   willUpdate: boolean;
 }
+
+// Equipment Attachments (accessories, buckets, implements, etc.)
+export interface EquipmentAttachment {
+  id: string;
+  equipmentId: string;
+  name: string;
+  description?: string;
+  value: number;
+  serialNumber?: string;
+  photoPath?: string;
+  createdAt: string;
+}
