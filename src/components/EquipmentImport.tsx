@@ -239,16 +239,16 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
 
           {/* File List */}
           {files.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-hidden">
               <p className="text-sm font-medium">Files to process:</p>
               {files.map((uploadedFile, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between bg-muted/50 rounded-md px-3 py-2"
+                  className="flex items-center justify-between gap-2 bg-muted/50 rounded-md px-3 py-2 overflow-hidden"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                     <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                    <span className="text-sm truncate">{uploadedFile.file.name}</span>
+                    <span className="text-sm truncate max-w-full">{uploadedFile.file.name}</span>
                     <span className="text-xs text-muted-foreground flex-shrink-0">
                       ({(uploadedFile.file.size / 1024 / 1024).toFixed(1)}MB)
                     </span>
