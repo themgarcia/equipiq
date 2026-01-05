@@ -67,7 +67,14 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
   // Sync form data when dialog opens or equipment changes
   useEffect(() => {
     if (open) {
-      setFormData(equipment ? { ...equipment } : { ...defaultFormData });
+      const initialData = equipment ? { ...equipment } : { ...defaultFormData };
+      
+      // Auto-populate financing start date if equipment has financing but no start date
+      if (initialData.financingType !== 'owned' && !initialData.financingStartDate) {
+        initialData.financingStartDate = initialData.purchaseDate;
+      }
+      
+      setFormData(initialData);
       setErrors({});
       setFinancingOpen(false);
     }
@@ -76,6 +83,11 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
   const handleChange = (field: keyof Equipment, value: string | number | undefined) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
+      
+      // Auto-set financing start date when switching to financed/leased
+      if (field === 'financingType' && value !== 'owned' && !prev.financingStartDate) {
+        updated.financingStartDate = prev.purchaseDate;
+      }
       
       // Auto-set replacementCostAsOfDate when replacementCostNew is entered/updated
       if (field === 'replacementCostNew') {
@@ -441,7 +453,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
                   <Input
                     id="financingStartDate"
                     type="date"
-                    value={formData.financingStartDate || formData.purchaseDate}
+                    value={formData.financingStartDate || ''}
                     onChange={(e) => handleChange('financingStartDate', e.target.value)}
                     disabled={formData.financingType === 'owned'}
                   />
