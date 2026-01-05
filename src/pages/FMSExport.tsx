@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import { Layout } from '@/components/Layout';
-import { toLMNExport, formatCurrency } from '@/lib/calculations';
+import { toFMSExport, formatCurrency } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { 
   Table, 
@@ -14,15 +14,15 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { Copy, Download, Check, FileSpreadsheet, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
-import { LMNExportData } from '@/types/equipment';
+import { FMSExportData } from '@/types/equipment';
 
-type ColumnKey = keyof LMNExportData;
+type ColumnKey = keyof FMSExportData;
 type SortDirection = 'asc' | 'desc';
 
 interface ColumnConfig {
   key: ColumnKey;
   label: string;
-  format: (value: LMNExportData[ColumnKey]) => string;
+  format: (value: FMSExportData[ColumnKey]) => string;
   align: 'left' | 'right';
   sortType: 'string' | 'number';
 }
@@ -110,7 +110,7 @@ export default function FMSExport() {
   const activeEquipment = calculatedEquipment.filter(e => e.status === 'Active');
   
   const exportData = useMemo(() => {
-    const data = activeEquipment.map(e => ({ id: e.id, data: toLMNExport(e) }));
+    const data = activeEquipment.map(e => ({ id: e.id, data: toFMSExport(e) }));
     
     const columnConfig = columns.find(c => c.key === sortColumn);
     if (!columnConfig) return data;
@@ -168,7 +168,7 @@ export default function FMSExport() {
     }
   };
 
-  const copyCell = async (id: string, columnKey: ColumnKey, value: LMNExportData[ColumnKey]) => {
+  const copyCell = async (id: string, columnKey: ColumnKey, value: FMSExportData[ColumnKey]) => {
     const cellId = `${id}-${columnKey}`;
     await navigator.clipboard.writeText(String(value));
     
@@ -211,7 +211,7 @@ export default function FMSExport() {
     });
   };
 
-  const formatCellValue = (key: ColumnKey, value: LMNExportData[ColumnKey]) => {
+  const formatCellValue = (key: ColumnKey, value: FMSExportData[ColumnKey]) => {
     if (key === 'equipmentName') return String(value);
     if (key === 'usefulLife') return String(value);
     if (key === 'cogsPercent' || key === 'overheadPercent') return `${value}%`;

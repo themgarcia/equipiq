@@ -44,7 +44,7 @@ The assumptions here are designed to protect your margin and ensure equipment co
 
 **What this app IS:**
 - A planning tool for equipment decisions
-- A way to feed accurate data into LMN
+- A way to feed accurate data into your FMS
 - A system for protecting your margins
     `.trim(),
   },
@@ -125,7 +125,7 @@ You can always override the default on individual items if you have a specific s
 - 70/30 COGS/Overhead if it's sometimes used for estimates
 - 50/50 if it serves dual purposes equally
 
-**Why this matters:** LMN and other budgeting tools need this split to calculate accurate job rates. Getting it wrong means either:
+**Why this matters:** FMS tools like LMN, Aspire, and Service Autopilot need this split to calculate accurate job rates. Getting it wrong means either:
 - Underpricing jobs (losing money)
 - Overpricing jobs (losing work)
 
@@ -133,22 +133,22 @@ Be honest with yourself about how equipment is actually used.
     `.trim(),
   },
   {
-    id: 'lmn-workflow',
+    id: 'fms-workflow',
     icon: ArrowRight,
-    title: 'How This App Fits Into LMN Workflows',
+    title: 'How This App Fits Into FMS Workflows',
     content: `
-This app is designed to feed data into LMN's **Owned Equipment Calculator**. Here's the workflow:
+This app is designed to feed data into your **Field Management Software (FMS)**. Here's the workflow:
 
 1. **Track all equipment here** — Keep one source of truth for your entire fleet
 
 2. **Set allocations thoughtfully** — Decide COGS vs. Overhead percentages based on actual use
 
-3. **Export to LMN** — Use the LMN Export view to get copy-ready data
+3. **Export to FMS** — Use the FMS Export view to get copy-ready data
 
-4. **Paste into LMN** — The export format matches what LMN expects
+4. **Paste into your FMS** — The export format matches what most FMS tools expect
 
 **What this app does NOT do:**
-- Calculate hourly equipment rates (that's LMN's job)
+- Calculate hourly equipment rates (that's your FMS's job)
 - Create estimates or quotes
 - Handle depreciation for tax purposes
 - Replace your accountant
@@ -156,7 +156,7 @@ This app is designed to feed data into LMN's **Owned Equipment Calculator**. Her
 **What this app DOES do:**
 - Keep your equipment data organized
 - Make allocation decisions explicit and visible
-- Speed up LMN data entry
+- Speed up FMS data entry
 - Prevent spreadsheet errors
 - Help you plan for replacement
     `.trim(),
@@ -346,7 +346,7 @@ This represents how much equipment value is "recovered" through job pricing each
 - Useful life: 10 years
 - Annual recovery: $6,000/year
 
-**This is the same as the annual depreciation used in LMN pricing.**
+**This is the same as the annual depreciation used in FMS pricing.**
 
 When you compare this to your annual financing payments, you can see:
 - If recovery > payments: You're pricing enough to cover cash outflow AND build equity

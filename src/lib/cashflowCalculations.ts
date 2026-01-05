@@ -3,7 +3,7 @@
  * 
  * IMPORTANT: This file calculates financing/cashflow metrics ONLY for visibility.
  * These calculations are completely separate from pricing logic.
- * They do NOT affect equipment pricing, Buy vs Rent, or LMN exports.
+ * They do NOT affect equipment pricing, Buy vs Rent, or FMS exports.
  */
 
 import { 

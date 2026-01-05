@@ -1,4 +1,4 @@
-import { Equipment, EquipmentCalculated, LMNExportData, CategoryDefaults } from '@/types/equipment';
+import { Equipment, EquipmentCalculated, FMSExportData, CategoryDefaults } from '@/types/equipment';
 import { getCategoryDefaults as getStaticCategoryDefaults } from '@/data/categoryDefaults';
 
 const ANNUAL_INFLATION_RATE = 0.03; // 3% annual inflation
@@ -90,7 +90,7 @@ export function calculateEquipment(
   };
 }
 
-export function toLMNExport(equipment: EquipmentCalculated): LMNExportData {
+export function toFMSExport(equipment: EquipmentCalculated): FMSExportData {
   const additionalFees = equipment.salesTax + equipment.freightSetup + equipment.otherCapEx;
   
   return {
