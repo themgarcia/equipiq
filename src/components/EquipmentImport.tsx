@@ -22,12 +22,13 @@ interface ExtractedEquipment {
   buyoutAmount: number | null;
   confidence: 'high' | 'medium' | 'low';
   notes: string | null;
+  sourceFile?: File;
 }
 
 interface EquipmentImportProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onEquipmentExtracted: (equipment: ExtractedEquipment[], sourceFile?: File) => void;
+  onEquipmentExtracted: (equipment: ExtractedEquipment[]) => void;
 }
 
 interface UploadedFile {
@@ -176,7 +177,12 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
         }
 
         if (data.equipment && data.equipment.length > 0) {
-          allExtractedEquipment.push(...data.equipment);
+          // Attach the source file to each equipment item extracted from this document
+          const equipmentWithSource = data.equipment.map((eq: ExtractedEquipment) => ({
+            ...eq,
+            sourceFile: file,
+          }));
+          allExtractedEquipment.push(...equipmentWithSource);
         } else {
           toast({
             title: "No Equipment Found",
@@ -186,9 +192,7 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
       }
 
       if (allExtractedEquipment.length > 0) {
-        // Pass the first file as source document for attachment
-        const sourceFile = files.length === 1 ? files[0].file : undefined;
-        onEquipmentExtracted(allExtractedEquipment, sourceFile);
+        onEquipmentExtracted(allExtractedEquipment);
         setFiles([]);
         onOpenChange(false);
         toast({

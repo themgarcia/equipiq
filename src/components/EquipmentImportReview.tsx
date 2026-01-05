@@ -33,6 +33,7 @@ interface ExtractedEquipment {
   suggestedParentIndex?: number | null;
   purchaseCondition?: 'new' | 'used' | null;
   suggestedCategory?: EquipmentCategory | null;
+  sourceFile?: File;
 }
 
 type DuplicateStatus = 'none' | 'exact' | 'potential';
@@ -65,7 +66,6 @@ interface EquipmentImportReviewProps {
   onOpenChange: (open: boolean) => void;
   extractedEquipment: ExtractedEquipment[];
   onComplete: () => void;
-  sourceFile?: File; // Original file that was parsed
 }
 
 const CATEGORIES: EquipmentCategory[] = [
@@ -275,8 +275,7 @@ export function EquipmentImportReview({
   open, 
   onOpenChange, 
   extractedEquipment,
-  onComplete,
-  sourceFile
+  onComplete
 }: EquipmentImportReviewProps) {
   const { addEquipment, updateEquipment, equipment, uploadDocument, addAttachment } = useEquipment();
   const [isImporting, setIsImporting] = useState(false);
@@ -693,13 +692,27 @@ export function EquipmentImportReview({
         }
       }
 
-      // Attach source document if requested
-      if (attachSourceDocument && sourceFile && importedEquipmentIds.length > 0) {
-        // Attach to the first updated/imported item
-        try {
-          await uploadDocument(importedEquipmentIds[0], sourceFile, 'Source document from import');
-        } catch (error) {
-          console.error('Failed to attach source document:', error);
+      // Attach source documents to their respective equipment items
+      if (attachSourceDocument) {
+        for (const eq of toProcess) {
+          if (eq.sourceFile) {
+            // Find the real equipment ID for this item
+            let equipmentId: string | undefined;
+            
+            if (eq.importMode === 'new') {
+              equipmentId = tempIdToRealId.get(eq.tempId);
+            } else if (eq.importMode === 'update_existing' && eq.matchedEquipmentId) {
+              equipmentId = eq.matchedEquipmentId;
+            }
+            
+            if (equipmentId) {
+              try {
+                await uploadDocument(equipmentId, eq.sourceFile, 'Source document from import');
+              } catch (error) {
+                console.error(`Failed to attach source document to equipment ${equipmentId}:`, error);
+              }
+            }
+          }
         }
       }
 
@@ -806,7 +819,7 @@ export function EquipmentImportReview({
           </div>
 
           {/* Attach Source Document Option */}
-          {sourceFile && (
+          {editableEquipment.some(eq => eq.sourceFile) && (
             <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
               <Checkbox
                 checked={attachSourceDocument}
@@ -814,7 +827,7 @@ export function EquipmentImportReview({
               />
               <FileText className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">
-                Attach source document ({sourceFile.name}) to imported items
+                Attach source documents to their respective equipment items
               </span>
             </div>
           )}
