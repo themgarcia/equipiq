@@ -34,11 +34,23 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication
+    // Verify authentication manually (verify_jwt is disabled in config)
     const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
+    
     if (!authHeader) {
       console.error('No authorization header provided');
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'Unauthorized - no auth header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Extract the token from the Bearer header
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    if (!token) {
+      console.error('No token found in auth header');
+      return new Response(JSON.stringify({ error: 'Unauthorized - no token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -46,14 +58,14 @@ serve(async (req) => {
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    // Verify the token explicitly
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) {
-      console.error('Auth error:', authError?.message || 'No user found');
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      console.error('Auth verification failed:', authError?.message || 'No user found');
+      return new Response(JSON.stringify({ error: 'Unauthorized - invalid token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

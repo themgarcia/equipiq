@@ -300,16 +300,15 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
             </p>
           </div>
 
-          {/* Processing Status */}
-            {/* Processing Status - always reserve space to prevent layout shift */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 h-5">
-              {isProcessing && (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
-                  <span className="truncate min-w-0">{processingStatus}</span>
-                </>
-              )}
-            </div>
+          {/* Processing Status - always reserve space to prevent layout shift */}
+          <div className="flex items-start gap-2 text-sm text-muted-foreground min-w-0 min-h-[1.25rem]">
+            {isProcessing && (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin flex-shrink-0 mt-0.5" />
+                <span className="break-all whitespace-normal min-w-0">{processingStatus}</span>
+              </>
+            )}
+          </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-2">
