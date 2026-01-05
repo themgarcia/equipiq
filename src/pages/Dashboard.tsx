@@ -12,11 +12,13 @@ import {
   ArrowRight,
   CreditCard,
   Calendar,
-  Wrench
+  Wrench,
+  Info
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
 
 export default function Dashboard() {
@@ -164,7 +166,19 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalOutstandingDebt)}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Equity Ratio</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-sm text-muted-foreground">Equity Ratio</p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Percentage of your fleet's value you own outright. 100% = no debt. Higher is better for financial stability.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <p className="text-2xl font-bold font-mono-nums">
                   {totalCostBasis > 0 ? formatPercent((totalCostBasis - totalOutstandingDebt) / totalCostBasis) : '100%'}
                 </p>
@@ -243,7 +257,7 @@ export default function Dashboard() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <RechartsTooltip 
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;

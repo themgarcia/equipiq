@@ -5,7 +5,7 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
-import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale, Shield, TrendingUp, Wallet } from 'lucide-react';
+import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale, Shield, TrendingUp, Wallet, Percent } from 'lucide-react';
 
 const definitions = [
   {
@@ -358,6 +358,47 @@ When you compare this to your annual financing payments, you can see:
 - Deposits are immediate cash out, but recovery spreads over years
 
 **The key insight:** A temporary shortfall is normal. What matters is that over the full useful life, you recover the full replacement value through pricing.
+    `.trim(),
+  },
+  {
+    id: 'equity-ratio',
+    icon: Percent,
+    title: 'Equity Ratio',
+    content: `
+**Equity Ratio = (Total Cost Basis - Outstanding Debt) ÷ Total Cost Basis × 100**
+
+This percentage shows how much of your equipment fleet you actually own versus how much you still owe.
+
+**What the numbers mean:**
+
+| Equity Ratio | Meaning |
+|--------------|---------|
+| 100% | You own everything outright — no debt |
+| 75% | You own 3/4 of your fleet's value |
+| 50% | Half your fleet value is still owed |
+| 25% | Most of your fleet is financed |
+| 0% | All equipment is fully leveraged |
+
+**Why it matters:**
+
+- **Financial Health Indicator** — Banks and lenders look at this when you apply for financing
+- **Borrowing Power** — Higher equity means more capacity to finance new equipment
+- **Risk Assessment** — Lower equity means more exposure if revenue drops
+- **Exit Planning** — If you sold everything today, equity ratio shows what you'd keep after paying off debt
+
+**Example calculation:**
+
+- Total Cost Basis: $500,000
+- Outstanding Debt: $150,000
+- Equity Ratio: ($500,000 - $150,000) ÷ $500,000 = 70%
+
+This means you own 70% of your fleet's value outright.
+
+**Important notes:**
+
+- This is based on cost basis, not current market value
+- A low equity ratio isn't necessarily bad — it might mean you're investing in growth
+- New equipment purchases temporarily lower equity ratio until payments are made
     `.trim(),
   },
 ];
