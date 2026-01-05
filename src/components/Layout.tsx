@@ -186,9 +186,11 @@ function AppSidebar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem disabled className="text-muted-foreground">
-                <User className="h-4 w-4 mr-2" />
-                Profile (coming soon)
+              <DropdownMenuItem asChild>
+                <Link to="/profile">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </Link>
               </DropdownMenuItem>
               {isAdmin && (
                 <>
@@ -310,9 +312,11 @@ function PhoneHeader() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem disabled className="text-muted-foreground">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile (coming soon)
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">
+                      <User className="h-4 w-4 mr-2" />
+                      Profile
+                    </Link>
                   </DropdownMenuItem>
                   {isAdmin && (
                     <>
