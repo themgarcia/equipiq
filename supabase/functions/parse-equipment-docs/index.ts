@@ -6,6 +6,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+type EquipmentCategory = 
+  | 'Compaction (Heavy)'
+  | 'Compaction (Light)'
+  | 'Excavator – Compact (≤ 6 ton)'
+  | 'Excavator – Mid-Size (6–12 ton)'
+  | 'Excavator – Large (12+ ton)'
+  | 'Handheld Power Tools'
+  | 'Large Demo & Specialty Tools'
+  | 'Lawn (Commercial)'
+  | 'Lawn (Handheld)'
+  | 'Loader – Skid Steer Mini'
+  | 'Loader – Skid Steer'
+  | 'Loader – Mid-Size'
+  | 'Loader – Wheel / Large'
+  | 'Shop / Other'
+  | 'Snow Equipment'
+  | 'Trailer'
+  | 'Vehicle (Commercial)'
+  | 'Vehicle (Light-Duty)';
+
 interface ExtractedEquipment {
   make: string;
   model: string;
@@ -26,6 +46,7 @@ interface ExtractedEquipment {
   suggestedType: 'equipment' | 'attachment';
   suggestedParentIndex: number | null;
   purchaseCondition: 'new' | 'used' | null;
+  suggestedCategory: EquipmentCategory | null;
 }
 
 serve(async (req) => {
@@ -89,12 +110,12 @@ serve(async (req) => {
     const systemPrompt = `You are an equipment data extraction assistant specialized in reading purchase orders, invoices, financing agreements, and lease agreements for landscaping equipment.
 
 Your task is to extract equipment information from the uploaded document. Look for:
-- Make (manufacturer/brand like John Deere, Kubota, Stihl, etc.)
+- Make (manufacturer/brand like John Deere, Kubota, Stihl, Bartell, Wacker Neuson, Bomag, etc.)
 - Model (model number/name)
-- Year (model year if visible)
+- Year (MODEL YEAR - see detailed instructions below)
 - Serial Number or VIN
-- Purchase Condition: "new" if from a dealer as new equipment, "used" if pre-owned, from auction, certified pre-owned, etc.
-- Purchase Date (invoice/order date)
+- Purchase Condition (new vs used - see detailed instructions below)
+- Purchase Date (invoice/order date - this is DIFFERENT from model year)
 - Purchase Price (pre-tax amount for the equipment)
 - Sales Tax (if itemized separately)
 - Freight/Setup charges (delivery or setup fees if listed)
@@ -106,21 +127,68 @@ Your task is to extract equipment information from the uploaded document. Look f
   - Term in months
   - Buyout amount (for leases)
 
-Be thorough and extract ALL equipment items if the document contains multiple pieces of equipment.
-If a field is not clearly visible in the document, set it to null.
-Set confidence to "high" if the data is clearly legible, "medium" if somewhat unclear, or "low" if you had to make assumptions.
+CATEGORY CLASSIFICATION (REQUIRED):
+You MUST suggest a category for each piece of equipment. Valid categories:
+- "Compaction (Light)": Tamping rammers, vibratory rammers, jumping jacks, walk-behind plate compactors (Bartell, Wacker Neuson, Bomag handheld units)
+- "Compaction (Heavy)": Ride-on rollers, large plate compactors (500+ lbs), trench rollers
+- "Excavator – Compact (≤ 6 ton)": Mini excavators under 6 tons (Kubota KX, CAT 303, Bobcat E35)
+- "Excavator – Mid-Size (6–12 ton)": Medium excavators 6-12 tons
+- "Excavator – Large (12+ ton)": Large excavators over 12 tons
+- "Handheld Power Tools": Battery/gas powered hand tools, drills, demo saws
+- "Large Demo & Specialty Tools": Walk-behind concrete saws, stump grinders, core drills
+- "Lawn (Commercial)": Zero-turn mowers, stand-on mowers, walk-behind commercial mowers
+- "Lawn (Handheld)": String trimmers, blowers, edgers, hedge trimmers, chainsaws
+- "Loader – Skid Steer Mini": Ditch Witch, Vermeer, Toro Dingo mini skid steers
+- "Loader – Skid Steer": Wheeled skid steers, compact track loaders (Bobcat, CAT, Case)
+- "Loader – Mid-Size": Larger CTLs, smaller wheel loaders
+- "Loader – Wheel / Large": Full wheel loaders, articulated loaders
+- "Shop / Other": Generators, pressure washers, shop equipment, compressors
+- "Snow Equipment": Plows, spreaders, snow blowers, salt equipment
+- "Trailer": Equipment trailers, utility trailers, dump trailers
+- "Vehicle (Commercial)": Dump trucks, cab-and-chassis, service body trucks, F-450+
+- "Vehicle (Light-Duty)": Pickups, vans, SUVs, F-150/F-250/F-350
+
+YEAR EXTRACTION (CRITICAL - READ CAREFULLY):
+- "year" = the MODEL YEAR of the equipment (manufacturing year, what year the equipment IS)
+- "purchaseDate" = the invoice/transaction date (when it was purchased)
+- These are DIFFERENT values, especially for USED equipment!
+- For USED equipment, the year is typically OLDER than the purchaseDate
+
+How to find model year:
+1. Look for explicit labels: "Model Year:", "MY:", "Year:", or year in item description
+2. Check model designation for year (e.g., "2019 Model", "23-series")
+3. For used equipment sales, the year is often listed in the item description
+4. If model year cannot be found, set year to null (system will use purchase year as fallback)
+
+PURCHASE CONDITION (CRITICAL):
+Set to "used" if ANY of these apply:
+- Document explicitly says: "USED", "PRE-OWNED", "CERTIFIED PRE-OWNED", "REFURBISHED", "RECONDITIONED"
+- From auction, dealer trade-in, rental fleet sale, or consignment
+- "As-is" language, hour meter readings noted, prior ownership mentioned
+- Limited warranty or shorter than manufacturer's new warranty
+- Keywords: "previously owned", "second-hand", "rental unit"
+
+Set to "new" if:
+- From authorized dealer with no "used" indicators
+- Full manufacturer warranty included
+- Model year matches or is within 1 year of purchase date
+
+If uncertain, set to null and explain in notes.
 
 ATTACHMENT DETECTION:
-Additionally, identify items that appear to be attachments or accessories rather than primary equipment:
+Identify items that appear to be attachments or accessories rather than primary equipment:
 - Buckets, forks, blades, augers, trenchers, grapples, pallet forks, etc.
 - Items with significantly lower value than the main equipment on the same document
 - Items that share financing terms with a larger piece of equipment (same monthly payment line)
 - Items described as "includes", "with", or "accessory" relative to the main equipment
-- Implements, quick-attach accessories, or add-ons
 
 For each item, set:
 - suggestedType: "equipment" for primary machines (loaders, excavators, trucks, mowers), "attachment" for accessories/implements
-- suggestedParentIndex: If this is an attachment, the 0-based index of the likely parent equipment in this extraction, or null if uncertain`;
+- suggestedParentIndex: If this is an attachment, the 0-based index of the likely parent equipment in this extraction, or null if uncertain
+
+Be thorough and extract ALL equipment items if the document contains multiple pieces of equipment.
+If a field is not clearly visible in the document, set it to null.
+Set confidence to "high" if the data is clearly legible, "medium" if somewhat unclear, or "low" if you had to make assumptions.`;
 
     const userPrompt = `Please analyze this document and extract all equipment information. Return the data using the extract_equipment function.`;
 
@@ -198,9 +266,34 @@ For each item, set:
                         suggestedParentIndex: {
                           type: ["number", "null"],
                           description: "For attachments, the 0-based index of the parent equipment in this extraction"
+                        },
+                        suggestedCategory: {
+                          type: ["string", "null"],
+                          enum: [
+                            "Compaction (Heavy)",
+                            "Compaction (Light)",
+                            "Excavator – Compact (≤ 6 ton)",
+                            "Excavator – Mid-Size (6–12 ton)",
+                            "Excavator – Large (12+ ton)",
+                            "Handheld Power Tools",
+                            "Large Demo & Specialty Tools",
+                            "Lawn (Commercial)",
+                            "Lawn (Handheld)",
+                            "Loader – Skid Steer Mini",
+                            "Loader – Skid Steer",
+                            "Loader – Mid-Size",
+                            "Loader – Wheel / Large",
+                            "Shop / Other",
+                            "Snow Equipment",
+                            "Trailer",
+                            "Vehicle (Commercial)",
+                            "Vehicle (Light-Duty)",
+                            null
+                          ],
+                          description: "Suggested equipment category based on make/model analysis"
                         }
                       },
-                      required: ["make", "model", "confidence", "suggestedType"]
+                      required: ["make", "model", "confidence", "suggestedType", "suggestedCategory"]
                     }
                   }
                 },

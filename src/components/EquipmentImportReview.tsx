@@ -32,6 +32,7 @@ interface ExtractedEquipment {
   suggestedType?: 'equipment' | 'attachment';
   suggestedParentIndex?: number | null;
   purchaseCondition?: 'new' | 'used' | null;
+  suggestedCategory?: EquipmentCategory | null;
 }
 
 type DuplicateStatus = 'none' | 'exact' | 'potential';
@@ -56,6 +57,7 @@ interface EditableEquipment extends ExtractedEquipment {
   suggestedParentIndex: number | null;
   selectedParentId?: string; // ID of existing equipment as parent
   selectedParentTempId?: string; // tempId of equipment from this import batch
+  yearDefaultedFromPurchase?: boolean;
 }
 
 interface EquipmentImportReviewProps {
@@ -192,8 +194,10 @@ const guessCategory = (make: string, model: string): EquipmentCategory => {
   if (combined.includes('excavator') || combined.includes('mini ex') || combined.includes('digger')) {
     return 'Excavator – Compact (≤ 6 ton)';
   }
-  if (combined.includes('compactor') || combined.includes('roller') || combined.includes('plate')) {
-    if (combined.includes('walk') || combined.includes('plate') || combined.includes('jumping')) {
+if (combined.includes('compactor') || combined.includes('roller') || combined.includes('plate') || 
+      combined.includes('rammer') || combined.includes('tamping') || combined.includes('tamper')) {
+    if (combined.includes('walk') || combined.includes('plate') || combined.includes('jumping') || 
+        combined.includes('rammer') || combined.includes('tamping') || combined.includes('tamper')) {
       return 'Compaction (Light)';
     }
     return 'Compaction (Heavy)';
@@ -396,7 +400,8 @@ export function EquipmentImportReview({
         ...eq,
         tempId: `import-${index}-${Date.now()}`,
         selected: defaultMode !== 'skip',
-        category: guessCategory(eq.make, eq.model),
+        category: eq.suggestedCategory || guessCategory(eq.make, eq.model),
+        yearDefaultedFromPurchase: !eq.year && !!eq.purchaseDate,
         duplicateStatus: duplicateCheck.status,
         duplicateReason: duplicateCheck.reason,
         matchedEquipmentId: duplicateCheck.matchedId,
@@ -635,7 +640,7 @@ export function EquipmentImportReview({
             name: `${eq.make} ${eq.model}`,
             make: eq.make,
             model: eq.model,
-            year: eq.year || new Date().getFullYear(),
+            year: eq.year || (eq.purchaseDate ? new Date(eq.purchaseDate).getFullYear() : new Date().getFullYear()),
             category: eq.category,
             status: 'Active',
             serialVin: eq.serialVin || undefined,
@@ -644,8 +649,8 @@ export function EquipmentImportReview({
             salesTax: eq.salesTax || 0,
             freightSetup: eq.freightSetup || 0,
             otherCapEx: 0,
-            cogsPercent: 80,
-            replacementCostNew: eq.purchasePrice || 0,
+            cogsPercent: 100,
+            replacementCostNew: 0,
             financingType: (eq.financingType as FinancingType) || 'owned',
             depositAmount: eq.depositAmount || 0,
             financedAmount: eq.financedAmount || 0,
