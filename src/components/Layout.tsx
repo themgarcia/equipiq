@@ -12,11 +12,14 @@ import {
   User,
   Menu,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  Shield,
+  ShieldCheck
 } from 'lucide-react';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminMode } from '@/contexts/AdminModeContext';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import {
@@ -86,10 +89,16 @@ function SidebarToggleButton() {
 function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin, adminModeActive, toggleAdminMode } = useAdminMode();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+
+  // Build navigation with admin item if in admin mode
+  const navItems = adminModeActive
+    ? [...navigation, { name: 'Admin', href: '/admin', icon: Shield }]
+    : navigation;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -113,7 +122,7 @@ function AppSidebar() {
 
       <SidebarContent className="px-2 py-4">
         <SidebarMenu>
-          {navigation.map((item) => {
+          {navItems.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <SidebarMenuItem key={item.name}>
@@ -181,6 +190,24 @@ function AppSidebar() {
                 <User className="h-4 w-4 mr-2" />
                 Profile (coming soon)
               </DropdownMenuItem>
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={toggleAdminMode}>
+                    {adminModeActive ? (
+                      <>
+                        <ShieldCheck className="h-4 w-4 mr-2 text-primary" />
+                        Exit Admin Mode
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="h-4 w-4 mr-2" />
+                        Switch to Admin Mode
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={signOut} className="text-destructive">
                 <LogOut className="h-4 w-4 mr-2" />
@@ -205,7 +232,13 @@ function AppSidebar() {
 function PhoneHeader() {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin, adminModeActive, toggleAdminMode } = useAdminMode();
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+
+  // Build navigation with admin item if in admin mode
+  const navItems = adminModeActive
+    ? [...navigation, { name: 'Admin', href: '/admin', icon: Shield }]
+    : navigation;
 
   return (
     <header className="sticky top-0 z-50 h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4">
@@ -232,7 +265,7 @@ function PhoneHeader() {
 
             {/* Navigation */}
             <nav className="flex-1 space-y-1 px-3 py-4">
-              {navigation.map((item) => {
+              {navItems.map((item) => {
                 const isActive = location.pathname === item.href;
                 return (
                   <Link
@@ -281,6 +314,24 @@ function PhoneHeader() {
                     <User className="h-4 w-4 mr-2" />
                     Profile (coming soon)
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={toggleAdminMode}>
+                        {adminModeActive ? (
+                          <>
+                            <ShieldCheck className="h-4 w-4 mr-2 text-primary" />
+                            Exit Admin Mode
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="h-4 w-4 mr-2" />
+                            Switch to Admin Mode
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} className="text-destructive">
                     <LogOut className="h-4 w-4 mr-2" />
