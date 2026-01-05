@@ -92,8 +92,8 @@ export interface EquipmentCalculated extends Equipment {
   roiPercent?: number;
 }
 
-// LMN Export format
-export interface LMNExportData {
+// FMS Export format
+export interface FMSExportData {
   equipmentName: string; // Format: "Category - Item Name"
   purchasePrice: number;
   additionalPurchaseFees: number;
