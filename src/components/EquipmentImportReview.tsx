@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,13 +32,17 @@ interface ExtractedEquipment {
 
 type DuplicateStatus = 'none' | 'exact' | 'potential';
 type DuplicateFilter = 'all' | 'no-duplicates' | 'only-duplicates';
+type DuplicateReason = 'serial' | 'year' | 'price' | 'date' | null;
 
 interface EditableEquipment extends ExtractedEquipment {
+  tempId: string; // Stable identifier for row updates
   selected: boolean;
   category: EquipmentCategory;
   duplicateStatus: DuplicateStatus;
+  duplicateReason: DuplicateReason;
   matchedEquipmentId?: string;
   matchedEquipmentName?: string;
+  matchedPurchaseDate?: string;
 }
 
 interface EquipmentImportReviewProps {
@@ -68,6 +72,68 @@ const CATEGORIES: EquipmentCategory[] = [
   'Vehicle (Commercial)',
   'Vehicle (Light-Duty)',
 ];
+
+// Normalize serial/VIN for comparison: lowercase, remove spaces/hyphens/non-alphanumeric
+const normalizeSerial = (serial: string | null | undefined): string => {
+  if (!serial) return '';
+  return serial.toLowerCase().replace(/[^a-z0-9]/g, '');
+};
+
+// Normalize make/model for fuzzy matching: lowercase, remove non-alphanumeric, collapse spaces
+const normalizeKey = (text: string | null | undefined): string => {
+  if (!text) return '';
+  return text.toLowerCase().replace(/[^a-z0-9]/g, '');
+};
+
+// Parse date string safely (handles YYYY-MM-DD and MM/DD/YYYY)
+const parseDate = (dateStr: string | null | undefined): Date | null => {
+  if (!dateStr) return null;
+  // Handle ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss)
+  const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
+  }
+  // Handle MM/DD/YYYY format
+  const usMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (usMatch) {
+    return new Date(parseInt(usMatch[3]), parseInt(usMatch[1]) - 1, parseInt(usMatch[2]));
+  }
+  return null;
+};
+
+// Calculate days difference between two dates
+const daysDifference = (date1: Date, date2: Date): number => {
+  const msPerDay = 1000 * 60 * 60 * 24;
+  return Math.abs(Math.floor((date1.getTime() - date2.getTime()) / msPerDay));
+};
+
+// Check if two make/model pairs match (fuzzy)
+const modelsMatch = (
+  extractedMake: string, 
+  extractedModel: string, 
+  existingMake: string, 
+  existingModel: string
+): boolean => {
+  const exMake = normalizeKey(extractedMake);
+  const exModel = normalizeKey(extractedModel);
+  const esMake = normalizeKey(existingMake);
+  const esModel = normalizeKey(existingModel);
+  
+  // Require minimum length to avoid false positives
+  if (exMake.length < 2 || esModel.length < 2) return false;
+  
+  // Make matches if one contains the other (or exact)
+  const makeMatches = exMake === esMake || 
+    (exMake.length >= 3 && esMake.includes(exMake)) || 
+    (esMake.length >= 3 && exMake.includes(esMake));
+  
+  // Model matches if one contains the other (or exact)
+  const modelMatches = exModel === esModel || 
+    (exModel.length >= 3 && esModel.includes(exModel)) || 
+    (esModel.length >= 3 && exModel.includes(esModel));
+  
+  return makeMatches && modelMatches;
+};
 
 // Guess category based on make/model
 const guessCategory = (make: string, model: string): EquipmentCategory => {
@@ -134,86 +200,100 @@ export function EquipmentImportReview({
   
   const [editableEquipment, setEditableEquipment] = useState<EditableEquipment[]>([]);
 
-  // Check for duplicates when component mounts or equipment changes
-  useEffect(() => {
-    const checkForDuplicates = (extracted: ExtractedEquipment): { 
-      status: DuplicateStatus; 
-      matchedId?: string; 
-      matchedName?: string;
-    } => {
-      const normalizedSerial = extracted.serialVin?.toLowerCase().trim();
+  // Duplicate checking function - memoized so it can be reused
+  const checkForDuplicates = useCallback((extracted: Partial<EditableEquipment>): { 
+    status: DuplicateStatus; 
+    reason: DuplicateReason;
+    matchedId?: string; 
+    matchedName?: string;
+    matchedPurchaseDate?: string;
+  } => {
+    const normalizedSerial = normalizeSerial(extracted.serialVin);
+    
+    for (const existing of equipment) {
+      // Exact match: Serial/VIN (normalized)
+      const existingSerialNorm = normalizeSerial(existing.serialVin);
+      if (normalizedSerial && existingSerialNorm && normalizedSerial === existingSerialNorm) {
+        return { 
+          status: 'exact', 
+          reason: 'serial',
+          matchedId: existing.id, 
+          matchedName: `${existing.year} ${existing.make} ${existing.model}` 
+        };
+      }
       
-      for (const existing of equipment) {
-        // Exact match: Serial/VIN
-        if (normalizedSerial && existing.serialVin) {
-          const existingSerial = existing.serialVin.toLowerCase().trim();
-          if (normalizedSerial === existingSerial) {
-            return { 
-              status: 'exact', 
-              matchedId: existing.id, 
-              matchedName: `${existing.year} ${existing.make} ${existing.model}` 
-            };
-          }
-        }
-        
-        // Potential match: Make + Model + Year
-        const sameModel = 
-          extracted.make.toLowerCase().trim() === existing.make.toLowerCase().trim() &&
-          extracted.model.toLowerCase().trim() === existing.model.toLowerCase().trim();
-        
-        if (sameModel && extracted.year === existing.year) {
+      // Check if make/model match (fuzzy)
+      const sameModel = modelsMatch(
+        extracted.make || '', 
+        extracted.model || '', 
+        existing.make, 
+        existing.model
+      );
+      
+      if (!sameModel) continue;
+      
+      // Potential match: Make + Model + Year
+      if (extracted.year === existing.year) {
+        return { 
+          status: 'potential', 
+          reason: 'year',
+          matchedId: existing.id, 
+          matchedName: `${existing.year} ${existing.make} ${existing.model}` 
+        };
+      }
+      
+      // Potential match: Make + Model with similar purchase price (within 10%)
+      if (extracted.purchasePrice && existing.purchasePrice) {
+        const priceDiff = Math.abs(extracted.purchasePrice - existing.purchasePrice) / existing.purchasePrice;
+        if (priceDiff <= 0.1) {
           return { 
             status: 'potential', 
+            reason: 'price',
             matchedId: existing.id, 
             matchedName: `${existing.year} ${existing.make} ${existing.model}` 
           };
         }
-        
-        // Potential match: Make + Model with similar purchase price
-        if (sameModel && extracted.purchasePrice && existing.purchasePrice) {
-          const priceDiff = Math.abs(extracted.purchasePrice - existing.purchasePrice) / existing.purchasePrice;
-          if (priceDiff <= 0.1) { // Within 10%
-            return { 
-              status: 'potential', 
-              matchedId: existing.id, 
-              matchedName: `${existing.year} ${existing.make} ${existing.model}` 
-            };
-          }
-        }
-        
-        // Potential match: Make + Model with purchase date within 30 days
-        if (sameModel && extracted.purchaseDate && existing.purchaseDate) {
-          const extractedDate = new Date(extracted.purchaseDate);
-          const existingDate = new Date(existing.purchaseDate);
-          const daysDiff = Math.abs(extractedDate.getTime() - existingDate.getTime()) / (1000 * 60 * 60 * 24);
-          
-          if (daysDiff <= 30) {
-            return { 
-              status: 'potential', 
-              matchedId: existing.id, 
-              matchedName: `${existing.year} ${existing.make} ${existing.model}` 
-            };
-          }
-        }
       }
       
-      return { status: 'none' };
-    };
+      // Potential match: Make + Model with purchase date within 30 days
+      const extractedDate = parseDate(extracted.purchaseDate);
+      const existingDate = parseDate(existing.purchaseDate);
+      if (extractedDate && existingDate) {
+        const daysDiff = daysDifference(extractedDate, existingDate);
+        if (daysDiff <= 30) {
+          return { 
+            status: 'potential', 
+            reason: 'date',
+            matchedId: existing.id, 
+            matchedName: `${existing.year} ${existing.make} ${existing.model}`,
+            matchedPurchaseDate: existing.purchaseDate
+          };
+        }
+      }
+    }
+    
+    return { status: 'none', reason: null };
+  }, [equipment]);
 
-    const mapped = extractedEquipment.map(eq => {
+  // Initialize editable equipment when extractedEquipment changes
+  useEffect(() => {
+    const mapped = extractedEquipment.map((eq, index) => {
       const duplicateCheck = checkForDuplicates(eq);
       return {
         ...eq,
+        tempId: `import-${index}-${Date.now()}`, // Stable ID for this import session
         selected: duplicateCheck.status !== 'exact', // Pre-deselect exact duplicates
         category: guessCategory(eq.make, eq.model),
         duplicateStatus: duplicateCheck.status,
+        duplicateReason: duplicateCheck.reason,
         matchedEquipmentId: duplicateCheck.matchedId,
         matchedEquipmentName: duplicateCheck.matchedName,
+        matchedPurchaseDate: duplicateCheck.matchedPurchaseDate,
       };
     });
     
     setEditableEquipment(mapped);
-  }, [extractedEquipment, equipment]);
+  }, [extractedEquipment, checkForDuplicates]);
 
   // Duplicate counts
   const duplicateCounts = useMemo(() => {
@@ -234,9 +314,34 @@ export function EquipmentImportReview({
     }
   }, [editableEquipment, duplicateFilter]);
 
-  const updateEquipment = (index: number, field: keyof EditableEquipment, value: any) => {
+  // Fields that should trigger re-checking duplicates
+  const duplicateCheckFields: (keyof EditableEquipment)[] = [
+    'make', 'model', 'year', 'serialVin', 'purchaseDate', 'purchasePrice'
+  ];
+
+  const updateEquipment = (tempId: string, field: keyof EditableEquipment, value: any) => {
     setEditableEquipment(prev => 
-      prev.map((eq, i) => i === index ? { ...eq, [field]: value } : eq)
+      prev.map((eq) => {
+        if (eq.tempId !== tempId) return eq;
+        
+        const updated = { ...eq, [field]: value };
+        
+        // Re-check duplicates if a relevant field changed
+        if (duplicateCheckFields.includes(field)) {
+          const duplicateCheck = checkForDuplicates(updated);
+          updated.duplicateStatus = duplicateCheck.status;
+          updated.duplicateReason = duplicateCheck.reason;
+          updated.matchedEquipmentId = duplicateCheck.matchedId;
+          updated.matchedEquipmentName = duplicateCheck.matchedName;
+          updated.matchedPurchaseDate = duplicateCheck.matchedPurchaseDate;
+          // Auto-deselect exact duplicates
+          if (duplicateCheck.status === 'exact') {
+            updated.selected = false;
+          }
+        }
+        
+        return updated;
+      })
     );
   };
 
@@ -251,15 +356,30 @@ export function EquipmentImportReview({
       return (
         <div className="flex items-center gap-1.5 text-xs text-destructive bg-destructive/10 px-2 py-1 rounded">
           <Copy className="h-3 w-3" />
-          <span>Duplicate: matches "{eq.matchedEquipmentName}"</span>
+          <span>Duplicate: matches "{eq.matchedEquipmentName}" (same serial/VIN)</span>
         </div>
       );
     }
     if (eq.duplicateStatus === 'potential') {
+      let reasonText = 'similar to';
+      if (eq.duplicateReason === 'year') {
+        reasonText = 'same make/model/year as';
+      } else if (eq.duplicateReason === 'price') {
+        reasonText = 'same make/model, similar price as';
+      } else if (eq.duplicateReason === 'date') {
+        const dateInfo = eq.matchedPurchaseDate ? ` (purchased ${eq.matchedPurchaseDate})` : '';
+        reasonText = `same make/model, date within 30 days of`;
+        return (
+          <div className="flex items-center gap-1.5 text-xs text-yellow-600 bg-yellow-500/10 px-2 py-1 rounded">
+            <AlertCircle className="h-3 w-3" />
+            <span>Possible duplicate: {reasonText} "{eq.matchedEquipmentName}"{dateInfo}</span>
+          </div>
+        );
+      }
       return (
         <div className="flex items-center gap-1.5 text-xs text-yellow-600 bg-yellow-500/10 px-2 py-1 rounded">
           <AlertCircle className="h-3 w-3" />
-          <span>Possible duplicate: similar to "{eq.matchedEquipmentName}"</span>
+          <span>Possible duplicate: {reasonText} "{eq.matchedEquipmentName}"</span>
         </div>
       );
     }
@@ -404,13 +524,9 @@ export function EquipmentImportReview({
           {/* Equipment List */}
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-4">
-              {filteredEquipment.map((eq) => {
-                const originalIndex = editableEquipment.findIndex(
-                  e => e.make === eq.make && e.model === eq.model && e.serialVin === eq.serialVin
-                );
-                return (
+              {filteredEquipment.map((eq) => (
                 <div
-                  key={originalIndex}
+                  key={eq.tempId}
                   className={`border rounded-lg p-4 space-y-3 ${
                     eq.duplicateStatus === 'exact' 
                       ? 'border-destructive/50 bg-destructive/5' 
@@ -425,7 +541,7 @@ export function EquipmentImportReview({
                     <div className="flex items-center gap-3">
                       <Checkbox
                         checked={eq.selected}
-                        onCheckedChange={(checked) => updateEquipment(originalIndex, 'selected', !!checked)}
+                        onCheckedChange={(checked) => updateEquipment(eq.tempId, 'selected', !!checked)}
                       />
                       <div className="space-y-1">
                         <p className="font-medium">{eq.make} {eq.model}</p>
@@ -444,7 +560,7 @@ export function EquipmentImportReview({
                         <label className="text-xs text-muted-foreground">Category *</label>
                         <Select
                           value={eq.category}
-                          onValueChange={(value) => updateEquipment(originalIndex, 'category', value)}
+                          onValueChange={(value) => updateEquipment(eq.tempId, 'category', value)}
                         >
                           <SelectTrigger className="h-8 text-sm">
                             <SelectValue />
@@ -462,7 +578,7 @@ export function EquipmentImportReview({
                         <Input
                           type="number"
                           value={eq.year || ''}
-                          onChange={(e) => updateEquipment(originalIndex, 'year', e.target.value ? parseInt(e.target.value) : null)}
+                          onChange={(e) => updateEquipment(eq.tempId, 'year', e.target.value ? parseInt(e.target.value) : null)}
                           className="h-8 text-sm"
                           placeholder="Year"
                         />
@@ -472,7 +588,7 @@ export function EquipmentImportReview({
                         <label className="text-xs text-muted-foreground">Serial/VIN</label>
                         <Input
                           value={eq.serialVin || ''}
-                          onChange={(e) => updateEquipment(originalIndex, 'serialVin', e.target.value || null)}
+                          onChange={(e) => updateEquipment(eq.tempId, 'serialVin', e.target.value || null)}
                           className="h-8 text-sm"
                           placeholder="Serial/VIN"
                         />
@@ -483,7 +599,7 @@ export function EquipmentImportReview({
                         <Input
                           type="date"
                           value={eq.purchaseDate || ''}
-                          onChange={(e) => updateEquipment(originalIndex, 'purchaseDate', e.target.value || null)}
+                          onChange={(e) => updateEquipment(eq.tempId, 'purchaseDate', e.target.value || null)}
                           className="h-8 text-sm"
                         />
                       </div>
@@ -493,7 +609,7 @@ export function EquipmentImportReview({
                         <Input
                           type="number"
                           value={eq.purchasePrice || ''}
-                          onChange={(e) => updateEquipment(originalIndex, 'purchasePrice', e.target.value ? parseFloat(e.target.value) : null)}
+                          onChange={(e) => updateEquipment(eq.tempId, 'purchasePrice', e.target.value ? parseFloat(e.target.value) : null)}
                           className="h-8 text-sm"
                           placeholder="$0.00"
                         />
@@ -504,7 +620,7 @@ export function EquipmentImportReview({
                         <Input
                           type="number"
                           value={eq.salesTax || ''}
-                          onChange={(e) => updateEquipment(originalIndex, 'salesTax', e.target.value ? parseFloat(e.target.value) : null)}
+                          onChange={(e) => updateEquipment(eq.tempId, 'salesTax', e.target.value ? parseFloat(e.target.value) : null)}
                           className="h-8 text-sm"
                           placeholder="$0.00"
                         />
@@ -515,7 +631,7 @@ export function EquipmentImportReview({
                         <Input
                           type="number"
                           value={eq.freightSetup || ''}
-                          onChange={(e) => updateEquipment(originalIndex, 'freightSetup', e.target.value ? parseFloat(e.target.value) : null)}
+                          onChange={(e) => updateEquipment(eq.tempId, 'freightSetup', e.target.value ? parseFloat(e.target.value) : null)}
                           className="h-8 text-sm"
                           placeholder="$0.00"
                         />
@@ -525,7 +641,7 @@ export function EquipmentImportReview({
                         <label className="text-xs text-muted-foreground">Financing</label>
                         <Select
                           value={eq.financingType || 'owned'}
-                          onValueChange={(value) => updateEquipment(originalIndex, 'financingType', value)}
+                          onValueChange={(value) => updateEquipment(eq.tempId, 'financingType', value)}
                         >
                           <SelectTrigger className="h-8 text-sm">
                             <SelectValue />
@@ -545,7 +661,7 @@ export function EquipmentImportReview({
                             <Input
                               type="number"
                               value={eq.monthlyPayment || ''}
-                              onChange={(e) => updateEquipment(originalIndex, 'monthlyPayment', e.target.value ? parseFloat(e.target.value) : null)}
+                              onChange={(e) => updateEquipment(eq.tempId, 'monthlyPayment', e.target.value ? parseFloat(e.target.value) : null)}
                               className="h-8 text-sm"
                               placeholder="$0.00"
                             />
@@ -556,7 +672,7 @@ export function EquipmentImportReview({
                             <Input
                               type="number"
                               value={eq.termMonths || ''}
-                              onChange={(e) => updateEquipment(originalIndex, 'termMonths', e.target.value ? parseInt(e.target.value) : null)}
+                              onChange={(e) => updateEquipment(eq.tempId, 'termMonths', e.target.value ? parseInt(e.target.value) : null)}
                               className="h-8 text-sm"
                               placeholder="Months"
                             />
@@ -568,7 +684,7 @@ export function EquipmentImportReview({
                               <Input
                                 type="number"
                                 value={eq.buyoutAmount || ''}
-                                onChange={(e) => updateEquipment(originalIndex, 'buyoutAmount', e.target.value ? parseFloat(e.target.value) : null)}
+                                onChange={(e) => updateEquipment(eq.tempId, 'buyoutAmount', e.target.value ? parseFloat(e.target.value) : null)}
                                 className="h-8 text-sm"
                                 placeholder="$0.00"
                               />
@@ -579,7 +695,7 @@ export function EquipmentImportReview({
                     </div>
                   )}
                 </div>
-              );})}
+              ))}
             </div>
           </ScrollArea>
 
