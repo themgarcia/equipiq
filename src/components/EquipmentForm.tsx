@@ -42,7 +42,7 @@ const defaultFormData: Omit<Equipment, 'id'> = {
   salesTax: 0,
   freightSetup: 0,
   otherCapEx: 0,
-  cogsPercent: 80,
+  cogsPercent: 100,
   replacementCostNew: 0,
   replacementCostAsOfDate: undefined,
   // Financing defaults
