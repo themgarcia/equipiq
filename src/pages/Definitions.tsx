@@ -538,8 +538,8 @@ export default function Definitions() {
                       );
                     }
 
-                    // Check for mixed content: heading followed by bullets
-                    if (paragraph.includes('\n- ')) {
+                    // Check for mixed content: heading followed by bullets (but not if paragraph starts with bullet)
+                    if (paragraph.includes('\n- ') && !paragraph.startsWith('- ')) {
                       const lines = paragraph.split('\n');
                       const headingLine = lines[0];
                       const bulletLines = lines.filter(line => line.startsWith('- '));
