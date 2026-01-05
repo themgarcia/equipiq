@@ -25,8 +25,8 @@ export function calculateBuyVsRent(input: BuyVsRentInput): BuyVsRentResult {
     ? annualOwnershipCost / input.rentalRateDaily 
     : 0;
 
-  // Determine recommendation
-  const recommendation = determineRecommendation(input.usageDaysPerYear, breakEvenDays);
+  // Determine recommendation based on actual cost comparison
+  const recommendation = determineRecommendation(annualOwnershipCost, annualRentalCost);
 
   // Calculate savings
   const annualSavings = Math.abs(annualOwnershipCost - annualRentalCost);
@@ -75,16 +75,22 @@ function calculateOptimalRentalCost(input: BuyVsRentInput): number {
   return Math.min(dailyCost, weeklyCost, monthlyCost);
 }
 
-function determineRecommendation(usageDays: number, breakEvenDays: number): BuyVsRentRecommendation {
-  const upperThreshold = breakEvenDays * (1 + BUFFER_PERCENT);
-  const lowerThreshold = breakEvenDays * (1 - BUFFER_PERCENT);
+function determineRecommendation(
+  annualOwnershipCost: number, 
+  annualRentalCost: number
+): BuyVsRentRecommendation {
+  const maxCost = Math.max(annualOwnershipCost, annualRentalCost);
+  const percentDifference = maxCost > 0 
+    ? Math.abs(annualOwnershipCost - annualRentalCost) / maxCost 
+    : 0;
   
-  if (usageDays > upperThreshold) {
-    return 'BUY';
-  } else if (usageDays < lowerThreshold) {
-    return 'RENT';
-  } else {
+  // If the difference is within 15%, it's a close call
+  if (percentDifference <= BUFFER_PERCENT) {
     return 'CLOSE_CALL';
+  } else if (annualOwnershipCost < annualRentalCost) {
+    return 'BUY';  // Owning costs less
+  } else {
+    return 'RENT'; // Renting costs less
   }
 }
 

@@ -60,9 +60,9 @@ export default function BuyVsRentAnalysis() {
 
   const handleCategoryChange = (category: EquipmentCategory) => {
     const defaults = getCategoryDefaults(category);
-    const resaleValue = input.purchasePrice * (defaults.defaultResalePercent / 100);
-    const maintenance = input.purchasePrice * (defaults.maintenancePercent / 100);
-    const insurance = input.purchasePrice * (defaults.insurancePercent / 100);
+    const resaleValue = Math.round(input.purchasePrice * (defaults.defaultResalePercent / 100));
+    const maintenance = Math.round(input.purchasePrice * (defaults.maintenancePercent / 100));
+    const insurance = Math.round(input.purchasePrice * (defaults.insurancePercent / 100));
 
     setInput(prev => ({
       ...prev,
@@ -76,9 +76,9 @@ export default function BuyVsRentAnalysis() {
 
   const handlePurchasePriceChange = (purchasePrice: number) => {
     const defaults = getCategoryDefaults(input.category);
-    const resaleValue = purchasePrice * (defaults.defaultResalePercent / 100);
-    const maintenance = purchasePrice * (defaults.maintenancePercent / 100);
-    const insurance = purchasePrice * (defaults.insurancePercent / 100);
+    const resaleValue = Math.round(purchasePrice * (defaults.defaultResalePercent / 100));
+    const maintenance = Math.round(purchasePrice * (defaults.maintenancePercent / 100));
+    const insurance = Math.round(purchasePrice * (defaults.insurancePercent / 100));
 
     setInput(prev => ({
       ...prev,
