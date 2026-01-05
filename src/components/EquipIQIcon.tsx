@@ -7,9 +7,9 @@ interface EquipIQIconProps {
 
 export function EquipIQIcon({ size = 'md', className }: EquipIQIconProps) {
   const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-5 w-5',
-    lg: 'h-8 w-8'
+    sm: 'h-6 w-6',
+    md: 'h-8 w-8',
+    lg: 'h-10 w-10'
   };
 
   return (
