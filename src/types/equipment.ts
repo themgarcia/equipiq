@@ -193,3 +193,24 @@ export interface PaybackTimelinePoint {
   cumulativeRecovery: number;
   netPosition: number;
 }
+
+// Equipment Documents
+export interface EquipmentDocument {
+  id: string;
+  equipmentId: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  fileType: string;
+  notes?: string;
+  uploadedAt: string;
+}
+
+// Updatable field for merge functionality
+export interface UpdatableField {
+  field: keyof Equipment;
+  label: string;
+  existingValue: any;
+  importedValue: any;
+  willUpdate: boolean;
+}

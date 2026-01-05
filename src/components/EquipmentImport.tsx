@@ -27,7 +27,7 @@ interface ExtractedEquipment {
 interface EquipmentImportProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onEquipmentExtracted: (equipment: ExtractedEquipment[]) => void;
+  onEquipmentExtracted: (equipment: ExtractedEquipment[], sourceFile?: File) => void;
 }
 
 interface UploadedFile {
@@ -171,7 +171,9 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
       }
 
       if (allExtractedEquipment.length > 0) {
-        onEquipmentExtracted(allExtractedEquipment);
+        // Pass the first file as source document for attachment
+        const sourceFile = files.length === 1 ? files[0].file : undefined;
+        onEquipmentExtracted(allExtractedEquipment, sourceFile);
         setFiles([]);
         onOpenChange(false);
         toast({

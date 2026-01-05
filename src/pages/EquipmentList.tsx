@@ -5,6 +5,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { EquipmentForm } from '@/components/EquipmentForm';
 import { EquipmentImport } from '@/components/EquipmentImport';
 import { EquipmentImportReview } from '@/components/EquipmentImportReview';
+import { EquipmentDocuments } from '@/components/EquipmentDocuments';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +29,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, Upload } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, Upload, FileText } from 'lucide-react';
 import { Equipment, EquipmentStatus } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
 
@@ -66,14 +67,26 @@ export default function EquipmentList() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [extractedEquipment, setExtractedEquipment] = useState<ExtractedEquipment[]>([]);
+  const [importSourceFile, setImportSourceFile] = useState<File | undefined>();
+  const [documentsOpen, setDocumentsOpen] = useState(false);
+  const [documentsEquipmentId, setDocumentsEquipmentId] = useState<string>('');
+  const [documentsEquipmentName, setDocumentsEquipmentName] = useState<string>('');
 
-  const handleEquipmentExtracted = (equipment: ExtractedEquipment[]) => {
+  const handleEquipmentExtracted = (equipment: ExtractedEquipment[], sourceFile?: File) => {
     setExtractedEquipment(equipment);
+    setImportSourceFile(sourceFile);
     setIsReviewOpen(true);
   };
 
   const handleImportComplete = () => {
     setExtractedEquipment([]);
+    setImportSourceFile(undefined);
+  };
+
+  const handleOpenDocuments = (equipment: Equipment) => {
+    setDocumentsEquipmentId(equipment.id);
+    setDocumentsEquipmentName(equipment.name);
+    setDocumentsOpen(true);
   };
 
   const filteredEquipment = useMemo(() => {
@@ -297,19 +310,23 @@ export default function EquipmentList() {
                                       <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEdit(equipment)}>
-                                      <Pencil className="h-4 w-4 mr-2" />
-                                      Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem 
-                                      onClick={() => handleDelete(equipment.id)}
-                                      className="text-destructive"
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
+                                                  <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => handleEdit(equipment)}>
+                                                      <Pencil className="h-4 w-4 mr-2" />
+                                                      Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleOpenDocuments(equipment)}>
+                                                      <FileText className="h-4 w-4 mr-2" />
+                                                      Documents
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem 
+                                                      onClick={() => handleDelete(equipment.id)}
+                                                      className="text-destructive"
+                                                    >
+                                                      <Trash2 className="h-4 w-4 mr-2" />
+                                                      Delete
+                                                    </DropdownMenuItem>
+                                                  </DropdownMenuContent>
                                 </DropdownMenu>
                               </TableCell>
                             </TableRow>
@@ -357,6 +374,15 @@ export default function EquipmentList() {
           onOpenChange={setIsReviewOpen}
           extractedEquipment={extractedEquipment}
           onComplete={handleImportComplete}
+          sourceFile={importSourceFile}
+        />
+
+        {/* Documents Sheet */}
+        <EquipmentDocuments
+          open={documentsOpen}
+          onOpenChange={setDocumentsOpen}
+          equipmentId={documentsEquipmentId}
+          equipmentName={documentsEquipmentName}
         />
       </div>
     </Layout>

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { Equipment, EquipmentCalculated, CategoryDefaults } from '@/types/equipment';
+import { Equipment, EquipmentCalculated, CategoryDefaults, EquipmentDocument } from '@/types/equipment';
 import { categoryDefaults as defaultCategories } from '@/data/categoryDefaults';
 import { calculateEquipment } from '@/lib/calculations';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +16,10 @@ interface EquipmentContextType {
   deleteEquipment: (id: string) => Promise<void>;
   updateCategoryDefaults: (category: string, updates: Partial<CategoryDefaults>) => void;
   refetch: () => Promise<void>;
+  // Document management
+  getDocuments: (equipmentId: string) => Promise<EquipmentDocument[]>;
+  uploadDocument: (equipmentId: string, file: File, notes?: string) => Promise<void>;
+  deleteDocument: (documentId: string, filePath: string) => Promise<void>;
 }
 
 const EquipmentContext = createContext<EquipmentContextType | undefined>(undefined);
@@ -273,6 +277,113 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  // Get documents for an equipment item
+  const getDocuments = useCallback(async (equipmentId: string): Promise<EquipmentDocument[]> => {
+    if (!user) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('equipment_documents')
+        .select('*')
+        .eq('equipment_id', equipmentId)
+        .eq('user_id', user.id)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) throw error;
+
+      return (data || []).map(doc => ({
+        id: doc.id,
+        equipmentId: doc.equipment_id,
+        fileName: doc.file_name,
+        filePath: doc.file_path,
+        fileSize: doc.file_size,
+        fileType: doc.file_type,
+        notes: doc.notes || undefined,
+        uploadedAt: doc.uploaded_at,
+      }));
+    } catch (error: any) {
+      console.error('Failed to load documents:', error);
+      return [];
+    }
+  }, [user]);
+
+  // Upload a document for an equipment item
+  const uploadDocument = useCallback(async (equipmentId: string, file: File, notes?: string): Promise<void> => {
+    if (!user) return;
+
+    try {
+      // Upload file to storage
+      const filePath = `${user.id}/${equipmentId}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('equipment-documents')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Create database record
+      const { error: dbError } = await supabase
+        .from('equipment_documents')
+        .insert({
+          equipment_id: equipmentId,
+          user_id: user.id,
+          file_name: file.name,
+          file_path: filePath,
+          file_size: file.size,
+          file_type: file.type,
+          notes: notes || null,
+        });
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Document uploaded",
+        description: `${file.name} has been attached to this equipment.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to upload document",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }, [user, toast]);
+
+  // Delete a document
+  const deleteDocument = useCallback(async (documentId: string, filePath: string): Promise<void> => {
+    if (!user) return;
+
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('equipment-documents')
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete database record
+      const { error: dbError } = await supabase
+        .from('equipment_documents')
+        .delete()
+        .eq('id', documentId)
+        .eq('user_id', user.id);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Document deleted",
+        description: "The document has been removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to delete document",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }, [user, toast]);
+
   return (
     <EquipmentContext.Provider value={{
       equipment,
@@ -284,6 +395,9 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       deleteEquipment,
       updateCategoryDefaults,
       refetch: fetchEquipment,
+      getDocuments,
+      uploadDocument,
+      deleteDocument,
     }}>
       {children}
     </EquipmentContext.Provider>
