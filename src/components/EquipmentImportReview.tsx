@@ -34,12 +34,20 @@ interface ExtractedEquipment {
   purchaseCondition?: 'new' | 'used' | null;
   suggestedCategory?: EquipmentCategory | null;
   sourceFile?: File;
+  sourceFiles?: File[]; // For merged items with multiple source documents
 }
 
 type DuplicateStatus = 'none' | 'exact' | 'potential';
 type DuplicateFilter = 'all' | 'no-duplicates' | 'only-duplicates';
 type DuplicateReason = 'serial' | 'year' | 'price' | 'date' | null;
 type ImportMode = 'new' | 'update_existing' | 'skip' | 'attachment';
+
+// Batch duplicate: potential match within the same import batch
+interface BatchDuplicateGroup {
+  primaryIndex: number;
+  duplicateIndices: number[];
+  reason: string;
+}
 
 interface EditableEquipment extends ExtractedEquipment {
   tempId: string;
@@ -59,6 +67,9 @@ interface EditableEquipment extends ExtractedEquipment {
   selectedParentId?: string; // ID of existing equipment as parent
   selectedParentTempId?: string; // tempId of equipment from this import batch
   yearDefaultedFromPurchase?: boolean;
+  // Batch duplicate tracking
+  batchDuplicateOf?: string; // tempId of item this was merged into
+  mergedFrom?: string[]; // tempIds of items merged into this one
 }
 
 interface EquipmentImportReviewProps {
@@ -282,6 +293,8 @@ export function EquipmentImportReview({
   const [duplicateFilter, setDuplicateFilter] = useState<DuplicateFilter>('all');
   const [attachSourceDocument, setAttachSourceDocument] = useState(true);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [batchDuplicateGroups, setBatchDuplicateGroups] = useState<BatchDuplicateGroup[]>([]);
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
   
   const [editableEquipment, setEditableEquipment] = useState<EditableEquipment[]>([]);
 
@@ -374,6 +387,168 @@ export function EquipmentImportReview({
     return { status: 'none', reason: null, updatableFields: [] };
   }, [equipment]);
 
+  // Check for potential duplicates within the import batch
+  const checkForBatchDuplicates = useCallback((items: ExtractedEquipment[]): BatchDuplicateGroup[] => {
+    const groups: BatchDuplicateGroup[] = [];
+    const alreadyGrouped = new Set<number>();
+    
+    for (let i = 0; i < items.length; i++) {
+      if (alreadyGrouped.has(i)) continue;
+      
+      const duplicateIndices: number[] = [];
+      const reasons: string[] = [];
+      
+      for (let j = i + 1; j < items.length; j++) {
+        if (alreadyGrouped.has(j)) continue;
+        
+        const a = items[i];
+        const b = items[j];
+        
+        // Check if same make/model (fuzzy)
+        if (!modelsMatch(a.make, a.model, b.make, b.model)) continue;
+        
+        // Additional signals they're the same equipment:
+        const serialA = normalizeSerial(a.serialVin);
+        const serialB = normalizeSerial(b.serialVin);
+        const serialMatch = serialA && serialB && serialA === serialB;
+        
+        const yearMatch = a.year === b.year || !a.year || !b.year;
+        
+        // Complementary documents: one has purchase info, other has financing info
+        const aHasPurchase = (a.purchasePrice && a.purchasePrice > 0);
+        const bHasPurchase = (b.purchasePrice && b.purchasePrice > 0);
+        const aHasFinancing = (a.financedAmount && a.financedAmount > 0) || 
+                              (a.monthlyPayment && a.monthlyPayment > 0);
+        const bHasFinancing = (b.financedAmount && b.financedAmount > 0) || 
+                              (b.monthlyPayment && b.monthlyPayment > 0);
+        const complementaryDocs = (aHasPurchase && !aHasFinancing && bHasFinancing) ||
+                                   (bHasPurchase && !bHasFinancing && aHasFinancing);
+        
+        const dateA = parseDate(a.purchaseDate);
+        const dateB = parseDate(b.purchaseDate);
+        const datesClose = (!dateA || !dateB) ? true : daysDifference(dateA, dateB) <= 60;
+        
+        if (serialMatch) {
+          duplicateIndices.push(j);
+          reasons.push('same serial/VIN');
+          alreadyGrouped.add(j);
+        } else if (yearMatch && datesClose && complementaryDocs) {
+          duplicateIndices.push(j);
+          reasons.push('complementary documents (purchase + financing)');
+          alreadyGrouped.add(j);
+        } else if (yearMatch && datesClose) {
+          duplicateIndices.push(j);
+          reasons.push('same make/model with similar dates');
+          alreadyGrouped.add(j);
+        }
+      }
+      
+      if (duplicateIndices.length > 0) {
+        groups.push({
+          primaryIndex: i,
+          duplicateIndices,
+          reason: [...new Set(reasons)].join(', '),
+        });
+        alreadyGrouped.add(i);
+      }
+    }
+    
+    return groups;
+  }, []);
+
+  // Merge two equipment items, combining their data
+  const mergeEquipmentItems = useCallback((primary: EditableEquipment, secondary: EditableEquipment): EditableEquipment => {
+    // Collect all source files
+    const allSourceFiles: File[] = [];
+    if (primary.sourceFiles?.length) {
+      allSourceFiles.push(...primary.sourceFiles);
+    } else if (primary.sourceFile) {
+      allSourceFiles.push(primary.sourceFile);
+    }
+    if (secondary.sourceFiles?.length) {
+      allSourceFiles.push(...secondary.sourceFiles);
+    } else if (secondary.sourceFile) {
+      allSourceFiles.push(secondary.sourceFile);
+    }
+    
+    // Merge notes
+    const mergedNotes = [primary.notes, secondary.notes].filter(Boolean).join(' | ');
+    
+    // Merge strategy: Take non-null values from both, prefer primary for conflicts
+    return {
+      ...primary,
+      // Take secondary values if primary is empty
+      serialVin: primary.serialVin || secondary.serialVin,
+      year: primary.year || secondary.year,
+      purchaseDate: primary.purchaseDate || secondary.purchaseDate,
+      purchasePrice: primary.purchasePrice || secondary.purchasePrice,
+      salesTax: primary.salesTax || secondary.salesTax,
+      freightSetup: primary.freightSetup || secondary.freightSetup,
+      purchaseCondition: primary.purchaseCondition || secondary.purchaseCondition,
+      // Take financing from whichever has it
+      financingType: (primary.financingType && primary.financingType !== 'owned') 
+        ? primary.financingType 
+        : ((secondary.financingType && secondary.financingType !== 'owned') ? secondary.financingType : primary.financingType),
+      financedAmount: primary.financedAmount || secondary.financedAmount,
+      monthlyPayment: primary.monthlyPayment || secondary.monthlyPayment,
+      termMonths: primary.termMonths || secondary.termMonths,
+      buyoutAmount: primary.buyoutAmount || secondary.buyoutAmount,
+      depositAmount: primary.depositAmount || secondary.depositAmount,
+      // Keep track of merged source files
+      sourceFiles: allSourceFiles.length > 0 ? allSourceFiles : undefined,
+      sourceFile: undefined, // Use sourceFiles instead
+      notes: mergedNotes || null,
+      // Track what was merged
+      mergedFrom: [...(primary.mergedFrom || []), secondary.tempId],
+      // Use higher confidence
+      confidence: primary.confidence === 'high' || secondary.confidence === 'high' 
+        ? 'high' 
+        : (primary.confidence === 'medium' || secondary.confidence === 'medium' ? 'medium' : 'low'),
+    };
+  }, []);
+
+  // Handle merging batch duplicates
+  const handleMergeBatchDuplicates = useCallback(() => {
+    if (batchDuplicateGroups.length === 0) return;
+    
+    setEditableEquipment(prev => {
+      const newEquipment = [...prev];
+      const toRemove = new Set<string>();
+      
+      for (const group of batchDuplicateGroups) {
+        const primaryIdx = newEquipment.findIndex(eq => 
+          prev.indexOf(eq) === group.primaryIndex || 
+          eq.tempId === prev[group.primaryIndex]?.tempId
+        );
+        
+        if (primaryIdx === -1) continue;
+        
+        let merged = { ...newEquipment[primaryIdx] };
+        
+        for (const dupIdx of group.duplicateIndices) {
+          const secondary = prev[dupIdx];
+          if (secondary) {
+            merged = mergeEquipmentItems(merged, secondary);
+            toRemove.add(secondary.tempId);
+          }
+        }
+        
+        newEquipment[primaryIdx] = merged;
+      }
+      
+      // Remove merged items
+      return newEquipment.filter(eq => !toRemove.has(eq.tempId));
+    });
+    
+    setBatchDuplicateGroups([]);
+    setShowMergeDialog(false);
+    
+    toast({
+      title: "Items Merged",
+      description: `Merged ${batchDuplicateGroups.reduce((acc, g) => acc + g.duplicateIndices.length, 0)} duplicate items`,
+    });
+  }, [batchDuplicateGroups, mergeEquipmentItems]);
+
   // Initialize editable equipment when extractedEquipment changes
   useEffect(() => {
     const mapped = extractedEquipment.map((eq, index) => {
@@ -432,6 +607,10 @@ export function EquipmentImportReview({
     
     setEditableEquipment(mapped);
     
+    // Check for batch duplicates (items from this import that might be the same equipment)
+    const batchDups = checkForBatchDuplicates(extractedEquipment);
+    setBatchDuplicateGroups(batchDups);
+    
     // Auto-expand items with updatable fields or attachments
     const toExpand = new Set<string>();
     mapped.forEach(eq => {
@@ -440,7 +619,7 @@ export function EquipmentImportReview({
       }
     });
     setExpandedItems(toExpand);
-  }, [extractedEquipment, checkForDuplicates]);
+  }, [extractedEquipment, checkForDuplicates, checkForBatchDuplicates]);
 
   // Duplicate counts
   const duplicateCounts = useMemo(() => {
@@ -695,19 +874,29 @@ export function EquipmentImportReview({
       // Attach source documents to their respective equipment items
       if (attachSourceDocument) {
         for (const eq of toProcess) {
-          if (eq.sourceFile) {
-            // Find the real equipment ID for this item
-            let equipmentId: string | undefined;
-            
-            if (eq.importMode === 'new') {
-              equipmentId = tempIdToRealId.get(eq.tempId);
-            } else if (eq.importMode === 'update_existing' && eq.matchedEquipmentId) {
-              equipmentId = eq.matchedEquipmentId;
-            }
-            
-            if (equipmentId) {
+          // Get all source files (handle both sourceFile and sourceFiles for merged items)
+          const filesToAttach: File[] = [];
+          if (eq.sourceFiles?.length) {
+            filesToAttach.push(...eq.sourceFiles);
+          } else if (eq.sourceFile) {
+            filesToAttach.push(eq.sourceFile);
+          }
+          
+          if (filesToAttach.length === 0) continue;
+          
+          // Find the real equipment ID for this item
+          let equipmentId: string | undefined;
+          
+          if (eq.importMode === 'new') {
+            equipmentId = tempIdToRealId.get(eq.tempId);
+          } else if (eq.importMode === 'update_existing' && eq.matchedEquipmentId) {
+            equipmentId = eq.matchedEquipmentId;
+          }
+          
+          if (equipmentId) {
+            for (const file of filesToAttach) {
               try {
-                await uploadDocument(equipmentId, eq.sourceFile, 'Source document from import');
+                await uploadDocument(equipmentId, file, 'Source document from import');
               } catch (error) {
                 console.error(`Failed to attach source document to equipment ${equipmentId}:`, error);
               }
@@ -763,6 +952,38 @@ export function EquipmentImportReview({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Batch Duplicate Detection Banner */}
+          {batchDuplicateGroups.length > 0 && (
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-blue-600 mb-2">
+                <Link className="h-4 w-4" />
+                <span className="font-medium">Potential duplicates detected in this import</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                {batchDuplicateGroups.length === 1 
+                  ? `${batchDuplicateGroups[0].duplicateIndices.length + 1} items appear to be the same equipment`
+                  : `${batchDuplicateGroups.length} groups of items appear to be duplicates`
+                } (e.g., purchase order + financing agreement for the same equipment). Would you like to merge them?
+              </p>
+              <div className="space-y-2">
+                {batchDuplicateGroups.map((group, idx) => (
+                  <div key={idx} className="text-xs text-muted-foreground bg-muted/30 rounded p-2">
+                    <span className="font-medium">{extractedEquipment[group.primaryIndex]?.make} {extractedEquipment[group.primaryIndex]?.model}</span>
+                    <span className="text-blue-600 ml-2">({group.duplicateIndices.length + 1} items - {group.reason})</span>
+                  </div>
+                ))}
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="mt-3"
+                onClick={handleMergeBatchDuplicates}
+              >
+                Merge Duplicate Items
+              </Button>
+            </div>
+          )}
+
           {/* Duplicate Summary */}
           {duplicateCounts.total > 0 && (
             <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
@@ -819,7 +1040,7 @@ export function EquipmentImportReview({
           </div>
 
           {/* Attach Source Document Option */}
-          {editableEquipment.some(eq => eq.sourceFile) && (
+          {editableEquipment.some(eq => eq.sourceFile || (eq.sourceFiles && eq.sourceFiles.length > 0)) && (
             <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
               <Checkbox
                 checked={attachSourceDocument}
