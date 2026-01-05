@@ -232,21 +232,21 @@ export default function EquipmentList() {
                   
                   <CollapsibleContent>
                     <div className="overflow-x-auto">
-                      <Table>
+                      <Table className="table-fixed">
                         <TableHeader>
                           <TableRow className="bg-muted/30">
                             <TableHead className="table-header-cell">Name / Details</TableHead>
-                            <TableHead className="table-header-cell">Status</TableHead>
-                            <TableHead className="table-header-cell text-right">Cost Basis</TableHead>
-                            <TableHead className="table-header-cell text-right">COGS %</TableHead>
-                            <TableHead className="table-header-cell text-right">
+                            <TableHead className="table-header-cell w-[90px]">Status</TableHead>
+                            <TableHead className="table-header-cell w-[100px] text-right">Cost Basis</TableHead>
+                            <TableHead className="table-header-cell w-[70px] text-right">COGS %</TableHead>
+                            <TableHead className="table-header-cell w-[90px] text-right">
                               <span className="text-warning">COGS $</span>
                             </TableHead>
-                            <TableHead className="table-header-cell text-right">
+                            <TableHead className="table-header-cell w-[90px] text-right">
                               <span className="text-warning">OH $</span>
                             </TableHead>
-                            <TableHead className="table-header-cell text-right">Years Left</TableHead>
-                            <TableHead className="table-header-cell text-right">Replacement</TableHead>
+                            <TableHead className="table-header-cell w-[80px] text-right">Years Left</TableHead>
+                            <TableHead className="table-header-cell w-[100px] text-right">Replacement</TableHead>
                             <TableHead className="table-header-cell w-[50px]"></TableHead>
                           </TableRow>
                         </TableHeader>
@@ -254,39 +254,39 @@ export default function EquipmentList() {
                           {items.map(equipment => (
                             <TableRow key={equipment.id} className="group hover:bg-muted/30">
                               <TableCell>
-                                <div>
-                                  <p className="font-medium">{equipment.name}</p>
+                                <div className="truncate">
+                                  <p className="font-medium truncate">{equipment.name}</p>
                                   {equipment.assetId && (
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-xs text-muted-foreground truncate">
                                       {equipment.assetId}
                                     </p>
                                   )}
                                 </div>
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="w-[90px]">
                                 <StatusBadge status={equipment.status} />
                               </TableCell>
-                              <TableCell className="text-right font-mono-nums">
+                              <TableCell className="w-[100px] text-right font-mono-nums">
                                 {formatCurrency(equipment.totalCostBasis)}
                               </TableCell>
-                              <TableCell className="text-right font-mono-nums">
+                              <TableCell className="w-[70px] text-right font-mono-nums">
                                 {formatPercent(equipment.cogsPercent)}
                               </TableCell>
-                              <TableCell className="text-right font-mono-nums bg-field-calculated">
+                              <TableCell className="w-[90px] text-right font-mono-nums bg-field-calculated">
                                 {formatCurrency(equipment.cogsAllocatedCost)}
                               </TableCell>
-                              <TableCell className="text-right font-mono-nums bg-field-calculated">
+                              <TableCell className="w-[90px] text-right font-mono-nums bg-field-calculated">
                                 {formatCurrency(equipment.overheadAllocatedCost)}
                               </TableCell>
-                              <TableCell className="text-right font-mono-nums">
+                              <TableCell className="w-[80px] text-right font-mono-nums">
                                 <span className={equipment.estimatedYearsLeft <= 1 ? 'text-warning font-semibold' : ''}>
                                   {equipment.estimatedYearsLeft}
                                 </span>
                               </TableCell>
-                              <TableCell className="text-right font-mono-nums">
+                              <TableCell className="w-[100px] text-right font-mono-nums">
                                 {formatCurrency(equipment.replacementCostNew)}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="w-[50px]">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button 
