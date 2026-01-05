@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -50,6 +50,24 @@ const defaultInput: BuyVsRentInput = {
 
 export default function BuyVsRentAnalysis() {
   const [input, setInput] = useState<BuyVsRentInput>(defaultInput);
+
+  // Round any existing decimal values on mount
+  useEffect(() => {
+    const roundedResale = Math.round(input.resaleValue);
+    const roundedMaintenance = Math.round(input.annualMaintenance);
+    const roundedInsurance = Math.round(input.annualInsurance);
+    
+    if (roundedResale !== input.resaleValue || 
+        roundedMaintenance !== input.annualMaintenance || 
+        roundedInsurance !== input.annualInsurance) {
+      setInput(prev => ({
+        ...prev,
+        resaleValue: roundedResale,
+        annualMaintenance: roundedMaintenance,
+        annualInsurance: roundedInsurance,
+      }));
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const result = useMemo(() => {
     if (input.purchasePrice > 0 && input.rentalRateDaily > 0 && input.usefulLife > 0) {
@@ -201,9 +219,14 @@ export default function BuyVsRentAnalysis() {
                       <Input
                         id="resaleValue"
                         type="number"
+                        step="1"
                         className="pl-9"
                         value={input.resaleValue || ''}
                         onChange={(e) => updateField('resaleValue', Number(e.target.value))}
+                        onBlur={(e) => {
+                          const rounded = Math.round(Number(e.target.value));
+                          if (rounded !== input.resaleValue) updateField('resaleValue', rounded);
+                        }}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -299,9 +322,14 @@ export default function BuyVsRentAnalysis() {
                       <Input
                         id="maintenance"
                         type="number"
+                        step="1"
                         className="pl-9"
                         value={input.annualMaintenance || ''}
                         onChange={(e) => updateField('annualMaintenance', Number(e.target.value))}
+                        onBlur={(e) => {
+                          const rounded = Math.round(Number(e.target.value));
+                          if (rounded !== input.annualMaintenance) updateField('annualMaintenance', rounded);
+                        }}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -315,9 +343,14 @@ export default function BuyVsRentAnalysis() {
                       <Input
                         id="insurance"
                         type="number"
+                        step="1"
                         className="pl-9"
                         value={input.annualInsurance || ''}
                         onChange={(e) => updateField('annualInsurance', Number(e.target.value))}
+                        onBlur={(e) => {
+                          const rounded = Math.round(Number(e.target.value));
+                          if (rounded !== input.annualInsurance) updateField('annualInsurance', rounded);
+                        }}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
