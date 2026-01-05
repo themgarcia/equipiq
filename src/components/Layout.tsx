@@ -104,8 +104,8 @@ function AppSidebar() {
                 <Anvil className="h-5 w-5 text-sidebar-primary-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-sm font-semibold text-sidebar-foreground truncate">Forge Legacy</h1>
-                <p className="text-xs text-sidebar-foreground/60 truncate">Equipment Intelligence</p>
+                <h1 className="text-sm font-semibold text-sidebar-foreground truncate">equipIQ</h1>
+                <p className="text-xs text-sidebar-foreground/60 truncate">Equipment intelligence for contractors</p>
               </div>
             </>
           )}
@@ -215,7 +215,7 @@ function PhoneHeader() {
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
           <Anvil className="h-4 w-4 text-sidebar-primary-foreground" />
         </div>
-        <span className="text-sm font-semibold text-sidebar-foreground">Forge Legacy</span>
+        <span className="text-sm font-semibold text-sidebar-foreground">equipIQ</span>
       </div>
       <Sheet>
         <SheetTrigger asChild>
@@ -231,8 +231,8 @@ function PhoneHeader() {
                 <Anvil className="h-5 w-5 text-sidebar-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-sidebar-foreground">Forge Legacy</h1>
-                <p className="text-xs text-sidebar-foreground/60">Equipment Intelligence</p>
+                <h1 className="text-sm font-semibold text-sidebar-foreground">equipIQ</h1>
+                <p className="text-xs text-sidebar-foreground/60">Equipment intelligence for contractors</p>
               </div>
             </div>
 
