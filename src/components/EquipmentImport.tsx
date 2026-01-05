@@ -126,6 +126,18 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
     setIsProcessing(true);
     const allExtractedEquipment: ExtractedEquipment[] = [];
 
+    // Get current session to ensure we have a valid token
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in again to process documents",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      return;
+    }
+
     try {
       for (let i = 0; i < files.length; i++) {
         const { file } = files[i];
@@ -134,6 +146,9 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
         const base64 = await fileToBase64(file);
 
         const { data, error } = await supabase.functions.invoke('parse-equipment-docs', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
           body: {
             documentBase64: base64,
             documentType: file.type || 'application/pdf',
@@ -239,7 +254,7 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
 
           {/* File List */}
           {files.length > 0 && (
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1 flex-shrink-0">
               <p className="text-sm font-medium">Files to process:</p>
               {files.map((uploadedFile, index) => (
                 <div
@@ -286,12 +301,15 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
           </div>
 
           {/* Processing Status */}
-          {isProcessing && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
-              <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
-              <span className="truncate min-w-0">{processingStatus}</span>
+            {/* Processing Status - always reserve space to prevent layout shift */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 h-5">
+              {isProcessing && (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+                  <span className="truncate min-w-0">{processingStatus}</span>
+                </>
+              )}
             </div>
-          )}
 
           {/* Actions */}
           <div className="flex justify-end gap-2">
