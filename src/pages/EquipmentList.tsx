@@ -51,6 +51,7 @@ interface ExtractedEquipment {
   buyoutAmount: number | null;
   confidence: 'high' | 'medium' | 'low';
   notes: string | null;
+  sourceFile?: File;
 }
 
 const statuses: EquipmentStatus[] = ['Active', 'Sold', 'Retired', 'Lost'];
@@ -68,7 +69,6 @@ export default function EquipmentList() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [extractedEquipment, setExtractedEquipment] = useState<ExtractedEquipment[]>([]);
-  const [importSourceFile, setImportSourceFile] = useState<File | undefined>();
   const [documentsOpen, setDocumentsOpen] = useState(false);
   const [documentsEquipmentId, setDocumentsEquipmentId] = useState<string>('');
   const [documentsEquipmentName, setDocumentsEquipmentName] = useState<string>('');
@@ -76,15 +76,13 @@ export default function EquipmentList() {
   const [attachmentsEquipmentId, setAttachmentsEquipmentId] = useState<string>('');
   const [attachmentsEquipmentName, setAttachmentsEquipmentName] = useState<string>('');
 
-  const handleEquipmentExtracted = (equipment: ExtractedEquipment[], sourceFile?: File) => {
+  const handleEquipmentExtracted = (equipment: ExtractedEquipment[]) => {
     setExtractedEquipment(equipment);
-    setImportSourceFile(sourceFile);
     setIsReviewOpen(true);
   };
 
   const handleImportComplete = () => {
     setExtractedEquipment([]);
-    setImportSourceFile(undefined);
   };
 
   const handleOpenDocuments = (equipment: Equipment) => {
@@ -388,7 +386,6 @@ export default function EquipmentList() {
           onOpenChange={setIsReviewOpen}
           extractedEquipment={extractedEquipment}
           onComplete={handleImportComplete}
-          sourceFile={importSourceFile}
         />
 
         {/* Documents Sheet */}
