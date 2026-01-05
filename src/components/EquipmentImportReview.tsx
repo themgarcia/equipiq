@@ -169,10 +169,25 @@ export function EquipmentImportReview({
           };
         }
         
-        // Potential match: Make + Model with similar purchase price/date
+        // Potential match: Make + Model with similar purchase price
         if (sameModel && extracted.purchasePrice && existing.purchasePrice) {
           const priceDiff = Math.abs(extracted.purchasePrice - existing.purchasePrice) / existing.purchasePrice;
           if (priceDiff <= 0.1) { // Within 10%
+            return { 
+              status: 'potential', 
+              matchedId: existing.id, 
+              matchedName: `${existing.year} ${existing.make} ${existing.model}` 
+            };
+          }
+        }
+        
+        // Potential match: Make + Model with purchase date within 30 days
+        if (sameModel && extracted.purchaseDate && existing.purchaseDate) {
+          const extractedDate = new Date(extracted.purchaseDate);
+          const existingDate = new Date(existing.purchaseDate);
+          const daysDiff = Math.abs(extractedDate.getTime() - existingDate.getTime()) / (1000 * 60 * 60 * 24);
+          
+          if (daysDiff <= 30) {
             return { 
               status: 'potential', 
               matchedId: existing.id, 
