@@ -18,6 +18,7 @@ import BuyVsRentAnalysis from "./pages/BuyVsRentAnalysis";
 import CashflowAnalysis from "./pages/CashflowAnalysis";
 import Definitions from "./pages/Definitions";
 import AdminDashboard from "./pages/AdminDashboard";
+import Profile from "./pages/Profile";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
@@ -74,6 +75,11 @@ const App = () => (
                   <Route path="/definitions" element={
                     <ProtectedRoute>
                       <Definitions />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
                     </ProtectedRoute>
                   } />
                   
