@@ -116,6 +116,50 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment_documents: {
+        Row: {
+          equipment_id: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          notes: string | null
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          equipment_id: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          notes?: string | null
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          equipment_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          notes?: string | null
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_documents_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
