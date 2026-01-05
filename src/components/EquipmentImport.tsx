@@ -239,36 +239,38 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
 
           {/* File List */}
           {files.length > 0 && (
-            <div className="space-y-2 overflow-hidden">
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               <p className="text-sm font-medium">Files to process:</p>
               {files.map((uploadedFile, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between gap-2 bg-muted/50 rounded-md px-3 py-2 overflow-hidden"
+                  className="flex items-start justify-between gap-2 bg-muted/50 rounded-md px-3 py-2"
                 >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  <div className="flex items-start gap-2 min-w-0 flex-1">
+                    <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground mt-0.5" />
                     <span 
-                      className="text-sm block truncate flex-1 min-w-0" 
+                      className="text-sm min-w-0 flex-1 break-all" 
                       title={uploadedFile.file.name}
                     >
                       {uploadedFile.file.name}
                     </span>
-                    <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
                       ({(uploadedFile.file.size / 1024 / 1024).toFixed(1)}MB)
                     </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(index);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 flex-shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFile(index);
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
               ))}
             </div>
