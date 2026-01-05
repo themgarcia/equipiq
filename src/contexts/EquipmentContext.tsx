@@ -11,7 +11,7 @@ interface EquipmentContextType {
   calculatedEquipment: EquipmentCalculated[];
   categoryDefaults: CategoryDefaults[];
   loading: boolean;
-  addEquipment: (equipment: Omit<Equipment, 'id'>) => Promise<void>;
+  addEquipment: (equipment: Omit<Equipment, 'id'>) => Promise<string | undefined>;
   updateEquipment: (id: string, updates: Partial<Equipment>) => Promise<void>;
   deleteEquipment: (id: string) => Promise<void>;
   updateCategoryDefaults: (category: string, updates: Partial<CategoryDefaults>) => void;
@@ -150,8 +150,8 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     fetchEquipment();
   }, [fetchEquipment]);
 
-  const addEquipment = useCallback(async (newEquipment: Omit<Equipment, 'id'>) => {
-    if (!user) return;
+  const addEquipment = useCallback(async (newEquipment: Omit<Equipment, 'id'>): Promise<string | undefined> => {
+    if (!user) return undefined;
 
     try {
       // Ensure name is generated from year/make/model
@@ -173,12 +173,15 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
         title: "Equipment added",
         description: `${equipmentWithName.name} has been added to your inventory.`,
       });
+      
+      return data.id;
     } catch (error: any) {
       toast({
         title: "Failed to add equipment",
         description: error.message,
         variant: "destructive",
       });
+      return undefined;
     }
   }, [user, toast]);
 

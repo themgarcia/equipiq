@@ -2,11 +2,11 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertTriangle, Check, Copy, AlertCircle, RefreshCw, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, AlertTriangle, Check, Copy, AlertCircle, RefreshCw, FileText, ChevronDown, ChevronUp, Link } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useEquipment } from "@/contexts/EquipmentContext";
 import { Equipment, EquipmentCategory, FinancingType, UpdatableField } from "@/types/equipment";
@@ -29,12 +29,14 @@ interface ExtractedEquipment {
   buyoutAmount: number | null;
   confidence: 'high' | 'medium' | 'low';
   notes: string | null;
+  suggestedType?: 'equipment' | 'attachment';
+  suggestedParentIndex?: number | null;
 }
 
 type DuplicateStatus = 'none' | 'exact' | 'potential';
 type DuplicateFilter = 'all' | 'no-duplicates' | 'only-duplicates';
 type DuplicateReason = 'serial' | 'year' | 'price' | 'date' | null;
-type ImportMode = 'new' | 'update_existing' | 'skip';
+type ImportMode = 'new' | 'update_existing' | 'skip' | 'attachment';
 
 interface EditableEquipment extends ExtractedEquipment {
   tempId: string;
@@ -48,6 +50,11 @@ interface EditableEquipment extends ExtractedEquipment {
   matchedEquipment?: Equipment;
   importMode: ImportMode;
   updatableFields: UpdatableField[];
+  // Attachment-specific fields
+  suggestedType: 'equipment' | 'attachment';
+  suggestedParentIndex: number | null;
+  selectedParentId?: string; // ID of existing equipment as parent
+  selectedParentTempId?: string; // tempId of equipment from this import batch
 }
 
 interface EquipmentImportReviewProps {
@@ -264,7 +271,7 @@ export function EquipmentImportReview({
   onComplete,
   sourceFile
 }: EquipmentImportReviewProps) {
-  const { addEquipment, updateEquipment, equipment, uploadDocument } = useEquipment();
+  const { addEquipment, updateEquipment, equipment, uploadDocument, addAttachment } = useEquipment();
   const [isImporting, setIsImporting] = useState(false);
   const [duplicateFilter, setDuplicateFilter] = useState<DuplicateFilter>('all');
   const [attachSourceDocument, setAttachSourceDocument] = useState(true);
@@ -366,10 +373,17 @@ export function EquipmentImportReview({
     const mapped = extractedEquipment.map((eq, index) => {
       const duplicateCheck = checkForDuplicates(eq);
       const hasUpdatableFields = duplicateCheck.updatableFields.length > 0;
+      const suggestedType = eq.suggestedType || 'equipment';
+      const suggestedParentIndex = eq.suggestedParentIndex ?? null;
       
-      // Default mode: update_existing if there are fields to update, otherwise new (or skip for exact with no updates)
+      // Default mode: 
+      // - attachment if AI suggests it
+      // - update_existing if there are fields to update
+      // - new otherwise (or skip for exact with no updates)
       let defaultMode: ImportMode = 'new';
-      if (duplicateCheck.status === 'exact') {
+      if (suggestedType === 'attachment') {
+        defaultMode = 'attachment';
+      } else if (duplicateCheck.status === 'exact') {
         defaultMode = hasUpdatableFields ? 'update_existing' : 'skip';
       } else if (duplicateCheck.status === 'potential' && hasUpdatableFields) {
         defaultMode = 'update_existing';
@@ -388,15 +402,27 @@ export function EquipmentImportReview({
         matchedEquipment: duplicateCheck.matchedEquipment,
         importMode: defaultMode,
         updatableFields: duplicateCheck.updatableFields,
+        suggestedType,
+        suggestedParentIndex,
+        // Pre-select parent if AI suggested one
+        selectedParentTempId: suggestedParentIndex !== null ? `import-${suggestedParentIndex}-${Date.now()}` : undefined,
       };
+    });
+    
+    // Fix parent tempId references now that we have all tempIds
+    const tempIds = mapped.map(m => m.tempId);
+    mapped.forEach((eq, index) => {
+      if (eq.suggestedParentIndex !== null && eq.suggestedParentIndex >= 0 && eq.suggestedParentIndex < tempIds.length) {
+        eq.selectedParentTempId = tempIds[eq.suggestedParentIndex];
+      }
     });
     
     setEditableEquipment(mapped);
     
-    // Auto-expand items with updatable fields
+    // Auto-expand items with updatable fields or attachments
     const toExpand = new Set<string>();
     mapped.forEach(eq => {
-      if (eq.updatableFields.length > 0) {
+      if (eq.updatableFields.length > 0 || eq.importMode === 'attachment') {
         toExpand.add(eq.tempId);
       }
     });
@@ -495,6 +521,26 @@ export function EquipmentImportReview({
   const selectedCount = editableEquipment.filter(eq => eq.selected).length;
   const updateCount = editableEquipment.filter(eq => eq.selected && eq.importMode === 'update_existing').length;
   const newCount = editableEquipment.filter(eq => eq.selected && eq.importMode === 'new').length;
+  const attachmentCount = editableEquipment.filter(eq => eq.selected && eq.importMode === 'attachment').length;
+
+  // Get potential parents for attachment selection
+  const potentialParentsFromImport = editableEquipment.filter(eq => 
+    eq.importMode === 'new' || eq.importMode === 'update_existing'
+  );
+
+  const setParentForAttachment = (tempId: string, parentValue: string) => {
+    setEditableEquipment(prev => 
+      prev.map(eq => {
+        if (eq.tempId !== tempId) return eq;
+        // Check if it's a temp ID (from this import) or an existing equipment ID
+        if (parentValue.startsWith('temp:')) {
+          return { ...eq, selectedParentTempId: parentValue.replace('temp:', ''), selectedParentId: undefined };
+        } else {
+          return { ...eq, selectedParentId: parentValue, selectedParentTempId: undefined };
+        }
+      })
+    );
+  };
 
   const getDuplicateBadge = (eq: EditableEquipment) => {
     if (eq.duplicateStatus === 'exact') {
@@ -541,13 +587,29 @@ export function EquipmentImportReview({
       return;
     }
 
+    // Validate attachments have parents selected
+    const attachmentsWithoutParents = toProcess.filter(eq => 
+      eq.importMode === 'attachment' && !eq.selectedParentId && !eq.selectedParentTempId
+    );
+    if (attachmentsWithoutParents.length > 0) {
+      toast({
+        title: "Parent not selected",
+        description: "Please select a parent equipment for all attachments",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsImporting(true);
 
     let newCount = 0;
     let updateCount = 0;
+    let attachmentImportCount = 0;
     const importedEquipmentIds: string[] = [];
+    const tempIdToRealId: Map<string, string> = new Map();
 
     try {
+      // First pass: Import all equipment (non-attachments) and updates
       for (const eq of toProcess) {
         if (eq.importMode === 'update_existing' && eq.matchedEquipmentId) {
           // Build updates object with only the fields we want to fill in
@@ -562,10 +624,11 @@ export function EquipmentImportReview({
           if (Object.keys(updates).length > 0) {
             await updateEquipment(eq.matchedEquipmentId, updates);
             importedEquipmentIds.push(eq.matchedEquipmentId);
+            tempIdToRealId.set(eq.tempId, eq.matchedEquipmentId);
             updateCount++;
           }
         } else if (eq.importMode === 'new') {
-          await addEquipment({
+          const newId = await addEquipment({
             name: `${eq.make} ${eq.model}`,
             make: eq.make,
             model: eq.model,
@@ -587,8 +650,31 @@ export function EquipmentImportReview({
             termMonths: eq.termMonths || 0,
             buyoutAmount: eq.buyoutAmount || 0,
           });
+          if (newId) {
+            importedEquipmentIds.push(newId);
+            tempIdToRealId.set(eq.tempId, newId);
+          }
           newCount++;
-          // Note: For new items, we'd need to get the ID from the response to attach documents
+        }
+      }
+
+      // Second pass: Import attachments
+      for (const eq of toProcess.filter(e => e.importMode === 'attachment')) {
+        let parentId = eq.selectedParentId;
+        
+        // If parent was from this import batch, get its real ID
+        if (eq.selectedParentTempId) {
+          parentId = tempIdToRealId.get(eq.selectedParentTempId);
+        }
+        
+        if (parentId) {
+          await addAttachment(parentId, {
+            name: `${eq.make} ${eq.model}`,
+            value: eq.purchasePrice || 0,
+            serialNumber: eq.serialVin || undefined,
+            description: eq.notes || undefined,
+          });
+          attachmentImportCount++;
         }
       }
 
@@ -604,8 +690,9 @@ export function EquipmentImportReview({
 
       // Build success message
       const parts = [];
-      if (newCount > 0) parts.push(`${newCount} new item${newCount !== 1 ? 's' : ''} imported`);
-      if (updateCount > 0) parts.push(`${updateCount} existing item${updateCount !== 1 ? 's' : ''} updated`);
+      if (newCount > 0) parts.push(`${newCount} new equipment`);
+      if (updateCount > 0) parts.push(`${updateCount} updated`);
+      if (attachmentImportCount > 0) parts.push(`${attachmentImportCount} attachment${attachmentImportCount !== 1 ? 's' : ''}`);
 
       toast({
         title: "Import Successful",
@@ -769,9 +856,17 @@ export function EquipmentImportReview({
                     </div>
                   </div>
 
-                  {/* Import Mode Selection for Duplicates */}
-                  {eq.duplicateStatus !== 'none' && (
-                    <div className="flex gap-2 pl-7">
+                  {/* AI Suggested Attachment Indicator */}
+                  {eq.suggestedType === 'attachment' && eq.importMode !== 'attachment' && (
+                    <div className="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-500/10 px-2 py-1 rounded ml-7">
+                      <Link className="h-3 w-3" />
+                      <span>AI suggests this may be an attachment</span>
+                    </div>
+                  )}
+
+                  {/* Import Mode Selection - always show for all items */}
+                  <div className="flex gap-2 pl-7 flex-wrap">
+                    {eq.duplicateStatus !== 'none' && (
                       <Button
                         variant={eq.importMode === 'update_existing' ? 'secondary' : 'ghost'}
                         size="sm"
@@ -783,22 +878,71 @@ export function EquipmentImportReview({
                         Update Existing
                         {eq.updatableFields.length > 0 && ` (${eq.updatableFields.length} fields)`}
                       </Button>
-                      <Button
-                        variant={eq.importMode === 'new' ? 'secondary' : 'ghost'}
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => setImportMode(eq.tempId, 'new')}
+                    )}
+                    <Button
+                      variant={eq.importMode === 'new' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setImportMode(eq.tempId, 'new')}
+                    >
+                      Import as Equipment
+                    </Button>
+                    <Button
+                      variant={eq.importMode === 'attachment' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setImportMode(eq.tempId, 'attachment')}
+                    >
+                      <Link className="h-3 w-3 mr-1" />
+                      Import as Attachment
+                      {eq.suggestedType === 'attachment' && <Badge variant="outline" className="ml-1 text-[10px] py-0 h-4">Suggested</Badge>}
+                    </Button>
+                    <Button
+                      variant={eq.importMode === 'skip' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setImportMode(eq.tempId, 'skip')}
+                    >
+                      Skip
+                    </Button>
+                  </div>
+
+                  {/* Parent Selection for Attachments */}
+                  {eq.importMode === 'attachment' && (
+                    <div className="pl-7 pt-2 space-y-2">
+                      <label className="text-xs font-medium">Attach to:</label>
+                      <Select
+                        value={eq.selectedParentId || (eq.selectedParentTempId ? `temp:${eq.selectedParentTempId}` : '')}
+                        onValueChange={(value) => setParentForAttachment(eq.tempId, value)}
                       >
-                        Import as New
-                      </Button>
-                      <Button
-                        variant={eq.importMode === 'skip' ? 'secondary' : 'ghost'}
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => setImportMode(eq.tempId, 'skip')}
-                      >
-                        Skip
-                      </Button>
+                        <SelectTrigger className="h-8 text-sm">
+                          <SelectValue placeholder="Select parent equipment..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {potentialParentsFromImport.length > 0 && (
+                            <SelectGroup>
+                              <SelectLabel>From this import</SelectLabel>
+                              {potentialParentsFromImport
+                                .filter(other => other.tempId !== eq.tempId)
+                                .map(other => (
+                                  <SelectItem key={other.tempId} value={`temp:${other.tempId}`}>
+                                    {other.make} {other.model} {other.year ? `(${other.year})` : ''}
+                                  </SelectItem>
+                                ))}
+                            </SelectGroup>
+                          )}
+                          {equipment.length > 0 && (
+                            <SelectGroup>
+                              <SelectLabel>Existing equipment</SelectLabel>
+                              {equipment.map(existing => (
+                                <SelectItem key={existing.id} value={existing.id}>
+                                  {existing.year} {existing.make} {existing.model}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          )}
+                        </SelectContent>
+                      </Select>
                     </div>
                   )}
 
@@ -977,8 +1121,10 @@ export function EquipmentImportReview({
           <div className="flex justify-between items-center gap-2 pt-2">
             <div className="text-sm text-muted-foreground">
               {newCount > 0 && <span>{newCount} new</span>}
-              {newCount > 0 && updateCount > 0 && <span>, </span>}
+              {newCount > 0 && (updateCount > 0 || attachmentCount > 0) && <span>, </span>}
               {updateCount > 0 && <span>{updateCount} updates</span>}
+              {updateCount > 0 && attachmentCount > 0 && <span>, </span>}
+              {attachmentCount > 0 && <span>{attachmentCount} attachments</span>}
             </div>
             <div className="flex gap-2">
               <Button
