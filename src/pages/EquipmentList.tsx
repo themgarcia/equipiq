@@ -237,16 +237,16 @@ export default function EquipmentList() {
                           <TableRow className="bg-muted/30">
                             <TableHead className="table-header-cell">Name / Details</TableHead>
                             <TableHead className="table-header-cell w-[90px]">Status</TableHead>
-                            <TableHead className="table-header-cell w-[100px] text-right">Cost Basis</TableHead>
+                            <TableHead className="table-header-cell w-[120px] text-right">Cost Basis</TableHead>
                             <TableHead className="table-header-cell w-[70px] text-right">COGS %</TableHead>
-                            <TableHead className="table-header-cell w-[90px] text-right">
+                            <TableHead className="table-header-cell w-[110px] text-right">
                               <span className="text-warning">COGS $</span>
                             </TableHead>
-                            <TableHead className="table-header-cell w-[90px] text-right">
+                            <TableHead className="table-header-cell w-[110px] text-right">
                               <span className="text-warning">OH $</span>
                             </TableHead>
                             <TableHead className="table-header-cell w-[80px] text-right">Years Left</TableHead>
-                            <TableHead className="table-header-cell w-[100px] text-right">Replacement</TableHead>
+                            <TableHead className="table-header-cell w-[120px] text-right">Replacement</TableHead>
                             <TableHead className="table-header-cell w-[50px]"></TableHead>
                           </TableRow>
                         </TableHeader>
@@ -266,16 +266,16 @@ export default function EquipmentList() {
                               <TableCell className="w-[90px]">
                                 <StatusBadge status={equipment.status} />
                               </TableCell>
-                              <TableCell className="w-[100px] text-right font-mono-nums">
+                              <TableCell className="w-[120px] text-right font-mono-nums">
                                 {formatCurrency(equipment.totalCostBasis)}
                               </TableCell>
                               <TableCell className="w-[70px] text-right font-mono-nums">
                                 {formatPercent(equipment.cogsPercent)}
                               </TableCell>
-                              <TableCell className="w-[90px] text-right font-mono-nums bg-field-calculated">
+                              <TableCell className="w-[110px] text-right font-mono-nums bg-field-calculated">
                                 {formatCurrency(equipment.cogsAllocatedCost)}
                               </TableCell>
-                              <TableCell className="w-[90px] text-right font-mono-nums bg-field-calculated">
+                              <TableCell className="w-[110px] text-right font-mono-nums bg-field-calculated">
                                 {formatCurrency(equipment.overheadAllocatedCost)}
                               </TableCell>
                               <TableCell className="w-[80px] text-right font-mono-nums">
@@ -283,7 +283,7 @@ export default function EquipmentList() {
                                   {equipment.estimatedYearsLeft}
                                 </span>
                               </TableCell>
-                              <TableCell className="w-[100px] text-right font-mono-nums">
+                              <TableCell className="w-[120px] text-right font-mono-nums">
                                 {formatCurrency(equipment.replacementCostNew)}
                               </TableCell>
                               <TableCell className="w-[50px]">
