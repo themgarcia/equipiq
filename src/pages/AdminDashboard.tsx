@@ -3,11 +3,18 @@ import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Package, DollarSign, TrendingUp, Wallet, Clock } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { 
+  getIndustryLabel, 
+  getFieldEmployeesLabel, 
+  getAnnualRevenueLabel, 
+  getRegionLabel 
+} from '@/data/signupOptions';
 
 interface UserStats {
   id: string;
@@ -16,6 +23,11 @@ interface UserStats {
   createdAt: string;
   equipmentCount: number;
   totalValue: number;
+  companyName: string | null;
+  industry: string | null;
+  fieldEmployees: string | null;
+  annualRevenue: string | null;
+  region: string | null;
 }
 
 interface CategoryStats {
@@ -33,6 +45,12 @@ interface FinancingStats {
   totalPurchaseValue: number;
 }
 
+interface MarketInsight {
+  name: string;
+  value: number;
+  label?: string;
+}
+
 const CHART_COLORS = [
   'hsl(var(--chart-1))',
   'hsl(var(--chart-2))',
@@ -45,6 +63,10 @@ export default function AdminDashboard() {
   const [userStats, setUserStats] = useState<UserStats[]>([]);
   const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
   const [financingStats, setFinancingStats] = useState<FinancingStats[]>([]);
+  const [industryStats, setIndustryStats] = useState<MarketInsight[]>([]);
+  const [companySizeStats, setCompanySizeStats] = useState<MarketInsight[]>([]);
+  const [revenueStats, setRevenueStats] = useState<MarketInsight[]>([]);
+  const [regionStats, setRegionStats] = useState<MarketInsight[]>([]);
   const [totals, setTotals] = useState({
     totalUsers: 0,
     totalEquipment: 0,
@@ -59,14 +81,14 @@ export default function AdminDashboard() {
 
   const fetchAdminData = async () => {
     try {
-      // Fetch all profiles
+      // Fetch all profiles with new columns
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, created_at');
+        .select('id, full_name, created_at, company_name, industry, field_employees, annual_revenue, region, years_in_business, company_website');
       
       if (profilesError) throw profilesError;
 
-      // Fetch all equipment (admin can see all due to service role context)
+      // Fetch all equipment
       const { data: equipment, error: equipmentError } = await supabase
         .from('equipment')
         .select('*');
@@ -79,11 +101,16 @@ export default function AdminDashboard() {
       profiles?.forEach(profile => {
         userStatsMap.set(profile.id, {
           id: profile.id,
-          email: '', // Will be populated if we have access
+          email: '',
           fullName: profile.full_name || 'Unknown',
           createdAt: profile.created_at,
           equipmentCount: 0,
           totalValue: 0,
+          companyName: profile.company_name,
+          industry: profile.industry,
+          fieldEmployees: profile.field_employees,
+          annualRevenue: profile.annual_revenue,
+          region: profile.region,
         });
       });
 
@@ -98,6 +125,51 @@ export default function AdminDashboard() {
       });
 
       const userStatsArray = Array.from(userStatsMap.values());
+
+      // Calculate market insights from profiles
+      const industryMap = new Map<string, number>();
+      const sizeMap = new Map<string, number>();
+      const revenueMap = new Map<string, number>();
+      const regionMap = new Map<string, number>();
+
+      profiles?.forEach(profile => {
+        if (profile.industry) {
+          industryMap.set(profile.industry, (industryMap.get(profile.industry) || 0) + 1);
+        }
+        if (profile.field_employees) {
+          sizeMap.set(profile.field_employees, (sizeMap.get(profile.field_employees) || 0) + 1);
+        }
+        if (profile.annual_revenue) {
+          revenueMap.set(profile.annual_revenue, (revenueMap.get(profile.annual_revenue) || 0) + 1);
+        }
+        if (profile.region) {
+          regionMap.set(profile.region, (regionMap.get(profile.region) || 0) + 1);
+        }
+      });
+
+      setIndustryStats(Array.from(industryMap.entries()).map(([name, value]) => ({
+        name,
+        value,
+        label: getIndustryLabel(name),
+      })).sort((a, b) => b.value - a.value));
+
+      setCompanySizeStats(Array.from(sizeMap.entries()).map(([name, value]) => ({
+        name,
+        value,
+        label: getFieldEmployeesLabel(name),
+      })));
+
+      setRevenueStats(Array.from(revenueMap.entries()).map(([name, value]) => ({
+        name,
+        value,
+        label: getAnnualRevenueLabel(name),
+      })));
+
+      setRegionStats(Array.from(regionMap.entries()).map(([name, value]) => ({
+        name,
+        value,
+        label: getRegionLabel(name),
+      })).sort((a, b) => b.value - a.value).slice(0, 10)); // Top 10 regions
 
       // Calculate category stats
       const categoryMap = new Map<string, CategoryStats>();
@@ -147,7 +219,6 @@ export default function AdminDashboard() {
         existing.totalPurchaseValue += itemValue;
         
         if (type !== 'owned') {
-          // For financed/leased: use financed_amount, or calculate from payments if zero
           let financedValue = Number(item.financed_amount) || 0;
           if (financedValue === 0 && Number(item.monthly_payment) > 0) {
             financedValue = Number(item.monthly_payment) * Number(item.term_months);
@@ -262,7 +333,8 @@ export default function AdminDashboard() {
         <Tabs defaultValue="users" className="space-y-4">
           <TabsList>
             <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="categories">Market Data</TabsTrigger>
+            <TabsTrigger value="market">Market Insights</TabsTrigger>
+            <TabsTrigger value="categories">Equipment Data</TabsTrigger>
             <TabsTrigger value="financing">Financing</TabsTrigger>
           </TabsList>
 
@@ -271,34 +343,221 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>User Management</CardTitle>
-                <CardDescription>Overview of all platform users and their equipment</CardDescription>
+                <CardDescription>Overview of all platform users and their companies</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Equipment</TableHead>
-                      <TableHead className="text-right">Total Value</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {userStats.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.fullName}</TableCell>
-                        <TableCell>{format(new Date(user.createdAt), 'MMM d, yyyy')}</TableCell>
-                        <TableCell className="text-right">{user.equipmentCount}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(user.totalValue)}</TableCell>
+                <ScrollArea className="w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Company</TableHead>
+                        <TableHead>Industry</TableHead>
+                        <TableHead>Employees</TableHead>
+                        <TableHead>Revenue</TableHead>
+                        <TableHead>Region</TableHead>
+                        <TableHead>Joined</TableHead>
+                        <TableHead className="text-right">Equipment</TableHead>
+                        <TableHead className="text-right">Total Value</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {userStats.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.fullName}</TableCell>
+                          <TableCell>{user.companyName || '—'}</TableCell>
+                          <TableCell>{user.industry ? getIndustryLabel(user.industry) : '—'}</TableCell>
+                          <TableCell>{user.fieldEmployees ? getFieldEmployeesLabel(user.fieldEmployees) : '—'}</TableCell>
+                          <TableCell>{user.annualRevenue ? getAnnualRevenueLabel(user.annualRevenue) : '—'}</TableCell>
+                          <TableCell>{user.region ? getRegionLabel(user.region) : '—'}</TableCell>
+                          <TableCell>{format(new Date(user.createdAt), 'MMM d, yyyy')}</TableCell>
+                          <TableCell className="text-right">{user.equipmentCount}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(user.totalValue)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Categories/Market Data Tab */}
+          {/* Market Insights Tab */}
+          <TabsContent value="market" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Industry Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    Industry Distribution
+                  </CardTitle>
+                  <CardDescription>Users by industry type</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  {industryStats.length > 0 ? (
+                    <ChartContainer config={{}} className="h-full w-full">
+                      <BarChart 
+                        data={industryStats} 
+                        layout="vertical"
+                      >
+                        <XAxis type="number" />
+                        <YAxis dataKey="label" type="category" width={140} tick={{ fontSize: 12 }} />
+                        <ChartTooltip 
+                          content={({ payload }) => {
+                            if (payload && payload[0]) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-background border rounded-md px-3 py-2 shadow-md">
+                                  <p className="font-medium">{data.label}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {data.value} companies
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={4} />
+                      </BarChart>
+                    </ChartContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      No industry data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Company Size Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Company Size
+                  </CardTitle>
+                  <CardDescription>Distribution by field employees</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  {companySizeStats.length > 0 ? (
+                    <ChartContainer config={{}} className="h-full w-full">
+                      <PieChart>
+                        <Pie
+                          data={companySizeStats}
+                          dataKey="value"
+                          nameKey="label"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ label, value }) => `${label}: ${value}`}
+                        >
+                          {companySizeStats.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                      </PieChart>
+                    </ChartContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      No company size data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Revenue Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5" />
+                    Revenue Distribution
+                  </CardTitle>
+                  <CardDescription>Companies by annual revenue range</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  {revenueStats.length > 0 ? (
+                    <ChartContainer config={{}} className="h-full w-full">
+                      <BarChart data={revenueStats}>
+                        <XAxis dataKey="label" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
+                        <YAxis />
+                        <ChartTooltip 
+                          content={({ payload }) => {
+                            if (payload && payload[0]) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-background border rounded-md px-3 py-2 shadow-md">
+                                  <p className="font-medium">{data.label}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {data.value} companies
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={4} />
+                      </BarChart>
+                    </ChartContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      No revenue data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Geographic Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Top Regions
+                  </CardTitle>
+                  <CardDescription>Geographic distribution of users</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  {regionStats.length > 0 ? (
+                    <ChartContainer config={{}} className="h-full w-full">
+                      <BarChart 
+                        data={regionStats} 
+                        layout="vertical"
+                      >
+                        <XAxis type="number" />
+                        <YAxis dataKey="label" type="category" width={120} tick={{ fontSize: 12 }} />
+                        <ChartTooltip 
+                          content={({ payload }) => {
+                            if (payload && payload[0]) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-background border rounded-md px-3 py-2 shadow-md">
+                                  <p className="font-medium">{data.label}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {data.value} users
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="value" fill="hsl(var(--chart-3))" radius={4} />
+                      </BarChart>
+                    </ChartContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      No region data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Categories/Equipment Data Tab */}
           <TabsContent value="categories" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card>

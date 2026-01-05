@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { z } from 'zod';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, CompanyProfileData } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Lock, User } from 'lucide-react';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Mail, Lock, User, Building2, Users, DollarSign, MapPin, Globe, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
+import { 
+  industryOptions, 
+  fieldEmployeesOptions, 
+  annualRevenueOptions, 
+  regionOptions 
+} from '@/data/signupOptions';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -17,6 +24,13 @@ const loginSchema = z.object({
 
 const signupSchema = loginSchema.extend({
   fullName: z.string().min(1, 'Full name is required').max(100, 'Name too long'),
+  companyName: z.string().min(1, 'Company name is required').max(200, 'Company name too long'),
+  industry: z.string().min(1, 'Industry is required'),
+  fieldEmployees: z.string().min(1, 'Number of field employees is required'),
+  annualRevenue: z.string().optional(),
+  yearsInBusiness: z.number().int().positive().max(200).optional().or(z.literal('')),
+  region: z.string().optional(),
+  companyWebsite: z.string().url('Invalid website URL').optional().or(z.literal('')),
 });
 
 export default function Auth() {
@@ -24,6 +38,13 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [fieldEmployees, setFieldEmployees] = useState('');
+  const [annualRevenue, setAnnualRevenue] = useState('');
+  const [yearsInBusiness, setYearsInBusiness] = useState('');
+  const [region, setRegion] = useState('');
+  const [companyWebsite, setCompanyWebsite] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -40,6 +61,20 @@ export default function Auth() {
       navigate(from, { replace: true });
     }
   }, [user, loading, navigate, from]);
+
+  const resetForm = () => {
+    setEmail('');
+    setPassword('');
+    setFullName('');
+    setCompanyName('');
+    setIndustry('');
+    setFieldEmployees('');
+    setAnnualRevenue('');
+    setYearsInBusiness('');
+    setRegion('');
+    setCompanyWebsite('');
+    setErrors({});
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,18 +118,41 @@ export default function Auth() {
           description: "You have successfully logged in.",
         });
       } else {
-        const result = signupSchema.safeParse({ email, password, fullName });
+        const yearsNum = yearsInBusiness ? parseInt(yearsInBusiness, 10) : undefined;
+        const result = signupSchema.safeParse({ 
+          email, 
+          password, 
+          fullName,
+          companyName,
+          industry,
+          fieldEmployees,
+          annualRevenue: annualRevenue || undefined,
+          yearsInBusiness: yearsNum || undefined,
+          region: region || undefined,
+          companyWebsite: companyWebsite || undefined,
+        });
+        
         if (!result.success) {
           const fieldErrors: Record<string, string> = {};
           result.error.issues.forEach(issue => {
-            fieldErrors[issue.path[0]] = issue.message;
+            fieldErrors[issue.path[0] as string] = issue.message;
           });
           setErrors(fieldErrors);
           setIsSubmitting(false);
           return;
         }
 
-        const { error } = await signUp(email, password, fullName);
+        const companyData: CompanyProfileData = {
+          companyName,
+          industry,
+          fieldEmployees,
+          annualRevenue: annualRevenue || undefined,
+          yearsInBusiness: yearsNum,
+          region: region || undefined,
+          companyWebsite: companyWebsite || undefined,
+        };
+
+        const { error } = await signUp(email, password, fullName, companyData);
         if (error) {
           if (error.message.includes('already registered')) {
             toast({
@@ -153,34 +211,187 @@ export default function Auth() {
             <CardDescription>
               {isLogin 
                 ? 'Enter your credentials to access your equipment' 
-                : 'Get started with tracking your equipment'}
+                : 'Tell us about yourself and your company'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="John Doe"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="pl-10"
-                      disabled={isSubmitting}
-                    />
+                <>
+                  {/* Personal Info Section */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name *</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="fullName"
+                          type="text"
+                          placeholder="John Doe"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="pl-10"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                      {errors.fullName && (
+                        <p className="text-sm text-destructive">{errors.fullName}</p>
+                      )}
+                    </div>
                   </div>
-                  {errors.fullName && (
-                    <p className="text-sm text-destructive">{errors.fullName}</p>
-                  )}
-                </div>
+
+                  {/* Company Info Section */}
+                  <div className="pt-4 border-t space-y-4">
+                    <p className="text-sm font-medium text-muted-foreground">Company Information</p>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName">Company Name *</Label>
+                      <div className="relative">
+                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="companyName"
+                          type="text"
+                          placeholder="ABC Construction"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          className="pl-10"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                      {errors.companyName && (
+                        <p className="text-sm text-destructive">{errors.companyName}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="industry">Industry *</Label>
+                      <Select value={industry} onValueChange={setIndustry} disabled={isSubmitting}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your industry" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {industryOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.industry && (
+                        <p className="text-sm text-destructive">{errors.industry}</p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fieldEmployees">Field Employees *</Label>
+                        <Select value={fieldEmployees} onValueChange={setFieldEmployees} disabled={isSubmitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select range" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {fieldEmployeesOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.fieldEmployees && (
+                          <p className="text-sm text-destructive">{errors.fieldEmployees}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="annualRevenue">Annual Revenue</Label>
+                        <Select value={annualRevenue} onValueChange={setAnnualRevenue} disabled={isSubmitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select range" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {annualRevenueOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="region">Region</Label>
+                        <Select value={region} onValueChange={setRegion} disabled={isSubmitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select region" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {regionOptions.map((group) => (
+                              <SelectGroup key={group.group}>
+                                <SelectLabel>{group.group}</SelectLabel>
+                                {group.options.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="yearsInBusiness">Years in Business</Label>
+                        <div className="relative">
+                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="yearsInBusiness"
+                            type="number"
+                            placeholder="10"
+                            min="0"
+                            max="200"
+                            value={yearsInBusiness}
+                            onChange={(e) => setYearsInBusiness(e.target.value)}
+                            className="pl-10"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        {errors.yearsInBusiness && (
+                          <p className="text-sm text-destructive">{errors.yearsInBusiness}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="companyWebsite">Company Website</Label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="companyWebsite"
+                          type="url"
+                          placeholder="https://yourcompany.com"
+                          value={companyWebsite}
+                          onChange={(e) => setCompanyWebsite(e.target.value)}
+                          className="pl-10"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                      {errors.companyWebsite && (
+                        <p className="text-sm text-destructive">{errors.companyWebsite}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Account Info Section */}
+                  <div className="pt-4 border-t space-y-4">
+                    <p className="text-sm font-medium text-muted-foreground">Account Details</p>
+                  </div>
+                </>
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email {!isLogin && '*'}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -199,7 +410,7 @@ export default function Auth() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Password {!isLogin && '*'}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -229,7 +440,7 @@ export default function Auth() {
                 type="button"
                 onClick={() => {
                   setIsLogin(!isLogin);
-                  setErrors({});
+                  resetForm();
                 }}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
