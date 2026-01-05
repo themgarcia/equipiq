@@ -30,6 +30,7 @@ interface FinancingStats {
   type: string;
   count: number;
   totalAmount: number;
+  totalPurchaseValue: number;
 }
 
 const CHART_COLORS = [
@@ -136,10 +137,23 @@ export default function AdminDashboard() {
           type,
           count: 0,
           totalAmount: 0,
+          totalPurchaseValue: 0,
         };
         
+        const itemValue = Number(item.purchase_price) + Number(item.sales_tax) + 
+                          Number(item.freight_setup) + Number(item.other_cap_ex);
+        
         existing.count++;
-        existing.totalAmount += Number(item.financed_amount) || 0;
+        existing.totalPurchaseValue += itemValue;
+        
+        if (type !== 'owned') {
+          // For financed/leased: use financed_amount, or calculate from payments if zero
+          let financedValue = Number(item.financed_amount) || 0;
+          if (financedValue === 0 && Number(item.monthly_payment) > 0) {
+            financedValue = Number(item.monthly_payment) * Number(item.term_months);
+          }
+          existing.totalAmount += financedValue;
+        }
         
         financingMap.set(type, existing);
       });
@@ -294,11 +308,34 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="h-[300px]">
                   <ChartContainer config={{}} className="h-full w-full">
-                    <BarChart data={categoryStats} layout="vertical">
-                      <XAxis type="number" />
+                    <BarChart 
+                      data={categoryStats.map(cat => ({
+                        ...cat,
+                        percent: totals.totalEquipment > 0 
+                          ? ((cat.count / totals.totalEquipment) * 100)
+                          : 0,
+                      }))} 
+                      layout="vertical"
+                    >
+                      <XAxis type="number" tickFormatter={(value) => `${value.toFixed(0)}%`} />
                       <YAxis dataKey="category" type="category" width={120} tick={{ fontSize: 12 }} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={4} />
+                      <ChartTooltip 
+                        content={({ payload }) => {
+                          if (payload && payload[0]) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-background border rounded-md px-3 py-2 shadow-md">
+                                <p className="font-medium">{data.category}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {data.percent.toFixed(1)}% ({data.count} items)
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="percent" fill="hsl(var(--primary))" radius={4} />
                     </BarChart>
                   </ChartContainer>
                 </CardContent>
@@ -319,7 +356,11 @@ export default function AdminDashboard() {
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
-                        label={({ type, count }) => `${type}: ${count}`}
+                        label={({ type, count }) => {
+                          const total = financingStats.reduce((sum, s) => sum + s.count, 0);
+                          const percent = total > 0 ? ((count / total) * 100).toFixed(1) : '0';
+                          return `${type}: ${percent}%`;
+                        }}
                       >
                         {financingStats.map((_, index) => (
                           <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
@@ -376,9 +417,11 @@ export default function AdminDashboard() {
                   <CardContent>
                     <div className="text-2xl font-bold">{stat.count}</div>
                     <p className="text-xs text-muted-foreground">
-                      {stat.type !== 'owned' && stat.totalAmount > 0 
-                        ? `${formatCurrency(stat.totalAmount)} financed`
-                        : 'equipment items'}
+                      {stat.type === 'owned' 
+                        ? `${formatCurrency(stat.totalPurchaseValue)} total value`
+                        : stat.totalAmount > 0 
+                          ? `${formatCurrency(stat.totalAmount)} financed`
+                          : `${formatCurrency(stat.totalPurchaseValue)} total value`}
                     </p>
                   </CardContent>
                 </Card>
@@ -396,7 +439,8 @@ export default function AdminDashboard() {
                     <TableRow>
                       <TableHead>Financing Type</TableHead>
                       <TableHead className="text-right">Count</TableHead>
-                      <TableHead className="text-right">Total Financed Amount</TableHead>
+                      <TableHead className="text-right">Total Value</TableHead>
+                      <TableHead className="text-right">Financed Amount</TableHead>
                       <TableHead className="text-right">% of Fleet</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -405,8 +449,9 @@ export default function AdminDashboard() {
                       <TableRow key={stat.type}>
                         <TableCell className="font-medium capitalize">{stat.type}</TableCell>
                         <TableCell className="text-right">{stat.count}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(stat.totalPurchaseValue)}</TableCell>
                         <TableCell className="text-right">
-                          {stat.totalAmount > 0 ? formatCurrency(stat.totalAmount) : '—'}
+                          {stat.type !== 'owned' ? formatCurrency(stat.totalAmount) : '—'}
                         </TableCell>
                         <TableCell className="text-right">
                           {totals.totalEquipment > 0 
