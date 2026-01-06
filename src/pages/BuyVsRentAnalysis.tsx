@@ -25,7 +25,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { BuyVsRentInput, EquipmentCategory } from '@/types/equipment';
 import { categoryDefaults, getCategoryDefaults } from '@/data/categoryDefaults';
-import { calculateBuyVsRent, formatCurrency, formatDays } from '@/lib/buyVsRentCalculations';
+import { calculateBuyVsRent, formatCurrency, formatDays, calculateRentalCostByType } from '@/lib/buyVsRentCalculations';
 import { cn } from '@/lib/utils';
 
 // Derive categories from categoryDefaults
@@ -127,6 +127,37 @@ export default function BuyVsRentAnalysis() {
       case 'daily': return result.breakEvenAnalysis.daily ?? 0;
       case 'weekly': return result.breakEvenAnalysis.weekly ?? 0;
       case 'monthly': return result.breakEvenAnalysis.monthly ?? 0;
+    }
+  };
+
+  // Calculate rental cost based on selected rate type
+  const selectedRentalCost = useMemo(() => {
+    return calculateRentalCostByType(input, selectedRateType) ?? result?.annualRentalCost ?? 0;
+  }, [input, selectedRateType, result]);
+
+  // Calculate year-by-year comparison based on selected rate
+  const selectedYearComparison = useMemo(() => {
+    if (!result) return [];
+    
+    return Array.from({ length: input.usefulLife }, (_, i) => {
+      const year = i + 1;
+      const ownCumulative = result.annualOwnershipCost * year;
+      const rentCumulative = selectedRentalCost * year;
+      return {
+        year,
+        ownCumulative,
+        rentCumulative,
+        savings: rentCumulative - ownCumulative,
+      };
+    });
+  }, [result, selectedRentalCost, input.usefulLife]);
+
+  // Get rate description for selected type
+  const getSelectedRateDescription = () => {
+    switch (selectedRateType) {
+      case 'daily': return `${formatCurrency(input.rentalRateDaily)}/day`;
+      case 'weekly': return `${formatCurrency(input.rentalRateWeekly!)}/week`;
+      case 'monthly': return `${formatCurrency(input.rentalRateMonthly!)}/month`;
     }
   };
 
@@ -390,12 +421,10 @@ export default function BuyVsRentAnalysis() {
                         Annual Cost to Rent
                       </div>
                       <p className="text-2xl font-bold font-mono-nums mt-1">
-                        {formatCurrency(result.annualRentalCost)}
+                        {formatCurrency(selectedRentalCost)}
                       </p>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Based on {input.usageDaysPerYear} days × {formatCurrency(input.rentalRateDaily)}/day
-                        {(input.rentalRateWeekly || input.rentalRateMonthly) && 
-                          ' (optimized using best available rate)'}
+                        Based on {input.usageDaysPerYear} days using {selectedRateType} rate ({getSelectedRateDescription()})
                       </p>
                     </CardContent>
                   </Card>
@@ -525,7 +554,7 @@ export default function BuyVsRentAnalysis() {
                   <CardContent>
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={result.yearByYearComparison}>
+                        <LineChart data={selectedYearComparison}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                           <XAxis 
                             dataKey="year" 
@@ -579,7 +608,7 @@ export default function BuyVsRentAnalysis() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {result.yearByYearComparison.map((row) => (
+                        {selectedYearComparison.map((row) => (
                           <TableRow key={row.year}>
                             <TableCell className="font-medium">Year {row.year}</TableCell>
                             <TableCell className="text-right font-mono-nums">
