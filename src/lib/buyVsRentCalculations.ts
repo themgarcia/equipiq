@@ -171,3 +171,27 @@ export function formatCurrency(value: number): string {
 export function formatDays(value: number): string {
   return `${Math.round(value)} days/year`;
 }
+
+export function calculateRentalCostByType(
+  input: BuyVsRentInput, 
+  rateType: 'daily' | 'weekly' | 'monthly'
+): number | null {
+  const daysPerYear = input.usageDaysPerYear;
+  
+  switch (rateType) {
+    case 'daily':
+      return daysPerYear * input.rentalRateDaily;
+    case 'weekly':
+      if (input.rentalRateWeekly && input.rentalRateWeekly > 0) {
+        const weeksNeeded = Math.ceil(daysPerYear / 5);
+        return weeksNeeded * input.rentalRateWeekly;
+      }
+      return null;
+    case 'monthly':
+      if (input.rentalRateMonthly && input.rentalRateMonthly > 0) {
+        const monthsNeeded = Math.ceil(daysPerYear / 22);
+        return monthsNeeded * input.rentalRateMonthly;
+      }
+      return null;
+  }
+}
