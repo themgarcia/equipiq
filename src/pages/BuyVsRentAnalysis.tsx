@@ -387,49 +387,6 @@ export default function BuyVsRentAnalysis() {
           <div className="space-y-6">
             {result ? (
               <>
-                {/* Key Metrics */}
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                        <TrendingDown className="h-4 w-4" />
-                        Annual Cost to Own
-                      </div>
-                      <p className="text-2xl font-bold font-mono-nums mt-1">
-                        {formatCurrency(result.annualOwnershipCost)}
-                      </p>
-                      <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                        <div className="flex justify-between">
-                          <span>Depreciation:</span>
-                          <span>{formatCurrency(result.ownershipBreakdown.depreciation)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Maintenance:</span>
-                          <span>{formatCurrency(result.ownershipBreakdown.maintenance)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Insurance:</span>
-                          <span>{formatCurrency(result.ownershipBreakdown.insurance)}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                        <Calendar className="h-4 w-4" />
-                        Annual Cost to Rent
-                      </div>
-                      <p className="text-2xl font-bold font-mono-nums mt-1">
-                        {formatCurrency(selectedRentalCost)}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Based on {input.usageDaysPerYear} days using {selectedRateType} rate ({getSelectedRateDescription()})
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
                 {/* Break-Even Analysis */}
                 <Card>
                   <CardContent className="p-4">
@@ -542,6 +499,49 @@ export default function BuyVsRentAnalysis() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Key Metrics */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                        <TrendingDown className="h-4 w-4" />
+                        Annual Cost to Own
+                      </div>
+                      <p className="text-2xl font-bold font-mono-nums mt-1">
+                        {formatCurrency(result.annualOwnershipCost)}
+                      </p>
+                      <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                        <div className="flex justify-between">
+                          <span>Depreciation:</span>
+                          <span>{formatCurrency(result.ownershipBreakdown.depreciation)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Maintenance:</span>
+                          <span>{formatCurrency(result.ownershipBreakdown.maintenance)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Insurance:</span>
+                          <span>{formatCurrency(result.ownershipBreakdown.insurance)}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                        <Calendar className="h-4 w-4" />
+                        Annual Cost to Rent
+                      </div>
+                      <p className="text-2xl font-bold font-mono-nums mt-1">
+                        {formatCurrency(selectedRentalCost)}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Based on {input.usageDaysPerYear} days using {selectedRateType} rate ({getSelectedRateDescription()})
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
 
                 {/* Cost Comparison Chart */}
                 <Card>
