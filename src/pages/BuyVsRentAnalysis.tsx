@@ -20,9 +20,6 @@ import {
   TrendingDown, 
   DollarSign, 
   Calendar,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
   Info
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -50,6 +47,7 @@ const defaultInput: BuyVsRentInput = {
 
 export default function BuyVsRentAnalysis() {
   const [input, setInput] = useState<BuyVsRentInput>(defaultInput);
+  const [selectedRateType, setSelectedRateType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
   // Round any existing decimal values on mount
   useEffect(() => {
@@ -75,6 +73,17 @@ export default function BuyVsRentAnalysis() {
     }
     return null;
   }, [input]);
+
+  // Auto-select the best available rate when rates change
+  useEffect(() => {
+    if (input.rentalRateMonthly && input.rentalRateMonthly > 0) {
+      setSelectedRateType('monthly');
+    } else if (input.rentalRateWeekly && input.rentalRateWeekly > 0) {
+      setSelectedRateType('weekly');
+    } else {
+      setSelectedRateType('daily');
+    }
+  }, [input.rentalRateDaily, input.rentalRateWeekly, input.rentalRateMonthly]);
 
   const handleCategoryChange = (category: EquipmentCategory) => {
     const defaults = getCategoryDefaults(category);
@@ -111,32 +120,13 @@ export default function BuyVsRentAnalysis() {
     setInput(prev => ({ ...prev, [field]: value }));
   };
 
-  const getRecommendationStyle = (recommendation: string) => {
-    switch (recommendation) {
-      case 'BUY':
-        return {
-          bg: 'bg-green-100 dark:bg-green-900/30',
-          text: 'text-green-800 dark:text-green-300',
-          border: 'border-green-200 dark:border-green-800',
-          icon: CheckCircle,
-          label: 'Buying is recommended',
-        };
-      case 'RENT':
-        return {
-          bg: 'bg-red-100 dark:bg-red-900/30',
-          text: 'text-red-800 dark:text-red-300',
-          border: 'border-red-200 dark:border-red-800',
-          icon: XCircle,
-          label: 'Renting is recommended',
-        };
-      default:
-        return {
-          bg: 'bg-yellow-100 dark:bg-yellow-900/30',
-          text: 'text-yellow-800 dark:text-yellow-300',
-          border: 'border-yellow-200 dark:border-yellow-800',
-          icon: AlertTriangle,
-          label: 'Close call - consider other factors',
-        };
+  // Get break-even value for selected rate type
+  const getSelectedBreakEven = () => {
+    if (!result) return 0;
+    switch (selectedRateType) {
+      case 'daily': return result.breakEvenAnalysis.daily ?? 0;
+      case 'weekly': return result.breakEvenAnalysis.weekly ?? 0;
+      case 'monthly': return result.breakEvenAnalysis.monthly ?? 0;
     }
   };
 
@@ -366,49 +356,6 @@ export default function BuyVsRentAnalysis() {
           <div className="space-y-6">
             {result ? (
               <>
-                {/* Recommendation Badge */}
-                {(() => {
-                  const style = getRecommendationStyle(result.recommendation);
-                  const Icon = style.icon;
-                  return (
-                    <Card className={cn('border-2', style.border)}>
-                      <CardContent className={cn('p-6', style.bg)}>
-                        <div className="flex items-center gap-4">
-                          <div className={cn('p-3 rounded-full', style.bg)}>
-                            <Icon className={cn('h-8 w-8', style.text)} />
-                          </div>
-                          <div>
-                            <Badge 
-                              className={cn(
-                                'text-lg px-4 py-1 font-bold',
-                                result.recommendation === 'BUY' && 'bg-green-600 hover:bg-green-600',
-                                result.recommendation === 'RENT' && 'bg-red-600 hover:bg-red-600',
-                                result.recommendation === 'CLOSE_CALL' && 'bg-yellow-600 hover:bg-yellow-600'
-                              )}
-                            >
-                              {result.recommendation === 'CLOSE_CALL' ? 'CLOSE CALL' : result.recommendation}
-                            </Badge>
-                            <p className={cn('mt-1 font-medium', style.text)}>
-                              {style.label}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-current/10">
-                          <p className={cn('text-lg font-semibold', style.text)}>
-                            {result.annualOwnershipCost < result.annualRentalCost 
-                              ? `Buying saves ${formatCurrency(result.annualSavings)} per year`
-                              : `Renting saves ${formatCurrency(result.annualSavings)} per year`
-                            }
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Over {input.usefulLife} years: {formatCurrency(result.totalSavingsOverLife)} total savings
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })()}
-
                 {/* Key Metrics */}
                 <div className="grid grid-cols-2 gap-4">
                   <Card>
@@ -460,61 +407,80 @@ export default function BuyVsRentAnalysis() {
                     <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
                       <Info className="h-4 w-4" />
                       Break-Even Analysis
+                      <span className="text-xs ml-auto">Click a card to view that scenario</span>
                     </div>
                     
-                    {/* All break-even scenarios */}
+                    {/* All break-even scenarios - Clickable */}
                     <div className="grid grid-cols-3 gap-3 mb-4">
                       {/* Daily Rate */}
-                      <div className={cn(
-                        'p-3 rounded-lg border',
-                        result.breakEvenAnalysis.primaryType === 'daily' 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-border'
-                      )}>
+                      <div 
+                        onClick={() => result.breakEvenAnalysis.daily !== null && setSelectedRateType('daily')}
+                        className={cn(
+                          'p-3 rounded-lg border transition-all',
+                          selectedRateType === 'daily' 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-border',
+                          result.breakEvenAnalysis.daily !== null 
+                            ? 'cursor-pointer hover:border-primary/50' 
+                            : 'opacity-50 cursor-not-allowed'
+                        )}
+                      >
                         <p className="text-xs text-muted-foreground">Daily Rate</p>
                         <p className="text-lg font-bold font-mono-nums">
                           {result.breakEvenAnalysis.daily !== null 
                             ? formatDays(result.breakEvenAnalysis.daily)
                             : 'N/A'}
                         </p>
-                        {result.breakEvenAnalysis.primaryType === 'daily' && (
-                          <Badge variant="secondary" className="text-xs mt-1">Active</Badge>
+                        {selectedRateType === 'daily' && result.breakEvenAnalysis.daily !== null && (
+                          <Badge variant="secondary" className="text-xs mt-1">Selected</Badge>
                         )}
                       </div>
                       
                       {/* Weekly Rate */}
-                      <div className={cn(
-                        'p-3 rounded-lg border',
-                        result.breakEvenAnalysis.primaryType === 'weekly' 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-border'
-                      )}>
+                      <div 
+                        onClick={() => result.breakEvenAnalysis.weekly !== null && setSelectedRateType('weekly')}
+                        className={cn(
+                          'p-3 rounded-lg border transition-all',
+                          selectedRateType === 'weekly' 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-border',
+                          result.breakEvenAnalysis.weekly !== null 
+                            ? 'cursor-pointer hover:border-primary/50' 
+                            : 'opacity-50 cursor-not-allowed'
+                        )}
+                      >
                         <p className="text-xs text-muted-foreground">Weekly Rate</p>
                         <p className="text-lg font-bold font-mono-nums">
                           {result.breakEvenAnalysis.weekly !== null 
                             ? formatDays(result.breakEvenAnalysis.weekly)
                             : 'N/A'}
                         </p>
-                        {result.breakEvenAnalysis.primaryType === 'weekly' && (
-                          <Badge variant="secondary" className="text-xs mt-1">Active</Badge>
+                        {selectedRateType === 'weekly' && result.breakEvenAnalysis.weekly !== null && (
+                          <Badge variant="secondary" className="text-xs mt-1">Selected</Badge>
                         )}
                       </div>
                       
                       {/* Monthly Rate */}
-                      <div className={cn(
-                        'p-3 rounded-lg border',
-                        result.breakEvenAnalysis.primaryType === 'monthly' 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-border'
-                      )}>
+                      <div 
+                        onClick={() => result.breakEvenAnalysis.monthly !== null && setSelectedRateType('monthly')}
+                        className={cn(
+                          'p-3 rounded-lg border transition-all',
+                          selectedRateType === 'monthly' 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-border',
+                          result.breakEvenAnalysis.monthly !== null 
+                            ? 'cursor-pointer hover:border-primary/50' 
+                            : 'opacity-50 cursor-not-allowed'
+                        )}
+                      >
                         <p className="text-xs text-muted-foreground">Monthly Rate</p>
                         <p className="text-lg font-bold font-mono-nums">
                           {result.breakEvenAnalysis.monthly !== null 
                             ? formatDays(result.breakEvenAnalysis.monthly)
                             : 'N/A'}
                         </p>
-                        {result.breakEvenAnalysis.primaryType === 'monthly' && (
-                          <Badge variant="secondary" className="text-xs mt-1">Active</Badge>
+                        {selectedRateType === 'monthly' && result.breakEvenAnalysis.monthly !== null && (
+                          <Badge variant="secondary" className="text-xs mt-1">Selected</Badge>
                         )}
                       </div>
                     </div>
@@ -522,9 +488,9 @@ export default function BuyVsRentAnalysis() {
                     {/* Your usage comparison */}
                     <div className="flex items-center justify-between border-t pt-4">
                       <div>
-                        <p className="text-sm">Active Break-Even:</p>
+                        <p className="text-sm">Selected Break-Even:</p>
                         <p className="text-xl font-bold font-mono-nums">
-                          {formatDays(result.breakEvenAnalysis.primary)}
+                          {formatDays(getSelectedBreakEven())}
                         </p>
                       </div>
                       <div className="text-right">
@@ -537,10 +503,10 @@ export default function BuyVsRentAnalysis() {
                     
                     <div className="mt-4 bg-muted rounded-lg p-3">
                       <p className="text-sm text-muted-foreground">
-                        {input.usageDaysPerYear > result.breakEvenAnalysis.primary 
-                          ? `You use this equipment ${Math.round(input.usageDaysPerYear - result.breakEvenAnalysis.primary)} days more than the break-even point, making buying more economical.`
-                          : input.usageDaysPerYear < result.breakEvenAnalysis.primary
-                            ? `You use this equipment ${Math.round(result.breakEvenAnalysis.primary - input.usageDaysPerYear)} days less than the break-even point, making renting more economical.`
+                        {input.usageDaysPerYear > getSelectedBreakEven() 
+                          ? `You use this equipment ${Math.round(input.usageDaysPerYear - getSelectedBreakEven())} days more than the break-even point, making buying more economical.`
+                          : input.usageDaysPerYear < getSelectedBreakEven()
+                            ? `You use this equipment ${Math.round(getSelectedBreakEven() - input.usageDaysPerYear)} days less than the break-even point, making renting more economical.`
                             : `Your usage is right at the break-even point. Consider other factors like convenience and availability.`
                         }
                       </p>
