@@ -1,4 +1,4 @@
-import { BuyVsRentInput, BuyVsRentResult, BuyVsRentRecommendation, OwnershipBreakdown, YearComparison } from '@/types/equipment';
+import { BuyVsRentInput, BuyVsRentResult, BuyVsRentRecommendation, OwnershipBreakdown, YearComparison, BreakEvenAnalysis } from '@/types/equipment';
 
 const BUFFER_PERCENT = 0.15; // 15% buffer for close call determination
 
@@ -20,10 +20,8 @@ export function calculateBuyVsRent(input: BuyVsRentInput): BuyVsRentResult {
   // Calculate optimal rental cost (use best rate available)
   const annualRentalCost = calculateOptimalRentalCost(input);
 
-  // Calculate break-even days
-  const breakEvenDays = input.rentalRateDaily > 0 
-    ? annualOwnershipCost / input.rentalRateDaily 
-    : 0;
+  // Calculate all break-even scenarios
+  const breakEvenAnalysis = calculateAllBreakEvenDays(input, annualOwnershipCost);
 
   // Determine recommendation based on actual cost comparison
   const recommendation = determineRecommendation(annualOwnershipCost, annualRentalCost);
@@ -43,11 +41,55 @@ export function calculateBuyVsRent(input: BuyVsRentInput): BuyVsRentResult {
     annualOwnershipCost,
     ownershipBreakdown,
     annualRentalCost,
-    breakEvenDays,
+    breakEvenDays: breakEvenAnalysis.primary,
+    breakEvenAnalysis,
     recommendation,
     annualSavings,
     totalSavingsOverLife,
     yearByYearComparison,
+  };
+}
+
+function calculateAllBreakEvenDays(
+  input: BuyVsRentInput, 
+  annualOwnershipCost: number
+): BreakEvenAnalysis {
+  // Daily break-even
+  const dailyBreakEven = input.rentalRateDaily > 0 
+    ? annualOwnershipCost / input.rentalRateDaily 
+    : null;
+  
+  // Weekly break-even (5 working days per week)
+  const weeklyBreakEven = input.rentalRateWeekly && input.rentalRateWeekly > 0
+    ? annualOwnershipCost / (input.rentalRateWeekly / 5)
+    : null;
+  
+  // Monthly break-even (22 working days per month)
+  const monthlyBreakEven = input.rentalRateMonthly && input.rentalRateMonthly > 0
+    ? annualOwnershipCost / (input.rentalRateMonthly / 22)
+    : null;
+  
+  // Determine primary (prioritize monthly > weekly > daily)
+  let primary: number;
+  let primaryType: 'daily' | 'weekly' | 'monthly';
+  
+  if (monthlyBreakEven !== null) {
+    primary = monthlyBreakEven;
+    primaryType = 'monthly';
+  } else if (weeklyBreakEven !== null) {
+    primary = weeklyBreakEven;
+    primaryType = 'weekly';
+  } else {
+    primary = dailyBreakEven ?? 0;
+    primaryType = 'daily';
+  }
+  
+  return {
+    daily: dailyBreakEven,
+    weekly: weeklyBreakEven,
+    monthly: monthlyBreakEven,
+    primary,
+    primaryType,
   };
 }
 

@@ -141,11 +141,20 @@ export interface YearComparison {
 
 export type BuyVsRentRecommendation = 'BUY' | 'RENT' | 'CLOSE_CALL';
 
+export interface BreakEvenAnalysis {
+  daily: number | null;
+  weekly: number | null;
+  monthly: number | null;
+  primary: number;
+  primaryType: 'daily' | 'weekly' | 'monthly';
+}
+
 export interface BuyVsRentResult {
   annualOwnershipCost: number;
   ownershipBreakdown: OwnershipBreakdown;
   annualRentalCost: number;
   breakEvenDays: number;
+  breakEvenAnalysis: BreakEvenAnalysis;
   recommendation: BuyVsRentRecommendation;
   annualSavings: number;
   totalSavingsOverLife: number;

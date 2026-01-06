@@ -457,15 +457,74 @@ export default function BuyVsRentAnalysis() {
                 {/* Break-Even Analysis */}
                 <Card>
                   <CardContent className="p-4">
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm mb-4">
                       <Info className="h-4 w-4" />
                       Break-Even Analysis
                     </div>
-                    <div className="flex items-center justify-between">
+                    
+                    {/* All break-even scenarios */}
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      {/* Daily Rate */}
+                      <div className={cn(
+                        'p-3 rounded-lg border',
+                        result.breakEvenAnalysis.primaryType === 'daily' 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border'
+                      )}>
+                        <p className="text-xs text-muted-foreground">Daily Rate</p>
+                        <p className="text-lg font-bold font-mono-nums">
+                          {result.breakEvenAnalysis.daily !== null 
+                            ? formatDays(result.breakEvenAnalysis.daily)
+                            : 'N/A'}
+                        </p>
+                        {result.breakEvenAnalysis.primaryType === 'daily' && (
+                          <Badge variant="secondary" className="text-xs mt-1">Active</Badge>
+                        )}
+                      </div>
+                      
+                      {/* Weekly Rate */}
+                      <div className={cn(
+                        'p-3 rounded-lg border',
+                        result.breakEvenAnalysis.primaryType === 'weekly' 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border'
+                      )}>
+                        <p className="text-xs text-muted-foreground">Weekly Rate</p>
+                        <p className="text-lg font-bold font-mono-nums">
+                          {result.breakEvenAnalysis.weekly !== null 
+                            ? formatDays(result.breakEvenAnalysis.weekly)
+                            : 'N/A'}
+                        </p>
+                        {result.breakEvenAnalysis.primaryType === 'weekly' && (
+                          <Badge variant="secondary" className="text-xs mt-1">Active</Badge>
+                        )}
+                      </div>
+                      
+                      {/* Monthly Rate */}
+                      <div className={cn(
+                        'p-3 rounded-lg border',
+                        result.breakEvenAnalysis.primaryType === 'monthly' 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border'
+                      )}>
+                        <p className="text-xs text-muted-foreground">Monthly Rate</p>
+                        <p className="text-lg font-bold font-mono-nums">
+                          {result.breakEvenAnalysis.monthly !== null 
+                            ? formatDays(result.breakEvenAnalysis.monthly)
+                            : 'N/A'}
+                        </p>
+                        {result.breakEvenAnalysis.primaryType === 'monthly' && (
+                          <Badge variant="secondary" className="text-xs mt-1">Active</Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Your usage comparison */}
+                    <div className="flex items-center justify-between border-t pt-4">
                       <div>
-                        <p className="text-sm">Break-Even Point:</p>
+                        <p className="text-sm">Active Break-Even:</p>
                         <p className="text-xl font-bold font-mono-nums">
-                          {formatDays(result.breakEvenDays)}
+                          {formatDays(result.breakEvenAnalysis.primary)}
                         </p>
                       </div>
                       <div className="text-right">
@@ -475,12 +534,13 @@ export default function BuyVsRentAnalysis() {
                         </p>
                       </div>
                     </div>
+                    
                     <div className="mt-4 bg-muted rounded-lg p-3">
                       <p className="text-sm text-muted-foreground">
-                        {input.usageDaysPerYear > result.breakEvenDays 
-                          ? `You use this equipment ${Math.round(input.usageDaysPerYear - result.breakEvenDays)} days more than the break-even point, making buying more economical.`
-                          : input.usageDaysPerYear < result.breakEvenDays
-                            ? `You use this equipment ${Math.round(result.breakEvenDays - input.usageDaysPerYear)} days less than the break-even point, making renting more economical.`
+                        {input.usageDaysPerYear > result.breakEvenAnalysis.primary 
+                          ? `You use this equipment ${Math.round(input.usageDaysPerYear - result.breakEvenAnalysis.primary)} days more than the break-even point, making buying more economical.`
+                          : input.usageDaysPerYear < result.breakEvenAnalysis.primary
+                            ? `You use this equipment ${Math.round(result.breakEvenAnalysis.primary - input.usageDaysPerYear)} days less than the break-even point, making renting more economical.`
                             : `Your usage is right at the break-even point. Consider other factors like convenience and availability.`
                         }
                       </p>
