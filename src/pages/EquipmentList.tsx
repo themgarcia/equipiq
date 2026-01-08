@@ -36,7 +36,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight, Sparkles, RefreshCw } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight, Sparkles, Archive } from 'lucide-react';
 import { Equipment, EquipmentStatus, EquipmentCalculated } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
 
@@ -332,7 +332,7 @@ export default function EquipmentList() {
                                                 {equipment.purchaseCondition === 'new' ? (
                                                   <Sparkles className="h-4 w-4 text-primary shrink-0" />
                                                 ) : (
-                                                  <RefreshCw className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                  <Archive className="h-4 w-4 text-muted-foreground shrink-0" />
                                                 )}
                                               </TooltipTrigger>
                                               <TooltipContent>
