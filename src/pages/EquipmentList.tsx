@@ -30,9 +30,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, Upload, FileText, Package, CornerDownRight } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight } from 'lucide-react';
 import { Equipment, EquipmentStatus, EquipmentCalculated } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
+import { Badge } from '@/components/ui/badge';
 
 interface ExtractedEquipment {
   make: string;
@@ -75,6 +76,19 @@ export default function EquipmentList() {
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const [attachmentsEquipmentId, setAttachmentsEquipmentId] = useState<string>('');
   const [attachmentsEquipmentName, setAttachmentsEquipmentName] = useState<string>('');
+  const [expandedAttachments, setExpandedAttachments] = useState<Set<string>>(new Set());
+
+  const toggleAttachments = (equipmentId: string) => {
+    setExpandedAttachments(prev => {
+      const next = new Set(prev);
+      if (next.has(equipmentId)) {
+        next.delete(equipmentId);
+      } else {
+        next.add(equipmentId);
+      }
+      return next;
+    });
+  };
 
   const handleEquipmentExtracted = (equipment: ExtractedEquipment[]) => {
     setExtractedEquipment(equipment);
@@ -287,17 +301,46 @@ export default function EquipmentList() {
                         <TableBody>
                           {items.map(equipment => {
                             const equipmentAttachments = attachmentsByEquipmentId[equipment.id] || [];
+                            const hasAttachments = equipmentAttachments.length > 0;
+                            const isAttachmentsExpanded = expandedAttachments.has(equipment.id);
                             return (
                               <>
                                 <TableRow key={equipment.id} className="group hover:bg-muted/30">
                                   <TableCell>
-                                    <div className="truncate">
-                                      <p className="font-medium truncate">{equipment.name}</p>
-                                      {equipment.assetId && (
-                                        <p className="text-xs text-muted-foreground truncate">
-                                          {equipment.assetId}
-                                        </p>
+                                    <div className="flex items-center gap-2">
+                                      {hasAttachments && (
+                                        <button 
+                                          onClick={() => toggleAttachments(equipment.id)}
+                                          className="p-0.5 hover:bg-muted rounded"
+                                        >
+                                          {isAttachmentsExpanded ? (
+                                            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                                          ) : (
+                                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                                          )}
+                                        </button>
                                       )}
+                                      <div className="truncate min-w-0">
+                                        <div className="flex items-center gap-2">
+                                          <p className="font-medium truncate">{equipment.name}</p>
+                                          <Badge 
+                                            variant={equipment.purchaseCondition === 'new' ? 'default' : 'secondary'}
+                                            className="text-[10px] px-1.5 py-0 shrink-0"
+                                          >
+                                            {equipment.purchaseCondition === 'new' ? 'New' : 'Used'}
+                                          </Badge>
+                                          {hasAttachments && (
+                                            <span className="text-xs text-muted-foreground shrink-0">
+                                              ({equipmentAttachments.length})
+                                            </span>
+                                          )}
+                                        </div>
+                                        {equipment.assetId && (
+                                          <p className="text-xs text-muted-foreground truncate">
+                                            {equipment.assetId}
+                                          </p>
+                                        )}
+                                      </div>
                                     </div>
                                   </TableCell>
                                   <TableCell className="w-[90px]">
@@ -358,8 +401,8 @@ export default function EquipmentList() {
                                     </DropdownMenu>
                                   </TableCell>
                                 </TableRow>
-                                {/* Attachment rows */}
-                                {equipmentAttachments.map(attachment => (
+                                {/* Collapsible attachment rows */}
+                                {hasAttachments && isAttachmentsExpanded && equipmentAttachments.map(attachment => (
                                   <TableRow 
                                     key={`att-${attachment.id}`} 
                                     className="bg-muted/20 hover:bg-muted/40"
