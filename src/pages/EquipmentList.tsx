@@ -30,13 +30,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight, Sparkles, Archive } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight } from 'lucide-react';
 import { Equipment, EquipmentStatus, EquipmentCalculated } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
 
@@ -326,20 +320,6 @@ export default function EquipmentList() {
                                       <div className="truncate min-w-0">
                                         <div className="flex items-center gap-2">
                                           <p className="font-medium truncate">{equipment.name}</p>
-                                          <TooltipProvider>
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                {equipment.purchaseCondition === 'new' ? (
-                                                  <Sparkles className="h-4 w-4 text-primary shrink-0" />
-                                                ) : (
-                                                  <Archive className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                )}
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                {equipment.purchaseCondition === 'new' ? 'Bought New' : 'Bought Used'}
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          </TooltipProvider>
                                           {hasAttachments && (
                                             <span className="text-xs text-muted-foreground shrink-0">
                                               ({equipmentAttachments.length})
