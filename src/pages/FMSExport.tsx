@@ -50,6 +50,13 @@ const columns: ColumnConfig[] = [
     sortType: 'number'
   },
   { 
+    key: 'attachmentValue', 
+    label: 'Attachments', 
+    format: (v) => String(v),
+    align: 'right',
+    sortType: 'number'
+  },
+  { 
     key: 'replacementValue', 
     label: 'Replacement', 
     format: (v) => String(v),
@@ -87,7 +94,7 @@ const columns: ColumnConfig[] = [
 ];
 
 export default function FMSExport() {
-  const { calculatedEquipment } = useEquipment();
+  const { calculatedEquipment, attachmentsByEquipmentId } = useEquipment();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
   const [sortColumn, setSortColumn] = useState<ColumnKey>('equipmentName');
@@ -96,7 +103,11 @@ export default function FMSExport() {
   const activeEquipment = calculatedEquipment.filter(e => e.status === 'Active');
   
   const exportData = useMemo(() => {
-    const data = activeEquipment.map(e => ({ id: e.id, data: toFMSExport(e) }));
+    const data = activeEquipment.map(e => {
+      const attachments = attachmentsByEquipmentId[e.id] || [];
+      const attachmentTotal = attachments.reduce((sum, a) => sum + a.value, 0);
+      return { id: e.id, data: toFMSExport(e, attachmentTotal) };
+    });
     
     const columnConfig = columns.find(c => c.key === sortColumn);
     if (!columnConfig) return data;
@@ -114,7 +125,7 @@ export default function FMSExport() {
       
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [activeEquipment, sortColumn, sortDirection]);
+  }, [activeEquipment, attachmentsByEquipmentId, sortColumn, sortDirection]);
 
   const handleSort = (columnKey: ColumnKey) => {
     if (sortColumn === columnKey) {
@@ -184,6 +195,7 @@ export default function FMSExport() {
         `"${e.data.equipmentName}"`,
         Math.round(e.data.purchasePrice),
         Math.round(e.data.additionalPurchaseFees),
+        Math.round(e.data.attachmentValue),
         Math.round(e.data.replacementValue),
         Math.round(e.data.expectedValueAtEndOfLife),
         e.data.usefulLife,
@@ -208,7 +220,6 @@ export default function FMSExport() {
     if (key === 'equipmentName') return String(value);
     if (key === 'usefulLife') return String(value);
     
-    if (key === 'cogsAllocatedCost' || key === 'overheadAllocatedCost') return formatCurrency(value as number);
     return formatCurrency(value as number);
   };
 
@@ -239,7 +250,7 @@ export default function FMSExport() {
             <h3 className="font-semibold mb-1">Copy Values for FMS</h3>
             <p className="text-sm text-muted-foreground">
               Most FMS tools require pasting one field at a time. Click the <Copy className="h-3 w-3 inline mx-1" /> 
-              button next to any value to copy it to your clipboard. Click column headers to sort.
+              button next to any value to copy it to your clipboard. Click column headers to sort. Replacement value includes equipment + attachments.
             </p>
           </div>
         </div>

@@ -30,8 +30,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, Upload, FileText, Package } from 'lucide-react';
-import { Equipment, EquipmentStatus } from '@/types/equipment';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, Upload, FileText, Package, CornerDownRight } from 'lucide-react';
+import { Equipment, EquipmentStatus, EquipmentCalculated } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
 
 interface ExtractedEquipment {
@@ -57,7 +57,7 @@ interface ExtractedEquipment {
 const statuses: EquipmentStatus[] = ['Active', 'Sold', 'Retired', 'Lost'];
 
 export default function EquipmentList() {
-  const { calculatedEquipment, addEquipment, updateEquipment, deleteEquipment } = useEquipment();
+  const { calculatedEquipment, addEquipment, updateEquipment, deleteEquipment, attachmentsByEquipmentId } = useEquipment();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -97,8 +97,21 @@ export default function EquipmentList() {
     setAttachmentsOpen(true);
   };
 
+  // Add attachment totals to equipment
+  const equipmentWithAttachments = useMemo(() => {
+    return calculatedEquipment.map(eq => {
+      const attachments = attachmentsByEquipmentId[eq.id] || [];
+      const attachmentTotalValue = attachments.reduce((sum, a) => sum + a.value, 0);
+      return {
+        ...eq,
+        attachmentTotalValue,
+        totalCostBasisWithAttachments: eq.totalCostBasis + attachmentTotalValue,
+      } as EquipmentCalculated;
+    });
+  }, [calculatedEquipment, attachmentsByEquipmentId]);
+
   const filteredEquipment = useMemo(() => {
-    return calculatedEquipment.filter(equipment => {
+    return equipmentWithAttachments.filter(equipment => {
       const matchesSearch = equipment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         equipment.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
         equipment.model.toLowerCase().includes(searchQuery.toLowerCase());
@@ -107,7 +120,7 @@ export default function EquipmentList() {
       
       return matchesSearch && matchesStatus;
     });
-  }, [calculatedEquipment, searchQuery, statusFilter]);
+  }, [equipmentWithAttachments, searchQuery, statusFilter]);
 
   // Group equipment by category (already alphabetically sorted in categoryDefaults)
   const groupedEquipment = useMemo(() => {
@@ -247,7 +260,7 @@ export default function EquipmentList() {
                       </span>
                     </div>
                     <span className="text-sm font-mono-nums text-muted-foreground">
-                      {formatCurrency(items.reduce((sum, e) => sum + e.totalCostBasis, 0))}
+                      {formatCurrency(items.reduce((sum, e) => sum + (e.totalCostBasisWithAttachments || e.totalCostBasis), 0))}
                     </span>
                   </CollapsibleTrigger>
                   
@@ -272,77 +285,108 @@ export default function EquipmentList() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {items.map(equipment => (
-                            <TableRow key={equipment.id} className="group hover:bg-muted/30">
-                              <TableCell>
-                                <div className="truncate">
-                                  <p className="font-medium truncate">{equipment.name}</p>
-                                  {equipment.assetId && (
-                                    <p className="text-xs text-muted-foreground truncate">
-                                      {equipment.assetId}
-                                    </p>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="w-[90px]">
-                                <StatusBadge status={equipment.status} />
-                              </TableCell>
-                              <TableCell className="w-[120px] text-right font-mono-nums">
-                                {formatCurrency(equipment.totalCostBasis)}
-                              </TableCell>
-                              <TableCell className="w-[70px] text-right font-mono-nums">
-                                {formatPercent(equipment.cogsPercent)}
-                              </TableCell>
-                              <TableCell className="w-[110px] text-right font-mono-nums bg-field-calculated">
-                                {formatCurrency(equipment.cogsAllocatedCost)}
-                              </TableCell>
-                              <TableCell className="w-[110px] text-right font-mono-nums bg-field-calculated">
-                                {formatCurrency(equipment.overheadAllocatedCost)}
-                              </TableCell>
-                              <TableCell className="w-[80px] text-right font-mono-nums">
-                                <span className={equipment.estimatedYearsLeft <= 1 ? 'text-warning font-semibold' : ''}>
-                                  {equipment.estimatedYearsLeft}
-                                </span>
-                              </TableCell>
-                              <TableCell className="w-[120px] text-right font-mono-nums">
-                                {formatCurrency(equipment.replacementCostUsed)}
-                              </TableCell>
-                              <TableCell className="w-[50px]">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="h-8 w-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                                    >
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                                  <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => handleEdit(equipment)}>
-                                                      <Pencil className="h-4 w-4 mr-2" />
-                                                      Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleOpenDocuments(equipment)}>
-                                                      <FileText className="h-4 w-4 mr-2" />
-                                                      Documents
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleOpenAttachments(equipment)}>
-                                                      <Package className="h-4 w-4 mr-2" />
-                                                      Attachments
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem 
-                                                      onClick={() => handleDelete(equipment.id)}
-                                                      className="text-destructive"
-                                                    >
-                                                      <Trash2 className="h-4 w-4 mr-2" />
-                                                      Delete
-                                                    </DropdownMenuItem>
-                                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {items.map(equipment => {
+                            const equipmentAttachments = attachmentsByEquipmentId[equipment.id] || [];
+                            return (
+                              <>
+                                <TableRow key={equipment.id} className="group hover:bg-muted/30">
+                                  <TableCell>
+                                    <div className="truncate">
+                                      <p className="font-medium truncate">{equipment.name}</p>
+                                      {equipment.assetId && (
+                                        <p className="text-xs text-muted-foreground truncate">
+                                          {equipment.assetId}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="w-[90px]">
+                                    <StatusBadge status={equipment.status} />
+                                  </TableCell>
+                                  <TableCell className="w-[120px] text-right font-mono-nums">
+                                    {formatCurrency(equipment.totalCostBasis)}
+                                  </TableCell>
+                                  <TableCell className="w-[70px] text-right font-mono-nums">
+                                    {formatPercent(equipment.cogsPercent)}
+                                  </TableCell>
+                                  <TableCell className="w-[110px] text-right font-mono-nums bg-field-calculated">
+                                    {formatCurrency(equipment.cogsAllocatedCost)}
+                                  </TableCell>
+                                  <TableCell className="w-[110px] text-right font-mono-nums bg-field-calculated">
+                                    {formatCurrency(equipment.overheadAllocatedCost)}
+                                  </TableCell>
+                                  <TableCell className="w-[80px] text-right font-mono-nums">
+                                    <span className={equipment.estimatedYearsLeft <= 1 ? 'text-warning font-semibold' : ''}>
+                                      {equipment.estimatedYearsLeft}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="w-[120px] text-right font-mono-nums">
+                                    {formatCurrency(equipment.replacementCostUsed)}
+                                  </TableCell>
+                                  <TableCell className="w-[50px]">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="icon" 
+                                          className="h-8 w-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => handleEdit(equipment)}>
+                                          <Pencil className="h-4 w-4 mr-2" />
+                                          Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleOpenDocuments(equipment)}>
+                                          <FileText className="h-4 w-4 mr-2" />
+                                          Documents
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleOpenAttachments(equipment)}>
+                                          <Package className="h-4 w-4 mr-2" />
+                                          Attachments
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem 
+                                          onClick={() => handleDelete(equipment.id)}
+                                          className="text-destructive"
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          Delete
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </TableCell>
+                                </TableRow>
+                                {/* Attachment rows */}
+                                {equipmentAttachments.map(attachment => (
+                                  <TableRow 
+                                    key={`att-${attachment.id}`} 
+                                    className="bg-muted/20 hover:bg-muted/40"
+                                  >
+                                    <TableCell className="pl-8">
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <CornerDownRight className="h-3 w-3" />
+                                        <span>{attachment.name}</span>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="w-[90px]">
+                                      <span className="text-xs text-muted-foreground">Attachment</span>
+                                    </TableCell>
+                                    <TableCell className="w-[120px] text-right font-mono-nums text-muted-foreground">
+                                      {formatCurrency(attachment.value)}
+                                    </TableCell>
+                                    <TableCell className="w-[70px]"></TableCell>
+                                    <TableCell className="w-[110px]"></TableCell>
+                                    <TableCell className="w-[110px]"></TableCell>
+                                    <TableCell className="w-[80px]"></TableCell>
+                                    <TableCell className="w-[120px]"></TableCell>
+                                    <TableCell className="w-[50px]"></TableCell>
+                                  </TableRow>
+                                ))}
+                              </>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
@@ -356,11 +400,11 @@ export default function EquipmentList() {
         {/* Summary */}
         <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
           <p>
-            Showing {filteredEquipment.length} of {calculatedEquipment.length} items in {groupedEquipment.length} categories
+            Showing {filteredEquipment.length} of {equipmentWithAttachments.length} items in {groupedEquipment.length} categories
           </p>
           <p>
-            Total Cost Basis: <span className="font-mono-nums font-medium text-foreground">
-              {formatCurrency(filteredEquipment.reduce((sum, e) => sum + e.totalCostBasis, 0))}
+            Total Value (incl. attachments): <span className="font-mono-nums font-medium text-foreground">
+              {formatCurrency(filteredEquipment.reduce((sum, e) => sum + (e.totalCostBasisWithAttachments || e.totalCostBasis), 0))}
             </span>
           </p>
         </div>

@@ -11,11 +11,13 @@ interface EquipmentContextType {
   calculatedEquipment: EquipmentCalculated[];
   categoryDefaults: CategoryDefaults[];
   loading: boolean;
+  attachmentsByEquipmentId: Record<string, EquipmentAttachment[]>;
   addEquipment: (equipment: Omit<Equipment, 'id'>) => Promise<string | undefined>;
   updateEquipment: (id: string, updates: Partial<Equipment>) => Promise<void>;
   deleteEquipment: (id: string) => Promise<void>;
   updateCategoryDefaults: (category: string, updates: Partial<CategoryDefaults>) => void;
   refetch: () => Promise<void>;
+  refetchAttachments: () => Promise<void>;
   // Document management
   getDocuments: (equipmentId: string) => Promise<EquipmentDocument[]>;
   uploadDocument: (equipmentId: string, file: File, notes?: string) => Promise<void>;
@@ -23,7 +25,7 @@ interface EquipmentContextType {
   // Attachment management
   getAttachments: (equipmentId: string) => Promise<EquipmentAttachment[]>;
   addAttachment: (equipmentId: string, attachment: Omit<EquipmentAttachment, 'id' | 'equipmentId' | 'createdAt'>, photo?: File) => Promise<void>;
-  updateAttachment: (id: string, updates: Partial<Omit<EquipmentAttachment, 'id' | 'equipmentId' | 'createdAt'>>, photo?: File) => Promise<void>;
+  updateAttachment: (id: string, updates: Partial<Omit<EquipmentAttachment, 'id' | 'createdAt'>>, photo?: File) => Promise<void>;
   deleteAttachment: (id: string, photoPath?: string) => Promise<void>;
 }
 
@@ -116,6 +118,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [categoryDefaultsState, setCategoryDefaults] = useState<CategoryDefaults[]>(defaultCategories);
   const [loading, setLoading] = useState(true);
+  const [attachmentsByEquipmentId, setAttachmentsByEquipmentId] = useState<Record<string, EquipmentAttachment[]>>({});
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -150,9 +153,49 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, toast]);
 
+  // Fetch all attachments and group by equipment ID
+  const fetchAllAttachments = useCallback(async () => {
+    if (!user) {
+      setAttachmentsByEquipmentId({});
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('equipment_attachments')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const grouped: Record<string, EquipmentAttachment[]> = {};
+      (data || []).forEach(att => {
+        const eqId = att.equipment_id;
+        if (!grouped[eqId]) grouped[eqId] = [];
+        grouped[eqId].push({
+          id: att.id,
+          equipmentId: att.equipment_id,
+          name: att.name,
+          description: att.description || undefined,
+          value: Number(att.value),
+          serialNumber: att.serial_number || undefined,
+          photoPath: att.photo_path || undefined,
+          createdAt: att.created_at,
+        });
+      });
+      setAttachmentsByEquipmentId(grouped);
+    } catch (error: any) {
+      console.error('Failed to load all attachments:', error);
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchEquipment();
   }, [fetchEquipment]);
+
+  useEffect(() => {
+    fetchAllAttachments();
+  }, [fetchAllAttachments]);
 
   const addEquipment = useCallback(async (newEquipment: Omit<Equipment, 'id'>): Promise<string | undefined> => {
     if (!user) return undefined;
@@ -478,10 +521,10 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, toast]);
 
-  // Update an attachment
+  // Update an attachment (supports reassignment via equipmentId)
   const updateAttachment = useCallback(async (
     id: string, 
-    updates: Partial<Omit<EquipmentAttachment, 'id' | 'equipmentId' | 'createdAt'>>,
+    updates: Partial<Omit<EquipmentAttachment, 'id' | 'createdAt'>>,
     photo?: File
   ): Promise<void> => {
     if (!user) return;
@@ -492,6 +535,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (updates.description !== undefined) dbUpdates.description = updates.description || null;
       if (updates.value !== undefined) dbUpdates.value = updates.value;
       if (updates.serialNumber !== undefined) dbUpdates.serial_number = updates.serialNumber || null;
+      if (updates.equipmentId !== undefined) dbUpdates.equipment_id = updates.equipmentId;
 
       // Handle photo upload if new photo provided
       if (photo) {
@@ -511,8 +555,11 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
               .remove([currentAtt.photo_path]);
           }
 
+          // Use the new equipmentId if provided, otherwise use current
+          const targetEquipmentId = updates.equipmentId || currentAtt.equipment_id;
+
           // Upload new photo
-          const photoPath = `${user.id}/${currentAtt.equipment_id}/attachments/${Date.now()}-${photo.name}`;
+          const photoPath = `${user.id}/${targetEquipmentId}/attachments/${Date.now()}-${photo.name}`;
           const { error: uploadError } = await supabase.storage
             .from('equipment-documents')
             .upload(photoPath, photo);
@@ -530,9 +577,12 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
 
+      // Refresh attachments to reflect reassignment
+      await fetchAllAttachments();
+
       toast({
         title: "Attachment updated",
-        description: "Your changes have been saved.",
+        description: updates.equipmentId ? "Attachment has been reassigned." : "Your changes have been saved.",
       });
     } catch (error: any) {
       toast({
@@ -542,7 +592,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       });
       throw error;
     }
-  }, [user, toast]);
+  }, [user, toast, fetchAllAttachments]);
 
   // Delete an attachment
   const deleteAttachment = useCallback(async (id: string, photoPath?: string): Promise<void> => {
@@ -585,11 +635,13 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       calculatedEquipment,
       categoryDefaults: categoryDefaultsState,
       loading,
+      attachmentsByEquipmentId,
       addEquipment,
       updateEquipment,
       deleteEquipment,
       updateCategoryDefaults,
       refetch: fetchEquipment,
+      refetchAttachments: fetchAllAttachments,
       getDocuments,
       uploadDocument,
       deleteDocument,
