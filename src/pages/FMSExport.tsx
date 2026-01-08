@@ -36,29 +36,15 @@ const columns: ColumnConfig[] = [
     sortType: 'string'
   },
   { 
-    key: 'purchasePrice', 
-    label: 'Purchase Price', 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number'
-  },
-  { 
-    key: 'additionalPurchaseFees', 
-    label: "Add'l Fees", 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number'
-  },
-  { 
-    key: 'attachmentValue', 
-    label: 'Attachments', 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number'
-  },
-  { 
     key: 'replacementValue', 
-    label: 'Replacement', 
+    label: 'Replacement Value', 
+    format: (v) => String(v),
+    align: 'right',
+    sortType: 'number'
+  },
+  { 
+    key: 'usefulLife', 
+    label: 'Useful Life (yrs)', 
     format: (v) => String(v),
     align: 'right',
     sortType: 'number'
@@ -66,13 +52,6 @@ const columns: ColumnConfig[] = [
   { 
     key: 'expectedValueAtEndOfLife', 
     label: 'End Value', 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number'
-  },
-  { 
-    key: 'usefulLife', 
-    label: 'Life (yrs)', 
     format: (v) => String(v),
     align: 'right',
     sortType: 'number'
@@ -193,14 +172,11 @@ export default function FMSExport() {
       headers.join(','),
       ...dataToExport.map(e => [
         `"${e.data.equipmentName}"`,
-        Math.round(e.data.purchasePrice),
-        Math.round(e.data.additionalPurchaseFees),
-        Math.round(e.data.attachmentValue),
         Math.round(e.data.replacementValue),
-        Math.round(e.data.expectedValueAtEndOfLife),
         e.data.usefulLife,
-        Math.round(e.data.cogsAllocatedCost),
-        Math.round(e.data.overheadAllocatedCost),
+        Math.round(e.data.expectedValueAtEndOfLife),
+        e.data.cogsAllocatedCost > 0 ? Math.round(e.data.cogsAllocatedCost) : '',
+        e.data.overheadAllocatedCost > 0 ? Math.round(e.data.overheadAllocatedCost) : '',
       ].join(','))
     ].join('\n');
 
@@ -219,6 +195,12 @@ export default function FMSExport() {
   const formatCellValue = (key: ColumnKey, value: FMSExportData[ColumnKey]) => {
     if (key === 'equipmentName') return String(value);
     if (key === 'usefulLife') return String(value);
+    
+    // For COGS/OH columns, show blank if $0
+    if (key === 'cogsAllocatedCost' || key === 'overheadAllocatedCost') {
+      const numValue = value as number;
+      return numValue > 0 ? formatCurrency(numValue) : '';
+    }
     
     return formatCurrency(value as number);
   };

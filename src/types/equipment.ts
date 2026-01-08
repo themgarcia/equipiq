@@ -103,14 +103,9 @@ export interface EquipmentCalculated extends Equipment {
 // FMS Export format
 export interface FMSExportData {
   equipmentName: string; // Format: "Category - Item Name"
-  purchasePrice: number;
-  additionalPurchaseFees: number;
-  attachmentValue: number;
   replacementValue: number;
-  expectedValueAtEndOfLife: number;
   usefulLife: number;
-  cogsPercent: number;
-  overheadPercent: number;
+  expectedValueAtEndOfLife: number;
   cogsAllocatedCost: number;
   overheadAllocatedCost: number;
 }

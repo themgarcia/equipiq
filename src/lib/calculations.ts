@@ -91,18 +91,11 @@ export function calculateEquipment(
 }
 
 export function toFMSExport(equipment: EquipmentCalculated, attachmentTotal: number = 0): FMSExportData {
-  const additionalFees = equipment.salesTax + equipment.freightSetup + equipment.otherCapEx;
-  
   return {
     equipmentName: `${equipment.category} - ${equipment.name}`,
-    purchasePrice: equipment.purchasePrice,
-    additionalPurchaseFees: additionalFees,
-    attachmentValue: attachmentTotal,
     replacementValue: equipment.replacementCostUsed + attachmentTotal,
-    expectedValueAtEndOfLife: equipment.expectedResaleUsed,
     usefulLife: equipment.usefulLifeUsed,
-    cogsPercent: equipment.cogsPercent,
-    overheadPercent: equipment.overheadPercent,
+    expectedValueAtEndOfLife: equipment.expectedResaleUsed,
     cogsAllocatedCost: equipment.cogsAllocatedCost,
     overheadAllocatedCost: equipment.overheadAllocatedCost,
   };
