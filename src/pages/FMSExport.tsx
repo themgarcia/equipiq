@@ -156,7 +156,16 @@ export default function FMSExport() {
 
   const copyCell = async (id: string, columnKey: ColumnKey, value: FMSExportData[ColumnKey]) => {
     const cellId = `${id}-${columnKey}`;
-    await navigator.clipboard.writeText(String(value));
+    
+    // For currency columns, round to nearest dollar (no decimals)
+    let copyValue: string;
+    if (columnKey === 'equipmentName' || columnKey === 'usefulLife') {
+      copyValue = String(value);
+    } else {
+      copyValue = String(Math.round(Number(value)));
+    }
+    
+    await navigator.clipboard.writeText(copyValue);
     
     setCopiedCell(cellId);
     setTimeout(() => setCopiedCell(null), 1500);
@@ -173,13 +182,13 @@ export default function FMSExport() {
       headers.join(','),
       ...dataToExport.map(e => [
         `"${e.data.equipmentName}"`,
-        e.data.purchasePrice,
-        e.data.additionalPurchaseFees,
-        e.data.replacementValue,
-        e.data.expectedValueAtEndOfLife,
+        Math.round(e.data.purchasePrice),
+        Math.round(e.data.additionalPurchaseFees),
+        Math.round(e.data.replacementValue),
+        Math.round(e.data.expectedValueAtEndOfLife),
         e.data.usefulLife,
-        e.data.cogsAllocatedCost,
-        e.data.overheadAllocatedCost,
+        Math.round(e.data.cogsAllocatedCost),
+        Math.round(e.data.overheadAllocatedCost),
       ].join(','))
     ].join('\n');
 
