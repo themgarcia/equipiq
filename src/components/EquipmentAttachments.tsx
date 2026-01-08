@@ -17,6 +17,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +42,7 @@ interface AttachmentFormData {
   value: string;
   serialNumber: string;
   description: string;
+  assignedEquipmentId: string;
 }
 
 const defaultFormData: AttachmentFormData = {
@@ -42,6 +50,7 @@ const defaultFormData: AttachmentFormData = {
   value: '',
   serialNumber: '',
   description: '',
+  assignedEquipmentId: '',
 };
 
 export function EquipmentAttachments({
@@ -50,7 +59,7 @@ export function EquipmentAttachments({
   equipmentId,
   equipmentName,
 }: EquipmentAttachmentsProps) {
-  const { getAttachments, addAttachment, updateAttachment, deleteAttachment } = useEquipment();
+  const { getAttachments, addAttachment, updateAttachment, deleteAttachment, equipment, refetchAttachments } = useEquipment();
   const [attachments, setAttachments] = useState<EquipmentAttachment[]>([]);
   const [loading, setLoading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -92,13 +101,17 @@ export function EquipmentAttachments({
         value: attachment.value.toString(),
         serialNumber: attachment.serialNumber || '',
         description: attachment.description || '',
+        assignedEquipmentId: attachment.equipmentId,
       });
       if (attachment.photoPath) {
         setPhotoPreview(getPhotoUrl(attachment.photoPath));
       }
     } else {
       setEditingAttachment(null);
-      setFormData(defaultFormData);
+      setFormData({
+        ...defaultFormData,
+        assignedEquipmentId: equipmentId,
+      });
       setPhotoPreview(null);
     }
     setPhotoFile(null);
@@ -139,13 +152,34 @@ export function EquipmentAttachments({
       };
 
       if (editingAttachment) {
-        await updateAttachment(editingAttachment.id, attachmentData, photoFile || undefined);
-      } else {
-        await addAttachment(equipmentId, attachmentData, photoFile || undefined);
-      }
+        // Check if equipment assignment changed
+        const isReassigning = formData.assignedEquipmentId !== editingAttachment.equipmentId;
+        
+        await updateAttachment(
+          editingAttachment.id, 
+          {
+            ...attachmentData,
+            ...(isReassigning ? { equipmentId: formData.assignedEquipmentId } : {}),
+          }, 
+          photoFile || undefined
+        );
 
-      handleCloseForm();
-      loadAttachments();
+        // If reassigned, close the sheet since attachment is no longer on this equipment
+        if (isReassigning) {
+          const newEquipment = equipment.find(e => e.id === formData.assignedEquipmentId);
+          handleCloseForm();
+          onOpenChange(false);
+          // Refresh will happen via context
+        } else {
+          handleCloseForm();
+          loadAttachments();
+        }
+      } else {
+        await addAttachment(formData.assignedEquipmentId || equipmentId, attachmentData, photoFile || undefined);
+        handleCloseForm();
+        loadAttachments();
+        await refetchAttachments();
+      }
     } catch (error) {
       console.error('Failed to save attachment:', error);
     } finally {
@@ -159,6 +193,7 @@ export function EquipmentAttachments({
     try {
       await deleteAttachment(attachment.id, attachment.photoPath);
       loadAttachments();
+      await refetchAttachments();
     } catch (error) {
       console.error('Failed to delete attachment:', error);
     }
@@ -317,6 +352,33 @@ export function EquipmentAttachments({
                 rows={2}
               />
             </div>
+
+            {/* Reassignment dropdown - only show when editing */}
+            {editingAttachment && (
+              <div className="space-y-2">
+                <Label htmlFor="assignedTo">Assigned To</Label>
+                <Select
+                  value={formData.assignedEquipmentId}
+                  onValueChange={(value) => setFormData({ ...formData, assignedEquipmentId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select equipment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {equipment.map((eq) => (
+                      <SelectItem key={eq.id} value={eq.id}>
+                        {eq.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.assignedEquipmentId !== editingAttachment.equipmentId && (
+                  <p className="text-xs text-warning">
+                    This attachment will be moved to the selected equipment.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Photo</Label>

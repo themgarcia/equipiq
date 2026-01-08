@@ -90,14 +90,15 @@ export function calculateEquipment(
   };
 }
 
-export function toFMSExport(equipment: EquipmentCalculated): FMSExportData {
+export function toFMSExport(equipment: EquipmentCalculated, attachmentTotal: number = 0): FMSExportData {
   const additionalFees = equipment.salesTax + equipment.freightSetup + equipment.otherCapEx;
   
   return {
     equipmentName: `${equipment.category} - ${equipment.name}`,
     purchasePrice: equipment.purchasePrice,
     additionalPurchaseFees: additionalFees,
-    replacementValue: equipment.replacementCostUsed,
+    attachmentValue: attachmentTotal,
+    replacementValue: equipment.replacementCostUsed + attachmentTotal,
     expectedValueAtEndOfLife: equipment.expectedResaleUsed,
     usefulLife: equipment.usefulLifeUsed,
     cogsPercent: equipment.cogsPercent,
