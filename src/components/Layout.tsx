@@ -57,7 +57,7 @@ interface LayoutProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Equipment', href: '/equipment', icon: Package },
   { name: 'FMS Export', href: '/export', icon: FileSpreadsheet },
   { name: 'Cashflow Analysis', href: '/cashflow', icon: Wallet },
