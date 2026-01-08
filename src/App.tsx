@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import EquipmentList from "./pages/EquipmentList";
 import CategoryLifespans from "./pages/CategoryLifespans";
@@ -35,16 +36,17 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <Routes>
+              <Routes>
                   {/* Public routes */}
+                  <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   
                   {/* Protected routes */}
-                  <Route path="/" element={
+                  <Route path="/dashboard" element={
                     <ProtectedRoute>
-                      <Index />
+                      <Dashboard />
                     </ProtectedRoute>
                   } />
                   <Route path="/equipment" element={
