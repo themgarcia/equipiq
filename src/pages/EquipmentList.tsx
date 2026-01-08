@@ -10,7 +10,7 @@ import { EquipmentAttachments } from '@/components/EquipmentAttachments';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Table, 
   TableBody, 
@@ -30,10 +30,15 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight, Sparkles, RefreshCw } from 'lucide-react';
 import { Equipment, EquipmentStatus, EquipmentCalculated } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
-import { Badge } from '@/components/ui/badge';
 
 interface ExtractedEquipment {
   make: string;
@@ -61,7 +66,7 @@ export default function EquipmentList() {
   const { calculatedEquipment, addEquipment, updateEquipment, deleteEquipment, attachmentsByEquipmentId } = useEquipment();
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [statusFilter, setStatusFilter] = useState<string>('Active');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState<Equipment | undefined>();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => 
@@ -223,8 +228,8 @@ export default function EquipmentList() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <div className="relative flex-1 min-w-[200px] max-w-[400px]">
+        <div className="space-y-4 mb-6">
+          <div className="relative max-w-[400px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search equipment..."
@@ -234,17 +239,15 @@ export default function EquipmentList() {
             />
           </div>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Status</SelectItem>
-              {statuses.map(status => (
-                <SelectItem key={status} value={status}>{status}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+            <TabsList>
+              <TabsTrigger value="Active">Active</TabsTrigger>
+              <TabsTrigger value="Sold">Sold</TabsTrigger>
+              <TabsTrigger value="Retired">Retired</TabsTrigger>
+              <TabsTrigger value="Lost">Lost</TabsTrigger>
+              <TabsTrigger value="All">All</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         {/* Category Groups */}
@@ -323,12 +326,20 @@ export default function EquipmentList() {
                                       <div className="truncate min-w-0">
                                         <div className="flex items-center gap-2">
                                           <p className="font-medium truncate">{equipment.name}</p>
-                                          <Badge 
-                                            variant={equipment.purchaseCondition === 'new' ? 'default' : 'secondary'}
-                                            className="text-[10px] px-1.5 py-0 shrink-0"
-                                          >
-                                            {equipment.purchaseCondition === 'new' ? 'New' : 'Used'}
-                                          </Badge>
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                {equipment.purchaseCondition === 'new' ? (
+                                                  <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                                                ) : (
+                                                  <RefreshCw className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                )}
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                {equipment.purchaseCondition === 'new' ? 'Bought New' : 'Bought Used'}
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
                                           {hasAttachments && (
                                             <span className="text-xs text-muted-foreground shrink-0">
                                               ({equipmentAttachments.length})
