@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth, CompanyProfileData } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,10 @@ import {
   annualRevenueOptions, 
   regionOptions 
 } from '@/data/signupOptions';
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -35,6 +40,7 @@ const signupSchema = loginSchema.extend({
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -47,6 +53,7 @@ export default function Auth() {
   const [companyWebsite, setCompanyWebsite] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
@@ -74,6 +81,54 @@ export default function Auth() {
     setRegion('');
     setCompanyWebsite('');
     setErrors({});
+    setResetEmailSent(false);
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    setIsSubmitting(true);
+
+    try {
+      const result = forgotPasswordSchema.safeParse({ email });
+      if (!result.success) {
+        const fieldErrors: Record<string, string> = {};
+        result.error.issues.forEach(issue => {
+          fieldErrors[issue.path[0] as string] = issue.message;
+        });
+        setErrors(fieldErrors);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        toast({
+          title: "Failed to send reset email",
+          description: error.message,
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      setResetEmailSent(true);
+      toast({
+        title: "Check your email",
+        description: "We've sent you a password reset link.",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -210,14 +265,86 @@ export default function Auth() {
 
         <Card className="shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle>{isLogin ? 'Welcome back' : 'Join the Open Beta'}</CardTitle>
+            <CardTitle>
+              {isForgotPassword 
+                ? 'Reset Password' 
+                : isLogin 
+                  ? 'Welcome back' 
+                  : 'Join the Open Beta'}
+            </CardTitle>
             <CardDescription>
-              {isLogin 
-                ? 'Enter your credentials to access your equipment' 
-                : 'Create your account and get full access'}
+              {isForgotPassword
+                ? resetEmailSent 
+                  ? 'Check your email for the reset link'
+                  : 'Enter your email to receive a reset link'
+                : isLogin 
+                  ? 'Enter your credentials to access your equipment' 
+                  : 'Create your account and get full access'}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {isForgotPassword ? (
+              resetEmailSent ? (
+                <div className="space-y-4">
+                  <div className="text-center py-4">
+                    <Mail className="h-12 w-12 mx-auto mb-4 text-primary" />
+                    <p className="text-sm text-muted-foreground">
+                      We've sent a password reset link to <strong>{email}</strong>. 
+                      Please check your inbox and follow the instructions to reset your password.
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      setIsForgotPassword(false);
+                      setResetEmailSent(false);
+                      resetForm();
+                    }} 
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Back to Sign In
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="text-sm text-destructive">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? 'Sending...' : 'Send Reset Link'}
+                  </Button>
+
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        resetForm();
+                      }}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              )
+            ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <>
@@ -429,6 +556,20 @@ export default function Auth() {
                 {errors.password && (
                   <p className="text-sm text-destructive">{errors.password}</p>
                 )}
+                {isLogin && (
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsForgotPassword(true);
+                        setErrors({});
+                      }}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -437,45 +578,50 @@ export default function Auth() {
                   : (isLogin ? 'Sign In' : 'Create Account')}
               </Button>
             </form>
+            )}
 
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  resetForm();
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {isLogin 
-                  ? "Don't have an account? Sign up" 
-                  : "Already have an account? Sign in"}
-              </button>
-            </div>
+            {!isForgotPassword && (
+              <>
+                <div className="mt-6 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsLogin(!isLogin);
+                      resetForm();
+                    }}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {isLogin 
+                      ? "Don't have an account? Sign up" 
+                      : "Already have an account? Sign in"}
+                  </button>
+                </div>
 
-            {/* Legal Links */}
-            <div className="mt-4 text-center">
-              <p className="text-xs text-muted-foreground">
-                By continuing, you agree to our{' '}
-                <a 
-                  href="/terms" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="underline hover:text-foreground transition-colors"
-                >
-                  Terms of Service
-                </a>
-                {' '}and{' '}
-                <a 
-                  href="/privacy" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="underline hover:text-foreground transition-colors"
-                >
-                  Privacy Policy
-                </a>
-              </p>
-            </div>
+                {/* Legal Links */}
+                <div className="mt-4 text-center">
+                  <p className="text-xs text-muted-foreground">
+                    By continuing, you agree to our{' '}
+                    <a 
+                      href="/terms" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground transition-colors"
+                    >
+                      Terms of Service
+                    </a>
+                    {' '}and{' '}
+                    <a 
+                      href="/privacy" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground transition-colors"
+                    >
+                      Privacy Policy
+                    </a>
+                  </p>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
