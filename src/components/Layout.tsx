@@ -15,7 +15,8 @@ import {
   PanelLeft,
   Shield,
   ShieldCheck,
-  CreditCard
+  CreditCard,
+  MessageSquare
 } from 'lucide-react';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { cn } from '@/lib/utils';
@@ -69,6 +70,7 @@ const navigation = [
   { name: 'Category Lifespans', href: '/categories', icon: Clock },
   { name: 'Buy vs. Rent', href: '/buy-vs-rent', icon: Scale },
   { name: 'Definitions', href: '/definitions', icon: BookOpen },
+  { name: 'Feedback', href: '/feedback', icon: MessageSquare },
 ];
 
 function SidebarToggleButton() {

@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -12,6 +13,13 @@ import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   getIndustryLabel, 
   getFieldEmployeesLabel, 
@@ -59,6 +67,19 @@ interface MarketInsight {
   label?: string;
 }
 
+interface FeedbackItem {
+  id: string;
+  user_id: string;
+  category: string;
+  subject: string;
+  description: string;
+  status: string;
+  admin_notes: string | null;
+  created_at: string;
+  userName?: string;
+  userEmail?: string;
+}
+
 const CHART_COLORS = [
   'hsl(var(--chart-1))',
   'hsl(var(--chart-2))',
@@ -66,6 +87,28 @@ const CHART_COLORS = [
   'hsl(var(--chart-4))',
   'hsl(var(--chart-5))',
 ];
+
+const categoryIcons: Record<string, React.ReactNode> = {
+  bug: <Bug className="h-4 w-4" />,
+  feature: <Lightbulb className="h-4 w-4" />,
+  general: <MessageCircle className="h-4 w-4" />,
+  question: <HelpCircle className="h-4 w-4" />,
+};
+
+const categoryLabels: Record<string, string> = {
+  bug: 'Bug Report',
+  feature: 'Feature Request',
+  general: 'General Feedback',
+  question: 'Question',
+};
+
+const statusColors: Record<string, string> = {
+  new: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
+  reviewed: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/30',
+  in_progress: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30',
+  resolved: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30',
+  closed: 'bg-muted text-muted-foreground border-border',
+};
 
 export default function AdminDashboard() {
   const [userStats, setUserStats] = useState<UserStats[]>([]);
@@ -83,10 +126,13 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [togglingBeta, setTogglingBeta] = useState<string | null>(null);
+  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
+  const [updatingFeedback, setUpdatingFeedback] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchAdminData();
+    fetchAllFeedback();
   }, []);
 
   const fetchAdminData = async () => {
@@ -295,6 +341,60 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchAllFeedback = async () => {
+    try {
+      const { data: feedback, error } = await supabase
+        .from('feedback')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Match feedback with user names
+      const feedbackWithUsers = feedback?.map(fb => {
+        const user = userStats.find(u => u.id === fb.user_id);
+        return {
+          ...fb,
+          userName: user?.fullName || 'Unknown',
+          userEmail: user?.companyName || '',
+        };
+      }) || [];
+
+      setFeedbackList(feedbackWithUsers);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+    }
+  };
+
+  const updateFeedbackStatus = async (feedbackId: string, newStatus: string) => {
+    setUpdatingFeedback(feedbackId);
+    try {
+      const { error } = await supabase
+        .from('feedback')
+        .update({ status: newStatus })
+        .eq('id', feedbackId);
+
+      if (error) throw error;
+
+      setFeedbackList(prev => prev.map(fb => 
+        fb.id === feedbackId ? { ...fb, status: newStatus } : fb
+      ));
+
+      toast({
+        title: 'Status updated',
+        description: `Feedback marked as ${newStatus.replace('_', ' ')}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingFeedback(null);
+    }
+  };
+
   const toggleBetaAccess = async (userId: string, enabled: boolean) => {
     setTogglingBeta(userId);
     try {
@@ -437,6 +537,7 @@ export default function AdminDashboard() {
         <Tabs defaultValue="users" className="space-y-4">
           <TabsList>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
             <TabsTrigger value="market">Market Insights</TabsTrigger>
             <TabsTrigger value="categories">Equipment Data</TabsTrigger>
             <TabsTrigger value="financing">Financing</TabsTrigger>
@@ -504,6 +605,68 @@ export default function AdminDashboard() {
                   </Table>
                   <ScrollBar orientation="horizontal" />
                 </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Feedback Tab */}
+          <TabsContent value="feedback" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  User Feedback
+                </CardTitle>
+                <CardDescription>Review and manage feedback from beta users</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {feedbackList.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No feedback submissions yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {feedbackList.map((item) => (
+                      <div key={item.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-2">
+                            {categoryIcons[item.category]}
+                            <span className="font-medium">{item.subject}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {categoryLabels[item.category]}
+                            </Badge>
+                          </div>
+                          <Select
+                            value={item.status}
+                            onValueChange={(value) => updateFeedbackStatus(item.id, value)}
+                            disabled={updatingFeedback === item.id}
+                          >
+                            <SelectTrigger className={`w-32 h-8 text-xs ${statusColors[item.status]}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="new">New</SelectItem>
+                              <SelectItem value="reviewed">Reviewed</SelectItem>
+                              <SelectItem value="in_progress">In Progress</SelectItem>
+                              <SelectItem value="resolved">Resolved</SelectItem>
+                              <SelectItem value="closed">Closed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{item.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>{item.userName}</span>
+                          <span>•</span>
+                          <span>{format(new Date(item.created_at), 'MMM d, yyyy h:mm a')}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <Button variant="outline" className="mt-4" onClick={fetchAllFeedback}>
+                  Refresh Feedback
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
