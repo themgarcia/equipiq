@@ -14,7 +14,8 @@ import {
   PanelLeftClose,
   PanelLeft,
   Shield,
-  ShieldCheck
+  ShieldCheck,
+  CreditCard
 } from 'lucide-react';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { cn } from '@/lib/utils';
@@ -197,6 +198,12 @@ function AppSidebar() {
                   Profile
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/settings/billing">
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Billing
+                </Link>
+              </DropdownMenuItem>
               {isAdmin && (
                 <>
                   <DropdownMenuSeparator />
@@ -321,6 +328,12 @@ function PhoneHeader() {
                     <Link to="/profile">
                       <User className="h-4 w-4 mr-2" />
                       Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings/billing">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Billing
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin && (
