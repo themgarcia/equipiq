@@ -77,7 +77,7 @@ const planFeatures: PlanFeature[] = [
   { name: 'Cashflow Analysis', free: false, professional: true, business: true },
   { name: 'Document Storage', free: '100 MB', professional: '2 GB', business: 'Unlimited' },
   { name: 'Email Alerts', free: false, professional: true, business: true },
-  { name: 'AI Document Parsing', free: 'Pay-per-use', professional: 'Included', business: 'Included' },
+  { name: 'AI Document Parsing', free: false, professional: 'Included', business: 'Included' },
   { name: 'Support', free: 'Docs', professional: 'Email', business: 'Priority' },
 ];
 
