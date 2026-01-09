@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,6 +89,16 @@ interface FeedbackItem {
   created_at: string;
   userName?: string;
   userEmail?: string;
+  replies?: FeedbackReply[];
+}
+
+interface FeedbackReply {
+  id: string;
+  feedback_id: string;
+  user_id: string;
+  message: string;
+  is_admin_reply: boolean;
+  created_at: string;
 }
 
 const CHART_COLORS = [
@@ -141,6 +151,9 @@ export default function AdminDashboard() {
   const [updatingFeedback, setUpdatingFeedback] = useState<string | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const [sendingTestEmail, setSendingTestEmail] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
+  const [sendingReply, setSendingReply] = useState<string | null>(null);
+  const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const { toast } = useToast();
 
   const sendTestEmail = async (emailType: 'welcome' | 'password-reset') => {
@@ -414,13 +427,25 @@ export default function AdminDashboard() {
 
       if (error) throw error;
 
-      // Match feedback with user names
+      // Fetch replies for all feedback
+      const feedbackIds = feedback?.map(f => f.id) || [];
+      const { data: replies, error: repliesError } = await supabase
+        .from('feedback_replies')
+        .select('*')
+        .in('feedback_id', feedbackIds)
+        .order('created_at', { ascending: true });
+
+      if (repliesError) throw repliesError;
+
+      // Match feedback with user names and replies
       const feedbackWithUsers = feedback?.map(fb => {
         const user = userStats.find(u => u.id === fb.user_id);
+        const feedbackReplies = replies?.filter(r => r.feedback_id === fb.id) || [];
         return {
           ...fb,
           userName: user?.fullName || 'Unknown',
           userEmail: user?.companyName || '',
+          replies: feedbackReplies,
         };
       }) || [];
 
@@ -440,6 +465,21 @@ export default function AdminDashboard() {
 
       if (error) throw error;
 
+      // Get the feedback item to find the user
+      const feedbackItem = feedbackList.find(fb => fb.id === feedbackId);
+      
+      // Create a notification for the user about status change
+      if (feedbackItem) {
+        await supabase.from('user_notifications').insert({
+          user_id: feedbackItem.user_id,
+          type: 'feedback_status_change',
+          title: 'Feedback status updated',
+          message: `Your feedback "${feedbackItem.subject}" has been marked as ${newStatus.replace('_', ' ')}.`,
+          reference_id: feedbackId,
+          reference_type: 'feedback',
+        });
+      }
+
       setFeedbackList(prev => prev.map(fb => 
         fb.id === feedbackId ? { ...fb, status: newStatus } : fb
       ));
@@ -456,6 +496,64 @@ export default function AdminDashboard() {
       });
     } finally {
       setUpdatingFeedback(null);
+    }
+  };
+
+  const sendAdminReply = async (feedbackId: string, feedbackUserId: string, feedbackSubject: string) => {
+    const message = replyText[feedbackId]?.trim();
+    if (!message) return;
+
+    setSendingReply(feedbackId);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Insert the reply
+      const { data: reply, error } = await supabase
+        .from('feedback_replies')
+        .insert({
+          feedback_id: feedbackId,
+          user_id: user.id,
+          message,
+          is_admin_reply: true,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create a notification for the user
+      await supabase.from('user_notifications').insert({
+        user_id: feedbackUserId,
+        type: 'feedback_reply',
+        title: 'New reply to your feedback',
+        message: `Admin replied to "${feedbackSubject}": ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}`,
+        reference_id: feedbackId,
+        reference_type: 'feedback',
+      });
+
+      // Update local state
+      setFeedbackList(prev => prev.map(fb => 
+        fb.id === feedbackId 
+          ? { ...fb, replies: [...(fb.replies || []), reply] }
+          : fb
+      ));
+
+      // Clear the reply text
+      setReplyText(prev => ({ ...prev, [feedbackId]: '' }));
+
+      toast({
+        title: 'Reply sent',
+        description: 'The user will be notified of your response.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error sending reply',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingReply(null);
     }
   };
 
@@ -605,50 +703,11 @@ export default function AdminDashboard() {
             <TabsTrigger value="market">Market Insights</TabsTrigger>
             <TabsTrigger value="categories">Equipment Data</TabsTrigger>
             <TabsTrigger value="financing">Financing</TabsTrigger>
+            <TabsTrigger value="marketing">Marketing</TabsTrigger>
           </TabsList>
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4">
-            {/* Test Emails Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Mail className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">Test Email Templates</CardTitle>
-                </div>
-                <CardDescription>Send sample emails to your own inbox to verify templates</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => sendTestEmail('welcome')}
-                    disabled={sendingTestEmail !== null}
-                    className="gap-2"
-                  >
-                    {sendingTestEmail === 'welcome' ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                    Send Welcome Email
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => sendTestEmail('password-reset')}
-                    disabled={sendingTestEmail !== null}
-                    className="gap-2"
-                  >
-                    {sendingTestEmail === 'password-reset' ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                    Send Password Changed Email
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
 
             <Card>
               <CardHeader>
@@ -757,7 +816,7 @@ export default function AdminDashboard() {
                   <MessageSquare className="h-5 w-5" />
                   User Feedback
                 </CardTitle>
-                <CardDescription>Review and manage feedback from beta users</CardDescription>
+                <CardDescription>Review, manage, and reply to feedback from users</CardDescription>
               </CardHeader>
               <CardContent>
                 {feedbackList.length === 0 ? (
@@ -768,38 +827,117 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {feedbackList.map((item) => (
-                      <div key={item.id} className="border rounded-lg p-4 space-y-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-center gap-2">
-                            {categoryIcons[item.category]}
-                            <span className="font-medium">{item.subject}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {categoryLabels[item.category]}
-                            </Badge>
+                      <div key={item.id} className="border rounded-lg overflow-hidden">
+                        {/* Main feedback card */}
+                        <div className="p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {categoryIcons[item.category]}
+                              <span className="font-medium">{item.subject}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {categoryLabels[item.category]}
+                              </Badge>
+                              {(item.replies?.length ?? 0) > 0 && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {item.replies?.length} {item.replies?.length === 1 ? 'reply' : 'replies'}
+                                </Badge>
+                              )}
+                            </div>
+                            <Select
+                              value={item.status}
+                              onValueChange={(value) => updateFeedbackStatus(item.id, value)}
+                              disabled={updatingFeedback === item.id}
+                            >
+                              <SelectTrigger className={`w-32 h-8 text-xs ${statusColors[item.status]}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="new">New</SelectItem>
+                                <SelectItem value="reviewed">Reviewed</SelectItem>
+                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                <SelectItem value="resolved">Resolved</SelectItem>
+                                <SelectItem value="closed">Closed</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
-                          <Select
-                            value={item.status}
-                            onValueChange={(value) => updateFeedbackStatus(item.id, value)}
-                            disabled={updatingFeedback === item.id}
-                          >
-                            <SelectTrigger className={`w-32 h-8 text-xs ${statusColors[item.status]}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="new">New</SelectItem>
-                              <SelectItem value="reviewed">Reviewed</SelectItem>
-                              <SelectItem value="in_progress">In Progress</SelectItem>
-                              <SelectItem value="resolved">Resolved</SelectItem>
-                              <SelectItem value="closed">Closed</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <p className="text-sm text-muted-foreground">{item.description}</p>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>{item.userName}</span>
+                              <span>•</span>
+                              <span>{format(new Date(item.created_at), 'MMM d, yyyy h:mm a')}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1 text-xs"
+                              onClick={() => setExpandedFeedback(expandedFeedback === item.id ? null : item.id)}
+                            >
+                              <Reply className="h-3 w-3" />
+                              {expandedFeedback === item.id ? 'Hide' : 'Reply'}
+                            </Button>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{item.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>{item.userName}</span>
-                          <span>•</span>
-                          <span>{format(new Date(item.created_at), 'MMM d, yyyy h:mm a')}</span>
-                        </div>
+
+                        {/* Expanded reply section */}
+                        {expandedFeedback === item.id && (
+                          <div className="border-t bg-muted/30 p-4 space-y-4">
+                            {/* Conversation thread */}
+                            {(item.replies?.length ?? 0) > 0 && (
+                              <div className="space-y-3">
+                                <span className="text-xs font-medium text-muted-foreground uppercase">Conversation</span>
+                                {item.replies?.map((reply) => (
+                                  <div
+                                    key={reply.id}
+                                    className={`p-3 rounded-lg text-sm ${
+                                      reply.is_admin_reply
+                                        ? 'bg-primary/10 border border-primary/20 ml-4'
+                                        : 'bg-background border mr-4'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className={`text-xs font-medium ${reply.is_admin_reply ? 'text-primary' : 'text-foreground'}`}>
+                                        {reply.is_admin_reply ? 'Admin' : item.userName}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {format(new Date(reply.created_at), 'MMM d, h:mm a')}
+                                      </span>
+                                    </div>
+                                    <p className="text-muted-foreground">{reply.message}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Reply input */}
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="Write a reply..."
+                                className="flex-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                value={replyText[item.id] || ''}
+                                onChange={(e) => setReplyText(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    sendAdminReply(item.id, item.user_id, item.subject);
+                                  }
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => sendAdminReply(item.id, item.user_id, item.subject)}
+                                disabled={sendingReply === item.id || !replyText[item.id]?.trim()}
+                              >
+                                {sendingReply === item.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Send className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1149,6 +1287,67 @@ export default function AdminDashboard() {
                     ))}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Marketing Tab */}
+          <TabsContent value="marketing" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Megaphone className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Marketing & Communications</CardTitle>
+                </div>
+                <CardDescription>Tools for user communication and marketing</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Test Email Templates Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="font-medium">Test Email Templates</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Send sample emails to your own inbox to verify templates before sending to users.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => sendTestEmail('welcome')}
+                      disabled={sendingTestEmail !== null}
+                      className="gap-2"
+                    >
+                      {sendingTestEmail === 'welcome' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                      Send Welcome Email
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => sendTestEmail('password-reset')}
+                      disabled={sendingTestEmail !== null}
+                      className="gap-2"
+                    >
+                      {sendingTestEmail === 'password-reset' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                      Send Password Changed Email
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="border-t pt-6">
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="font-medium">More marketing tools coming soon</p>
+                    <p className="text-sm">Bulk emails, announcements, and more</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

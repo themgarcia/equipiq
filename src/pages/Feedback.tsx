@@ -13,11 +13,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, MessageSquare, Send, CheckCircle2, Bug, Lightbulb, HelpCircle, MessageCircle } from 'lucide-react';
+import { Loader2, MessageSquare, Send, CheckCircle2, Bug, Lightbulb, HelpCircle, MessageCircle, ChevronDown, Reply } from 'lucide-react';
 import { format } from 'date-fns';
+
+interface FeedbackReply {
+  id: string;
+  feedback_id: string;
+  user_id: string;
+  message: string;
+  is_admin_reply: boolean;
+  created_at: string;
+}
 
 interface FeedbackItem {
   id: string;
@@ -26,6 +40,7 @@ interface FeedbackItem {
   description: string;
   status: string;
   created_at: string;
+  replies?: FeedbackReply[];
 }
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -61,6 +76,9 @@ export default function Feedback() {
   const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
   const [loadingFeedback, setLoadingFeedback] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
+  const [sendingReply, setSendingReply] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUserFeedback();
@@ -70,14 +88,34 @@ export default function Feedback() {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
+      const { data: feedback, error } = await supabase
         .from('feedback')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setFeedbackList(data || []);
+
+      // Fetch replies for user's feedback
+      const feedbackIds = feedback?.map(f => f.id) || [];
+      if (feedbackIds.length > 0) {
+        const { data: replies, error: repliesError } = await supabase
+          .from('feedback_replies')
+          .select('*')
+          .in('feedback_id', feedbackIds)
+          .order('created_at', { ascending: true });
+
+        if (repliesError) throw repliesError;
+
+        const feedbackWithReplies = feedback?.map(fb => ({
+          ...fb,
+          replies: replies?.filter(r => r.feedback_id === fb.id) || [],
+        })) || [];
+
+        setFeedbackList(feedbackWithReplies);
+      } else {
+        setFeedbackList(feedback || []);
+      }
     } catch (error) {
       console.error('Error fetching feedback:', error);
     } finally {
@@ -134,6 +172,54 @@ export default function Feedback() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const sendUserReply = async (feedbackId: string) => {
+    const message = replyText[feedbackId]?.trim();
+    if (!message || !user) return;
+
+    setSendingReply(feedbackId);
+    try {
+      const { data: reply, error } = await supabase
+        .from('feedback_replies')
+        .insert({
+          feedback_id: feedbackId,
+          user_id: user.id,
+          message,
+          is_admin_reply: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
+      setFeedbackList(prev => prev.map(fb => 
+        fb.id === feedbackId 
+          ? { ...fb, replies: [...(fb.replies || []), reply] }
+          : fb
+      ));
+
+      // Clear the reply text
+      setReplyText(prev => ({ ...prev, [feedbackId]: '' }));
+
+      toast({
+        title: 'Reply sent',
+        description: 'Your follow-up has been added.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error sending reply',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingReply(null);
+    }
+  };
+
+  const hasUnreadAdminReplies = (item: FeedbackItem) => {
+    return item.replies?.some(r => r.is_admin_reply) ?? false;
   };
 
   return (
@@ -252,7 +338,7 @@ export default function Feedback() {
             <CardHeader>
               <CardTitle>Your Feedback History</CardTitle>
               <CardDescription>
-                Track the status of your previous submissions
+                Track the status of your previous submissions and continue conversations
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -268,30 +354,121 @@ export default function Feedback() {
               ) : (
                 <div className="space-y-4">
                   {feedbackList.map((item) => (
-                    <div
+                    <Collapsible
                       key={item.id}
-                      className="border rounded-lg p-4 space-y-2"
+                      open={expandedFeedback === item.id}
+                      onOpenChange={(open) => setExpandedFeedback(open ? item.id : null)}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                          {categoryIcons[item.category]}
-                          <span className="font-medium">{item.subject}</span>
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="p-4 space-y-2">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {categoryIcons[item.category]}
+                              <span className="font-medium">{item.subject}</span>
+                              {hasUnreadAdminReplies(item) && (
+                                <Badge variant="default" className="text-xs">
+                                  Admin replied
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Badge variant="outline" className={statusColors[item.status]}>
+                                {item.status.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {item.description}
+                          </p>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>{categoryLabels[item.category]}</span>
+                              <span>•</span>
+                              <span>{format(new Date(item.created_at), 'MMM d, yyyy')}</span>
+                              {(item.replies?.length ?? 0) > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span>{item.replies?.length} {item.replies?.length === 1 ? 'reply' : 'replies'}</span>
+                                </>
+                              )}
+                            </div>
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm" className="gap-1 text-xs">
+                                <Reply className="h-3 w-3" />
+                                {expandedFeedback === item.id ? 'Hide' : 'View / Reply'}
+                                <ChevronDown className={`h-3 w-3 transition-transform ${expandedFeedback === item.id ? 'rotate-180' : ''}`} />
+                              </Button>
+                            </CollapsibleTrigger>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Badge variant="outline" className={statusColors[item.status]}>
-                            {item.status.replace('_', ' ')}
-                          </Badge>
-                        </div>
+
+                        <CollapsibleContent>
+                          <div className="border-t bg-muted/30 p-4 space-y-4">
+                            {/* Full description */}
+                            <div className="space-y-2">
+                              <span className="text-xs font-medium text-muted-foreground uppercase">Your original message</span>
+                              <p className="text-sm bg-background border rounded-lg p-3">{item.description}</p>
+                            </div>
+
+                            {/* Conversation thread */}
+                            {(item.replies?.length ?? 0) > 0 && (
+                              <div className="space-y-3">
+                                <span className="text-xs font-medium text-muted-foreground uppercase">Conversation</span>
+                                {item.replies?.map((reply) => (
+                                  <div
+                                    key={reply.id}
+                                    className={`p-3 rounded-lg text-sm ${
+                                      reply.is_admin_reply
+                                        ? 'bg-primary/10 border border-primary/20 ml-4'
+                                        : 'bg-background border mr-4'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className={`text-xs font-medium ${reply.is_admin_reply ? 'text-primary' : 'text-foreground'}`}>
+                                        {reply.is_admin_reply ? 'equipIQ Team' : 'You'}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {format(new Date(reply.created_at), 'MMM d, h:mm a')}
+                                      </span>
+                                    </div>
+                                    <p className="text-muted-foreground">{reply.message}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Reply input */}
+                            <div className="space-y-2">
+                              <span className="text-xs font-medium text-muted-foreground uppercase">Add a follow-up</span>
+                              <div className="flex gap-2">
+                                <Input
+                                  placeholder="Add more information or ask a question..."
+                                  value={replyText[item.id] || ''}
+                                  onChange={(e) => setReplyText(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      sendUserReply(item.id);
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  size="icon"
+                                  onClick={() => sendUserReply(item.id)}
+                                  disabled={sendingReply === item.id || !replyText[item.id]?.trim()}
+                                >
+                                  {sendingReply === item.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Send className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CollapsibleContent>
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {item.description}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>{categoryLabels[item.category]}</span>
-                        <span>•</span>
-                        <span>{format(new Date(item.created_at), 'MMM d, yyyy')}</span>
-                      </div>
-                    </div>
+                    </Collapsible>
                   ))}
                 </div>
               )}
