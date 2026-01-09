@@ -13,7 +13,8 @@ import {
   Zap,
   Users,
   Mail,
-  Headphones
+  Headphones,
+  Menu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const features = [
   {
@@ -99,7 +101,9 @@ export default function Landing() {
             <EquipIQIcon size="lg" />
             <span className="text-xl font-bold text-foreground">equipIQ</span>
           </div>
-          <div className="flex items-center gap-4">
+          
+          {/* Desktop navigation */}
+          <div className="hidden md:flex items-center gap-4">
             {user ? (
               <Button asChild>
                 <Link to="/dashboard">Go to Dashboard</Link>
@@ -115,6 +119,41 @@ export default function Landing() {
               </>
             )}
           </div>
+          
+          {/* Mobile hamburger menu */}
+          <Sheet>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-64">
+              <div className="flex flex-col gap-4 pt-8">
+                <a href="#features" className="text-lg font-medium hover:text-primary transition-colors">
+                  Features
+                </a>
+                <a href="#pricing" className="text-lg font-medium hover:text-primary transition-colors">
+                  Pricing
+                </a>
+                <hr className="border-border" />
+                {user ? (
+                  <Button asChild>
+                    <Link to="/dashboard">Go to Dashboard</Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="ghost" asChild className="justify-start">
+                      <Link to="/auth">Log In</Link>
+                    </Button>
+                    <Button asChild>
+                      <Link to="/auth">Get Started</Link>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
