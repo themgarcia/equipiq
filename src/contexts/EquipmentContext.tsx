@@ -524,6 +524,12 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
 
   // Get attachments for an equipment item
   const getAttachments = useCallback(async (equipmentId: string): Promise<EquipmentAttachment[]> => {
+    // Return demo attachments when in demo mode
+    if (isDemoData) {
+      const demoAttachments = getDemoAttachmentsForPlan(demoPlan || 'free');
+      return demoAttachments[equipmentId] || [];
+    }
+
     if (!user) return [];
 
     try {
@@ -550,7 +556,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       console.error('Failed to load attachments:', error);
       return [];
     }
-  }, [user]);
+  }, [user, isDemoData, demoPlan]);
 
   // Add an attachment to an equipment item
   const addAttachment = useCallback(async (
