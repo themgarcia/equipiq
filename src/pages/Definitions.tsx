@@ -125,7 +125,7 @@ You can always override the default on individual items if you have a specific s
 - 70/30 COGS/Overhead if it's sometimes used for estimates
 - 50/50 if it serves dual purposes equally
 
-**Why this matters:** FMS tools like LMN, Aspire, and Service Autopilot need this split to calculate accurate job rates. Getting it wrong means either:
+**Why this matters:** Your Field Management Software (FMS) needs this split to calculate accurate job rates. Getting it wrong means either:
 - Underpricing jobs (losing money)
 - Overpricing jobs (losing work)
 
