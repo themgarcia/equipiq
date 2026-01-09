@@ -2,11 +2,18 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
+export type SubscriptionPlan = 'free' | 'professional' | 'business';
+
 interface AdminModeContextType {
   isAdmin: boolean;
   isLoading: boolean;
   adminModeActive: boolean;
   toggleAdminMode: () => void;
+  // Demo mode features
+  demoPlan: SubscriptionPlan | null;
+  setDemoPlan: (plan: SubscriptionPlan | null) => void;
+  demoDataEnabled: boolean;
+  setDemoDataEnabled: (enabled: boolean) => void;
 }
 
 const AdminModeContext = createContext<AdminModeContextType | undefined>(undefined);
@@ -16,6 +23,8 @@ export function AdminModeProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [adminModeActive, setAdminModeActive] = useState(false);
+  const [demoPlan, setDemoPlanState] = useState<SubscriptionPlan | null>(null);
+  const [demoDataEnabled, setDemoDataEnabledState] = useState(false);
 
   // Check if user has admin role
   useEffect(() => {
@@ -23,6 +32,8 @@ export function AdminModeProvider({ children }: { children: ReactNode }) {
       if (!user) {
         setIsAdmin(false);
         setAdminModeActive(false);
+        setDemoPlanState(null);
+        setDemoDataEnabledState(false);
         setIsLoading(false);
         return;
       }
@@ -52,18 +63,36 @@ export function AdminModeProvider({ children }: { children: ReactNode }) {
     checkAdminStatus();
   }, [user]);
 
-  // Restore admin mode from localStorage if user is admin
+  // Restore admin mode and demo settings from localStorage if user is admin
   useEffect(() => {
     if (isAdmin && !isLoading) {
       const storedMode = localStorage.getItem('adminModeActive');
       if (storedMode === 'true') {
         setAdminModeActive(true);
+        
+        // Restore demo settings
+        const storedDemoPlan = localStorage.getItem('demoPlan');
+        if (storedDemoPlan && ['free', 'professional', 'business'].includes(storedDemoPlan)) {
+          setDemoPlanState(storedDemoPlan as SubscriptionPlan);
+        }
+        
+        const storedDemoData = localStorage.getItem('demoDataEnabled');
+        if (storedDemoData === 'true') {
+          setDemoDataEnabledState(true);
+        }
       }
     }
   }, [isAdmin, isLoading]);
 
-  // Deactivate admin mode if user loses admin status
+  // Clear demo settings if user loses admin status or admin mode is deactivated
   useEffect(() => {
+    if (!isAdmin || !adminModeActive) {
+      setDemoPlanState(null);
+      setDemoDataEnabledState(false);
+      localStorage.removeItem('demoPlan');
+      localStorage.removeItem('demoDataEnabled');
+    }
+    
     if (!isAdmin && adminModeActive) {
       setAdminModeActive(false);
       localStorage.removeItem('adminModeActive');
@@ -80,11 +109,45 @@ export function AdminModeProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('adminModeActive', 'true');
     } else {
       localStorage.removeItem('adminModeActive');
+      // Also clear demo settings when exiting admin mode
+      setDemoPlanState(null);
+      setDemoDataEnabledState(false);
+      localStorage.removeItem('demoPlan');
+      localStorage.removeItem('demoDataEnabled');
+    }
+  };
+
+  const setDemoPlan = (plan: SubscriptionPlan | null) => {
+    if (!adminModeActive) return;
+    setDemoPlanState(plan);
+    if (plan) {
+      localStorage.setItem('demoPlan', plan);
+    } else {
+      localStorage.removeItem('demoPlan');
+    }
+  };
+
+  const setDemoDataEnabled = (enabled: boolean) => {
+    if (!adminModeActive) return;
+    setDemoDataEnabledState(enabled);
+    if (enabled) {
+      localStorage.setItem('demoDataEnabled', 'true');
+    } else {
+      localStorage.removeItem('demoDataEnabled');
     }
   };
 
   return (
-    <AdminModeContext.Provider value={{ isAdmin, isLoading, adminModeActive, toggleAdminMode }}>
+    <AdminModeContext.Provider value={{ 
+      isAdmin, 
+      isLoading, 
+      adminModeActive, 
+      toggleAdminMode,
+      demoPlan,
+      setDemoPlan,
+      demoDataEnabled,
+      setDemoDataEnabled,
+    }}>
       {children}
     </AdminModeContext.Provider>
   );
