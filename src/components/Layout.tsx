@@ -22,6 +22,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdminMode } from '@/contexts/AdminModeContext';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { DemoModeControls } from '@/components/DemoModeControls';
+import { DemoModeBanner } from '@/components/DemoModeBanner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -161,6 +163,9 @@ function AppSidebar() {
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
         <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center")}>
+          {/* Demo Mode Controls - only show when sidebar is expanded and admin mode is active */}
+          {!isCollapsed && adminModeActive && <DemoModeControls />}
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -366,9 +371,10 @@ export function Layout({ children }: LayoutProps) {
 
   if (isPhone) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <PhoneHeader />
-        <main>
+        <DemoModeBanner />
+        <main className="flex-1">
           <div className="min-h-screen">
             {children}
           </div>
@@ -381,8 +387,9 @@ export function Layout({ children }: LayoutProps) {
     <SidebarProvider defaultOpen={defaultOpen}>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
-        <main className="flex-1">
-          <div className="min-h-screen">
+        <main className="flex-1 flex flex-col">
+          <DemoModeBanner />
+          <div className="flex-1 min-h-0">
             {children}
           </div>
         </main>

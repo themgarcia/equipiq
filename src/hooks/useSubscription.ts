@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminMode } from '@/contexts/AdminModeContext';
+import { DEMO_USAGE } from '@/data/demoEquipmentData';
 
 export type SubscriptionPlan = 'free' | 'professional' | 'business';
 
@@ -66,6 +68,8 @@ const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
 
 export function useSubscription() {
   const { user } = useAuth();
+  const { adminModeActive, demoPlan, demoDataEnabled } = useAdminMode();
+  
   const [subscription, setSubscription] = useState<SubscriptionState>({
     plan: 'free',
     isSubscribed: false,
@@ -185,18 +189,37 @@ export function useSubscription() {
     return () => clearInterval(interval);
   }, [checkSubscription]);
 
-  // Computed values
-  const limits = PLAN_LIMITS[subscription.plan];
+  // Determine if we're in demo mode
+  const isDemo = adminModeActive && (demoPlan !== null || demoDataEnabled);
   
-  const canAddEquipment = usage.totalItemCount < limits.maxItems;
-  const canUploadDocuments = usage.storageUsedBytes < limits.maxStorageBytes;
+  // Effective plan - use demo plan if set, otherwise real subscription
+  const effectivePlan = useMemo(() => {
+    if (adminModeActive && demoPlan) {
+      return demoPlan;
+    }
+    return subscription.plan;
+  }, [adminModeActive, demoPlan, subscription.plan]);
+  
+  // Effective usage - use demo usage if demo data enabled
+  const effectiveUsage = useMemo(() => {
+    if (adminModeActive && demoDataEnabled) {
+      return DEMO_USAGE[demoPlan || 'free'];
+    }
+    return usage;
+  }, [adminModeActive, demoDataEnabled, demoPlan, usage]);
+
+  // Computed values using effective plan and usage
+  const limits = PLAN_LIMITS[effectivePlan];
+  
+  const canAddEquipment = effectiveUsage.totalItemCount < limits.maxItems;
+  const canUploadDocuments = effectiveUsage.storageUsedBytes < limits.maxStorageBytes;
   const canUseBuyVsRent = limits.hasFullBuyVsRent || subscription.inGracePeriod;
   const canUseCashflow = limits.hasCashflow || subscription.inGracePeriod;
   const hasEmailAlerts = limits.hasEmailAlerts;
   const hasPrioritySupport = limits.hasPrioritySupport;
 
-  const itemsRemaining = Math.max(0, limits.maxItems - usage.totalItemCount);
-  const storageRemaining = Math.max(0, limits.maxStorageBytes - usage.storageUsedBytes);
+  const itemsRemaining = Math.max(0, limits.maxItems - effectiveUsage.totalItemCount);
+  const storageRemaining = Math.max(0, limits.maxStorageBytes - effectiveUsage.storageUsedBytes);
 
   const daysLeftInGrace = subscription.gracePeriodEndsAt
     ? Math.max(0, Math.ceil((new Date(subscription.gracePeriodEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
@@ -205,8 +228,13 @@ export function useSubscription() {
   return {
     // State
     subscription,
-    usage,
+    usage: effectiveUsage,
     limits,
+    
+    // Demo mode indicators
+    isDemo,
+    effectivePlan,
+    realPlan: subscription.plan,
 
     // Permissions
     canAddEquipment,
