@@ -49,6 +49,17 @@ interface ExtractedEquipment {
   suggestedCategory: EquipmentCategory | null;
 }
 
+// Input validation constants
+const MAX_BASE64_SIZE = 20 * 1024 * 1024 * 1.37; // ~27MB base64 for 20MB file
+const ALLOWED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif'
+];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -101,8 +112,41 @@ serve(async (req) => {
 
     const { documentBase64, documentType, fileName } = await req.json();
 
-    if (!documentBase64) {
-      throw new Error('No document provided');
+    // Input validation: Check document presence
+    if (!documentBase64 || typeof documentBase64 !== 'string') {
+      console.error('No document provided or invalid format');
+      return new Response(JSON.stringify({ error: 'No document provided' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Input validation: Check document size (prevent oversized uploads)
+    if (documentBase64.length > MAX_BASE64_SIZE) {
+      console.error(`Document too large: ${documentBase64.length} bytes (max: ${MAX_BASE64_SIZE})`);
+      return new Response(JSON.stringify({ error: 'Document too large. Maximum size is 20MB.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Input validation: Check document type
+    if (!documentType || !ALLOWED_DOCUMENT_TYPES.includes(documentType)) {
+      console.error(`Invalid document type: ${documentType}`);
+      return new Response(JSON.stringify({ error: 'Invalid document type. Supported: PDF, JPEG, PNG, WebP, HEIC' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Input validation: Basic base64 format check
+    const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+    if (!base64Regex.test(documentBase64)) {
+      console.error('Invalid base64 format');
+      return new Response(JSON.stringify({ error: 'Invalid document format' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log(`Processing document: ${fileName}, type: ${documentType}`);
