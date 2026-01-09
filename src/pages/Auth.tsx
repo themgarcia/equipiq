@@ -203,15 +203,18 @@ export default function Auth() {
           <EquipIQIcon className="h-14 w-14 mb-4" />
           <h1 className="text-2xl font-bold">equipIQ</h1>
           <p className="text-muted-foreground">Equipment intelligence for contractors</p>
+          <span className="mt-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            Open Beta – All features included
+          </span>
         </div>
 
         <Card className="shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle>{isLogin ? 'Welcome back' : 'Create an account'}</CardTitle>
+            <CardTitle>{isLogin ? 'Welcome back' : 'Join the Open Beta'}</CardTitle>
             <CardDescription>
               {isLogin 
                 ? 'Enter your credentials to access your equipment' 
-                : 'Tell us about yourself and your company'}
+                : 'Create your account and get full access'}
             </CardDescription>
           </CardHeader>
           <CardContent>
