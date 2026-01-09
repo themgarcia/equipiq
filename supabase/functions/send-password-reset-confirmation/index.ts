@@ -65,7 +65,7 @@ serve(async (req: Request) => {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "equipIQ <security@resend.dev>",
+        from: "equipIQ <noreply@equipiq.app>",
         to: [email],
         subject: "Your equipIQ password was changed",
         html: `
