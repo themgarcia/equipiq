@@ -1,17 +1,19 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { Equipment, EquipmentCalculated, CategoryDefaults, EquipmentDocument, EquipmentAttachment } from '@/types/equipment';
 import { categoryDefaults as defaultCategories } from '@/data/categoryDefaults';
 import { calculateEquipment } from '@/lib/calculations';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminMode } from '@/contexts/AdminModeContext';
 import { useToast } from '@/hooks/use-toast';
-
+import { getDemoEquipmentForPlan } from '@/data/demoEquipmentData';
 interface EquipmentContextType {
   equipment: Equipment[];
   calculatedEquipment: EquipmentCalculated[];
   categoryDefaults: CategoryDefaults[];
   loading: boolean;
   attachmentsByEquipmentId: Record<string, EquipmentAttachment[]>;
+  isDemoData: boolean;
   addEquipment: (equipment: Omit<Equipment, 'id'>) => Promise<string | undefined>;
   updateEquipment: (id: string, updates: Partial<Equipment>) => Promise<void>;
   deleteEquipment: (id: string) => Promise<void>;
@@ -120,9 +122,24 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [attachmentsByEquipmentId, setAttachmentsByEquipmentId] = useState<Record<string, EquipmentAttachment[]>>({});
   const { user } = useAuth();
+  const { adminModeActive, demoDataEnabled, demoPlan } = useAdminMode();
   const { toast } = useToast();
 
-  const calculatedEquipment = equipment.map(e => calculateEquipment(e, categoryDefaultsState));
+  // Determine if we're showing demo data
+  const isDemoData = adminModeActive && demoDataEnabled;
+
+  // Use demo equipment when demo mode is active with demo data enabled
+  const effectiveEquipment = useMemo(() => {
+    if (isDemoData) {
+      return getDemoEquipmentForPlan(demoPlan || 'free');
+    }
+    return equipment;
+  }, [isDemoData, demoPlan, equipment]);
+
+  const calculatedEquipment = useMemo(() => 
+    effectiveEquipment.map(e => calculateEquipment(e, categoryDefaultsState)),
+    [effectiveEquipment, categoryDefaultsState]
+  );
 
   const fetchEquipment = useCallback(async () => {
     if (!user) {
@@ -200,6 +217,16 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
   const addEquipment = useCallback(async (newEquipment: Omit<Equipment, 'id'>): Promise<string | undefined> => {
     if (!user) return undefined;
 
+    // Block operations when viewing demo data
+    if (isDemoData) {
+      toast({
+        title: "Demo mode active",
+        description: "Switch to real data to make changes.",
+        variant: "destructive",
+      });
+      return undefined;
+    }
+
     try {
       // Ensure name is generated from year/make/model
       const equipmentWithName = {
@@ -230,10 +257,20 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       });
       return undefined;
     }
-  }, [user, toast]);
+  }, [user, toast, isDemoData]);
 
   const updateEquipment = useCallback(async (id: string, updates: Partial<Equipment>) => {
     if (!user) return;
+
+    // Block operations when viewing demo data
+    if (isDemoData) {
+      toast({
+        title: "Demo mode active",
+        description: "Switch to real data to make changes.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       // Find current equipment to merge with updates for name generation
@@ -300,10 +337,20 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
         variant: "destructive",
       });
     }
-  }, [user, equipment, toast]);
+  }, [user, equipment, toast, isDemoData]);
 
   const deleteEquipment = useCallback(async (id: string) => {
     if (!user) return;
+
+    // Block operations when viewing demo data
+    if (isDemoData) {
+      toast({
+        title: "Demo mode active",
+        description: "Switch to real data to make changes.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -326,7 +373,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
         variant: "destructive",
       });
     }
-  }, [user, toast]);
+  }, [user, toast, isDemoData]);
 
   const updateCategoryDefaults = useCallback((category: string, updates: Partial<CategoryDefaults>) => {
     setCategoryDefaults(prev =>
@@ -631,11 +678,12 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <EquipmentContext.Provider value={{
-      equipment,
+      equipment: effectiveEquipment,
       calculatedEquipment,
       categoryDefaults: categoryDefaultsState,
       loading,
       attachmentsByEquipmentId,
+      isDemoData,
       addEquipment,
       updateEquipment,
       deleteEquipment,
