@@ -1,5 +1,170 @@
-import { Equipment } from '@/types/equipment';
+import { Equipment, EquipmentAttachment } from '@/types/equipment';
 import { SubscriptionPlan, UsageState } from '@/hooks/useSubscription';
+
+// Demo attachments per plan tier - matches DEMO_USAGE attachment counts
+export const DEMO_ATTACHMENTS: Record<SubscriptionPlan, Record<string, EquipmentAttachment[]>> = {
+  free: {
+    // No attachments on free tier (matches DEMO_USAGE.free.attachmentCount = 0)
+  },
+  professional: {
+    'demo-3': [ // Bobcat S570 Skid Steer
+      {
+        id: 'demo-att-1',
+        equipmentId: 'demo-3',
+        name: '72" General Purpose Bucket',
+        description: 'Standard dirt bucket with bolt-on edge',
+        value: 2800,
+        serialNumber: 'BKT-72GP-001',
+        createdAt: '2021-07-15T00:00:00Z',
+      },
+      {
+        id: 'demo-att-2',
+        equipmentId: 'demo-3',
+        name: '48" Pallet Forks',
+        description: '4000lb capacity pallet forks',
+        value: 1500,
+        serialNumber: 'FRK-48-001',
+        createdAt: '2021-07-15T00:00:00Z',
+      },
+    ],
+    'demo-1': [ // Kubota KX040-4 Mini Excavator
+      {
+        id: 'demo-att-3',
+        equipmentId: 'demo-1',
+        name: '24" Digging Bucket',
+        description: 'HD excavator bucket with teeth',
+        value: 1800,
+        serialNumber: 'EXB-24-001',
+        createdAt: '2022-04-01T00:00:00Z',
+      },
+    ],
+    'demo-5': [ // CAT 320 Large Excavator
+      {
+        id: 'demo-att-4',
+        equipmentId: 'demo-5',
+        name: '48" Digging Bucket',
+        description: 'Heavy duty rock bucket',
+        value: 4500,
+        serialNumber: 'EXB-48HD-001',
+        createdAt: '2020-09-01T00:00:00Z',
+      },
+      {
+        id: 'demo-att-5',
+        equipmentId: 'demo-5',
+        name: 'Hydraulic Thumb',
+        description: 'Mechanical thumb for material handling',
+        value: 3200,
+        serialNumber: 'THB-320-001',
+        createdAt: '2020-09-15T00:00:00Z',
+      },
+    ],
+  },
+  business: {
+    // Same as professional plus additional attachments (10 total)
+    'demo-3': [
+      {
+        id: 'demo-att-1',
+        equipmentId: 'demo-3',
+        name: '72" General Purpose Bucket',
+        description: 'Standard dirt bucket with bolt-on edge',
+        value: 2800,
+        serialNumber: 'BKT-72GP-001',
+        createdAt: '2021-07-15T00:00:00Z',
+      },
+      {
+        id: 'demo-att-2',
+        equipmentId: 'demo-3',
+        name: '48" Pallet Forks',
+        description: '4000lb capacity pallet forks',
+        value: 1500,
+        serialNumber: 'FRK-48-001',
+        createdAt: '2021-07-15T00:00:00Z',
+      },
+      {
+        id: 'demo-att-6',
+        equipmentId: 'demo-3',
+        name: '72" Grapple Bucket',
+        description: 'Root grapple for debris handling',
+        value: 3500,
+        serialNumber: 'GRP-72-001',
+        createdAt: '2021-08-01T00:00:00Z',
+      },
+    ],
+    'demo-1': [
+      {
+        id: 'demo-att-3',
+        equipmentId: 'demo-1',
+        name: '24" Digging Bucket',
+        description: 'HD excavator bucket with teeth',
+        value: 1800,
+        serialNumber: 'EXB-24-001',
+        createdAt: '2022-04-01T00:00:00Z',
+      },
+      {
+        id: 'demo-att-7',
+        equipmentId: 'demo-1',
+        name: '36" Grading Bucket',
+        description: 'Smooth edge for finish grading',
+        value: 2200,
+        serialNumber: 'EXB-36GR-001',
+        createdAt: '2022-05-01T00:00:00Z',
+      },
+    ],
+    'demo-5': [
+      {
+        id: 'demo-att-4',
+        equipmentId: 'demo-5',
+        name: '48" Digging Bucket',
+        description: 'Heavy duty rock bucket',
+        value: 4500,
+        serialNumber: 'EXB-48HD-001',
+        createdAt: '2020-09-01T00:00:00Z',
+      },
+      {
+        id: 'demo-att-5',
+        equipmentId: 'demo-5',
+        name: 'Hydraulic Thumb',
+        description: 'Mechanical thumb for material handling',
+        value: 3200,
+        serialNumber: 'THB-320-001',
+        createdAt: '2020-09-15T00:00:00Z',
+      },
+      {
+        id: 'demo-att-8',
+        equipmentId: 'demo-5',
+        name: '60" Cleanup Bucket',
+        description: 'Wide bucket for cleanup work',
+        value: 5200,
+        serialNumber: 'EXB-60CL-001',
+        createdAt: '2020-10-01T00:00:00Z',
+      },
+    ],
+    'demo-6': [ // John Deere 310SL
+      {
+        id: 'demo-att-9',
+        equipmentId: 'demo-6',
+        name: '24" Backhoe Bucket',
+        description: 'Standard digging bucket',
+        value: 1600,
+        serialNumber: 'BHB-24-001',
+        createdAt: '2021-04-01T00:00:00Z',
+      },
+      {
+        id: 'demo-att-10',
+        equipmentId: 'demo-6',
+        name: '12" Trenching Bucket',
+        description: 'Narrow bucket for utility trenching',
+        value: 1200,
+        serialNumber: 'BHB-12TR-001',
+        createdAt: '2021-04-15T00:00:00Z',
+      },
+    ],
+  },
+};
+
+export function getDemoAttachmentsForPlan(plan: SubscriptionPlan): Record<string, EquipmentAttachment[]> {
+  return DEMO_ATTACHMENTS[plan] || {};
+}
 
 // Demo usage data per plan - shows realistic usage near plan limits
 export const DEMO_USAGE: Record<SubscriptionPlan, UsageState> = {

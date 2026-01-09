@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminMode } from '@/contexts/AdminModeContext';
 import { useToast } from '@/hooks/use-toast';
-import { getDemoEquipmentForPlan } from '@/data/demoEquipmentData';
+import { getDemoEquipmentForPlan, getDemoAttachmentsForPlan } from '@/data/demoEquipmentData';
 interface EquipmentContextType {
   equipment: Equipment[];
   calculatedEquipment: EquipmentCalculated[];
@@ -140,6 +140,14 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     effectiveEquipment.map(e => calculateEquipment(e, categoryDefaultsState)),
     [effectiveEquipment, categoryDefaultsState]
   );
+
+  // Use demo attachments when demo mode is active with demo data enabled
+  const effectiveAttachmentsByEquipmentId = useMemo(() => {
+    if (isDemoData) {
+      return getDemoAttachmentsForPlan(demoPlan || 'free');
+    }
+    return attachmentsByEquipmentId;
+  }, [isDemoData, demoPlan, attachmentsByEquipmentId]);
 
   const fetchEquipment = useCallback(async () => {
     if (!user) {
@@ -526,6 +534,16 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
   ): Promise<void> => {
     if (!user) return;
 
+    // Block operations when viewing demo data
+    if (isDemoData) {
+      toast({
+        title: "Demo mode active",
+        description: "Switch to real data to make changes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       let photoPath: string | null = null;
 
@@ -566,7 +584,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       });
       throw error;
     }
-  }, [user, toast]);
+  }, [user, toast, isDemoData]);
 
   // Update an attachment (supports reassignment via equipmentId)
   const updateAttachment = useCallback(async (
@@ -575,6 +593,16 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     photo?: File
   ): Promise<void> => {
     if (!user) return;
+
+    // Block operations when viewing demo data
+    if (isDemoData) {
+      toast({
+        title: "Demo mode active",
+        description: "Switch to real data to make changes.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const dbUpdates: Record<string, any> = {};
@@ -639,11 +667,21 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       });
       throw error;
     }
-  }, [user, toast, fetchAllAttachments]);
+  }, [user, toast, fetchAllAttachments, isDemoData]);
 
   // Delete an attachment
   const deleteAttachment = useCallback(async (id: string, photoPath?: string): Promise<void> => {
     if (!user) return;
+
+    // Block operations when viewing demo data
+    if (isDemoData) {
+      toast({
+        title: "Demo mode active",
+        description: "Switch to real data to make changes.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       // Delete photo from storage if exists
@@ -674,7 +712,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       });
       throw error;
     }
-  }, [user, toast]);
+  }, [user, toast, isDemoData]);
 
   return (
     <EquipmentContext.Provider value={{
@@ -682,7 +720,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       calculatedEquipment,
       categoryDefaults: categoryDefaultsState,
       loading,
-      attachmentsByEquipmentId,
+      attachmentsByEquipmentId: effectiveAttachmentsByEquipmentId,
       isDemoData,
       addEquipment,
       updateEquipment,

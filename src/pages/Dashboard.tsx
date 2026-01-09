@@ -390,7 +390,7 @@ export default function Dashboard() {
                       <p className="text-xs text-muted-foreground">
                         {equipment.category} • {equipment.estimatedYearsLeft === 0 
                           ? 'Past useful life' 
-                          : `${equipment.estimatedYearsLeft} year left`}
+                          : `${equipment.estimatedYearsLeft.toFixed(1)} years left`}
                       </p>
                     </div>
                     <div className="text-right">

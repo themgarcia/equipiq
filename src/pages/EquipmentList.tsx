@@ -351,7 +351,7 @@ export default function EquipmentList() {
                                   </TableCell>
                                   <TableCell className="w-[80px] text-right font-mono-nums">
                                     <span className={equipment.estimatedYearsLeft <= 1 ? 'text-warning font-semibold' : ''}>
-                                      {equipment.estimatedYearsLeft}
+                                      {equipment.estimatedYearsLeft.toFixed(1)}
                                     </span>
                                   </TableCell>
                                   <TableCell className="w-[120px] text-right font-mono-nums">
