@@ -25,7 +25,7 @@ const features = [
   {
     icon: FileSpreadsheet,
     title: 'FMS Export',
-    description: 'Export equipment data directly to LMN for seamless financial management system integration.',
+    description: 'Export equipment data directly to your FMS for seamless Field Management Software integration.',
   },
   {
     icon: Scale,
@@ -53,7 +53,7 @@ const benefits = [
   'No accounting expertise required',
   'Built specifically for contractors',
   'Real-time depreciation calculations',
-  'LMN FMS integration ready',
+  'FMS integration ready',
 ];
 
 export default function Landing() {
@@ -229,7 +229,7 @@ export default function Landing() {
                 </li>
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Export directly to LMN FMS</span>
+                  <span>Export directly to your FMS</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />

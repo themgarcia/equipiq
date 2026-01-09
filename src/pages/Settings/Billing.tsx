@@ -105,7 +105,7 @@ export default function Billing() {
                 <ul className="space-y-3">
                   <li className="flex items-center gap-3 text-sm">
                     <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span>LMN FMS export</span>
+                    <span>FMS export ready</span>
                   </li>
                   <li className="flex items-center gap-3 text-sm">
                     <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
