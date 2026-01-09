@@ -68,6 +68,7 @@ export function EquipmentAttachments({
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
 
   const loadAttachments = useCallback(async () => {
     if (!equipmentId) return;
@@ -86,14 +87,40 @@ export function EquipmentAttachments({
     }
   }, [open, equipmentId, loadAttachments]);
 
-  const getPhotoUrl = (photoPath: string) => {
-    const { data } = supabase.storage
+  // Generate signed URLs for private bucket photos
+  const getSignedPhotoUrl = useCallback(async (photoPath: string): Promise<string | null> => {
+    const { data, error } = await supabase.storage
       .from('equipment-documents')
-      .getPublicUrl(photoPath);
-    return data.publicUrl;
-  };
+      .createSignedUrl(photoPath, 3600); // 1 hour expiry
+    
+    if (error) {
+      console.error('Failed to generate signed URL:', error);
+      return null;
+    }
+    return data.signedUrl;
+  }, []);
 
-  const handleOpenForm = (attachment?: EquipmentAttachment) => {
+  // Load signed URLs when attachments change
+  useEffect(() => {
+    const loadPhotoUrls = async () => {
+      const urls: Record<string, string> = {};
+      for (const attachment of attachments) {
+        if (attachment.photoPath) {
+          const url = await getSignedPhotoUrl(attachment.photoPath);
+          if (url) {
+            urls[attachment.id] = url;
+          }
+        }
+      }
+      setPhotoUrls(urls);
+    };
+    
+    if (attachments.length > 0) {
+      loadPhotoUrls();
+    }
+  }, [attachments, getSignedPhotoUrl]);
+
+  const handleOpenForm = async (attachment?: EquipmentAttachment) => {
     if (attachment) {
       setEditingAttachment(attachment);
       setFormData({
@@ -104,7 +131,9 @@ export function EquipmentAttachments({
         assignedEquipmentId: attachment.equipmentId,
       });
       if (attachment.photoPath) {
-        setPhotoPreview(getPhotoUrl(attachment.photoPath));
+        // Use signed URL for existing photo preview
+        const signedUrl = await getSignedPhotoUrl(attachment.photoPath);
+        setPhotoPreview(signedUrl);
       }
     } else {
       setEditingAttachment(null);
@@ -236,12 +265,16 @@ export function EquipmentAttachments({
                     key={attachment.id}
                     className="flex items-start gap-3 p-3 border rounded-lg bg-card"
                   >
-                    {attachment.photoPath ? (
+                    {photoUrls[attachment.id] ? (
                       <img
-                        src={getPhotoUrl(attachment.photoPath)}
+                        src={photoUrls[attachment.id]}
                         alt={attachment.name}
                         className="w-16 h-16 object-cover rounded border"
                       />
+                    ) : attachment.photoPath ? (
+                      <div className="w-16 h-16 flex items-center justify-center bg-muted rounded border animate-pulse">
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                      </div>
                     ) : (
                       <div className="w-16 h-16 flex items-center justify-center bg-muted rounded border">
                         <ImageIcon className="h-6 w-6 text-muted-foreground" />
