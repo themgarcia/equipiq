@@ -3,6 +3,7 @@ import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -11,7 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { 
+import {
   getIndustryLabel, 
   getFieldEmployeesLabel, 
   getAnnualRevenueLabel, 
@@ -32,6 +33,9 @@ interface UserStats {
   region: string | null;
   betaAccess: boolean;
   betaAccessGrantedAt: string | null;
+  subscriptionPlan: string;
+  subscriptionStatus: string;
+  billingInterval: string | null;
 }
 
 interface CategoryStats {
@@ -94,17 +98,26 @@ export default function AdminDashboard() {
       
       if (profilesError) throw profilesError;
 
-      // Fetch subscriptions for beta access info
+      // Fetch subscriptions for plan and beta access info
       const { data: subscriptions, error: subscriptionsError } = await supabase
         .from('subscriptions')
-        .select('user_id, beta_access, beta_access_granted_at');
+        .select('user_id, plan, status, billing_interval, beta_access, beta_access_granted_at');
       
       if (subscriptionsError) throw subscriptionsError;
 
       // Create a map for quick subscription lookup
-      const subscriptionMap = new Map<string, { betaAccess: boolean; betaAccessGrantedAt: string | null }>();
+      const subscriptionMap = new Map<string, { 
+        plan: string; 
+        status: string; 
+        billingInterval: string | null;
+        betaAccess: boolean; 
+        betaAccessGrantedAt: string | null;
+      }>();
       subscriptions?.forEach(sub => {
         subscriptionMap.set(sub.user_id, {
+          plan: sub.plan || 'free',
+          status: sub.status || 'active',
+          billingInterval: sub.billing_interval,
           betaAccess: sub.beta_access || false,
           betaAccessGrantedAt: sub.beta_access_granted_at,
         });
@@ -136,6 +149,9 @@ export default function AdminDashboard() {
           region: profile.region,
           betaAccess: subInfo?.betaAccess || false,
           betaAccessGrantedAt: subInfo?.betaAccessGrantedAt || null,
+          subscriptionPlan: subInfo?.plan || 'free',
+          subscriptionStatus: subInfo?.status || 'active',
+          billingInterval: subInfo?.billingInterval || null,
         });
       });
 
@@ -331,6 +347,26 @@ export default function AdminDashboard() {
     }).format(value);
   };
 
+  const getPlanBadgeVariant = (plan: string, betaAccess: boolean): "default" | "secondary" | "destructive" | "outline" => {
+    if (betaAccess) return "default";
+    switch (plan) {
+      case 'business': return "default";
+      case 'professional': return "secondary";
+      default: return "outline";
+    }
+  };
+
+  const formatPlanDisplay = (plan: string, interval: string | null, betaAccess: boolean): string => {
+    if (betaAccess && plan === 'free') return "Business (Beta)";
+    
+    const planName = plan === 'professional' ? 'Pro' : plan.charAt(0).toUpperCase() + plan.slice(1);
+    
+    if (plan === 'free') return 'Free';
+    
+    const intervalLabel = interval === 'year' ? 'Annual' : interval === 'month' ? 'Monthly' : '';
+    return intervalLabel ? `${planName} (${intervalLabel})` : planName;
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -427,6 +463,7 @@ export default function AdminDashboard() {
                         <TableHead>Joined</TableHead>
                         <TableHead className="text-right">Equipment</TableHead>
                         <TableHead className="text-right">Total Value</TableHead>
+                        <TableHead>Plan</TableHead>
                         <TableHead className="text-center">Beta Access</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -442,6 +479,11 @@ export default function AdminDashboard() {
                           <TableCell>{format(new Date(user.createdAt), 'MMM d, yyyy')}</TableCell>
                           <TableCell className="text-right">{user.equipmentCount}</TableCell>
                           <TableCell className="text-right">{formatCurrency(user.totalValue)}</TableCell>
+                          <TableCell>
+                            <Badge variant={getPlanBadgeVariant(user.subscriptionPlan, user.betaAccess)}>
+                              {formatPlanDisplay(user.subscriptionPlan, user.billingInterval, user.betaAccess)}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="text-center">
                             <div className="flex flex-col items-center gap-1">
                               <Switch 
