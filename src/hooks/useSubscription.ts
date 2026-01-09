@@ -23,6 +23,7 @@ export interface SubscriptionState {
   subscriptionEnd: string | null;
   inGracePeriod: boolean;
   gracePeriodEndsAt: string | null;
+  hasBetaAccess: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -77,6 +78,7 @@ export function useSubscription() {
     subscriptionEnd: null,
     inGracePeriod: false,
     gracePeriodEndsAt: null,
+    hasBetaAccess: false,
     loading: true,
     error: null,
   });
@@ -98,6 +100,7 @@ export function useSubscription() {
         subscriptionEnd: null,
         inGracePeriod: false,
         gracePeriodEndsAt: null,
+        hasBetaAccess: false,
         loading: false,
         error: null,
       });
@@ -118,6 +121,7 @@ export function useSubscription() {
         subscriptionEnd: data.subscription_end || null,
         inGracePeriod: data.in_grace_period || false,
         gracePeriodEndsAt: data.grace_period_ends_at || null,
+        hasBetaAccess: data.beta_access || false,
         loading: false,
         error: null,
       });
@@ -243,6 +247,7 @@ export function useSubscription() {
     canUseCashflow,
     hasEmailAlerts,
     hasPrioritySupport,
+    hasBetaAccess: subscription.hasBetaAccess,
 
     // Computed
     itemsRemaining,

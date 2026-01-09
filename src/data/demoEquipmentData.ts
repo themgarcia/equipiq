@@ -1,5 +1,154 @@
-import { Equipment, EquipmentAttachment } from '@/types/equipment';
+import { Equipment, EquipmentAttachment, EquipmentDocument } from '@/types/equipment';
 import { SubscriptionPlan, UsageState } from '@/hooks/useSubscription';
+
+// Demo documents per plan tier
+export const DEMO_DOCUMENTS: Record<SubscriptionPlan, Record<string, EquipmentDocument[]>> = {
+  free: {
+    // No documents on free tier
+  },
+  professional: {
+    'demo-1': [ // Kubota KX040-4 Mini Excavator
+      {
+        id: 'demo-doc-1',
+        equipmentId: 'demo-1',
+        fileName: 'Kubota_KX040-4_Operators_Manual.pdf',
+        filePath: 'demo/kubota-manual.pdf',
+        fileSize: 2500000, // 2.5MB
+        fileType: 'application/pdf',
+        notes: 'Official operator and maintenance manual',
+        uploadedAt: '2022-04-01T00:00:00Z',
+      },
+      {
+        id: 'demo-doc-2',
+        equipmentId: 'demo-1',
+        fileName: 'Purchase_Invoice_EX001.pdf',
+        filePath: 'demo/invoice-ex001.pdf',
+        fileSize: 150000, // 150KB
+        fileType: 'application/pdf',
+        notes: 'Original purchase invoice',
+        uploadedAt: '2022-03-15T00:00:00Z',
+      },
+    ],
+    'demo-3': [ // Bobcat S570 Skid Steer
+      {
+        id: 'demo-doc-3',
+        equipmentId: 'demo-3',
+        fileName: 'Bobcat_S570_Service_Manual.pdf',
+        filePath: 'demo/bobcat-service.pdf',
+        fileSize: 5200000, // 5.2MB
+        fileType: 'application/pdf',
+        notes: 'Service and repair manual',
+        uploadedAt: '2021-07-20T00:00:00Z',
+      },
+    ],
+    'demo-2': [ // Ford F-250
+      {
+        id: 'demo-doc-4',
+        equipmentId: 'demo-2',
+        fileName: 'F250_Warranty_Certificate.pdf',
+        filePath: 'demo/f250-warranty.pdf',
+        fileSize: 85000, // 85KB
+        fileType: 'application/pdf',
+        notes: 'Extended warranty documentation',
+        uploadedAt: '2023-01-10T00:00:00Z',
+      },
+    ],
+  },
+  business: {
+    'demo-1': [
+      {
+        id: 'demo-doc-1',
+        equipmentId: 'demo-1',
+        fileName: 'Kubota_KX040-4_Operators_Manual.pdf',
+        filePath: 'demo/kubota-manual.pdf',
+        fileSize: 2500000,
+        fileType: 'application/pdf',
+        notes: 'Official operator and maintenance manual',
+        uploadedAt: '2022-04-01T00:00:00Z',
+      },
+      {
+        id: 'demo-doc-2',
+        equipmentId: 'demo-1',
+        fileName: 'Purchase_Invoice_EX001.pdf',
+        filePath: 'demo/invoice-ex001.pdf',
+        fileSize: 150000,
+        fileType: 'application/pdf',
+        notes: 'Original purchase invoice',
+        uploadedAt: '2022-03-15T00:00:00Z',
+      },
+      {
+        id: 'demo-doc-5',
+        equipmentId: 'demo-1',
+        fileName: 'Kubota_Service_Record_2024.pdf',
+        filePath: 'demo/kubota-service-record.pdf',
+        fileSize: 320000,
+        fileType: 'application/pdf',
+        notes: 'Annual service record - all maintenance completed',
+        uploadedAt: '2024-06-15T00:00:00Z',
+      },
+    ],
+    'demo-3': [
+      {
+        id: 'demo-doc-3',
+        equipmentId: 'demo-3',
+        fileName: 'Bobcat_S570_Service_Manual.pdf',
+        filePath: 'demo/bobcat-service.pdf',
+        fileSize: 5200000,
+        fileType: 'application/pdf',
+        notes: 'Service and repair manual',
+        uploadedAt: '2021-07-20T00:00:00Z',
+      },
+      {
+        id: 'demo-doc-6',
+        equipmentId: 'demo-3',
+        fileName: 'Bobcat_Insurance_Policy.pdf',
+        filePath: 'demo/bobcat-insurance.pdf',
+        fileSize: 450000,
+        fileType: 'application/pdf',
+        notes: 'Equipment insurance policy - expires Dec 2025',
+        uploadedAt: '2024-01-05T00:00:00Z',
+      },
+    ],
+    'demo-2': [
+      {
+        id: 'demo-doc-4',
+        equipmentId: 'demo-2',
+        fileName: 'F250_Warranty_Certificate.pdf',
+        filePath: 'demo/f250-warranty.pdf',
+        fileSize: 85000,
+        fileType: 'application/pdf',
+        notes: 'Extended warranty documentation',
+        uploadedAt: '2023-01-10T00:00:00Z',
+      },
+    ],
+    'demo-5': [ // CAT 320
+      {
+        id: 'demo-doc-7',
+        equipmentId: 'demo-5',
+        fileName: 'CAT_320_Maintenance_Schedule.pdf',
+        filePath: 'demo/cat320-maintenance.pdf',
+        fileSize: 1800000,
+        fileType: 'application/pdf',
+        notes: 'Preventive maintenance schedule and checklist',
+        uploadedAt: '2020-09-01T00:00:00Z',
+      },
+      {
+        id: 'demo-doc-8',
+        equipmentId: 'demo-5',
+        fileName: 'CAT_Financing_Agreement.pdf',
+        filePath: 'demo/cat320-financing.pdf',
+        fileSize: 520000,
+        fileType: 'application/pdf',
+        notes: 'Original financing agreement - Cat Financial',
+        uploadedAt: '2020-08-12T00:00:00Z',
+      },
+    ],
+  },
+};
+
+export function getDemoDocumentsForPlan(plan: SubscriptionPlan): Record<string, EquipmentDocument[]> {
+  return DEMO_DOCUMENTS[plan] || {};
+}
 
 // Demo attachments per plan tier - matches DEMO_USAGE attachment counts
 export const DEMO_ATTACHMENTS: Record<SubscriptionPlan, Record<string, EquipmentAttachment[]>> = {

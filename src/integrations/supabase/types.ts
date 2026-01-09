@@ -314,6 +314,9 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          beta_access: boolean
+          beta_access_granted_at: string | null
+          beta_access_notes: string | null
           billing_interval: string | null
           canceled_at: string | null
           created_at: string
@@ -329,6 +332,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          beta_access?: boolean
+          beta_access_granted_at?: string | null
+          beta_access_notes?: string | null
           billing_interval?: string | null
           canceled_at?: string | null
           created_at?: string
@@ -344,6 +350,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          beta_access?: boolean
+          beta_access_granted_at?: string | null
+          beta_access_notes?: string | null
           billing_interval?: string | null
           canceled_at?: string | null
           created_at?: string

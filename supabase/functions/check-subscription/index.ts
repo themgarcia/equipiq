@@ -79,6 +79,16 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
+    // Check for beta access in database
+    const { data: dbSubscription } = await supabaseClient
+      .from("subscriptions")
+      .select("beta_access, beta_access_granted_at, plan")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const hasBetaAccess = dbSubscription?.beta_access === true;
+    logStep("Beta access check", { hasBetaAccess, grantedAt: dbSubscription?.beta_access_granted_at });
+
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
@@ -89,6 +99,20 @@ serve(async (req) => {
     let plan: "free" | "professional" | "business" = "free";
     let subscriptionEnd: string | null = null;
     let billingInterval: "monthly" | "annual" | null = null;
+
+    // If user has beta access but no active subscription, grant business tier
+    if (!hasActiveSub && hasBetaAccess) {
+      logStep("Granting business tier via beta access");
+      return new Response(JSON.stringify({
+        subscribed: false,
+        plan: "business",
+        beta_access: true,
+        in_grace_period: false,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
@@ -157,6 +181,7 @@ serve(async (req) => {
       billing_interval: billingInterval,
       subscription_end: subscriptionEnd,
       in_grace_period: false,
+      beta_access: hasBetaAccess,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

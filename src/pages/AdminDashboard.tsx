@@ -9,6 +9,8 @@ import { format } from 'date-fns';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
 import { 
   getIndustryLabel, 
   getFieldEmployeesLabel, 
@@ -28,6 +30,8 @@ interface UserStats {
   fieldEmployees: string | null;
   annualRevenue: string | null;
   region: string | null;
+  betaAccess: boolean;
+  betaAccessGrantedAt: string | null;
 }
 
 interface CategoryStats {
@@ -74,6 +78,8 @@ export default function AdminDashboard() {
     avgEquipmentPerUser: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [togglingBeta, setTogglingBeta] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchAdminData();
@@ -88,6 +94,22 @@ export default function AdminDashboard() {
       
       if (profilesError) throw profilesError;
 
+      // Fetch subscriptions for beta access info
+      const { data: subscriptions, error: subscriptionsError } = await supabase
+        .from('subscriptions')
+        .select('user_id, beta_access, beta_access_granted_at');
+      
+      if (subscriptionsError) throw subscriptionsError;
+
+      // Create a map for quick subscription lookup
+      const subscriptionMap = new Map<string, { betaAccess: boolean; betaAccessGrantedAt: string | null }>();
+      subscriptions?.forEach(sub => {
+        subscriptionMap.set(sub.user_id, {
+          betaAccess: sub.beta_access || false,
+          betaAccessGrantedAt: sub.beta_access_granted_at,
+        });
+      });
+
       // Fetch all equipment
       const { data: equipment, error: equipmentError } = await supabase
         .from('equipment')
@@ -99,6 +121,7 @@ export default function AdminDashboard() {
       const userStatsMap = new Map<string, UserStats>();
       
       profiles?.forEach(profile => {
+        const subInfo = subscriptionMap.get(profile.id);
         userStatsMap.set(profile.id, {
           id: profile.id,
           email: '',
@@ -111,6 +134,8 @@ export default function AdminDashboard() {
           fieldEmployees: profile.field_employees,
           annualRevenue: profile.annual_revenue,
           region: profile.region,
+          betaAccess: subInfo?.betaAccess || false,
+          betaAccessGrantedAt: subInfo?.betaAccessGrantedAt || null,
         });
       });
 
@@ -254,6 +279,49 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleBetaAccess = async (userId: string, enabled: boolean) => {
+    setTogglingBeta(userId);
+    try {
+      const updateData = enabled 
+        ? { beta_access: true, beta_access_granted_at: new Date().toISOString() }
+        : { beta_access: false, beta_access_granted_at: null };
+
+      const { error } = await supabase
+        .from('subscriptions')
+        .update(updateData)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      // Update local state
+      setUserStats(prev => prev.map(user => 
+        user.id === userId 
+          ? { 
+              ...user, 
+              betaAccess: enabled, 
+              betaAccessGrantedAt: enabled ? new Date().toISOString() : null 
+            } 
+          : user
+      ));
+
+      toast({
+        title: enabled ? "Beta access granted" : "Beta access revoked",
+        description: enabled 
+          ? "User now has full Business tier access." 
+          : "User has been reverted to their subscription plan.",
+      });
+    } catch (error: any) {
+      console.error('Error toggling beta access:', error);
+      toast({
+        title: "Failed to update beta access",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setTogglingBeta(null);
+    }
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -359,6 +427,7 @@ export default function AdminDashboard() {
                         <TableHead>Joined</TableHead>
                         <TableHead className="text-right">Equipment</TableHead>
                         <TableHead className="text-right">Total Value</TableHead>
+                        <TableHead className="text-center">Beta Access</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -373,6 +442,20 @@ export default function AdminDashboard() {
                           <TableCell>{format(new Date(user.createdAt), 'MMM d, yyyy')}</TableCell>
                           <TableCell className="text-right">{user.equipmentCount}</TableCell>
                           <TableCell className="text-right">{formatCurrency(user.totalValue)}</TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              <Switch 
+                                checked={user.betaAccess}
+                                onCheckedChange={(checked) => toggleBetaAccess(user.id, checked)}
+                                disabled={togglingBeta === user.id}
+                              />
+                              {user.betaAccess && user.betaAccessGrantedAt && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  {format(new Date(user.betaAccessGrantedAt), 'MMM d')}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

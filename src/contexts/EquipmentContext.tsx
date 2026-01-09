@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminMode } from '@/contexts/AdminModeContext';
 import { useToast } from '@/hooks/use-toast';
-import { getDemoEquipmentForPlan, getDemoAttachmentsForPlan } from '@/data/demoEquipmentData';
+import { getDemoEquipmentForPlan, getDemoAttachmentsForPlan, getDemoDocumentsForPlan } from '@/data/demoEquipmentData';
 interface EquipmentContextType {
   equipment: Equipment[];
   calculatedEquipment: EquipmentCalculated[];
@@ -391,6 +391,12 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
 
   // Get documents for an equipment item
   const getDocuments = useCallback(async (equipmentId: string): Promise<EquipmentDocument[]> => {
+    // Return demo documents when in demo mode
+    if (isDemoData) {
+      const demoDocuments = getDemoDocumentsForPlan(demoPlan || 'free');
+      return demoDocuments[equipmentId] || [];
+    }
+
     if (!user) return [];
 
     try {
@@ -417,11 +423,21 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       console.error('Failed to load documents:', error);
       return [];
     }
-  }, [user]);
+  }, [user, isDemoData, demoPlan]);
 
   // Upload a document for an equipment item
   const uploadDocument = useCallback(async (equipmentId: string, file: File, notes?: string): Promise<void> => {
     if (!user) return;
+
+    // Block operations when viewing demo data
+    if (isDemoData) {
+      toast({
+        title: "Demo mode active",
+        description: "Switch to real data to upload documents.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       // Upload file to storage
@@ -459,11 +475,21 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       });
       throw error;
     }
-  }, [user, toast]);
+  }, [user, toast, isDemoData]);
 
   // Delete a document
   const deleteDocument = useCallback(async (documentId: string, filePath: string): Promise<void> => {
     if (!user) return;
+
+    // Block operations when viewing demo data
+    if (isDemoData) {
+      toast({
+        title: "Demo mode active",
+        description: "Switch to real data to delete documents.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       // Delete from storage
@@ -494,7 +520,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       });
       throw error;
     }
-  }, [user, toast]);
+  }, [user, toast, isDemoData]);
 
   // Get attachments for an equipment item
   const getAttachments = useCallback(async (equipmentId: string): Promise<EquipmentAttachment[]> => {
