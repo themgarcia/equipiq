@@ -221,6 +221,7 @@ export function useSubscription() {
   const canUseCashflow = limits.hasCashflow || subscription.inGracePeriod;
   const hasEmailAlerts = limits.hasEmailAlerts;
   const hasPrioritySupport = limits.hasPrioritySupport;
+  const canUseAIParsing = limits.aiParsingIncluded || subscription.hasBetaAccess;
 
   const itemsRemaining = Math.max(0, limits.maxItems - effectiveUsage.totalItemCount);
   const storageRemaining = Math.max(0, limits.maxStorageBytes - effectiveUsage.storageUsedBytes);
@@ -247,6 +248,7 @@ export function useSubscription() {
     canUseCashflow,
     hasEmailAlerts,
     hasPrioritySupport,
+    canUseAIParsing,
     hasBetaAccess: subscription.hasBetaAccess,
 
     // Computed

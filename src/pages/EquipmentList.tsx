@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Layout } from '@/components/Layout';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EquipmentForm } from '@/components/EquipmentForm';
@@ -7,6 +8,7 @@ import { EquipmentImport } from '@/components/EquipmentImport';
 import { EquipmentImportReview } from '@/components/EquipmentImportReview';
 import { EquipmentDocuments } from '@/components/EquipmentDocuments';
 import { EquipmentAttachments } from '@/components/EquipmentAttachments';
+import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +60,7 @@ const statuses: EquipmentStatus[] = ['Active', 'Sold', 'Retired', 'Lost'];
 
 export default function EquipmentList() {
   const { calculatedEquipment, addEquipment, updateEquipment, deleteEquipment, attachmentsByEquipmentId } = useEquipment();
+  const { canUseAIParsing } = useSubscription();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('Active');
@@ -76,6 +79,7 @@ export default function EquipmentList() {
   const [attachmentsEquipmentId, setAttachmentsEquipmentId] = useState<string>('');
   const [attachmentsEquipmentName, setAttachmentsEquipmentName] = useState<string>('');
   const [expandedAttachments, setExpandedAttachments] = useState<Set<string>>(new Set());
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   const toggleAttachments = (equipmentId: string) => {
     setExpandedAttachments(prev => {
@@ -208,7 +212,17 @@ export default function EquipmentList() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsImportOpen(true)} className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                if (canUseAIParsing) {
+                  setIsImportOpen(true);
+                } else {
+                  setShowUpgradePrompt(true);
+                }
+              }} 
+              className="gap-2"
+            >
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Import from Documents</span>
               <span className="sm:hidden">Import</span>
@@ -480,6 +494,15 @@ export default function EquipmentList() {
           onOpenChange={setAttachmentsOpen}
           equipmentId={attachmentsEquipmentId}
           equipmentName={attachmentsEquipmentName}
+        />
+
+        {/* Upgrade Prompt for AI Import */}
+        <UpgradePrompt
+          feature="AI Document Import"
+          description="Automatically extract equipment details from purchase orders, invoices, and financing documents. Upgrade to Professional or Business to unlock this time-saving feature."
+          variant="modal"
+          open={showUpgradePrompt}
+          onOpenChange={setShowUpgradePrompt}
         />
       </div>
     </Layout>
