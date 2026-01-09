@@ -35,10 +35,18 @@ export function calculateEquipment(
   
   // Useful Life
   const usefulLifeUsed = equipment.usefulLifeOverride ?? categoryDefaults.defaultUsefulLife;
-  const purchaseYear = new Date(equipment.purchaseDate).getFullYear();
-  const estimatedEndOfLifeYear = purchaseYear + usefulLifeUsed;
-  const currentYear = new Date().getFullYear();
-  const estimatedYearsLeft = Math.max(0, estimatedEndOfLifeYear - currentYear);
+  const purchaseDate = new Date(equipment.purchaseDate);
+  const endOfLifeDate = new Date(purchaseDate);
+  endOfLifeDate.setFullYear(endOfLifeDate.getFullYear() + usefulLifeUsed);
+  const estimatedEndOfLifeYear = endOfLifeDate.getFullYear();
+  
+  // Calculate precise years left with decimal precision
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const purchaseYear = purchaseDate.getFullYear();
+  const msPerYear = 1000 * 60 * 60 * 24 * 365.25;
+  const yearsLeft = (endOfLifeDate.getTime() - now.getTime()) / msPerYear;
+  const estimatedYearsLeft = Math.max(0, Math.round(yearsLeft * 10) / 10);
   
   // Replacement Cost - apply 3% annual inflation
   let replacementCostUsed: number;
