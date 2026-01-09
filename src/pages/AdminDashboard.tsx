@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2 } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -140,7 +140,33 @@ export default function AdminDashboard() {
   const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
   const [updatingFeedback, setUpdatingFeedback] = useState<string | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const [sendingTestEmail, setSendingTestEmail] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const sendTestEmail = async (emailType: 'welcome' | 'password-reset') => {
+    setSendingTestEmail(emailType);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-test-email', {
+        body: { emailType },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Test email sent!",
+        description: `Check your inbox at ${data.sentTo}`,
+      });
+    } catch (error: any) {
+      console.error('Error sending test email:', error);
+      toast({
+        title: "Failed to send test email",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSendingTestEmail(null);
+    }
+  };
 
   const deleteUser = async (userId: string, userName: string) => {
     setDeletingUser(userId);
@@ -583,6 +609,47 @@ export default function AdminDashboard() {
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4">
+            {/* Test Emails Card */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Test Email Templates</CardTitle>
+                </div>
+                <CardDescription>Send sample emails to your own inbox to verify templates</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => sendTestEmail('welcome')}
+                    disabled={sendingTestEmail !== null}
+                    className="gap-2"
+                  >
+                    {sendingTestEmail === 'welcome' ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Send Welcome Email
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => sendTestEmail('password-reset')}
+                    disabled={sendingTestEmail !== null}
+                    className="gap-2"
+                  >
+                    {sendingTestEmail === 'password-reset' ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Send Password Changed Email
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>User Management</CardTitle>

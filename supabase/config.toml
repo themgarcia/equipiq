@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.send-password-reset-confirmation]
 verify_jwt = false
+
+[functions.admin-test-email]
+verify_jwt = false
