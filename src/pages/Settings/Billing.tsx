@@ -3,18 +3,33 @@ import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useSubscription, SubscriptionPlan } from '@/hooks/useSubscription';
 import { UsageMeter, formatBytes } from '@/components/UsageMeter';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, CreditCard, Zap, Users, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Loader2, CreditCard, Zap, Users, CheckCircle2, Crown, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const PLAN_ORDER: Record<SubscriptionPlan, number> = { 
+  free: 0, 
+  professional: 1, 
+  business: 2 
+};
+
 export default function Billing() {
-  const { subscription, usage, limits, refreshSubscription } = useSubscription();
+  const { subscription, usage, limits, refreshSubscription, effectivePlan, isDemo } = useSubscription();
   const { toast } = useToast();
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+
+  const currentPlanLevel = PLAN_ORDER[effectivePlan];
+
+  const getPlanAction = (targetPlan: SubscriptionPlan): 'current' | 'upgrade' | 'downgrade' => {
+    const targetLevel = PLAN_ORDER[targetPlan];
+    if (targetLevel === currentPlanLevel) return 'current';
+    if (targetLevel > currentPlanLevel) return 'upgrade';
+    return 'downgrade';
+  };
 
   const handleCheckout = async (plan: 'professional' | 'business', interval: 'monthly' | 'annual') => {
     setCheckoutLoading(`${plan}-${interval}`);
@@ -68,10 +83,117 @@ export default function Billing() {
     );
   }
 
-  const planBadgeColor = {
+  const planBadgeColor: Record<SubscriptionPlan, string> = {
     free: 'bg-muted text-muted-foreground',
     professional: 'bg-primary text-primary-foreground',
     business: 'bg-purple-500 text-white',
+  };
+
+  const renderPlanCard = (
+    plan: SubscriptionPlan,
+    title: string,
+    description: string,
+    icon: React.ReactNode,
+    features: string[],
+    pricing?: { monthly: string; annual: string }
+  ) => {
+    const action = getPlanAction(plan);
+    const isCurrent = action === 'current';
+    const isUpgrade = action === 'upgrade';
+    const isDowngrade = action === 'downgrade';
+
+    return (
+      <Card className={cn(
+        "relative transition-all",
+        isCurrent && "ring-2 ring-primary border-primary",
+        isDowngrade && "opacity-75"
+      )}>
+        {isCurrent && (
+          <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground shadow-md">
+            <Crown className="h-3 w-3 mr-1" />
+            Current Plan
+          </Badge>
+        )}
+        <CardHeader className={cn(isCurrent && "pt-6")}>
+          <CardTitle className="flex items-center gap-2">
+            {icon}
+            {title}
+          </CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ul className="space-y-2 text-sm">
+            {features.map((feature, i) => (
+              <li key={i} className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                {feature}
+              </li>
+            ))}
+          </ul>
+
+          {pricing ? (
+            <div className="flex gap-2">
+              {isCurrent ? (
+                <Button className="flex-1" variant="secondary" disabled>
+                  <Crown className="h-4 w-4 mr-2" />
+                  Your Plan
+                </Button>
+              ) : isUpgrade ? (
+                <>
+                  <Button
+                    className="flex-1"
+                    onClick={() => handleCheckout(plan as 'professional' | 'business', 'annual')}
+                    disabled={checkoutLoading !== null || isDemo}
+                  >
+                    {checkoutLoading === `${plan}-annual` && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    <Sparkles className="h-4 w-4 mr-1" />
+                    {pricing.annual}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => handleCheckout(plan as 'professional' | 'business', 'monthly')}
+                    disabled={checkoutLoading !== null || isDemo}
+                  >
+                    {checkoutLoading === `${plan}-monthly` && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    {pricing.monthly}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  className="flex-1"
+                  variant="outline"
+                  onClick={handleManageBilling}
+                  disabled={portalLoading || isDemo}
+                >
+                  {portalLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Downgrade via Portal
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              {isCurrent ? (
+                <Button className="flex-1" variant="secondary" disabled>
+                  <Crown className="h-4 w-4 mr-2" />
+                  Your Plan
+                </Button>
+              ) : (
+                <Button
+                  className="flex-1"
+                  variant="outline"
+                  onClick={handleManageBilling}
+                  disabled={portalLoading || isDemo}
+                >
+                  {portalLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Downgrade via Portal
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -84,157 +206,118 @@ export default function Billing() {
             <p className="text-muted-foreground mt-1">Manage your subscription and view usage</p>
           </div>
 
-        {/* Current Plan */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-3">
-                  Current Plan
-                  <Badge className={cn('capitalize', planBadgeColor[subscription.plan])}>
-                    {subscription.plan}
-                  </Badge>
-                </CardTitle>
-                <CardDescription>
-                  {subscription.isSubscribed && subscription.subscriptionEnd && (
-                    <>Next billing date: {new Date(subscription.subscriptionEnd).toLocaleDateString()}</>
-                  )}
-                  {subscription.inGracePeriod && (
-                    <span className="text-yellow-600">Grace period ends: {new Date(subscription.gracePeriodEndsAt!).toLocaleDateString()}</span>
-                  )}
-                  {!subscription.isSubscribed && !subscription.inGracePeriod && (
-                    <>You're on the free plan</>
-                  )}
-                </CardDescription>
-              </div>
-              {subscription.isSubscribed && (
-                <Button variant="outline" onClick={handleManageBilling} disabled={portalLoading}>
-                  {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
-                  Manage Billing
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <UsageMeter
-                current={usage.totalItemCount}
-                max={limits.maxItems}
-                label="Equipment + Attachments"
-              />
-              <UsageMeter
-                current={usage.storageUsedBytes}
-                max={limits.maxStorageBytes}
-                label="Document Storage"
-                formatValue={formatBytes}
-              />
-            </div>
-          </CardContent>
-        </Card>
+          {/* Demo Mode Banner */}
+          {isDemo && (
+            <Card className="border-amber-500/50 bg-amber-500/10">
+              <CardContent className="py-3">
+                <p className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                  <Crown className="h-4 w-4" />
+                  Demo Mode: Simulating <span className="font-semibold capitalize">{effectivePlan}</span> plan. 
+                  Checkout buttons are disabled.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Upgrade Options */}
-        {subscription.plan !== 'business' && (
+          {/* Current Plan */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-3">
+                    Current Plan
+                    <Badge className={cn('capitalize', planBadgeColor[effectivePlan])}>
+                      {effectivePlan}
+                    </Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    {subscription.isSubscribed && subscription.subscriptionEnd && (
+                      <>Next billing date: {new Date(subscription.subscriptionEnd).toLocaleDateString()}</>
+                    )}
+                    {subscription.inGracePeriod && (
+                      <span className="text-yellow-600">Grace period ends: {new Date(subscription.gracePeriodEndsAt!).toLocaleDateString()}</span>
+                    )}
+                    {!subscription.isSubscribed && !subscription.inGracePeriod && (
+                      <>You're on the free plan</>
+                    )}
+                  </CardDescription>
+                </div>
+                {(subscription.isSubscribed || effectivePlan !== 'free') && (
+                  <Button variant="outline" onClick={handleManageBilling} disabled={portalLoading || isDemo}>
+                    {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                    Manage Billing
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <UsageMeter
+                  current={usage.totalItemCount}
+                  max={limits.maxItems}
+                  label="Equipment + Attachments"
+                />
+                <UsageMeter
+                  current={usage.storageUsedBytes}
+                  max={limits.maxStorageBytes}
+                  label="Document Storage"
+                  formatValue={formatBytes}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Plan Options */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-foreground">
-              {subscription.plan === 'free' ? 'Upgrade Your Plan' : 'Available Plans'}
+              {effectivePlan === 'free' ? 'Upgrade Your Plan' : 
+               effectivePlan === 'business' ? 'Plan Comparison' : 'Manage Your Plan'}
             </h2>
-            <div className="grid gap-6 md:grid-cols-2">
-              {/* Professional */}
-              {subscription.plan === 'free' && (
-                <Card className="border-primary">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-primary" />
-                      Professional
-                    </CardTitle>
-                    <CardDescription>For growing contractors</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                        50 equipment + attachments
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                        Full Buy vs Rent & Cashflow
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                        AI parsing & email alerts
-                      </li>
-                    </ul>
-                    <div className="flex gap-2">
-                      <Button
-                        className="flex-1"
-                        onClick={() => handleCheckout('professional', 'annual')}
-                        disabled={checkoutLoading !== null}
-                      >
-                        {checkoutLoading === 'professional-annual' && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                        $349/year
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => handleCheckout('professional', 'monthly')}
-                        disabled={checkoutLoading !== null}
-                      >
-                        {checkoutLoading === 'professional-monthly' && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                        $39/mo
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="grid gap-6 md:grid-cols-3">
+              {/* Free Plan */}
+              {renderPlanCard(
+                'free',
+                'Free',
+                'Get started',
+                <Zap className="h-5 w-5 text-muted-foreground" />,
+                [
+                  '5 equipment + attachments',
+                  '100 MB storage',
+                  'Basic depreciation tracking',
+                ]
               )}
 
-              {/* Business */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    Business
-                  </CardTitle>
-                  <CardDescription>For large fleets</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                      Unlimited equipment
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                      Unlimited document storage
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                      Priority support
-                    </li>
-                  </ul>
-                  <div className="flex gap-2">
-                    <Button
-                      className="flex-1"
-                      onClick={() => handleCheckout('business', 'annual')}
-                      disabled={checkoutLoading !== null}
-                    >
-                      {checkoutLoading === 'business-annual' && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                      $799/year
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleCheckout('business', 'monthly')}
-                      disabled={checkoutLoading !== null}
-                    >
-                      {checkoutLoading === 'business-monthly' && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                      $89/mo
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Professional Plan */}
+              {renderPlanCard(
+                'professional',
+                'Professional',
+                'For growing contractors',
+                <Zap className="h-5 w-5 text-primary" />,
+                [
+                  '50 equipment + attachments',
+                  '2 GB storage',
+                  'Full Buy vs Rent & Cashflow',
+                  'AI parsing & email alerts',
+                ],
+                { monthly: '$39/mo', annual: '$349/year' }
+              )}
+
+              {/* Business Plan */}
+              {renderPlanCard(
+                'business',
+                'Business',
+                'For large fleets',
+                <Users className="h-5 w-5 text-purple-500" />,
+                [
+                  'Unlimited equipment',
+                  'Unlimited storage',
+                  'Priority support',
+                  'Everything in Professional',
+                ],
+                { monthly: '$89/mo', annual: '$799/year' }
+              )}
             </div>
           </div>
-        )}
 
           <Button variant="ghost" onClick={() => refreshSubscription()}>
             Refresh Subscription Status
