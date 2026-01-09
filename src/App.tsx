@@ -12,6 +12,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import EquipmentList from "./pages/EquipmentList";
 import CategoryLifespans from "./pages/CategoryLifespans";
 import FMSExport from "./pages/FMSExport";
@@ -42,7 +43,9 @@ const App = () => (
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   
                   {/* Protected routes */}

@@ -5,7 +5,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -128,7 +139,34 @@ export default function AdminDashboard() {
   const [togglingBeta, setTogglingBeta] = useState<string | null>(null);
   const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
   const [updatingFeedback, setUpdatingFeedback] = useState<string | null>(null);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const deleteUser = async (userId: string, userName: string) => {
+    setDeletingUser(userId);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { userIdToDelete: userId },
+      });
+
+      if (error) throw error;
+
+      setUserStats(prev => prev.filter(user => user.id !== userId));
+      toast({
+        title: "User deleted",
+        description: `${userName} has been removed from the platform.`,
+      });
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Failed to delete user",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingUser(null);
+    }
+  };
 
   useEffect(() => {
     fetchAdminData();
@@ -566,6 +604,7 @@ export default function AdminDashboard() {
                         <TableHead className="text-right">Total Value</TableHead>
                         <TableHead>Plan</TableHead>
                         <TableHead className="text-center">Beta Access</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -598,6 +637,40 @@ export default function AdminDashboard() {
                                 </span>
                               )}
                             </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  disabled={deletingUser === user.id}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete User Account</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete <strong>{user.fullName}</strong>
+                                    {user.companyName && ` from ${user.companyName}`}? 
+                                    This will permanently remove their account and all associated data 
+                                    ({user.equipmentCount} equipment items).
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteUser(user.id, user.fullName)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete User
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </TableCell>
                         </TableRow>
                       ))}
