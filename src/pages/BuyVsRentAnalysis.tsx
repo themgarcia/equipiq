@@ -176,12 +176,12 @@ export default function BuyVsRentAnalysis() {
               <div className="flex-1">
                 <p className="font-medium text-yellow-700 dark:text-yellow-400">Demo Mode</p>
                 <p className="text-sm text-yellow-600 dark:text-yellow-500">
-                  This calculator is available in demo mode. Upgrade to Professional or Business to save analyses and use with your equipment data.
+                  You're using the Buy vs. Rent calculator in demo mode. Upgrade to Professional or Business for full, unrestricted access.
                 </p>
               </div>
               <UpgradePrompt
-                feature="Full Buy vs. Rent Analysis"
-                description="Save your analyses, integrate with your equipment inventory, and get detailed comparisons."
+                feature="Buy vs. Rent Analysis"
+                description="Get full access to the Buy vs. Rent calculator with no restrictions."
                 variant="inline"
               />
             </div>
