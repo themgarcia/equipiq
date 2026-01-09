@@ -20,13 +20,16 @@ import {
   TrendingDown, 
   DollarSign, 
   Calendar,
-  Info
+  Info,
+  Lock
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { BuyVsRentInput, EquipmentCategory } from '@/types/equipment';
 import { categoryDefaults, getCategoryDefaults } from '@/data/categoryDefaults';
 import { calculateBuyVsRent, formatCurrency, formatDays, calculateRentalCostByType } from '@/lib/buyVsRentCalculations';
 import { cn } from '@/lib/utils';
+import { useSubscription } from '@/hooks/useSubscription';
+import { UpgradePrompt } from '@/components/UpgradePrompt';
 
 // Derive categories from categoryDefaults
 const categories: EquipmentCategory[] = categoryDefaults.map(c => c.category);
@@ -46,6 +49,7 @@ const defaultInput: BuyVsRentInput = {
 };
 
 export default function BuyVsRentAnalysis() {
+  const { canUseBuyVsRent, effectivePlan } = useSubscription();
   const [input, setInput] = useState<BuyVsRentInput>(defaultInput);
   const [selectedRateType, setSelectedRateType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
@@ -164,6 +168,26 @@ export default function BuyVsRentAnalysis() {
   return (
     <Layout>
       <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
+        {/* Demo-only banner for free users */}
+        {!canUseBuyVsRent && (
+          <div className="mb-6 p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10">
+            <div className="flex items-center gap-3">
+              <Lock className="h-5 w-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-medium text-yellow-700 dark:text-yellow-400">Demo Mode</p>
+                <p className="text-sm text-yellow-600 dark:text-yellow-500">
+                  This calculator is available in demo mode. Upgrade to Professional or Business to save analyses and use with your equipment data.
+                </p>
+              </div>
+              <UpgradePrompt
+                feature="Full Buy vs. Rent Analysis"
+                description="Save your analyses, integrate with your equipment inventory, and get detailed comparisons."
+                variant="inline"
+              />
+            </div>
+          </div>
+        )}
+        
         {/* Header */}
         <div className="mb-8">
           <div className="accent-line mb-4" />

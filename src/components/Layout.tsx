@@ -25,6 +25,8 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { DemoModeControls } from '@/components/DemoModeControls';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
+import { GracePeriodBanner } from '@/components/GracePeriodBanner';
+import { useSubscription } from '@/hooks/useSubscription';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -381,12 +383,16 @@ export function Layout({ children }: LayoutProps) {
   const deviceType = useDeviceType();
   const isPhone = deviceType === 'phone';
   const defaultOpen = deviceType === 'desktop';
+  const { subscription, daysLeftInGrace } = useSubscription();
 
   if (isPhone) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <PhoneHeader />
         <DemoModeBanner />
+        {subscription.inGracePeriod && daysLeftInGrace !== null && (
+          <GracePeriodBanner daysLeft={daysLeftInGrace} plan={subscription.plan} />
+        )}
         <main className="flex-1">
           <div className="min-h-screen">
             {children}
@@ -402,6 +408,9 @@ export function Layout({ children }: LayoutProps) {
         <AppSidebar />
         <main className="flex-1 flex flex-col">
           <DemoModeBanner />
+          {subscription.inGracePeriod && daysLeftInGrace !== null && (
+            <GracePeriodBanner daysLeft={daysLeftInGrace} plan={subscription.plan} />
+          )}
           <div className="flex-1 min-h-0">
             {children}
           </div>
