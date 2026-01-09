@@ -20,6 +20,7 @@ import CashflowAnalysis from "./pages/CashflowAnalysis";
 import Definitions from "./pages/Definitions";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
+import Billing from "./pages/Settings/Billing";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
@@ -82,6 +83,11 @@ const App = () => (
                   <Route path="/profile" element={
                     <ProtectedRoute>
                       <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/settings/billing" element={
+                    <ProtectedRoute>
+                      <Billing />
                     </ProtectedRoute>
                   } />
                   
