@@ -18,6 +18,7 @@ import {
   CreditCard,
   MessageSquare
 } from 'lucide-react';
+import { NotificationBell } from '@/components/NotificationBell';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -168,6 +169,11 @@ function AppSidebar() {
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
         <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center")}>
+          {/* Notification Bell */}
+          <div className={cn("flex", isCollapsed ? "justify-center" : "justify-start")}>
+            <NotificationBell />
+          </div>
+          
           {/* Demo Mode Controls - only show when sidebar is expanded and admin mode is active */}
           {!isCollapsed && adminModeActive && <DemoModeControls />}
           
@@ -308,6 +314,11 @@ function PhoneHeader() {
 
             {/* User Menu & Footer */}
             <div className="border-t border-sidebar-border p-4 space-y-4">
+              {/* Notification Bell for mobile */}
+              <div className="flex justify-start">
+                <NotificationBell />
+              </div>
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 

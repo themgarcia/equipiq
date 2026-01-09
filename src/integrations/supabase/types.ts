@@ -276,6 +276,41 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_replies: {
+        Row: {
+          created_at: string
+          feedback_id: string
+          id: string
+          is_admin_reply: boolean
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_id: string
+          id?: string
+          is_admin_reply?: boolean
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          is_admin_reply?: boolean
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_replies_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedback"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metered_usage: {
         Row: {
           created_at: string
@@ -440,6 +475,42 @@ export type Database = {
           month?: string
           storage_bytes_used?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          reference_id: string | null
+          reference_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          reference_id?: string | null
+          reference_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          title?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
