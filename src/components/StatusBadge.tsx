@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { EquipmentStatus } from '@/types/equipment';
 import { cn } from '@/lib/utils';
 
@@ -13,14 +14,21 @@ const statusStyles: Record<EquipmentStatus, string> = {
   Lost: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
-  return (
-    <span className={cn(
-      'status-badge border',
-      statusStyles[status],
-      className
-    )}>
-      {status}
-    </span>
-  );
-}
+export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(
+  ({ status, className }, ref) => {
+    return (
+      <span
+        ref={ref}
+        className={cn(
+          'status-badge border',
+          statusStyles[status],
+          className
+        )}
+      >
+        {status}
+      </span>
+    );
+  }
+);
+
+StatusBadge.displayName = 'StatusBadge';
