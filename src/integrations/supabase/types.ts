@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_preferences: {
+        Row: {
+          budgeting_season_reminders: boolean
+          created_at: string
+          depreciation_milestones: boolean
+          id: string
+          product_updates: boolean
+          replacement_alerts: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budgeting_season_reminders?: boolean
+          created_at?: string
+          depreciation_milestones?: boolean
+          id?: string
+          product_updates?: boolean
+          replacement_alerts?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budgeting_season_reminders?: boolean
+          created_at?: string
+          depreciation_milestones?: boolean
+          id?: string
+          product_updates?: boolean
+          replacement_alerts?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       equipment: {
         Row: {
           asset_id: string | null
@@ -207,6 +240,39 @@ export type Database = {
           },
         ]
       }
+      metered_usage: {
+        Row: {
+          created_at: string
+          id: string
+          quantity: number
+          stripe_usage_record_id: string | null
+          total_cost: number
+          unit_cost: number
+          usage_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          quantity?: number
+          stripe_usage_record_id?: string | null
+          total_cost: number
+          unit_cost: number
+          usage_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          quantity?: number
+          stripe_usage_record_id?: string | null
+          total_cost?: number
+          unit_cost?: number
+          usage_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           annual_revenue: string | null
@@ -243,6 +309,93 @@ export type Database = {
           industry?: string | null
           region?: string | null
           years_in_business?: number | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          billing_interval: string | null
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          grace_period_ends_at: string | null
+          id: string
+          plan: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_interval?: string | null
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          grace_period_ends_at?: string | null
+          id?: string
+          plan?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_interval?: string | null
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          grace_period_ends_at?: string | null
+          id?: string
+          plan?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usage_tracking: {
+        Row: {
+          ai_parsing_cost: number
+          ai_parsing_count: number
+          attachment_count: number
+          created_at: string
+          equipment_count: number
+          id: string
+          month: string
+          storage_bytes_used: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_parsing_cost?: number
+          ai_parsing_count?: number
+          attachment_count?: number
+          created_at?: string
+          equipment_count?: number
+          id?: string
+          month: string
+          storage_bytes_used?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_parsing_cost?: number
+          ai_parsing_count?: number
+          attachment_count?: number
+          created_at?: string
+          equipment_count?: number
+          id?: string
+          month?: string
+          storage_bytes_used?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
