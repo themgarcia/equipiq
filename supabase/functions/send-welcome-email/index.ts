@@ -49,7 +49,7 @@ serve(async (req: Request) => {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #16a34a; margin-bottom: 10px;">Welcome to equipIQ!</h1>
+    <h1 style="color: #1e3a5f; margin-bottom: 10px;">Welcome to equipIQ!</h1>
     <p style="color: #666; font-size: 16px;">Equipment intelligence for contractors</p>
   </div>
   
@@ -68,12 +68,12 @@ serve(async (req: Request) => {
     </ul>
   </div>
 
-  <div style="background-color: #ecfdf5; border-left: 4px solid #16a34a; padding: 16px; margin-bottom: 24px;">
-    <p style="margin: 0; color: #166534;"><strong>🎉 Open Beta Perk:</strong> All Business tier features are unlocked for you during the beta period!</p>
+  <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin-bottom: 24px;">
+    <p style="margin: 0; color: #92400e;"><strong>🎉 Open Beta Perk:</strong> All Business tier features are unlocked for you during the beta period!</p>
   </div>
 
   <div style="text-align: center; margin-bottom: 24px;">
-    <a href="https://equipiq.app/dashboard" style="display: inline-block; background-color: #16a34a; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600;">Go to Dashboard</a>
+    <a href="https://equipiq.app/dashboard" style="display: inline-block; background-color: #1e3a5f; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600;">Go to Dashboard</a>
   </div>
 
   <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; color: #64748b; font-size: 14px;">

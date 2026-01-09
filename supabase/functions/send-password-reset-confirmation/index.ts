@@ -77,7 +77,7 @@ serve(async (req: Request) => {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #1e293b; margin-bottom: 10px;">Password Changed</h1>
+    <h1 style="color: #1e3a5f; margin-bottom: 10px;">Password Changed</h1>
   </div>
   
   <div style="background-color: #f8fafc; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
