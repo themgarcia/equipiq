@@ -76,11 +76,13 @@ export default function Billing() {
 
   return (
     <Layout>
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Billing & Subscription</h1>
-          <p className="text-muted-foreground mt-1">Manage your subscription and view usage</p>
-        </div>
+      <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
+        <div className="space-y-8">
+          <div>
+            <div className="accent-line mb-4" />
+            <h1 className="text-3xl font-bold">Billing & Subscription</h1>
+            <p className="text-muted-foreground mt-1">Manage your subscription and view usage</p>
+          </div>
 
         {/* Current Plan */}
         <Card>
@@ -234,9 +236,10 @@ export default function Billing() {
           </div>
         )}
 
-        <Button variant="ghost" onClick={() => refreshSubscription()}>
-          Refresh Subscription Status
-        </Button>
+          <Button variant="ghost" onClick={() => refreshSubscription()}>
+            Refresh Subscription Status
+          </Button>
+        </div>
       </div>
     </Layout>
   );
