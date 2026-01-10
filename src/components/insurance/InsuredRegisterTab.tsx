@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Send, AlertTriangle } from 'lucide-react';
+import { Copy, Send, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -10,6 +10,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { InsuredEquipment, InsuranceSettings } from '@/types/insurance';
@@ -20,14 +31,74 @@ interface InsuredRegisterTabProps {
   equipment: InsuredEquipment[];
   settings: InsuranceSettings | null;
   userProfile: { fullName: string; companyName: string; email: string } | null;
+  onUpdateInsurance?: (id: string, declaredValue: number, notes: string) => Promise<void>;
+  onRemoveFromInsurance?: (id: string) => Promise<void>;
 }
 
-export function InsuredRegisterTab({ equipment, settings, userProfile }: InsuredRegisterTabProps) {
+export function InsuredRegisterTab({ 
+  equipment, 
+  settings, 
+  userProfile,
+  onUpdateInsurance,
+  onRemoveFromInsurance,
+}: InsuredRegisterTabProps) {
   const { toast } = useToast();
   const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState<InsuredEquipment | null>(null);
+  const [editDeclaredValue, setEditDeclaredValue] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const totalValue = equipment.reduce((sum, e) => sum + e.declaredValue, 0);
   const totalPurchasePrice = equipment.reduce((sum, e) => sum + e.purchasePrice, 0);
+
+  const handleRowClick = (item: InsuredEquipment) => {
+    setSelectedEquipment(item);
+    setEditDeclaredValue(item.declaredValue.toString());
+    setEditNotes(item.insuranceNotes || '');
+    setEditModalOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!selectedEquipment || !onUpdateInsurance) return;
+
+    const declaredValue = parseFloat(editDeclaredValue);
+    if (isNaN(declaredValue) || declaredValue < 0) {
+      toast({
+        title: "Invalid value",
+        description: "Please enter a valid declared value.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onUpdateInsurance(selectedEquipment.id, declaredValue, editNotes);
+      setEditModalOpen(false);
+      setSelectedEquipment(null);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    if (!selectedEquipment || !onRemoveFromInsurance) return;
+
+    if (!confirm(`Are you sure you want to remove "${selectedEquipment.name}" from your insured equipment list?`)) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onRemoveFromInsurance(selectedEquipment.id);
+      setEditModalOpen(false);
+      setSelectedEquipment(null);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleCopyRegister = () => {
     const template = generateFullRegisterTemplate(equipment, {
@@ -103,7 +174,11 @@ export function InsuredRegisterTab({ equipment, settings, userProfile }: Insured
               </TableHeader>
               <TableBody>
                 {equipment.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow 
+                    key={item.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleRowClick(item)}
+                  >
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell className="text-muted-foreground">{item.category}</TableCell>
                     <TableCell className="font-mono text-sm">{item.serialVin || '—'}</TableCell>
@@ -133,6 +208,81 @@ export function InsuredRegisterTab({ equipment, settings, userProfile }: Insured
         equipment={equipment}
         userProfile={userProfile}
       />
+
+      {/* Edit Insurance Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedEquipment?.name}</DialogTitle>
+            <DialogDescription>
+              {selectedEquipment?.category} • {selectedEquipment?.serialVin || 'No serial/VIN'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-muted-foreground text-xs">Purchase Price</Label>
+                <p className="font-medium font-mono-nums">
+                  ${Math.ceil(selectedEquipment?.purchasePrice || 0).toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Financing Type</Label>
+                <div className="mt-1">
+                  {selectedEquipment && formatFinancing(selectedEquipment.financingType)}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="declaredValue">Declared Value</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <Input
+                  id="declaredValue"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={editDeclaredValue}
+                  onChange={(e) => setEditDeclaredValue(e.target.value)}
+                  className="pl-7 font-mono-nums"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Insurance Notes</Label>
+              <Textarea
+                id="notes"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Optional notes for your broker..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="destructive"
+              onClick={handleRemove}
+              disabled={isSaving || !onRemoveFromInsurance}
+              className="w-full sm:w-auto sm:mr-auto"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Remove from Insurance
+            </Button>
+            <Button variant="outline" onClick={() => setEditModalOpen(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving || !onUpdateInsurance}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

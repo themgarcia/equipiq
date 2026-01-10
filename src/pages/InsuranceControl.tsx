@@ -39,6 +39,8 @@ export default function InsuranceControl() {
     markAllAsSent,
     closeTheLoop,
     applyPolicyImport,
+    updateInsuredEquipment,
+    removeFromInsurance,
   } = useInsurance();
 
   const [activeTab, setActiveTab] = useState('register');
@@ -125,7 +127,7 @@ export default function InsuranceControl() {
                   className="w-full"
                 />
               ) : (
-                <TabsList className="w-full justify-start overflow-x-auto">
+                <TabsList className="h-auto flex-wrap justify-start gap-1">
                   <TabsTrigger value="register">
                     Insured List
                   </TabsTrigger>
@@ -154,6 +156,8 @@ export default function InsuranceControl() {
                   equipment={insuredEquipment}
                   settings={settings}
                   userProfile={userProfile}
+                  onUpdateInsurance={updateInsuredEquipment}
+                  onRemoveFromInsurance={removeFromInsurance}
                 />
               </TabsContent>
 
