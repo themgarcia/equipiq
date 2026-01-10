@@ -5,10 +5,13 @@ import { useDeviceType } from '@/hooks/use-mobile';
 import { Layout } from '@/components/Layout';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EquipmentForm } from '@/components/EquipmentForm';
+import { EquipmentFormContent } from '@/components/EquipmentFormContent';
 import { EquipmentImport } from '@/components/EquipmentImport';
 import { EquipmentImportReview } from '@/components/EquipmentImportReview';
 import { EquipmentDocuments } from '@/components/EquipmentDocuments';
+import { EquipmentDocumentsContent } from '@/components/EquipmentDocumentsContent';
 import { EquipmentAttachments } from '@/components/EquipmentAttachments';
+import { EquipmentAttachmentsContent } from '@/components/EquipmentAttachmentsContent';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { MobileTabSelect } from '@/components/MobileTabSelect';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
@@ -35,10 +38,21 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight, User, Building2 } from 'lucide-react';
 import { Equipment, EquipmentStatus, EquipmentCalculated } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+type SheetView = 'details' | 'edit' | 'documents' | 'attachments';
 
 interface ExtractedEquipment {
   make: string;
@@ -87,6 +101,7 @@ export default function EquipmentList() {
   const [expandedAttachments, setExpandedAttachments] = useState<Set<string>>(new Set());
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [selectedEquipmentForSheet, setSelectedEquipmentForSheet] = useState<EquipmentCalculated | null>(null);
+  const [sheetView, setSheetView] = useState<SheetView>('details');
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
@@ -546,117 +561,173 @@ export default function EquipmentList() {
           onOpenChange={setShowUpgradePrompt}
         />
 
-        {/* Equipment Details Sheet (Mobile) */}
-        <Sheet open={!!selectedEquipmentForSheet} onOpenChange={(open) => !open && setSelectedEquipmentForSheet(null)}>
-          <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+        {/* Equipment Details Sheet */}
+        <Sheet 
+          open={!!selectedEquipmentForSheet} 
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedEquipmentForSheet(null);
+              setSheetView('details');
+            }
+          }}
+        >
+          <SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0">
             {selectedEquipmentForSheet && (
               <>
-                <SheetHeader>
-                  <SheetTitle>{selectedEquipmentForSheet.name}</SheetTitle>
-                  <SheetDescription>
-                    {selectedEquipmentForSheet.make} {selectedEquipmentForSheet.model} • {selectedEquipmentForSheet.year}
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={selectedEquipmentForSheet.status} />
-                    {selectedEquipmentForSheet.allocationType === 'owner_perk' && (
-                      <Badge variant="outline" className="text-amber-600 border-amber-300">
-                        <User className="h-3 w-3 mr-1" />
-                        Owner Perk
-                      </Badge>
-                    )}
-                    {selectedEquipmentForSheet.allocationType === 'overhead_only' && (
-                      <Badge variant="outline" className="text-blue-600 border-blue-300">
-                        <Building2 className="h-3 w-3 mr-1" />
-                        Overhead Only
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Cost Basis</p>
-                      <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.totalCostBasis)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">COGS %</p>
-                      <p className="font-medium font-mono-nums">{formatPercent(selectedEquipmentForSheet.cogsPercent)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">COGS $</p>
-                      <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.cogsAllocatedCost)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Overhead $</p>
-                      <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.overheadAllocatedCost)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Years Left</p>
-                      <p className={`font-medium font-mono-nums ${selectedEquipmentForSheet.estimatedYearsLeft <= 1 ? 'text-warning' : ''}`}>
-                        {selectedEquipmentForSheet.estimatedYearsLeft.toFixed(1)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Replacement</p>
-                      <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.replacementCostUsed)}</p>
-                    </div>
-                  </div>
-                  
-                  {selectedEquipmentForSheet.assetId && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Asset ID</p>
-                      <p className="font-medium">{selectedEquipmentForSheet.assetId}</p>
-                    </div>
+                <SheetHeader className="p-6 pb-4 border-b shrink-0">
+                  {sheetView === 'details' ? (
+                    <>
+                      <SheetTitle>{selectedEquipmentForSheet.name}</SheetTitle>
+                      <SheetDescription>
+                        {selectedEquipmentForSheet.make} {selectedEquipmentForSheet.model} • {selectedEquipmentForSheet.year}
+                      </SheetDescription>
+                    </>
+                  ) : (
+                    <Breadcrumb>
+                      <BreadcrumbList>
+                        <BreadcrumbItem>
+                          <BreadcrumbLink 
+                            className="cursor-pointer hover:text-foreground"
+                            onClick={() => setSheetView('details')}
+                          >
+                            {selectedEquipmentForSheet.name}
+                          </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                          <BreadcrumbPage>
+                            {sheetView === 'edit' && 'Edit Equipment'}
+                            {sheetView === 'documents' && 'Documents'}
+                            {sheetView === 'attachments' && 'Attachments'}
+                          </BreadcrumbPage>
+                        </BreadcrumbItem>
+                      </BreadcrumbList>
+                    </Breadcrumb>
                   )}
-                  
-                  <div className="pt-4 border-t space-y-2">
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => {
-                        handleEdit(selectedEquipmentForSheet);
-                        setSelectedEquipmentForSheet(null);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit Equipment
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => {
-                        handleOpenDocuments(selectedEquipmentForSheet);
-                        setSelectedEquipmentForSheet(null);
-                      }}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Documents
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => {
-                        handleOpenAttachments(selectedEquipmentForSheet);
-                        setSelectedEquipmentForSheet(null);
-                      }}
-                    >
-                      <Package className="h-4 w-4 mr-2" />
-                      Attachments
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start text-destructive hover:text-destructive"
-                      onClick={() => {
-                        handleDelete(selectedEquipmentForSheet.id);
-                        setSelectedEquipmentForSheet(null);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </Button>
+                </SheetHeader>
+
+                <ScrollArea className="flex-1">
+                  <div className="p-6">
+                    {sheetView === 'details' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={selectedEquipmentForSheet.status} />
+                          {selectedEquipmentForSheet.allocationType === 'owner_perk' && (
+                            <Badge variant="outline" className="text-amber-600 border-amber-300">
+                              <User className="h-3 w-3 mr-1" />
+                              Owner Perk
+                            </Badge>
+                          )}
+                          {selectedEquipmentForSheet.allocationType === 'overhead_only' && (
+                            <Badge variant="outline" className="text-blue-600 border-blue-300">
+                              <Building2 className="h-3 w-3 mr-1" />
+                              Overhead Only
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Cost Basis</p>
+                            <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.totalCostBasis)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">COGS %</p>
+                            <p className="font-medium font-mono-nums">{formatPercent(selectedEquipmentForSheet.cogsPercent)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">COGS $</p>
+                            <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.cogsAllocatedCost)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Overhead $</p>
+                            <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.overheadAllocatedCost)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Years Left</p>
+                            <p className={`font-medium font-mono-nums ${selectedEquipmentForSheet.estimatedYearsLeft <= 1 ? 'text-warning' : ''}`}>
+                              {selectedEquipmentForSheet.estimatedYearsLeft.toFixed(1)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Replacement</p>
+                            <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.replacementCostUsed)}</p>
+                          </div>
+                        </div>
+                        
+                        {selectedEquipmentForSheet.assetId && (
+                          <div>
+                            <p className="text-sm text-muted-foreground">Asset ID</p>
+                            <p className="font-medium">{selectedEquipmentForSheet.assetId}</p>
+                          </div>
+                        )}
+                        
+                        <div className="pt-4 border-t space-y-2">
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start"
+                            onClick={() => setSheetView('edit')}
+                          >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit Equipment
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start"
+                            onClick={() => setSheetView('documents')}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Documents
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start"
+                            onClick={() => setSheetView('attachments')}
+                          >
+                            <Package className="h-4 w-4 mr-2" />
+                            Attachments
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start text-destructive hover:text-destructive"
+                            onClick={() => {
+                              handleDelete(selectedEquipmentForSheet.id);
+                              setSelectedEquipmentForSheet(null);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {sheetView === 'edit' && (
+                      <EquipmentFormContent
+                        equipment={selectedEquipmentForSheet}
+                        onSubmit={(data) => {
+                          updateEquipment(selectedEquipmentForSheet.id, data);
+                          setSheetView('details');
+                        }}
+                        onCancel={() => setSheetView('details')}
+                      />
+                    )}
+
+                    {sheetView === 'documents' && (
+                      <EquipmentDocumentsContent
+                        equipmentId={selectedEquipmentForSheet.id}
+                        equipmentName={selectedEquipmentForSheet.name}
+                      />
+                    )}
+
+                    {sheetView === 'attachments' && (
+                      <EquipmentAttachmentsContent
+                        equipmentId={selectedEquipmentForSheet.id}
+                        equipmentName={selectedEquipmentForSheet.name}
+                      />
+                    )}
                   </div>
-                </div>
+                </ScrollArea>
               </>
             )}
           </SheetContent>
