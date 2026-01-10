@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Info } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { ChevronDown, Info, ShieldCheck } from 'lucide-react';
 import { categoryDefaults } from '@/data/categoryDefaults';
 
 interface EquipmentFormProps {
@@ -63,6 +65,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [financingOpen, setFinancingOpen] = useState(false);
+  const [insuranceOpen, setInsuranceOpen] = useState(false);
 
   // Sync form data when dialog opens or equipment changes
   useEffect(() => {
@@ -77,10 +80,11 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
       setFormData(initialData);
       setErrors({});
       setFinancingOpen(false);
+      setInsuranceOpen(false);
     }
   }, [equipment, open]);
 
-  const handleChange = (field: keyof Equipment, value: string | number | undefined) => {
+  const handleChange = (field: keyof Equipment, value: string | number | boolean | undefined) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
       
@@ -520,6 +524,71 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
                     />
                   </div>
                 )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Insurance */}
+          <Collapsible open={insuranceOpen} onOpenChange={setInsuranceOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full py-2 group">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Insurance
+                </h3>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${insuranceOpen ? 'rotate-180' : ''}`} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-2">
+              <div className="bg-muted/50 border rounded-lg p-3">
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <span>Track this equipment on your insurance policy. Changes are logged for broker communication.</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2 flex items-center space-x-2">
+                  <Checkbox
+                    id="isInsured"
+                    checked={formData.isInsured === true}
+                    onCheckedChange={(checked) => {
+                      handleChange('isInsured', checked === true ? true : (checked === false ? false : undefined));
+                      // Auto-populate declared value if enabling insurance
+                      if (checked === true && !formData.insuranceDeclaredValue) {
+                        handleChange('insuranceDeclaredValue', formData.purchasePrice);
+                      }
+                    }}
+                  />
+                  <Label htmlFor="isInsured" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    This equipment is insured
+                  </Label>
+                </div>
+
+                <div>
+                  <Label htmlFor="insuranceDeclaredValue">Declared Value ($)</Label>
+                  <Input
+                    id="insuranceDeclaredValue"
+                    type="number"
+                    value={formData.insuranceDeclaredValue || ''}
+                    onChange={(e) => handleChange('insuranceDeclaredValue', e.target.value ? parseFloat(e.target.value) : undefined)}
+                    placeholder={formData.purchasePrice?.toString() || '0'}
+                    disabled={!formData.isInsured}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Value declared to your insurer</p>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <Label htmlFor="insuranceNotes">Insurance Notes</Label>
+                  <Textarea
+                    id="insuranceNotes"
+                    value={formData.insuranceNotes || ''}
+                    onChange={(e) => handleChange('insuranceNotes', e.target.value)}
+                    placeholder="Policy reference, special coverage notes, etc."
+                    disabled={!formData.isInsured}
+                    rows={2}
+                  />
+                </div>
               </div>
             </CollapsibleContent>
           </Collapsible>

@@ -23,6 +23,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
 import Billing from "./pages/Settings/Billing";
 import Feedback from "./pages/Feedback";
+import InsuranceControl from "./pages/InsuranceControl";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
@@ -97,6 +98,11 @@ const App = () => (
                   <Route path="/feedback" element={
                     <ProtectedRoute>
                       <Feedback />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/insurance" element={
+                    <ProtectedRoute>
+                      <InsuranceControl />
                     </ProtectedRoute>
                   } />
                   
