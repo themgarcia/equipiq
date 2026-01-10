@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { useDeviceType } from '@/hooks/use-mobile';
 import { Layout } from '@/components/Layout';
 import { toFMSExport, formatCurrency } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
@@ -13,8 +14,15 @@ import {
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
-import { Copy, Download, Check, FileSpreadsheet, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Copy, Download, Check, FileSpreadsheet, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight } from 'lucide-react';
 import { FMSExportData } from '@/types/equipment';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 type ColumnKey = keyof FMSExportData;
 type SortDirection = 'asc' | 'desc';
@@ -78,10 +86,13 @@ const columns: ColumnConfig[] = [
 
 export default function FMSExport() {
   const { calculatedEquipment, attachmentsByEquipmentId } = useEquipment();
+  const deviceType = useDeviceType();
+  const isMobile = deviceType === 'phone';
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
   const [sortColumn, setSortColumn] = useState<ColumnKey>('equipmentName');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [selectedEquipmentForSheet, setSelectedEquipmentForSheet] = useState<{ id: string; data: FMSExportData } | null>(null);
 
   const activeEquipment = calculatedEquipment.filter(e => e.status === 'Active');
   
@@ -243,81 +254,116 @@ export default function FMSExport() {
 
         {/* Table */}
         <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-[50px]">
-                    <Checkbox 
-                      checked={selectedIds.size === exportData.length && exportData.length > 0}
-                      onCheckedChange={toggleAll}
-                    />
-                  </TableHead>
-                  {columns.map(col => (
-                    <TableHead 
-                      key={col.key} 
-                      className={`table-header-cell cursor-pointer hover:bg-muted/70 transition-colors ${col.align === 'right' ? 'text-right' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
-                      onClick={() => handleSort(col.key)}
-                    >
-                      <div className={`flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
-                        <span>{col.label}</span>
-                        {getSortIcon(col.key)}
+          {isMobile ? (
+            /* Mobile Card View */
+            <div className="divide-y">
+              {exportData.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No active equipment to export. Add equipment and set status to "Active".
+                </div>
+              ) : (
+                exportData.map(({ id, data }) => (
+                  <div 
+                    key={id}
+                    className="flex items-center justify-between p-4 hover:bg-muted/30 cursor-pointer"
+                    onClick={() => setSelectedEquipmentForSheet({ id, data })}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <Checkbox 
+                        checked={selectedIds.has(id)}
+                        onCheckedChange={() => toggleSelect(id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{data.equipmentName}</p>
+                        <p className="text-sm text-muted-foreground font-mono-nums">
+                          {formatCurrency(data.replacementValue)}
+                        </p>
                       </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground ml-2" />
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            /* Desktop Table View */
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[50px]">
+                      <Checkbox 
+                        checked={selectedIds.size === exportData.length && exportData.length > 0}
+                        onCheckedChange={toggleAll}
+                      />
                     </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {exportData.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={columns.length + 1} className="text-center py-8 text-muted-foreground">
-                      No active equipment to export. Add equipment and set status to "Active".
-                    </TableCell>
+                    {columns.map(col => (
+                      <TableHead 
+                        key={col.key} 
+                        className={`table-header-cell cursor-pointer hover:bg-muted/70 transition-colors ${col.align === 'right' ? 'text-right' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
+                        onClick={() => handleSort(col.key)}
+                      >
+                        <div className={`flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
+                          <span>{col.label}</span>
+                          {getSortIcon(col.key)}
+                        </div>
+                      </TableHead>
+                    ))}
                   </TableRow>
-                ) : (
-                  exportData.map(({ id, data }) => (
-                    <TableRow key={id} className="group">
-                      <TableCell>
-                        <Checkbox 
-                          checked={selectedIds.has(id)}
-                          onCheckedChange={() => toggleSelect(id)}
-                        />
+                </TableHeader>
+                <TableBody>
+                  {exportData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={columns.length + 1} className="text-center py-8 text-muted-foreground">
+                        No active equipment to export. Add equipment and set status to "Active".
                       </TableCell>
-                      {columns.map(col => {
-                        const cellId = `${id}-${col.key}`;
-                        const isCopied = copiedCell === cellId;
-                        return (
-                          <TableCell 
-                            key={col.key}
-                            className={`${col.align === 'right' ? 'text-right' : ''} ${col.key === 'equipmentName' ? 'font-medium' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
-                          >
-                            <div className={`flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
-                              <span className={col.align === 'right' ? 'font-mono-nums' : ''}>
-                                {formatCellValue(col.key, data[col.key])}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-5 w-5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-primary/10 shrink-0"
-                                onClick={() => copyCell(id, col.key, data[col.key])}
-                                title="Copy value"
-                              >
-                                {isCopied ? (
-                                  <Check className="h-3 w-3 text-success" />
-                                ) : (
-                                  <Copy className="h-3 w-3" />
-                                )}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        );
-                      })}
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : (
+                    exportData.map(({ id, data }) => (
+                      <TableRow key={id} className="group">
+                        <TableCell>
+                          <Checkbox 
+                            checked={selectedIds.has(id)}
+                            onCheckedChange={() => toggleSelect(id)}
+                          />
+                        </TableCell>
+                        {columns.map(col => {
+                          const cellId = `${id}-${col.key}`;
+                          const isCopied = copiedCell === cellId;
+                          return (
+                            <TableCell 
+                              key={col.key}
+                              className={`${col.align === 'right' ? 'text-right' : ''} ${col.key === 'equipmentName' ? 'font-medium' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
+                            >
+                              <div className={`flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
+                                <span className={col.align === 'right' ? 'font-mono-nums' : ''}>
+                                  {formatCellValue(col.key, data[col.key])}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-primary/10 shrink-0"
+                                  onClick={() => copyCell(id, col.key, data[col.key])}
+                                  title="Copy value"
+                                >
+                                  {isCopied ? (
+                                    <Check className="h-3 w-3 text-success" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
 
         {/* Summary */}
@@ -329,6 +375,40 @@ export default function FMSExport() {
             }
           </p>
         </div>
+
+        {/* FMS Equipment Details Sheet (Mobile) */}
+        <Sheet open={!!selectedEquipmentForSheet} onOpenChange={(open) => !open && setSelectedEquipmentForSheet(null)}>
+          <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+            {selectedEquipmentForSheet && (
+              <>
+                <SheetHeader>
+                  <SheetTitle>{selectedEquipmentForSheet.data.equipmentName}</SheetTitle>
+                  <SheetDescription>FMS Export Values</SheetDescription>
+                </SheetHeader>
+                <div className="mt-6 space-y-4">
+                  {columns.map(col => (
+                    <div key={col.key} className="flex items-center justify-between py-2 border-b">
+                      <span className="text-sm text-muted-foreground">{col.label}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium font-mono-nums">
+                          {formatCellValue(col.key, selectedEquipmentForSheet.data[col.key])}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => copyCell(selectedEquipmentForSheet.id, col.key, selectedEquipmentForSheet.data[col.key])}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
       </div>
     </Layout>
   );
