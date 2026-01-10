@@ -277,7 +277,7 @@ export default function EquipmentList() {
             />
           ) : (
             <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-              <TabsList>
+              <TabsList className="w-full justify-start overflow-x-auto">
                 <TabsTrigger value="Active">Active</TabsTrigger>
                 <TabsTrigger value="Sold">Sold</TabsTrigger>
                 <TabsTrigger value="Retired">Retired</TabsTrigger>

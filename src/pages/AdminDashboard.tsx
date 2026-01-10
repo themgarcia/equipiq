@@ -39,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { MobileTabSelect } from '@/components/MobileTabSelect';
 import {
   getIndustryLabel, 
   getFieldEmployeesLabel, 
@@ -181,6 +182,7 @@ export default function AdminDashboard() {
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [loadingActivityLog, setLoadingActivityLog] = useState(false);
   const [selectedUserForSheet, setSelectedUserForSheet] = useState<UserStats | null>(null);
+  const [activeTab, setActiveTab] = useState('users');
   const { toast } = useToast();
   const deviceType = useDeviceType();
   const isMobileOrTablet = deviceType !== 'desktop';
@@ -984,22 +986,22 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tabs for different views */}
-        <Tabs defaultValue="users" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           {isMobileOrTablet ? (
-            <Select defaultValue="users">
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="users">Users</SelectItem>
-                <SelectItem value="feedback">Feedback</SelectItem>
-                <SelectItem value="activity">Activity</SelectItem>
-                <SelectItem value="market">Market Insights</SelectItem>
-                <SelectItem value="categories">Equipment Data</SelectItem>
-                <SelectItem value="financing">Financing</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
-              </SelectContent>
-            </Select>
+            <MobileTabSelect
+              value={activeTab}
+              onValueChange={setActiveTab}
+              tabs={[
+                { value: 'users', label: 'Users' },
+                { value: 'feedback', label: 'Feedback' },
+                { value: 'activity', label: 'Activity' },
+                { value: 'market', label: 'Market Insights' },
+                { value: 'categories', label: 'Equipment Data' },
+                { value: 'financing', label: 'Financing' },
+                { value: 'marketing', label: 'Marketing' },
+              ]}
+              className="w-full"
+            />
           ) : (
             <TabsList className="w-full justify-start overflow-x-auto">
               <TabsTrigger value="users">Users</TabsTrigger>
