@@ -552,7 +552,7 @@ export default function EquipmentList() {
             }
           }}
         >
-          <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col p-0">
+          <SheetContent side="right" className="w-full md:max-w-xl lg:max-w-2xl flex flex-col p-0">
             {selectedEquipmentForSheet && (
               <>
                 <SheetHeader className="p-6 pb-4 border-b shrink-0">
