@@ -69,7 +69,7 @@ interface LayoutProps {
 
 const navigationGroups = [
   {
-    label: 'Main',
+    label: '', // Primary items - no label needed
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Equipment', href: '/equipment', icon: Package },
@@ -97,6 +97,15 @@ const navigationGroups = [
     ]
   },
 ];
+
+// Content header with notification bell
+function ContentHeader() {
+  return (
+    <header className="sticky top-0 z-40 flex h-14 items-center justify-end gap-2 border-b bg-background px-4 md:px-6">
+      <NotificationBell />
+    </header>
+  );
+}
 
 // Flat list for mobile menu
 const allNavItems = navigationGroups.flatMap(group => group.items);
@@ -169,8 +178,8 @@ function AppSidebar() {
 
       <SidebarContent className="px-2 py-2">
         {groups.map((group, groupIndex) => (
-          <SidebarGroup key={group.label} className="py-1">
-            {!isCollapsed && (
+          <SidebarGroup key={group.label || `group-${groupIndex}`} className="py-1">
+            {!isCollapsed && group.label && (
               <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 font-medium px-3 mb-1">
                 {group.label}
               </SidebarGroupLabel>
@@ -247,11 +256,6 @@ function AppSidebar() {
               </TooltipContent>
             )}
           </Tooltip>
-          
-          {/* Notification Bell */}
-          <div className={cn("flex", isCollapsed ? "justify-center" : "justify-start")}>
-            <NotificationBell />
-          </div>
           
           {/* Demo Mode Controls - only show when sidebar is expanded and admin mode is active */}
           {!isCollapsed && adminModeActive && <DemoModeControls />}
@@ -378,10 +382,12 @@ function PhoneHeader() {
             {/* Navigation - Grouped */}
             <nav className="flex-1 overflow-y-auto px-3 py-4">
               {groups.map((group, groupIndex) => (
-                <div key={group.label} className={cn(groupIndex > 0 && "mt-4")}>
-                  <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 font-medium px-3 mb-2">
-                    {group.label}
-                  </p>
+                <div key={group.label || `group-${groupIndex}`} className={cn(groupIndex > 0 && "mt-4")}>
+                  {group.label && (
+                    <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 font-medium px-3 mb-2">
+                      {group.label}
+                    </p>
+                  )}
                   <div className="space-y-1">
                     {group.items.map((item) => {
                       const isActive = location.pathname === item.href;
@@ -428,10 +434,6 @@ function PhoneHeader() {
                 <span className="flex-1">{feedbackItem.name}</span>
               </Link>
               
-              {/* Notification Bell for mobile */}
-              <div className="flex justify-start">
-                <NotificationBell />
-              </div>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -516,6 +518,7 @@ export function Layout({ children }: LayoutProps) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <PhoneHeader />
+        <ContentHeader />
         <DemoModeBanner />
         {subscription.inGracePeriod && daysLeftInGrace !== null && (
           <GracePeriodBanner daysLeft={daysLeftInGrace} plan={subscription.plan} />
@@ -533,15 +536,16 @@ export function Layout({ children }: LayoutProps) {
     <SidebarProvider defaultOpen={defaultOpen}>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
-        <main className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col">
+          <ContentHeader />
           <DemoModeBanner />
           {subscription.inGracePeriod && daysLeftInGrace !== null && (
             <GracePeriodBanner daysLeft={daysLeftInGrace} plan={subscription.plan} />
           )}
-          <div className="flex-1 min-h-0">
+          <main className="flex-1 min-h-0">
             {children}
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );
