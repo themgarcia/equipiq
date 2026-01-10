@@ -33,7 +33,7 @@ Please update our equipment insurance policy with the following changes:
     template += `REMOVED FROM COVERAGE:\n`;
     removed.forEach(change => {
       template += `• ${change.equipmentName}\n`;
-      template += `  Declared Value: $${(change.previousDeclaredValue || 0).toLocaleString()}\n`;
+      template += `  Declared Value: $${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()}\n`;
       template += `  Effective Date: ${format(new Date(change.effectiveDate), 'MMM d, yyyy')}\n`;
       template += `  Reason: ${formatReason(change.reason)}\n\n`;
     });
@@ -43,7 +43,7 @@ Please update our equipment insurance policy with the following changes:
     template += `ADDED TO COVERAGE:\n`;
     added.forEach(change => {
       template += `• ${change.equipmentName}\n`;
-      template += `  Declared Value: $${(change.newDeclaredValue || 0).toLocaleString()}\n`;
+      template += `  Declared Value: $${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}\n`;
       template += `  Effective Date: ${format(new Date(change.effectiveDate), 'MMM d, yyyy')}\n\n`;
     });
   }
@@ -52,14 +52,14 @@ Please update our equipment insurance policy with the following changes:
     template += `VALUE CHANGES:\n`;
     valueChanged.forEach(change => {
       template += `• ${change.equipmentName}\n`;
-      template += `  Previous: $${(change.previousDeclaredValue || 0).toLocaleString()}\n`;
-      template += `  New: $${(change.newDeclaredValue || 0).toLocaleString()}\n`;
+      template += `  Previous: $${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()}\n`;
+      template += `  New: $${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}\n`;
       template += `  Effective Date: ${format(new Date(change.effectiveDate), 'MMM d, yyyy')}\n\n`;
     });
   }
 
   template += `---
-NET CHANGE IN DECLARED VALUE: ${netChange >= 0 ? '+' : ''}$${netChange.toLocaleString()}
+NET CHANGE IN DECLARED VALUE: ${netChange >= 0 ? '+' : ''}$${Math.ceil(netChange).toLocaleString()}
 
 Please confirm receipt and processing of these changes.
 
@@ -86,8 +86,8 @@ export function generateFullRegisterTemplate(
 Please find our complete insured equipment list for policy review:
 
 INSURED EQUIPMENT LIST (${equipment.length} items)
-Total Purchase Price: $${totalPurchasePrice.toLocaleString()}
-Total Declared Value: $${totalValue.toLocaleString()}
+Total Purchase Price: $${Math.ceil(totalPurchasePrice).toLocaleString()}
+Total Declared Value: $${Math.ceil(totalValue).toLocaleString()}
 
 `;
 
@@ -97,8 +97,8 @@ Total Declared Value: $${totalValue.toLocaleString()}
     if (item.serialVin) {
       template += `   Serial/VIN: ${item.serialVin}\n`;
     }
-    template += `   Purchase Price: $${item.purchasePrice.toLocaleString()}\n`;
-    template += `   Declared Value: $${item.declaredValue.toLocaleString()}\n`;
+    template += `   Purchase Price: $${Math.ceil(item.purchasePrice).toLocaleString()}\n`;
+    template += `   Declared Value: $${Math.ceil(item.declaredValue).toLocaleString()}\n`;
     template += `   Financing: ${formatFinancingType(item.financingType)}\n`;
     if (item.insuranceNotes) {
       template += `   Notes: ${item.insuranceNotes}\n`;

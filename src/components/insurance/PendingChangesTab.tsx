@@ -187,10 +187,10 @@ export function PendingChangesTab({
                     <TableCell>{getChangeTypeBadge(change.changeType)}</TableCell>
                     <TableCell className="text-right font-medium">
                       {change.changeType === 'removed' 
-                        ? `$${(change.previousDeclaredValue || 0).toLocaleString()}`
+                        ? `$${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()}`
                         : change.changeType === 'added'
-                        ? `$${(change.newDeclaredValue || 0).toLocaleString()}`
-                        : `$${(change.previousDeclaredValue || 0).toLocaleString()} → $${(change.newDeclaredValue || 0).toLocaleString()}`
+                        ? `$${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}`
+                        : `$${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()} → $${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}`
                       }
                     </TableCell>
                     <TableCell className="text-muted-foreground">{formatReason(change.reason)}</TableCell>

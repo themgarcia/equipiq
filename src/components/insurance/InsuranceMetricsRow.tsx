@@ -45,7 +45,7 @@ export function InsuranceMetricsRow({ metrics }: InsuranceMetricsRowProps) {
               <DollarSign className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">${metrics.totalDeclaredValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold">${Math.ceil(metrics.totalDeclaredValue).toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">Total Declared Value</p>
             </div>
           </div>
