@@ -209,7 +209,7 @@ export default function BuyVsRentAnalysis() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <Label htmlFor="category">Category</Label>
                     <Select 
@@ -291,7 +291,7 @@ export default function BuyVsRentAnalysis() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="rentalDaily">Daily Rate *</Label>
                     <div className="relative">
@@ -359,7 +359,7 @@ export default function BuyVsRentAnalysis() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="maintenance">Maintenance/Repairs</Label>
                     <div className="relative">
