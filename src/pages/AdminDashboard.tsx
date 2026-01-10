@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight, Check, ShieldCheck } from 'lucide-react';
 import { useDeviceType } from '@/hooks/use-mobile';
 import {
   Sheet,
@@ -1003,7 +1003,7 @@ export default function AdminDashboard() {
               className="w-full"
             />
           ) : (
-            <TabsList className="w-full justify-start overflow-x-auto">
+            <TabsList className="h-auto flex-wrap justify-start gap-1">
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="feedback">Feedback</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -1051,153 +1051,90 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 ) : (
-                  /* Desktop Table View */
-                  <ScrollArea className="w-full whitespace-nowrap">
-                    <Table className="min-w-[1200px]">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Company</TableHead>
-                          <TableHead>Industry</TableHead>
-                          <TableHead>Employees</TableHead>
-                          <TableHead>Revenue</TableHead>
-                          <TableHead>Region</TableHead>
-                          <TableHead>Joined</TableHead>
-                          <TableHead className="text-right">Equipment</TableHead>
-                          <TableHead className="text-right">Total Value</TableHead>
-                          <TableHead>Plan</TableHead>
-                          <TableHead>Source</TableHead>
-                          <TableHead className="text-center">Beta Access</TableHead>
-                          <TableHead className="text-center">Admin</TableHead>
-                          <TableHead className="text-center">Actions</TableHead>
+                  /* Desktop Table View - Simplified with clickable rows */
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Company</TableHead>
+                        <TableHead>Industry</TableHead>
+                        <TableHead>Joined</TableHead>
+                        <TableHead>Plan</TableHead>
+                        <TableHead>Source</TableHead>
+                        <TableHead className="text-center">Beta</TableHead>
+                        <TableHead className="text-center">Admin</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {userStats.map((user) => (
+                        <TableRow 
+                          key={user.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setSelectedUserForSheet(user)}
+                        >
+                          <TableCell className="font-medium">
+                            <div>
+                              <p>{user.companyName || 'No company'}</p>
+                              <p className="text-xs text-muted-foreground">{user.fullName}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{user.industry ? getIndustryLabel(user.industry) : '—'}</TableCell>
+                          <TableCell>{format(new Date(user.createdAt), 'MMM d, yyyy')}</TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${getPlanBadgeVariant(user.subscriptionPlan, user.betaAccess)}`}
+                            >
+                              {formatPlanDisplay(user.subscriptionPlan, user.billingInterval, user.betaAccess)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {user.isPaidSubscription ? (
+                              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/30">
+                                Paid
+                              </Badge>
+                            ) : user.betaAccess ? (
+                              <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
+                                Beta
+                              </Badge>
+                            ) : user.subscriptionPlan !== 'free' ? (
+                              <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/30">
+                                Admin
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {user.betaAccess ? (
+                              <Check className="h-4 w-4 text-blue-600 mx-auto" />
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {user.isAdmin ? (
+                              <ShieldCheck className="h-4 w-4 text-red-600 mx-auto" />
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {userStats.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell className="font-medium">{user.fullName}</TableCell>
-                            <TableCell>{user.companyName || '—'}</TableCell>
-                            <TableCell>{user.industry ? getIndustryLabel(user.industry) : '—'}</TableCell>
-                            <TableCell>{user.fieldEmployees ? getFieldEmployeesLabel(user.fieldEmployees) : '—'}</TableCell>
-                            <TableCell>{user.annualRevenue ? getAnnualRevenueLabel(user.annualRevenue) : '—'}</TableCell>
-                            <TableCell>{user.region ? getRegionLabel(user.region) : '—'}</TableCell>
-                            <TableCell>{format(new Date(user.createdAt), 'MMM d, yyyy')}</TableCell>
-                            <TableCell className="text-right">{user.equipmentCount}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(user.totalValue)}</TableCell>
-                            <TableCell>
-                              <Select
-                                value={user.subscriptionPlan}
-                                onValueChange={(value) => updateUserPlan(user.id, value)}
-                                disabled={changingPlan === user.id}
-                              >
-                                <SelectTrigger className="w-32 h-8 text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="free">Free</SelectItem>
-                                  <SelectItem value="professional">Professional</SelectItem>
-                                  <SelectItem value="business">Business</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              {user.isPaidSubscription ? (
-                                <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/30">
-                                  Paid
-                                </Badge>
-                              ) : user.betaAccess ? (
-                                <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
-                                  Beta
-                                </Badge>
-                              ) : user.subscriptionPlan !== 'free' ? (
-                                <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/30">
-                                  Admin
-                                </Badge>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex flex-col items-center gap-1">
-                                <Switch 
-                                  checked={user.betaAccess}
-                                  onCheckedChange={(checked) => toggleBetaAccess(user.id, checked)}
-                                  disabled={togglingBeta === user.id}
-                                />
-                                {user.betaAccess && user.betaAccessGrantedAt && (
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {format(new Date(user.betaAccessGrantedAt), 'MMM d')}
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                <Switch 
-                                  checked={user.isAdmin}
-                                  onCheckedChange={(checked) => toggleAdminRole(user.id, checked)}
-                                  disabled={togglingAdmin === user.id || user.id === currentUserId}
-                                />
-                                {user.isAdmin && (
-                                  <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 border-red-500/30">
-                                    Admin
-                                  </Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    disabled={deletingUser === user.id || user.isAdmin}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete User Account</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete <strong>{user.fullName}</strong>
-                                      {user.companyName && ` from ${user.companyName}`}? 
-                                      This will permanently remove their account and all associated data 
-                                      ({user.equipmentCount} equipment items).
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => deleteUser(user.id, user.fullName)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      Delete User
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
+                      ))}
+                    </TableBody>
+                  </Table>
                 )}
               </CardContent>
             </Card>
 
-            {/* User Details Sheet for Mobile/Tablet */}
+            {/* User Details Sheet */}
             <Sheet open={!!selectedUserForSheet} onOpenChange={(open) => !open && setSelectedUserForSheet(null)}>
               <SheetContent className="w-full sm:max-w-md overflow-y-auto">
                 {selectedUserForSheet && (
                   <>
                     <SheetHeader>
-                      <SheetTitle>{selectedUserForSheet.fullName}</SheetTitle>
+                      <SheetTitle>{selectedUserForSheet.companyName || 'No company'}</SheetTitle>
                       <SheetDescription>
-                        {selectedUserForSheet.companyName || 'No company'}
+                        {selectedUserForSheet.fullName}
                       </SheetDescription>
                     </SheetHeader>
                     <div className="mt-6 space-y-6">
