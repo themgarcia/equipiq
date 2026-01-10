@@ -105,11 +105,10 @@ const handler = async (req: Request): Promise<Response> => {
         // Send email if enabled
         if (emailEnabled && userEmail) {
           try {
-            await resend.emails.send({
-              from: "EquipIQ <noreply@resend.dev>",
-              to: [userEmail],
-              subject: `Insurance Renewal Reminder - ${setting.profiles?.company_name || 'Your Policy'}`,
-              html: `
+            await sendEmail(
+              [userEmail],
+              `Insurance Renewal Reminder - ${setting.profiles?.company_name || 'Your Policy'}`,
+              `
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                   <h2 style="color: #1a1a1a;">Insurance Renewal Approaching</h2>
                   <p>Hi ${setting.profiles?.full_name || 'there'},</p>
@@ -123,8 +122,8 @@ const handler = async (req: Request): Promise<Response> => {
                   <p>Log in to EquipIQ to manage your Insurance Control.</p>
                   <p>Best regards,<br>The EquipIQ Team</p>
                 </div>
-              `,
-            });
+              `
+            );
             results.emailsSent++;
           } catch (emailError) {
             results.errors.push(`Failed to send pre-renewal email to ${userEmail}`);
@@ -164,11 +163,10 @@ const handler = async (req: Request): Promise<Response> => {
         // Send email if enabled
         if (emailEnabled && userEmail) {
           try {
-            await resend.emails.send({
-              from: "EquipIQ <noreply@resend.dev>",
-              to: [userEmail],
-              subject: `Close the Loop - Insurance Renewal Confirmation`,
-              html: `
+            await sendEmail(
+              [userEmail],
+              `Close the Loop - Insurance Renewal Confirmation`,
+              `
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                   <h2 style="color: #1a1a1a;">Time to Close the Loop</h2>
                   <p>Hi ${setting.profiles?.full_name || 'there'},</p>
@@ -183,8 +181,8 @@ const handler = async (req: Request): Promise<Response> => {
                   <p>Log in to EquipIQ and visit Insurance Control to close the loop.</p>
                   <p>Best regards,<br>The EquipIQ Team</p>
                 </div>
-              `,
-            });
+              `
+            );
             results.emailsSent++;
           } catch (emailError) {
             results.errors.push(`Failed to send post-renewal email to ${userEmail}`);
