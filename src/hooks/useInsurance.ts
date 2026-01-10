@@ -356,6 +356,45 @@ export function useInsurance() {
     }
   }, [user, settings, saveSettings, toast]);
 
+  // Apply policy import (bulk update equipment + settings)
+  const applyPolicyImport = useCallback(async (
+    settingsUpdates: Partial<InsuranceSettings>,
+    equipmentUpdates: { id: string; declaredValue: number }[]
+  ) => {
+    if (!user) return;
+
+    try {
+      // Update settings
+      await saveSettings(settingsUpdates);
+
+      // Update each matched equipment
+      for (const update of equipmentUpdates) {
+        await supabase
+          .from('equipment')
+          .update({
+            is_insured: true,
+            insurance_declared_value: update.declaredValue,
+            insurance_reviewed_at: new Date().toISOString(),
+          })
+          .eq('id', update.id)
+          .eq('user_id', user.id);
+      }
+
+      await Promise.all([fetchInsuredEquipment(), fetchUnreviewedEquipment()]);
+
+      toast({
+        title: "Import applied",
+        description: `Updated settings and ${equipmentUpdates.length} equipment item(s).`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to apply import",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  }, [user, saveSettings, fetchInsuredEquipment, fetchUnreviewedEquipment, toast]);
+
   // Initial fetch
   useEffect(() => {
     const fetchAll = async () => {
@@ -388,6 +427,7 @@ export function useInsurance() {
     updateChangeStatus,
     markAllAsSent,
     closeTheLoop,
+    applyPolicyImport,
     refetch: async () => {
       await Promise.all([
         fetchSettings(),

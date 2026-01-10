@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInsurance } from '@/hooks/useInsurance';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEquipment } from '@/contexts/EquipmentContext';
 import { supabase } from '@/integrations/supabase/client';
 import { InsuranceMetricsRow } from '@/components/insurance/InsuranceMetricsRow';
 import { InsuredRegisterTab } from '@/components/insurance/InsuredRegisterTab';
@@ -14,6 +15,7 @@ import { InsuranceSettingsTab } from '@/components/insurance/InsuranceSettingsTa
 
 export default function InsuranceControl() {
   const { user } = useAuth();
+  const { equipment } = useEquipment();
   const {
     loading,
     settings,
@@ -28,6 +30,7 @@ export default function InsuranceControl() {
     updateChangeStatus,
     markAllAsSent,
     closeTheLoop,
+    applyPolicyImport,
   } = useInsurance();
 
   const [userProfile, setUserProfile] = useState<{
@@ -149,6 +152,8 @@ export default function InsuranceControl() {
                   settings={settings}
                   onSaveSettings={saveSettings}
                   onCloseTheLoop={closeTheLoop}
+                  onApplyPolicyImport={applyPolicyImport}
+                  existingEquipment={equipment}
                 />
               </TabsContent>
             </Tabs>

@@ -95,3 +95,34 @@ export function dbToInsuranceSettings(record: any): InsuranceSettings {
     updatedAt: record.updated_at,
   };
 }
+
+// Types for policy document import
+export interface ExtractedBrokerInfo {
+  name: string | null;
+  company: string | null;
+  email: string | null;
+  phone: string | null;
+}
+
+export interface ExtractedPolicyInfo {
+  policyNumber: string | null;
+  effectiveDate: string | null;
+  renewalDate: string | null;
+}
+
+export interface ExtractedScheduledEquipment {
+  description: string;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  serialVin: string | null;
+  declaredValue: number | null;
+  coverageNotes: string | null;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export interface ExtractedPolicyData {
+  brokerInfo: ExtractedBrokerInfo;
+  policyInfo: ExtractedPolicyInfo;
+  scheduledEquipment: ExtractedScheduledEquipment[];
+}
