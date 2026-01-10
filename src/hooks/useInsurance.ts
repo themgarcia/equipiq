@@ -356,10 +356,11 @@ export function useInsurance() {
     }
   }, [user, settings, saveSettings, toast]);
 
-  // Apply policy import (bulk update equipment + settings)
+  // Apply policy import (bulk update equipment + settings + removal flags)
   const applyPolicyImport = useCallback(async (
     settingsUpdates: Partial<InsuranceSettings>,
-    equipmentUpdates: { id: string; declaredValue: number }[]
+    equipmentUpdates: { id: string; declaredValue: number }[],
+    removalFlags?: { equipmentName: string; reason: string; previousDeclaredValue: number | null }[]
   ) => {
     if (!user) return;
 
@@ -380,11 +381,36 @@ export function useInsurance() {
           .eq('user_id', user.id);
       }
 
-      await Promise.all([fetchInsuredEquipment(), fetchUnreviewedEquipment()]);
+      // Create change log entries for removal flags (items to remove from policy)
+      if (removalFlags && removalFlags.length > 0) {
+        for (const flag of removalFlags) {
+          await supabase
+            .from('insurance_change_log')
+            .insert({
+              user_id: user.id,
+              equipment_id: null, // No equipment record - item only exists on policy
+              equipment_name: flag.equipmentName,
+              change_type: 'removed',
+              reason: flag.reason,
+              previous_declared_value: flag.previousDeclaredValue,
+              new_declared_value: null,
+              effective_date: new Date().toISOString().split('T')[0],
+              status: 'pending',
+            });
+        }
+      }
+
+      await Promise.all([fetchInsuredEquipment(), fetchUnreviewedEquipment(), fetchChangeLogs()]);
+
+      const removalCount = removalFlags?.length || 0;
+      let description = `Updated settings and ${equipmentUpdates.length} equipment item(s).`;
+      if (removalCount > 0) {
+        description += ` Flagged ${removalCount} item(s) for removal.`;
+      }
 
       toast({
         title: "Import applied",
-        description: `Updated settings and ${equipmentUpdates.length} equipment item(s).`,
+        description,
       });
     } catch (error: any) {
       toast({
@@ -393,7 +419,7 @@ export function useInsurance() {
         variant: "destructive",
       });
     }
-  }, [user, saveSettings, fetchInsuredEquipment, fetchUnreviewedEquipment, toast]);
+  }, [user, saveSettings, fetchInsuredEquipment, fetchUnreviewedEquipment, fetchChangeLogs, toast]);
 
   // Initial fetch
   useEffect(() => {

@@ -14,6 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   CheckCircle2, 
   AlertTriangle, 
@@ -23,7 +29,10 @@ import {
   FileText,
   Package,
   ArrowRightLeft,
-  Link2
+  Link2,
+  Trash2,
+  X,
+  Undo2
 } from "lucide-react";
 import { ExtractedPolicyData, ExtractedScheduledEquipment, InsuranceSettings } from "@/types/insurance";
 import { Equipment } from "@/types/equipment";
@@ -47,9 +56,18 @@ interface MatchedEquipment {
   editedDeclaredValue?: number;
 }
 
+type RemovalReason = 'sold' | 'retired' | 'lost' | 'traded';
+
 interface UnmatchedEquipment {
   extracted: ExtractedScheduledEquipment;
-  action: 'ignore' | 'add' | null;
+  action: 'ignore' | 'add' | 'flag_removal' | null;
+  removalReason?: RemovalReason;
+}
+
+interface RemovalFlag {
+  equipmentName: string;
+  reason: RemovalReason;
+  previousDeclaredValue: number | null;
 }
 
 interface InsurancePolicyImportReviewProps {
@@ -59,7 +77,8 @@ interface InsurancePolicyImportReviewProps {
   existingEquipment: Equipment[];
   onApplyImport: (
     settingsUpdates: Partial<InsuranceSettings>,
-    matchedEquipmentUpdates: { id: string; declaredValue: number }[]
+    matchedEquipmentUpdates: { id: string; declaredValue: number }[],
+    removalFlags?: RemovalFlag[]
   ) => Promise<void>;
 }
 
@@ -259,6 +278,34 @@ export function InsurancePolicyImportReview({
     setUnmatchedEquipment(prev => prev.filter((_, i) => i !== unmatchedIndex));
   };
 
+  // Flag an unmatched item for removal (notify broker to remove from policy)
+  const flagForRemoval = (index: number, reason: RemovalReason) => {
+    setUnmatchedEquipment(prev => prev.map((u, i) => 
+      i === index ? { ...u, action: 'flag_removal', removalReason: reason } : u
+    ));
+  };
+
+  // Undo a flag for removal
+  const undoFlag = (index: number) => {
+    setUnmatchedEquipment(prev => prev.map((u, i) => 
+      i === index ? { ...u, action: null, removalReason: undefined } : u
+    ));
+  };
+
+  // Ignore an unmatched item (remove from list, no database action)
+  const ignoreItem = (index: number) => {
+    setUnmatchedEquipment(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getReasonLabel = (reason: RemovalReason): string => {
+    switch (reason) {
+      case 'sold': return 'Sold';
+      case 'retired': return 'Retired';
+      case 'lost': return 'Lost';
+      case 'traded': return 'Traded';
+    }
+  };
+
   const handleApply = async () => {
     setIsApplying(true);
     try {
@@ -280,7 +327,16 @@ export function InsurancePolicyImportReview({
           declaredValue: m.editedDeclaredValue ?? m.extracted.declaredValue!,
         }));
 
-      await onApplyImport(settingsUpdates, equipmentUpdates);
+      // Build removal flags for items flagged to be removed from policy
+      const removalFlags: RemovalFlag[] = unmatchedEquipment
+        .filter(u => u.action === 'flag_removal' && u.removalReason)
+        .map(u => ({
+          equipmentName: u.extracted.description,
+          reason: u.removalReason!,
+          previousDeclaredValue: u.extracted.declaredValue,
+        }));
+
+      await onApplyImport(settingsUpdates, equipmentUpdates, removalFlags.length > 0 ? removalFlags : undefined);
       onOpenChange(false);
     } finally {
       setIsApplying(false);
@@ -544,62 +600,132 @@ export function InsurancePolicyImportReview({
                     You can manually assign them to equipment below.
                   </p>
                   <div className="space-y-2">
-                    {unmatchedEquipment.map((item, index) => (
-                      <div 
-                        key={index}
-                        className="flex items-start gap-3 p-2 rounded bg-background/50"
-                      >
-                        <XCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <div className="flex-1 min-w-0 space-y-2">
-                          <p className="text-sm truncate" title={item.extracted.description}>
-                            {item.extracted.description}
-                          </p>
-                          {item.extracted.serialVin && (
-                            <p className="text-xs text-muted-foreground">
-                              S/N: {item.extracted.serialVin}
-                            </p>
+                    {unmatchedEquipment.map((item, index) => {
+                      const isFlagged = item.action === 'flag_removal';
+                      
+                      return (
+                        <div 
+                          key={index}
+                          className={`flex items-start gap-3 p-2 rounded ${
+                            isFlagged 
+                              ? 'bg-destructive/10 border border-destructive/20' 
+                              : 'bg-background/50'
+                          }`}
+                        >
+                          {isFlagged ? (
+                            <Trash2 className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                           )}
-                          
-                          {/* Assign to equipment dropdown */}
-                          {availableEquipment.length > 0 && (
-                            <Select
-                              value=""
-                              onValueChange={(equipmentId) => {
-                                if (equipmentId) {
-                                  assignToEquipment(index, equipmentId);
-                                }
-                              }}
-                            >
-                              <SelectTrigger className="h-7 text-xs w-auto max-w-xs">
-                                <div className="flex items-center gap-1.5">
-                                  <Link2 className="h-3 w-3" />
-                                  <span>Assign to equipment...</span>
-                                </div>
-                              </SelectTrigger>
-                              <SelectContent className="bg-popover z-50">
-                                {availableEquipment.map((equip) => (
-                                  <SelectItem key={equip.id} value={equip.id} className="text-xs">
-                                    <div className="flex items-center gap-2">
-                                      <span>{equip.year} {equip.make} {equip.model}</span>
-                                      {equip.serialVin && (
-                                        <span className="text-muted-foreground text-xs">
-                                          ({equip.serialVin.slice(-6)})
-                                        </span>
-                                      )}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-sm">
-                            {formatCurrency(item.extracted.declaredValue)}
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className={`text-sm truncate ${isFlagged ? 'line-through text-muted-foreground' : ''}`} title={item.extracted.description}>
+                                {item.extracted.description}
+                              </p>
+                              {isFlagged && item.removalReason && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Will flag: {getReasonLabel(item.removalReason)}
+                                </Badge>
+                              )}
+                            </div>
+                            {item.extracted.serialVin && (
+                              <p className="text-xs text-muted-foreground">
+                                S/N: {item.extracted.serialVin}
+                              </p>
+                            )}
+                            
+                            {/* Action buttons row */}
+                            {!isFlagged ? (
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {/* Assign to equipment dropdown */}
+                                {availableEquipment.length > 0 && (
+                                  <Select
+                                    value=""
+                                    onValueChange={(equipmentId) => {
+                                      if (equipmentId) {
+                                        assignToEquipment(index, equipmentId);
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-7 text-xs w-auto max-w-[180px]">
+                                      <div className="flex items-center gap-1.5">
+                                        <Link2 className="h-3 w-3" />
+                                        <span>Assign to equipment</span>
+                                      </div>
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-popover z-50">
+                                      {availableEquipment.map((equip) => (
+                                        <SelectItem key={equip.id} value={equip.id} className="text-xs">
+                                          <div className="flex items-center gap-2">
+                                            <span>{equip.year} {equip.make} {equip.model}</span>
+                                            {equip.serialVin && (
+                                              <span className="text-muted-foreground text-xs">
+                                                ({equip.serialVin.slice(-6)})
+                                              </span>
+                                            )}
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                                
+                                {/* Flag for Removal dropdown */}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="h-7 text-xs text-destructive hover:text-destructive">
+                                      <Trash2 className="h-3 w-3 mr-1" />
+                                      Flag for Removal
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start" className="bg-popover">
+                                    <DropdownMenuItem onClick={() => flagForRemoval(index, 'sold')}>
+                                      Sold
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => flagForRemoval(index, 'retired')}>
+                                      Retired
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => flagForRemoval(index, 'lost')}>
+                                      Lost
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => flagForRemoval(index, 'traded')}>
+                                      Traded
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                                
+                                {/* Ignore button */}
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-7 text-xs text-muted-foreground"
+                                  onClick={() => ignoreItem(index)}
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Ignore
+                                </Button>
+                              </div>
+                            ) : (
+                              /* Undo button for flagged items */
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 text-xs"
+                                onClick={() => undoFlag(index)}
+                              >
+                                <Undo2 className="h-3 w-3 mr-1" />
+                                Undo
+                              </Button>
+                            )}
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <div className={`text-sm ${isFlagged ? 'line-through text-muted-foreground' : ''}`}>
+                              {formatCurrency(item.extracted.declaredValue)}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
