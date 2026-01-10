@@ -36,6 +36,7 @@ interface MatchedEquipment {
   existing: Equipment;
   matchType: 'serial' | 'make_model_year' | 'fuzzy';
   selected: boolean;
+  editedDeclaredValue?: number;
 }
 
 interface UnmatchedEquipment {
@@ -170,6 +171,16 @@ export function InsurancePolicyImportReview({
     );
   };
 
+  const updateMatchedDeclaredValue = (index: number, value: string) => {
+    const numValue = parseFloat(value.replace(/[^0-9.]/g, ''));
+    setMatchedEquipment(prev => 
+      prev.map((item, i) => i === index 
+        ? { ...item, editedDeclaredValue: isNaN(numValue) ? undefined : numValue } 
+        : item
+      )
+    );
+  };
+
   const handleApply = async () => {
     setIsApplying(true);
     try {
@@ -183,12 +194,12 @@ export function InsurancePolicyImportReview({
         policyRenewalDate: policyInfo.policyRenewalDate || null,
       };
 
-      // Build matched equipment updates
+      // Build matched equipment updates - use edited value if available, otherwise use extracted value
       const equipmentUpdates = matchedEquipment
-        .filter(m => m.selected && m.extracted.declaredValue)
+        .filter(m => m.selected && (m.editedDeclaredValue !== undefined || m.extracted.declaredValue))
         .map(m => ({
           id: m.existing.id,
-          declaredValue: m.extracted.declaredValue!,
+          declaredValue: m.editedDeclaredValue ?? m.extracted.declaredValue!,
         }));
 
       await onApplyImport(settingsUpdates, equipmentUpdates);
@@ -220,7 +231,7 @@ export function InsurancePolicyImportReview({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Review Imported Policy Data</DialogTitle>
           <DialogDescription>
@@ -228,7 +239,7 @@ export function InsurancePolicyImportReview({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
           <div className="space-y-6 pb-4">
             {/* Broker & Policy Info */}
             <div className="grid gap-4 md:grid-cols-2">
@@ -353,11 +364,23 @@ export function InsurancePolicyImportReview({
                           </p>
                         )}
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <div className="text-sm font-medium">
-                          {formatCurrency(item.extracted.declaredValue)}
+                      <div className="flex-shrink-0 space-y-1 w-32">
+                        {item.existing.insuranceDeclaredValue && (
+                          <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
+                            <span>Current:</span>
+                            <span>{formatCurrency(item.existing.insuranceDeclaredValue)}</span>
+                          </div>
+                        )}
+                        <div className="space-y-0.5">
+                          <Label className="text-xs text-muted-foreground">Imported Value</Label>
+                          <Input
+                            type="number"
+                            value={item.editedDeclaredValue ?? item.extracted.declaredValue ?? ''}
+                            onChange={(e) => updateMatchedDeclaredValue(index, e.target.value)}
+                            className="h-8 text-sm text-right"
+                            placeholder="$0"
+                          />
                         </div>
-                        <div className="text-xs text-muted-foreground">Declared Value</div>
                       </div>
                     </div>
                   ))}
