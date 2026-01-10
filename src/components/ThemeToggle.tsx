@@ -7,7 +7,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  variant?: "full" | "icon";
+}
+
+export function ThemeToggle({ variant = "full" }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
 
   const cycleTheme = () => {
@@ -27,10 +31,31 @@ export function ThemeToggle() {
   };
 
   const getLabel = () => {
-    if (theme === "light") return "Light";
-    if (theme === "dark") return "Dark";
-    return "System";
+    if (theme === "light") return "Light mode";
+    if (theme === "dark") return "Dark mode";
+    return "System theme";
   };
+
+  if (variant === "icon") {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={cycleTheme}
+            className="h-9 w-9"
+          >
+            {getIcon()}
+            <span className="sr-only">{getLabel()}</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{getLabel()}</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   return (
     <Tooltip>
@@ -42,7 +67,7 @@ export function ThemeToggle() {
           className="w-full justify-start gap-2"
         >
           {getIcon()}
-          <span>{getLabel()} Mode</span>
+          <span>{getLabel()}</span>
         </Button>
       </TooltipTrigger>
       <TooltipContent side="right">
