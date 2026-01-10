@@ -153,7 +153,7 @@ export function EquipmentDocuments({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-lg">
+        <SheetContent className="sm:max-w-xl">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -240,40 +240,38 @@ export function EquipmentDocuments({
                 </div>
               ) : (
                 <ScrollArea className="h-[300px]">
-                  <div className="space-y-2 pr-4">
+                  <div className="space-y-2 pr-4 overflow-hidden">
                     {documents.map((doc) => (
                       <div
                         key={doc.id}
-                        className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                        className="flex flex-col gap-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors overflow-hidden"
                       >
-                        <span className="text-2xl">{getFileIcon(doc.fileType)}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{doc.fileName}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatFileSize(doc.fileSize)} • {formatDate(doc.uploadedAt)}
-                          </p>
-                          {doc.notes && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                              {doc.notes}
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl flex-shrink-0">{getFileIcon(doc.fileType)}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{doc.fileName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatFileSize(doc.fileSize)} • {formatDate(doc.uploadedAt)}
                             </p>
-                          )}
+                          </div>
                         </div>
-                        <div className="flex gap-1">
+                        {doc.notes && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">{doc.notes}</p>
+                        )}
+                        <div className="flex gap-2 pt-1">
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="flex-1"
                             onClick={() => handleDownload(doc)}
-                            title="Download"
                           >
-                            <Download className="h-4 w-4" />
+                            <Download className="h-4 w-4 mr-1" /> Download
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            className="text-destructive hover:text-destructive"
                             onClick={() => handleDeleteClick(doc)}
-                            title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
