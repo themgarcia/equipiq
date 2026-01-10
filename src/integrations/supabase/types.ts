@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_log: {
+        Row: {
+          action_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          performed_by_email: string
+          performed_by_user_id: string
+          target_user_email: string
+          target_user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          performed_by_email: string
+          performed_by_user_id: string
+          target_user_email: string
+          target_user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          performed_by_email?: string
+          performed_by_user_id?: string
+          target_user_email?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       email_preferences: {
         Row: {
           budgeting_season_reminders: boolean

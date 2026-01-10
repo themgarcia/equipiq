@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2 } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -103,6 +103,17 @@ interface FeedbackReply {
   created_at: string;
 }
 
+interface ActivityLogEntry {
+  id: string;
+  action_type: string;
+  target_user_id: string;
+  target_user_email: string;
+  performed_by_user_id: string;
+  performed_by_email: string;
+  details: any;
+  created_at: string;
+}
+
 const CHART_COLORS = [
   'hsl(var(--chart-1))',
   'hsl(var(--chart-2))',
@@ -159,7 +170,101 @@ export default function AdminDashboard() {
   const [sendingReply, setSendingReply] = useState<string | null>(null);
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
+  const [loadingActivityLog, setLoadingActivityLog] = useState(false);
   const { toast } = useToast();
+
+  // Helper function to log admin actions
+  const logAdminAction = async (
+    actionType: string,
+    targetUserId: string,
+    targetUserEmail: string,
+    details?: Record<string, any>
+  ) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase.from('admin_activity_log').insert({
+        action_type: actionType,
+        target_user_id: targetUserId,
+        target_user_email: targetUserEmail,
+        performed_by_user_id: user.id,
+        performed_by_email: user.email || 'Unknown',
+        details: details || null,
+      });
+
+      // Refresh activity log
+      fetchActivityLog();
+    } catch (error) {
+      console.error('Failed to log admin action:', error);
+    }
+  };
+
+  const fetchActivityLog = async () => {
+    setLoadingActivityLog(true);
+    try {
+      const { data, error } = await supabase
+        .from('admin_activity_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setActivityLog(data || []);
+    } catch (error) {
+      console.error('Failed to fetch activity log:', error);
+    } finally {
+      setLoadingActivityLog(false);
+    }
+  };
+
+  const formatActionType = (action: string): string => {
+    const labels: Record<string, string> = {
+      'admin_granted': 'Admin Granted',
+      'admin_revoked': 'Admin Revoked',
+      'plan_changed': 'Plan Changed',
+      'beta_toggled': 'Beta Toggled',
+      'user_deleted': 'User Deleted',
+      'feedback_status_changed': 'Feedback Updated',
+      'admin_reply_sent': 'Reply Sent',
+    };
+    return labels[action] || action;
+  };
+
+  const getActionBadgeVariant = (action: string): "default" | "secondary" | "destructive" | "outline" => {
+    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+      'admin_granted': 'default',
+      'admin_revoked': 'destructive',
+      'user_deleted': 'destructive',
+      'plan_changed': 'secondary',
+      'beta_toggled': 'outline',
+      'feedback_status_changed': 'secondary',
+      'admin_reply_sent': 'outline',
+    };
+    return variants[action] || 'outline';
+  };
+
+  const formatDetails = (details: Record<string, any> | null): string => {
+    if (!details) return '—';
+
+    if (details.old_plan && details.new_plan) {
+      return `${details.old_plan} → ${details.new_plan}`;
+    }
+    if (details.beta_access !== undefined) {
+      return details.beta_access ? 'Enabled' : 'Disabled';
+    }
+    if (details.new_status) {
+      return `→ ${details.new_status}`;
+    }
+    if (details.reply_preview) {
+      return `"${details.reply_preview}"`;
+    }
+    if (details.deleted_user_name) {
+      return details.deleted_user_name;
+    }
+    return '—';
+  };
 
   const sendTestEmail = async (emailType: 'welcome' | 'password-reset') => {
     setSendingTestEmail(emailType);
@@ -189,11 +294,20 @@ export default function AdminDashboard() {
   const deleteUser = async (userId: string, userName: string) => {
     setDeletingUser(userId);
     try {
+      // Get user email before deletion
+      const userToDelete = userStats.find(u => u.id === userId);
+      const userEmail = userToDelete?.email || userName;
+
       const { data, error } = await supabase.functions.invoke('admin-delete-user', {
         body: { userIdToDelete: userId },
       });
 
       if (error) throw error;
+
+      // Log the action
+      await logAdminAction('user_deleted', userId, userEmail, {
+        deleted_user_name: userName,
+      });
 
       setUserStats(prev => prev.filter(user => user.id !== userId));
       toast({
@@ -215,6 +329,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchAdminData();
     fetchAllFeedback();
+    fetchActivityLog();
   }, []);
 
   const fetchAdminData = async () => {
@@ -483,6 +598,10 @@ export default function AdminDashboard() {
   const updateFeedbackStatus = async (feedbackId: string, newStatus: string) => {
     setUpdatingFeedback(feedbackId);
     try {
+      // Get the feedback item to find the user and old status
+      const feedbackItem = feedbackList.find(fb => fb.id === feedbackId);
+      const oldStatus = feedbackItem?.status || 'unknown';
+
       const { error } = await supabase
         .from('feedback')
         .update({ status: newStatus })
@@ -490,9 +609,6 @@ export default function AdminDashboard() {
 
       if (error) throw error;
 
-      // Get the feedback item to find the user
-      const feedbackItem = feedbackList.find(fb => fb.id === feedbackId);
-      
       // Create a notification for the user about status change
       if (feedbackItem) {
         await supabase.from('user_notifications').insert({
@@ -503,6 +619,14 @@ export default function AdminDashboard() {
           reference_id: feedbackId,
           reference_type: 'feedback',
         });
+
+        // Log the action
+        await logAdminAction(
+          'feedback_status_changed',
+          feedbackItem.user_id,
+          feedbackItem.userEmail || 'Unknown',
+          { old_status: oldStatus, new_status: newStatus, subject: feedbackItem.subject }
+        );
       }
 
       setFeedbackList(prev => prev.map(fb => 
@@ -533,6 +657,9 @@ export default function AdminDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Get the feedback item
+      const feedbackItem = feedbackList.find(fb => fb.id === feedbackId);
+
       // Insert the reply
       const { data: reply, error } = await supabase
         .from('feedback_replies')
@@ -556,6 +683,17 @@ export default function AdminDashboard() {
         reference_id: feedbackId,
         reference_type: 'feedback',
       });
+
+      // Log the action
+      await logAdminAction(
+        'admin_reply_sent',
+        feedbackUserId,
+        feedbackItem?.userEmail || 'Unknown',
+        { 
+          feedback_subject: feedbackSubject,
+          reply_preview: message.substring(0, 50) + (message.length > 50 ? '...' : '')
+        }
+      );
 
       // Update local state
       setFeedbackList(prev => prev.map(fb => 
@@ -585,6 +723,8 @@ export default function AdminDashboard() {
   const toggleBetaAccess = async (userId: string, enabled: boolean) => {
     setTogglingBeta(userId);
     try {
+      const targetUser = userStats.find(u => u.id === userId);
+
       const upsertData = {
         user_id: userId,
         plan: 'free',
@@ -599,6 +739,11 @@ export default function AdminDashboard() {
         .upsert(upsertData, { onConflict: 'user_id' });
 
       if (error) throw error;
+
+      // Log the action
+      await logAdminAction('beta_toggled', userId, targetUser?.email || 'Unknown', {
+        beta_access: enabled
+      });
 
       // Update local state
       setUserStats(prev => prev.map(user => 
@@ -632,6 +777,9 @@ export default function AdminDashboard() {
   const updateUserPlan = async (userId: string, newPlan: string) => {
     setChangingPlan(userId);
     try {
+      const targetUser = userStats.find(u => u.id === userId);
+      const oldPlan = targetUser?.subscriptionPlan || 'unknown';
+
       const upsertData = {
         user_id: userId,
         plan: newPlan,
@@ -648,6 +796,12 @@ export default function AdminDashboard() {
         .upsert(upsertData, { onConflict: 'user_id' });
 
       if (error) throw error;
+
+      // Log the action
+      await logAdminAction('plan_changed', userId, targetUser?.email || 'Unknown', {
+        old_plan: oldPlan,
+        new_plan: newPlan
+      });
 
       // Update local state
       setUserStats(prev => prev.map(user => 
@@ -675,6 +829,8 @@ export default function AdminDashboard() {
   const toggleAdminRole = async (userId: string, makeAdmin: boolean) => {
     setTogglingAdmin(userId);
     try {
+      const targetUser = userStats.find(u => u.id === userId);
+
       if (makeAdmin) {
         // Insert admin role
         const { error } = await supabase
@@ -690,6 +846,13 @@ export default function AdminDashboard() {
           .eq('role', 'admin');
         if (error) throw error;
       }
+
+      // Log the action
+      await logAdminAction(
+        makeAdmin ? 'admin_granted' : 'admin_revoked',
+        userId,
+        targetUser?.email || 'Unknown'
+      );
 
       // Update local state
       setUserStats(prev => prev.map(user => 
@@ -812,8 +975,9 @@ export default function AdminDashboard() {
         {/* Tabs for different views */}
         <Tabs defaultValue="users" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="market">Market Insights</TabsTrigger>
             <TabsTrigger value="categories">Equipment Data</TabsTrigger>
             <TabsTrigger value="financing">Financing</TabsTrigger>
@@ -1102,6 +1266,73 @@ export default function AdminDashboard() {
                 )}
                 <Button variant="outline" className="mt-4" onClick={fetchAllFeedback}>
                   Refresh Feedback
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Activity Log Tab */}
+          <TabsContent value="activity" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Admin Activity Log
+                </CardTitle>
+                <CardDescription>
+                  Recent administrative actions and audit trail
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingActivityLog ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : activityLog.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No activity logged yet. Actions will appear here as they are performed.
+                  </div>
+                ) : (
+                  <ScrollArea className="w-full">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date & Time</TableHead>
+                          <TableHead>Action</TableHead>
+                          <TableHead>Target User</TableHead>
+                          <TableHead>Performed By</TableHead>
+                          <TableHead>Details</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {activityLog.map((entry) => (
+                          <TableRow key={entry.id}>
+                            <TableCell className="whitespace-nowrap">
+                              {format(new Date(entry.created_at), 'MMM d, yyyy h:mm a')}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={getActionBadgeVariant(entry.action_type)}>
+                                {formatActionType(entry.action_type)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-[200px] truncate">
+                              {entry.target_user_email}
+                            </TableCell>
+                            <TableCell className="max-w-[200px] truncate">
+                              {entry.performed_by_email}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground max-w-[200px]">
+                              {formatDetails(entry.details)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <ScrollBar orientation="horizontal" />
+                  </ScrollArea>
+                )}
+                <Button variant="outline" className="mt-4" onClick={fetchActivityLog}>
+                  Refresh Activity Log
                 </Button>
               </CardContent>
             </Card>
