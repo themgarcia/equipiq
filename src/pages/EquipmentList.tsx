@@ -371,14 +371,7 @@ export default function EquipmentList() {
                               <TableHead className="table-header-cell">Name / Details</TableHead>
                               <TableHead className="table-header-cell w-[90px]">Status</TableHead>
                               <TableHead className="table-header-cell w-[120px] text-right">Cost Basis</TableHead>
-                              <TableHead className="table-header-cell w-[70px] text-right hidden md:table-cell">COGS %</TableHead>
-                              <TableHead className="table-header-cell w-[110px] text-right hidden lg:table-cell">
-                                <span className="text-warning">COGS $</span>
-                              </TableHead>
-                              <TableHead className="table-header-cell w-[110px] text-right hidden lg:table-cell">
-                                <span className="text-warning">OH $</span>
-                              </TableHead>
-                              <TableHead className="table-header-cell w-[80px] text-right hidden sm:table-cell">Years Left</TableHead>
+                              <TableHead className="table-header-cell w-[80px] text-right hidden md:table-cell">Years Left</TableHead>
                               <TableHead className="table-header-cell w-[120px] text-right hidden md:table-cell">Replacement</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -444,16 +437,7 @@ export default function EquipmentList() {
                                     <TableCell className="w-[120px] text-right font-mono-nums">
                                       {formatCurrency(equipment.totalCostBasis)}
                                     </TableCell>
-                                    <TableCell className="w-[70px] text-right font-mono-nums hidden md:table-cell">
-                                      {formatPercent(equipment.cogsPercent)}
-                                    </TableCell>
-                                    <TableCell className="w-[110px] text-right font-mono-nums bg-field-calculated hidden lg:table-cell">
-                                      {formatCurrency(equipment.cogsAllocatedCost)}
-                                    </TableCell>
-                                    <TableCell className="w-[110px] text-right font-mono-nums bg-field-calculated hidden lg:table-cell">
-                                      {formatCurrency(equipment.overheadAllocatedCost)}
-                                    </TableCell>
-                                    <TableCell className="w-[80px] text-right font-mono-nums hidden sm:table-cell">
+                                    <TableCell className="w-[80px] text-right font-mono-nums hidden md:table-cell">
                                       <span className={equipment.estimatedYearsLeft <= 1 ? 'text-warning font-semibold' : ''}>
                                         {equipment.estimatedYearsLeft.toFixed(1)}
                                       </span>
@@ -480,11 +464,8 @@ export default function EquipmentList() {
                                       <TableCell className="w-[120px] text-right font-mono-nums text-muted-foreground">
                                         {formatCurrency(attachment.value)}
                                       </TableCell>
-                                      <TableCell className="w-[70px]"></TableCell>
-                                      <TableCell className="w-[110px]"></TableCell>
-                                      <TableCell className="w-[110px]"></TableCell>
-                                      <TableCell className="w-[80px]"></TableCell>
-                                      <TableCell className="w-[120px]"></TableCell>
+                                      <TableCell className="w-[80px] hidden md:table-cell"></TableCell>
+                                      <TableCell className="w-[120px] hidden md:table-cell"></TableCell>
                                     </TableRow>
                                   ))}
                                 </>
