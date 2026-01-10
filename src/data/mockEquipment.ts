@@ -26,6 +26,7 @@ export const mockEquipment: Equipment[] = [
     buyoutAmount: 0,
     financingStartDate: '2021-03-15',
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: '2',
@@ -51,6 +52,7 @@ export const mockEquipment: Equipment[] = [
     termMonths: 0,
     buyoutAmount: 0,
     purchaseCondition: 'used',
+    allocationType: 'operational',
   },
   {
     id: '3',
@@ -77,6 +79,7 @@ export const mockEquipment: Equipment[] = [
     buyoutAmount: 15000,
     financingStartDate: '2022-01-10',
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: '4',
@@ -102,6 +105,7 @@ export const mockEquipment: Equipment[] = [
     termMonths: 0,
     buyoutAmount: 0,
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: '5',
@@ -128,6 +132,7 @@ export const mockEquipment: Equipment[] = [
     buyoutAmount: 0,
     financingStartDate: '2023-02-28',
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: '6',
@@ -151,6 +156,7 @@ export const mockEquipment: Equipment[] = [
     termMonths: 0,
     buyoutAmount: 0,
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: '7',
@@ -176,6 +182,7 @@ export const mockEquipment: Equipment[] = [
     termMonths: 0,
     buyoutAmount: 0,
     purchaseCondition: 'used',
+    allocationType: 'operational',
   },
   {
     id: '8',
@@ -200,6 +207,7 @@ export const mockEquipment: Equipment[] = [
     termMonths: 0,
     buyoutAmount: 0,
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: '9',
@@ -223,6 +231,7 @@ export const mockEquipment: Equipment[] = [
     termMonths: 0,
     buyoutAmount: 0,
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: '10',
@@ -248,5 +257,6 @@ export const mockEquipment: Equipment[] = [
     termMonths: 0,
     buyoutAmount: 0,
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
 ];

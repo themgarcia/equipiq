@@ -4,6 +4,8 @@ export type FinancingType = 'owned' | 'financed' | 'leased';
 
 export type PurchaseCondition = 'new' | 'used';
 
+export type AllocationType = 'operational' | 'overhead_only' | 'owner_perk';
+
 export type EquipmentCategory = 
   | 'Compaction (Heavy)'
   | 'Compaction (Light)'
@@ -78,6 +80,9 @@ export interface Equipment {
   // Purchase condition
   purchaseCondition: PurchaseCondition;
   
+  // Allocation type (for owner perks, overhead-only items)
+  allocationType: AllocationType;
+
   // Insurance
   isInsured?: boolean;
   insuranceDeclaredValue?: number;

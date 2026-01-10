@@ -28,9 +28,11 @@ export function calculateEquipment(
     equipment.freightSetup + 
     equipment.otherCapEx;
   
-  // Allocation
-  const overheadPercent = 100 - equipment.cogsPercent;
-  const cogsAllocatedCost = (equipment.cogsPercent / 100) * totalCostBasis;
+  // Allocation - owner_perk items are excluded from overhead recovery
+  const isOwnerPerk = equipment.allocationType === 'owner_perk';
+  const effectiveCogsPercent = isOwnerPerk ? 0 : equipment.cogsPercent;
+  const overheadPercent = isOwnerPerk ? 0 : (100 - equipment.cogsPercent);
+  const cogsAllocatedCost = (effectiveCogsPercent / 100) * totalCostBasis;
   const overheadAllocatedCost = (overheadPercent / 100) * totalCostBasis;
   
   // Useful Life
@@ -99,13 +101,16 @@ export function calculateEquipment(
 }
 
 export function toFMSExport(equipment: EquipmentCalculated, attachmentTotal: number = 0): FMSExportData {
+  // Owner perks are excluded from FMS export calculations (they don't go to overhead recovery)
+  const isOwnerPerk = equipment.allocationType === 'owner_perk';
+  
   return {
     equipmentName: `${equipment.category} - ${equipment.name}`,
     replacementValue: equipment.replacementCostUsed + attachmentTotal,
     usefulLife: equipment.usefulLifeUsed,
     expectedValueAtEndOfLife: equipment.expectedResaleUsed,
-    cogsAllocatedCost: equipment.cogsAllocatedCost,
-    overheadAllocatedCost: equipment.overheadAllocatedCost,
+    cogsAllocatedCost: isOwnerPerk ? 0 : equipment.cogsAllocatedCost,
+    overheadAllocatedCost: isOwnerPerk ? 0 : equipment.overheadAllocatedCost,
   };
 }
 

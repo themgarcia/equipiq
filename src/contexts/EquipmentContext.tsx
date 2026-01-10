@@ -76,6 +76,8 @@ function dbToEquipment(record: any): Equipment {
     financingStartDate: record.financing_start_date || undefined,
     // Purchase condition
     purchaseCondition: record.purchase_condition || 'new',
+    // Allocation type
+    allocationType: record.allocation_type || 'operational',
   };
 }
 
@@ -113,6 +115,8 @@ function equipmentToDb(equipment: Omit<Equipment, 'id'>, userId: string) {
     financing_start_date: equipment.financingStartDate || null,
     // Purchase condition
     purchase_condition: equipment.purchaseCondition || 'new',
+    // Allocation type
+    allocation_type: equipment.allocationType || 'operational',
   };
 }
 
@@ -322,6 +326,8 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (updatesWithName.financingStartDate !== undefined) dbUpdates.financing_start_date = updatesWithName.financingStartDate || null;
       // Purchase condition
       if (updatesWithName.purchaseCondition !== undefined) dbUpdates.purchase_condition = updatesWithName.purchaseCondition;
+      // Allocation type
+      if (updatesWithName.allocationType !== undefined) dbUpdates.allocation_type = updatesWithName.allocationType;
 
       const { error } = await supabase
         .from('equipment')

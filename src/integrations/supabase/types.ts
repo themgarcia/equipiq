@@ -52,6 +52,7 @@ export type Database = {
       }
       equipment: {
         Row: {
+          allocation_type: string
           asset_id: string | null
           buyout_amount: number
           category: string
@@ -90,6 +91,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          allocation_type?: string
           asset_id?: string | null
           buyout_amount?: number
           category: string
@@ -128,6 +130,7 @@ export type Database = {
           year: number
         }
         Update: {
+          allocation_type?: string
           asset_id?: string | null
           buyout_amount?: number
           category?: string
