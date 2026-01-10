@@ -55,6 +55,7 @@ interface UserStats {
   subscriptionPlan: string;
   subscriptionStatus: string;
   billingInterval: string | null;
+  isPaidSubscription: boolean;
 }
 
 interface CategoryStats {
@@ -147,6 +148,7 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [togglingBeta, setTogglingBeta] = useState<string | null>(null);
+  const [changingPlan, setChangingPlan] = useState<string | null>(null);
   const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
   const [updatingFeedback, setUpdatingFeedback] = useState<string | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
@@ -224,7 +226,7 @@ export default function AdminDashboard() {
       // Fetch subscriptions for plan and beta access info
       const { data: subscriptions, error: subscriptionsError } = await supabase
         .from('subscriptions')
-        .select('user_id, plan, status, billing_interval, beta_access, beta_access_granted_at');
+        .select('user_id, plan, status, billing_interval, beta_access, beta_access_granted_at, stripe_subscription_id');
       
       if (subscriptionsError) throw subscriptionsError;
 
@@ -235,6 +237,7 @@ export default function AdminDashboard() {
         billingInterval: string | null;
         betaAccess: boolean; 
         betaAccessGrantedAt: string | null;
+        isPaidSubscription: boolean;
       }>();
       subscriptions?.forEach(sub => {
         subscriptionMap.set(sub.user_id, {
@@ -243,6 +246,7 @@ export default function AdminDashboard() {
           billingInterval: sub.billing_interval,
           betaAccess: sub.beta_access || false,
           betaAccessGrantedAt: sub.beta_access_granted_at,
+          isPaidSubscription: !!sub.stripe_subscription_id,
         });
       });
 
@@ -275,6 +279,7 @@ export default function AdminDashboard() {
           subscriptionPlan: subInfo?.plan || 'free',
           subscriptionStatus: subInfo?.status || 'active',
           billingInterval: subInfo?.billingInterval || null,
+          isPaidSubscription: subInfo?.isPaidSubscription || false,
         });
       });
 
@@ -560,14 +565,18 @@ export default function AdminDashboard() {
   const toggleBetaAccess = async (userId: string, enabled: boolean) => {
     setTogglingBeta(userId);
     try {
-      const updateData = enabled 
-        ? { beta_access: true, beta_access_granted_at: new Date().toISOString() }
-        : { beta_access: false, beta_access_granted_at: null };
+      const upsertData = {
+        user_id: userId,
+        plan: 'free',
+        status: 'active',
+        beta_access: enabled,
+        beta_access_granted_at: enabled ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      };
 
       const { error } = await supabase
         .from('subscriptions')
-        .update(updateData)
-        .eq('user_id', userId);
+        .upsert(upsertData, { onConflict: 'user_id' });
 
       if (error) throw error;
 
@@ -597,6 +606,49 @@ export default function AdminDashboard() {
       });
     } finally {
       setTogglingBeta(null);
+    }
+  };
+
+  const updateUserPlan = async (userId: string, newPlan: string) => {
+    setChangingPlan(userId);
+    try {
+      const upsertData = {
+        user_id: userId,
+        plan: newPlan,
+        status: 'active',
+        // Clear Stripe IDs since this is an admin override
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        billing_interval: null,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('subscriptions')
+        .upsert(upsertData, { onConflict: 'user_id' });
+
+      if (error) throw error;
+
+      // Update local state
+      setUserStats(prev => prev.map(user => 
+        user.id === userId 
+          ? { ...user, subscriptionPlan: newPlan, billingInterval: null, isPaidSubscription: false }
+          : user
+      ));
+
+      toast({
+        title: "Plan updated",
+        description: `User plan changed to ${newPlan}.`,
+      });
+    } catch (error: any) {
+      console.error('Error updating user plan:', error);
+      toast({
+        title: "Failed to update plan",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setChangingPlan(null);
     }
   };
 
@@ -729,6 +781,7 @@ export default function AdminDashboard() {
                         <TableHead className="text-right">Equipment</TableHead>
                         <TableHead className="text-right">Total Value</TableHead>
                         <TableHead>Plan</TableHead>
+                        <TableHead>Source</TableHead>
                         <TableHead className="text-center">Beta Access</TableHead>
                         <TableHead className="text-center">Actions</TableHead>
                       </TableRow>
@@ -746,9 +799,37 @@ export default function AdminDashboard() {
                           <TableCell className="text-right">{user.equipmentCount}</TableCell>
                           <TableCell className="text-right">{formatCurrency(user.totalValue)}</TableCell>
                           <TableCell>
-                            <Badge variant={getPlanBadgeVariant(user.subscriptionPlan, user.betaAccess)}>
-                              {formatPlanDisplay(user.subscriptionPlan, user.billingInterval, user.betaAccess)}
-                            </Badge>
+                            <Select
+                              value={user.subscriptionPlan}
+                              onValueChange={(value) => updateUserPlan(user.id, value)}
+                              disabled={changingPlan === user.id}
+                            >
+                              <SelectTrigger className="w-32 h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="free">Free</SelectItem>
+                                <SelectItem value="professional">Professional</SelectItem>
+                                <SelectItem value="business">Business</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            {user.isPaidSubscription ? (
+                              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/30">
+                                Paid
+                              </Badge>
+                            ) : user.betaAccess ? (
+                              <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
+                                Beta
+                              </Badge>
+                            ) : user.subscriptionPlan !== 'free' ? (
+                              <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/30">
+                                Admin
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex flex-col items-center gap-1">
