@@ -29,6 +29,10 @@ interface EquipmentDocumentsProps {
   equipmentName: string;
 }
 
+interface DocumentWithPreview extends EquipmentDocument {
+  previewUrl?: string;
+}
+
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -53,6 +57,10 @@ const getFileIcon = (fileType: string) => {
   return '📎';
 };
 
+const isPreviewable = (fileType: string): boolean => {
+  return fileType.includes('image') || fileType.includes('pdf');
+};
+
 export function EquipmentDocuments({ 
   open, 
   onOpenChange, 
@@ -60,7 +68,7 @@ export function EquipmentDocuments({
   equipmentName 
 }: EquipmentDocumentsProps) {
   const { getDocuments, uploadDocument, deleteDocument } = useEquipment();
-  const [documents, setDocuments] = useState<EquipmentDocument[]>([]);
+  const [documents, setDocuments] = useState<DocumentWithPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -71,7 +79,25 @@ export function EquipmentDocuments({
   const loadDocuments = useCallback(async () => {
     setLoading(true);
     const docs = await getDocuments(equipmentId);
-    setDocuments(docs);
+    
+    // Generate preview URLs for images
+    const docsWithPreviews: DocumentWithPreview[] = await Promise.all(
+      docs.map(async (doc) => {
+        if (isPreviewable(doc.fileType)) {
+          try {
+            const { data } = await supabase.storage
+              .from('equipment-documents')
+              .createSignedUrl(doc.filePath, 3600); // 1 hour expiry
+            return { ...doc, previewUrl: data?.signedUrl };
+          } catch {
+            return doc;
+          }
+        }
+        return doc;
+      })
+    );
+    
+    setDocuments(docsWithPreviews);
     setLoading(false);
   }, [equipmentId, getDocuments]);
 
@@ -151,6 +177,39 @@ export function EquipmentDocuments({
     }
   };
 
+  const renderThumbnail = (doc: DocumentWithPreview) => {
+    if (doc.previewUrl && doc.fileType.includes('image')) {
+      return (
+        <div className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0">
+          <img 
+            src={doc.previewUrl} 
+            alt={doc.fileName}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback to icon on error
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl flex items-center justify-center w-full h-full">🖼️</span>';
+            }}
+          />
+        </div>
+      );
+    }
+    
+    if (doc.previewUrl && doc.fileType.includes('pdf')) {
+      return (
+        <div className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center border">
+          <span className="text-2xl">📄</span>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="w-12 h-12 rounded bg-muted flex-shrink-0 flex items-center justify-center">
+        <span className="text-2xl">{getFileIcon(doc.fileType)}</span>
+      </div>
+    );
+  };
+
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -172,13 +231,13 @@ export function EquipmentDocuments({
               
               {selectedFile ? (
                 <div className="flex items-center gap-2 p-2 bg-background rounded border">
-                  <FileIcon className="h-4 w-4 text-muted-foreground" />
-                  <span className="flex-1 text-sm truncate">{selectedFile.name}</span>
-                  <span className="text-xs text-muted-foreground">{formatFileSize(selectedFile.size)}</span>
+                  <FileIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="flex-1 text-sm truncate min-w-0">{selectedFile.name}</span>
+                  <span className="text-xs text-muted-foreground flex-shrink-0">{formatFileSize(selectedFile.size)}</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0"
+                    className="h-6 w-6 p-0 flex-shrink-0"
                     onClick={() => setSelectedFile(null)}
                   >
                     <X className="h-4 w-4" />
@@ -224,8 +283,8 @@ export function EquipmentDocuments({
               )}
             </div>
 
-            {/* Documents List */}
-            <div className="space-y-2">
+            {/* Documents List - matching container style */}
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
               <Label className="text-sm font-medium">
                 Attached Documents ({documents.length})
               </Label>
@@ -241,14 +300,14 @@ export function EquipmentDocuments({
                 </div>
               ) : (
                 <ScrollArea className="h-[300px]">
-                  <div className="space-y-2 pr-4 overflow-hidden">
+                  <div className="space-y-2 pr-4">
                     {documents.map((doc) => (
                       <div
                         key={doc.id}
-                        className="flex flex-col gap-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors overflow-hidden"
+                        className="flex flex-col gap-2 p-3 bg-background border rounded-lg hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-start gap-3">
-                          <span className="text-2xl flex-shrink-0">{getFileIcon(doc.fileType)}</span>
+                          {renderThumbnail(doc)}
                           <div className="flex-1 min-w-0">
                             <TooltipProvider>
                               <Tooltip>
