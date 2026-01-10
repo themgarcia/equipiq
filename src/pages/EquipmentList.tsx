@@ -379,7 +379,10 @@ export default function EquipmentList() {
                                       <div className="flex items-center gap-2">
                                         {hasAttachments && (
                                           <button 
-                                            onClick={() => toggleAttachments(equipment.id)}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              toggleAttachments(equipment.id);
+                                            }}
                                             className="p-0.5 hover:bg-muted rounded"
                                           >
                                             {isAttachmentsExpanded ? (
