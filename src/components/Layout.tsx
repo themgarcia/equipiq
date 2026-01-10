@@ -50,6 +50,10 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarProvider,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -63,17 +67,42 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Equipment', href: '/equipment', icon: Package },
-  { name: 'Insurance Control', href: '/insurance', icon: ShieldCheck },
-  { name: 'FMS Export', href: '/export', icon: FileSpreadsheet },
-  { name: 'Cashflow Analysis', href: '/cashflow', icon: Wallet },
-  { name: 'Category Lifespans', href: '/categories', icon: Clock },
-  { name: 'Buy vs. Rent', href: '/buy-vs-rent', icon: Scale },
-  { name: 'Definitions', href: '/definitions', icon: BookOpen },
-  { name: 'Feedback', href: '/feedback', icon: MessageSquare },
+const navigationGroups = [
+  {
+    label: 'Main',
+    items: [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Equipment', href: '/equipment', icon: Package },
+      { name: 'Insurance Control', href: '/insurance', icon: ShieldCheck },
+    ]
+  },
+  {
+    label: 'Analysis',
+    items: [
+      { name: 'Cashflow Analysis', href: '/cashflow', icon: Wallet },
+      { name: 'Buy vs. Rent', href: '/buy-vs-rent', icon: Scale },
+    ]
+  },
+  {
+    label: 'Tools',
+    items: [
+      { name: 'FMS Export', href: '/export', icon: FileSpreadsheet },
+      { name: 'Category Lifespans', href: '/categories', icon: Clock },
+    ]
+  },
+  {
+    label: 'Reference',
+    items: [
+      { name: 'Definitions', href: '/definitions', icon: BookOpen },
+    ]
+  },
 ];
+
+// Flat list for mobile menu
+const allNavItems = navigationGroups.flatMap(group => group.items);
+
+// Feedback is separate - shown in footer
+const feedbackItem = { name: 'Feedback', href: '/feedback', icon: MessageSquare };
 
 function SidebarToggleButton() {
   const { state, toggleSidebar } = useSidebar();
@@ -104,10 +133,19 @@ function AppSidebar() {
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
-  // Build navigation with admin item if in admin mode
-  const navItems = adminModeActive
-    ? [...navigation, { name: 'Admin', href: '/admin', icon: Shield }]
-    : navigation;
+  // Add admin item to reference group if in admin mode
+  const groups = adminModeActive
+    ? [
+        ...navigationGroups.slice(0, -1),
+        {
+          ...navigationGroups[navigationGroups.length - 1],
+          items: [
+            ...navigationGroups[navigationGroups.length - 1].items,
+            { name: 'Admin', href: '/admin', icon: Shield }
+          ]
+        }
+      ]
+    : navigationGroups;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -129,47 +167,87 @@ function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-4">
-        <SidebarMenu>
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            return (
-              <SidebarMenuItem key={item.name}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      className={cn(
-                        'transition-all',
-                        isActive
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                      )}
-                    >
-                      <Link to={item.href}>
-                        <item.icon className={cn(
-                          'h-5 w-5 flex-shrink-0',
-                          isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/50'
-                        )} />
-                        <span>{item.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </TooltipTrigger>
-                  {isCollapsed && (
-                    <TooltipContent side="right">
-                      {item.name}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
+      <SidebarContent className="px-2 py-2">
+        {groups.map((group, groupIndex) => (
+          <SidebarGroup key={group.label} className="py-1">
+            {!isCollapsed && (
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 font-medium px-3 mb-1">
+                {group.label}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <SidebarMenuItem key={item.name}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive}
+                            className={cn(
+                              'transition-all',
+                              isActive
+                                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                                : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                            )}
+                          >
+                            <Link to={item.href}>
+                              <item.icon className={cn(
+                                'h-5 w-5 flex-shrink-0',
+                                isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/50'
+                              )} />
+                              <span>{item.name}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        {isCollapsed && (
+                          <TooltipContent side="right">
+                            {item.name}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
         <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center")}>
+          {/* Feedback Link */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SidebarMenuButton
+                asChild
+                isActive={location.pathname === feedbackItem.href}
+                className={cn(
+                  'transition-all',
+                  location.pathname === feedbackItem.href
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                )}
+              >
+                <Link to={feedbackItem.href}>
+                  <feedbackItem.icon className={cn(
+                    'h-5 w-5 flex-shrink-0',
+                    location.pathname === feedbackItem.href ? 'text-sidebar-primary' : 'text-sidebar-foreground/50'
+                  )} />
+                  <span>{feedbackItem.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </TooltipTrigger>
+            {isCollapsed && (
+              <TooltipContent side="right">
+                {feedbackItem.name}
+              </TooltipContent>
+            )}
+          </Tooltip>
+          
           {/* Notification Bell */}
           <div className={cn("flex", isCollapsed ? "justify-center" : "justify-start")}>
             <NotificationBell />
@@ -260,10 +338,19 @@ function PhoneHeader() {
   const { isAdmin, adminModeActive, toggleAdminMode } = useAdminMode();
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
-  // Build navigation with admin item if in admin mode
-  const navItems = adminModeActive
-    ? [...navigation, { name: 'Admin', href: '/admin', icon: Shield }]
-    : navigation;
+  // Build navigation groups with admin item if in admin mode
+  const groups = adminModeActive
+    ? [
+        ...navigationGroups.slice(0, -1),
+        {
+          ...navigationGroups[navigationGroups.length - 1],
+          items: [
+            ...navigationGroups[navigationGroups.length - 1].items,
+            { name: 'Admin', href: '/admin', icon: Shield }
+          ]
+        }
+      ]
+    : navigationGroups;
 
   return (
     <header className="sticky top-0 z-50 h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4">
@@ -288,33 +375,59 @@ function PhoneHeader() {
               </div>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 space-y-1 px-3 py-4">
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={cn(
-                      'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                      isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                    )}
-                  >
-                    <item.icon className={cn(
-                      'h-5 w-5 flex-shrink-0 transition-colors',
-                      isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70'
-                    )} />
-                    <span className="flex-1">{item.name}</span>
-                  </Link>
-                );
-              })}
+            {/* Navigation - Grouped */}
+            <nav className="flex-1 overflow-y-auto px-3 py-4">
+              {groups.map((group, groupIndex) => (
+                <div key={group.label} className={cn(groupIndex > 0 && "mt-4")}>
+                  <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 font-medium px-3 mb-2">
+                    {group.label}
+                  </p>
+                  <div className="space-y-1">
+                    {group.items.map((item) => {
+                      const isActive = location.pathname === item.href;
+                      return (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          className={cn(
+                            'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
+                            isActive
+                              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                          )}
+                        >
+                          <item.icon className={cn(
+                            'h-5 w-5 flex-shrink-0 transition-colors',
+                            isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70'
+                          )} />
+                          <span className="flex-1">{item.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </nav>
 
             {/* User Menu & Footer */}
             <div className="border-t border-sidebar-border p-4 space-y-4">
+              {/* Feedback Link */}
+              <Link
+                to={feedbackItem.href}
+                className={cn(
+                  'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
+                  location.pathname === feedbackItem.href
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                )}
+              >
+                <feedbackItem.icon className={cn(
+                  'h-5 w-5 flex-shrink-0 transition-colors',
+                  location.pathname === feedbackItem.href ? 'text-sidebar-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70'
+                )} />
+                <span className="flex-1">{feedbackItem.name}</span>
+              </Link>
+              
               {/* Notification Bell for mobile */}
               <div className="flex justify-start">
                 <NotificationBell />
