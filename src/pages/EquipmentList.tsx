@@ -32,9 +32,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight, User, Building2 } from 'lucide-react';
 import { Equipment, EquipmentStatus, EquipmentCalculated } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
+import { Badge } from '@/components/ui/badge';
 
 interface ExtractedEquipment {
   make: string;
@@ -348,8 +349,22 @@ export default function EquipmentList() {
                                       </div>
                                     </div>
                                   </TableCell>
-                                  <TableCell className="w-[90px]">
-                                    <StatusBadge status={equipment.status} />
+                                  <TableCell className="w-[130px]">
+                                    <div className="flex items-center gap-1.5">
+                                      <StatusBadge status={equipment.status} />
+                                      {equipment.allocationType === 'owner_perk' && (
+                                        <Badge variant="outline" className="text-amber-600 border-amber-300 text-[10px] px-1.5 py-0">
+                                          <User className="h-3 w-3 mr-0.5" />
+                                          Perk
+                                        </Badge>
+                                      )}
+                                      {equipment.allocationType === 'overhead_only' && (
+                                        <Badge variant="outline" className="text-blue-600 border-blue-300 text-[10px] px-1.5 py-0">
+                                          <Building2 className="h-3 w-3 mr-0.5" />
+                                          OH
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </TableCell>
                                   <TableCell className="w-[120px] text-right font-mono-nums">
                                     {formatCurrency(equipment.totalCostBasis)}

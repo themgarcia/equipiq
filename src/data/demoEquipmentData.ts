@@ -367,6 +367,7 @@ const FREE_TIER_EQUIPMENT: Equipment[] = [
     buyoutAmount: 1,
     financingStartDate: '2022-03-15',
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: 'demo-2',
@@ -393,6 +394,7 @@ const FREE_TIER_EQUIPMENT: Equipment[] = [
     buyoutAmount: 15000,
     financingStartDate: '2023-01-10',
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: 'demo-3',
@@ -418,6 +420,7 @@ const FREE_TIER_EQUIPMENT: Equipment[] = [
     termMonths: 0,
     buyoutAmount: 0,
     purchaseCondition: 'used',
+    allocationType: 'operational',
   },
   {
     id: 'demo-4',
@@ -443,6 +446,7 @@ const FREE_TIER_EQUIPMENT: Equipment[] = [
     termMonths: 0,
     buyoutAmount: 0,
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
 ];
 
@@ -473,6 +477,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
     buyoutAmount: 1,
     financingStartDate: '2020-08-12',
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: 'demo-6',
@@ -498,6 +503,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
     buyoutAmount: 1,
     financingStartDate: '2021-03-22',
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: 'demo-7',
@@ -523,6 +529,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
     buyoutAmount: 80000,
     financingStartDate: '2022-05-18',
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: 'demo-8',
@@ -547,6 +554,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
     termMonths: 0,
     buyoutAmount: 0,
     purchaseCondition: 'used',
+    allocationType: 'operational',
   },
   {
     id: 'demo-9',
@@ -572,6 +580,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
     buyoutAmount: 1,
     financingStartDate: '2023-02-28',
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
   {
     id: 'demo-10',
@@ -597,6 +606,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
     buyoutAmount: 1,
     financingStartDate: '2020-04-15',
     purchaseCondition: 'new',
+    allocationType: 'operational',
   },
 ];
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Equipment, EquipmentCategory, EquipmentStatus, FinancingType, PurchaseCondition } from '@/types/equipment';
+import { Equipment, EquipmentCategory, EquipmentStatus, FinancingType, PurchaseCondition, AllocationType } from '@/types/equipment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +32,12 @@ const purchaseConditions: { value: PurchaseCondition; label: string }[] = [
   { value: 'used', label: 'Used' },
 ];
 
+const allocationTypes: { value: AllocationType; label: string; description: string }[] = [
+  { value: 'operational', label: 'Operational', description: 'Charged to jobs via COGS & overhead' },
+  { value: 'overhead_only', label: 'Overhead Only', description: 'Business overhead, not job-specific' },
+  { value: 'owner_perk', label: 'Owner Perk', description: 'Excluded from overhead recovery' },
+];
+
 const defaultFormData: Omit<Equipment, 'id'> = {
   name: '', // Will be auto-generated
   category: 'Vehicle (Commercial)',
@@ -57,6 +63,8 @@ const defaultFormData: Omit<Equipment, 'id'> = {
   financingStartDate: undefined,
   // Purchase condition
   purchaseCondition: 'new',
+  // Allocation type
+  allocationType: 'operational',
 };
 
 export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: EquipmentFormProps) {
@@ -322,6 +330,29 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
+                <Label htmlFor="allocationType">Allocation Type</Label>
+                <Select 
+                  value={formData.allocationType} 
+                  onValueChange={(v) => handleChange('allocationType', v as AllocationType)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allocationTypes.map(at => (
+                      <SelectItem key={at.value} value={at.value}>
+                        <div className="flex flex-col">
+                          <span>{at.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {allocationTypes.find(at => at.value === formData.allocationType)?.description}
+                </p>
+              </div>
+              <div>
                 <Label htmlFor="cogsPercent">% Used for COGS (0-100) *</Label>
                 <Input
                   id="cogsPercent"
@@ -331,13 +362,14 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
                   value={formData.cogsPercent}
                   onChange={(e) => handleChange('cogsPercent', parseFloat(e.target.value) || 0)}
                   className={errors.cogsPercent ? 'border-destructive' : ''}
+                  disabled={formData.allocationType === 'owner_perk'}
                 />
                 {errors.cogsPercent && <p className="text-xs text-destructive mt-1">{errors.cogsPercent}</p>}
               </div>
               <div>
                 <Label>% Used for Overhead</Label>
                 <Input
-                  value={100 - formData.cogsPercent}
+                  value={formData.allocationType === 'owner_perk' ? 0 : 100 - formData.cogsPercent}
                   disabled
                   className="bg-field-calculated"
                 />

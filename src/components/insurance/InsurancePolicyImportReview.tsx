@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { 
   CheckCircle2, 
@@ -439,9 +438,9 @@ export function InsurancePolicyImportReview({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
-        <div className="flex justify-between items-center pt-4 border-t">
+        <div className="flex justify-between items-center px-6 py-4 border-t flex-shrink-0">
           <p className="text-xs text-muted-foreground">
             {selectedCount > 0 
               ? `${selectedCount} equipment will be marked as insured with updated declared values`

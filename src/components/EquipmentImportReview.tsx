@@ -842,6 +842,7 @@ export function EquipmentImportReview({
             termMonths: eq.termMonths || 0,
             buyoutAmount: eq.buyoutAmount || 0,
             purchaseCondition: (eq.purchaseCondition as 'new' | 'used') || 'new',
+            allocationType: 'operational',
           });
           if (newId) {
             importedEquipmentIds.push(newId);
