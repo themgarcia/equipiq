@@ -73,7 +73,7 @@ export default function InsuranceControl() {
 
   return (
     <Layout>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
@@ -105,7 +105,7 @@ export default function InsuranceControl() {
 
             {/* Tabs */}
             <Tabs defaultValue="register" className="space-y-4">
-              <TabsList>
+              <TabsList className="w-full justify-start overflow-x-auto">
               <TabsTrigger value="register">
                   Insured List
                 </TabsTrigger>

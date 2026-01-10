@@ -533,7 +533,6 @@ export function Layout({ children }: LayoutProps) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <PhoneHeader />
-        <ContentHeader />
         <DemoModeBanner />
         {subscription.inGracePeriod && daysLeftInGrace !== null && (
           <GracePeriodBanner daysLeft={daysLeftInGrace} plan={subscription.plan} />

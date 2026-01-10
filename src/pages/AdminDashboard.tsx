@@ -974,7 +974,7 @@ export default function AdminDashboard() {
 
         {/* Tabs for different views */}
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList>
+          <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -993,8 +993,8 @@ export default function AdminDashboard() {
                 <CardDescription>Overview of all platform users and their companies</CardDescription>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="w-full">
-                  <Table>
+                <ScrollArea className="w-full whitespace-nowrap">
+                  <Table className="min-w-[1200px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
