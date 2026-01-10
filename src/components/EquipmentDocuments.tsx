@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import { EquipmentDocument } from '@/types/equipment';
 import { supabase } from '@/integrations/supabase/client';
@@ -246,10 +247,19 @@ export function EquipmentDocuments({
                         key={doc.id}
                         className="flex flex-col gap-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors overflow-hidden"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-start gap-3">
                           <span className="text-2xl flex-shrink-0">{getFileIcon(doc.fileType)}</span>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{doc.fileName}</p>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <p className="font-medium text-sm break-all line-clamp-2">{doc.fileName}</p>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs">
+                                  <p className="break-all">{doc.fileName}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                             <p className="text-xs text-muted-foreground">
                               {formatFileSize(doc.fileSize)} • {formatDate(doc.uploadedAt)}
                             </p>
