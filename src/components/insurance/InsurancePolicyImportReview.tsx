@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   CheckCircle2, 
   AlertTriangle, 
@@ -14,7 +21,9 @@ import {
   Loader2,
   User,
   FileText,
-  Package
+  Package,
+  ArrowRightLeft,
+  Link2
 } from "lucide-react";
 import { ExtractedPolicyData, ExtractedScheduledEquipment, InsuranceSettings } from "@/types/insurance";
 import { Equipment } from "@/types/equipment";
@@ -33,7 +42,7 @@ function formatPhoneNumber(value: string): string {
 interface MatchedEquipment {
   extracted: ExtractedScheduledEquipment;
   existing: Equipment;
-  matchType: 'serial' | 'make_model_year' | 'fuzzy';
+  matchType: 'serial' | 'make_model_year' | 'fuzzy' | 'manual';
   selected: boolean;
   editedDeclaredValue?: number;
 }
@@ -164,6 +173,23 @@ export function InsurancePolicyImportReview({
     setUnmatchedEquipment(unmatched);
   }, [extractedData, existingEquipment]);
 
+  // Get equipment not currently matched (available for assignment from unmatched)
+  const availableEquipment = useMemo(() => {
+    return existingEquipment.filter(
+      e => !matchedEquipment.some(m => m.existing.id === e.id)
+    );
+  }, [existingEquipment, matchedEquipment]);
+
+  // Get all extracted items for swap dropdown (unmatched + current item)
+  const getAvailableExtractedForSwap = (currentIndex: number) => {
+    const currentExtracted = matchedEquipment[currentIndex]?.extracted;
+    return unmatchedEquipment.map((u, idx) => ({ 
+      extracted: u.extracted, 
+      unmatchedIndex: idx,
+      isCurrent: false 
+    }));
+  };
+
   const toggleMatchedSelection = (index: number) => {
     setMatchedEquipment(prev => 
       prev.map((item, i) => i === index ? { ...item, selected: !item.selected } : item)
@@ -178,6 +204,59 @@ export function InsurancePolicyImportReview({
         : item
       )
     );
+  };
+
+  // Reassign a matched item to a different extracted policy item from unmatched
+  const reassignMatch = (matchIndex: number, unmatchedIndex: number) => {
+    const currentMatch = matchedEquipment[matchIndex];
+    const newExtracted = unmatchedEquipment[unmatchedIndex].extracted;
+    
+    // Move current extracted to unmatched
+    setUnmatchedEquipment(prev => {
+      const updated = [...prev];
+      // Remove the new extracted from unmatched
+      updated.splice(unmatchedIndex, 1);
+      // Add the old extracted to unmatched
+      updated.push({ extracted: currentMatch.extracted, action: null });
+      return updated;
+    });
+    
+    // Update matched with new extracted
+    setMatchedEquipment(prev => prev.map((item, i) => 
+      i === matchIndex 
+        ? { ...item, extracted: newExtracted, matchType: 'manual', editedDeclaredValue: undefined } 
+        : item
+    ));
+  };
+
+  // Remove a match (move extracted back to unmatched)
+  const removeMatch = (matchIndex: number) => {
+    const item = matchedEquipment[matchIndex];
+    
+    // Move extracted to unmatched
+    setUnmatchedEquipment(prev => [...prev, { extracted: item.extracted, action: null }]);
+    
+    // Remove from matched
+    setMatchedEquipment(prev => prev.filter((_, i) => i !== matchIndex));
+  };
+
+  // Assign an unmatched item to an equipment
+  const assignToEquipment = (unmatchedIndex: number, equipmentId: string) => {
+    const extracted = unmatchedEquipment[unmatchedIndex].extracted;
+    const equipment = existingEquipment.find(e => e.id === equipmentId);
+    
+    if (!equipment) return;
+    
+    // Add to matched
+    setMatchedEquipment(prev => [...prev, {
+      extracted,
+      existing: equipment,
+      matchType: 'manual',
+      selected: true,
+    }]);
+    
+    // Remove from unmatched
+    setUnmatchedEquipment(prev => prev.filter((_, i) => i !== unmatchedIndex));
   };
 
   const handleApply = async () => {
@@ -213,7 +292,7 @@ export function InsurancePolicyImportReview({
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
   };
 
-  const getMatchBadge = (matchType: 'serial' | 'make_model_year' | 'fuzzy') => {
+  const getMatchBadge = (matchType: 'serial' | 'make_model_year' | 'fuzzy' | 'manual') => {
     switch (matchType) {
       case 'serial':
         return <Badge variant="default" className="bg-green-500">Serial Match</Badge>;
@@ -221,7 +300,14 @@ export function InsurancePolicyImportReview({
         return <Badge variant="secondary">Make/Model Match</Badge>;
       case 'fuzzy':
         return <Badge variant="outline">Fuzzy Match</Badge>;
+      case 'manual':
+        return <Badge variant="default" className="bg-blue-500">Manual Match</Badge>;
     }
+  };
+
+  const hasYearMismatch = (item: MatchedEquipment) => {
+    if (!item.extracted.year) return false;
+    return Math.abs(item.existing.year - item.extracted.year) > 1;
   };
 
   const selectedCount = matchedEquipment.filter(m => m.selected).length;
@@ -347,16 +433,72 @@ export function InsurancePolicyImportReview({
                         onCheckedChange={() => toggleMatchedSelection(index)}
                         className="mt-1"
                       />
-                      <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex-1 min-w-0 space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium text-sm">
                             {item.existing.year} {item.existing.make} {item.existing.model}
                           </span>
                           {getMatchBadge(item.matchType)}
+                          {hasYearMismatch(item) && (
+                            <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/30">
+                              ⚠️ Policy says {item.extracted.year}
+                            </Badge>
+                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate" title={item.extracted.description}>
-                          Policy: "{item.extracted.description}"
-                        </p>
+                        
+                        {/* Policy item swap dropdown */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Policy:</span>
+                          <Select
+                            value="current"
+                            onValueChange={(value) => {
+                              if (value === 'remove') {
+                                removeMatch(index);
+                              } else if (value !== 'current') {
+                                const unmatchedIdx = parseInt(value);
+                                reassignMatch(index, unmatchedIdx);
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="h-7 text-xs flex-1 max-w-md">
+                              <SelectValue>
+                                <span className="truncate">{item.extracted.description}</span>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover z-50">
+                              <SelectItem value="current" className="text-xs">
+                                <span className="font-medium">Current:</span> {item.extracted.description}
+                              </SelectItem>
+                              {unmatchedEquipment.length > 0 && (
+                                <>
+                                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-t mt-1 pt-2">
+                                    Swap with unmatched item:
+                                  </div>
+                                  {unmatchedEquipment.map((unmatched, uIdx) => (
+                                    <SelectItem key={uIdx} value={uIdx.toString()} className="text-xs">
+                                      <div className="flex items-center gap-2">
+                                        <ArrowRightLeft className="h-3 w-3 text-muted-foreground" />
+                                        <span className="truncate">{unmatched.extracted.description}</span>
+                                        {unmatched.extracted.declaredValue && (
+                                          <span className="text-muted-foreground">
+                                            ({formatCurrency(unmatched.extracted.declaredValue)})
+                                          </span>
+                                        )}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </>
+                              )}
+                              <SelectItem value="remove" className="text-xs text-destructive border-t mt-1 pt-2">
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="h-3 w-3" />
+                                  Remove match
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         {item.existing.serialVin && (
                           <p className="text-xs text-muted-foreground">
                             S/N: {item.existing.serialVin}
@@ -399,7 +541,7 @@ export function InsurancePolicyImportReview({
                 <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                   <p className="text-xs text-amber-700 dark:text-amber-400 mb-3">
                     These items from your policy don't match any equipment in your records. 
-                    To include them, first add them to your equipment list, then re-import.
+                    You can manually assign them to equipment below.
                   </p>
                   <div className="space-y-2">
                     {unmatchedEquipment.map((item, index) => (
@@ -408,7 +550,7 @@ export function InsurancePolicyImportReview({
                         className="flex items-start gap-3 p-2 rounded bg-background/50"
                       >
                         <XCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 space-y-2">
                           <p className="text-sm truncate" title={item.extracted.description}>
                             {item.extracted.description}
                           </p>
@@ -416,6 +558,39 @@ export function InsurancePolicyImportReview({
                             <p className="text-xs text-muted-foreground">
                               S/N: {item.extracted.serialVin}
                             </p>
+                          )}
+                          
+                          {/* Assign to equipment dropdown */}
+                          {availableEquipment.length > 0 && (
+                            <Select
+                              value=""
+                              onValueChange={(equipmentId) => {
+                                if (equipmentId) {
+                                  assignToEquipment(index, equipmentId);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="h-7 text-xs w-auto max-w-xs">
+                                <div className="flex items-center gap-1.5">
+                                  <Link2 className="h-3 w-3" />
+                                  <span>Assign to equipment...</span>
+                                </div>
+                              </SelectTrigger>
+                              <SelectContent className="bg-popover z-50">
+                                {availableEquipment.map((equip) => (
+                                  <SelectItem key={equip.id} value={equip.id} className="text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <span>{equip.year} {equip.make} {equip.model}</span>
+                                      {equip.serialVin && (
+                                        <span className="text-muted-foreground text-xs">
+                                          ({equip.serialVin.slice(-6)})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           )}
                         </div>
                         <div className="text-right flex-shrink-0">
