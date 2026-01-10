@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Upload } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ExtractedPolicyData } from '@/types/insurance';
+import { InsurancePolicyImport } from '@/components/insurance/InsurancePolicyImport';
+import { InsurancePolicyImportReview } from '@/components/insurance/InsurancePolicyImportReview';
 import { Layout } from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,6 +42,9 @@ export default function InsuranceControl() {
     companyName: string;
     email: string;
   } | null>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [extractedPolicyData, setExtractedPolicyData] = useState<ExtractedPolicyData | null>(null);
 
   // Fetch user profile for email templates
   useEffect(() => {
@@ -68,16 +75,22 @@ export default function InsuranceControl() {
     <Layout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <ShieldCheck className="h-6 w-6 text-primary" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <ShieldCheck className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Insurance Control</h1>
+              <p className="text-muted-foreground">
+                Manage insured equipment and communicate changes to your broker
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Insurance Control</h1>
-            <p className="text-muted-foreground">
-              Manage insured equipment and communicate changes to your broker
-            </p>
-          </div>
+          <Button variant="outline" onClick={() => setImportModalOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Import from Policy
+          </Button>
         </div>
 
         {loading ? (
@@ -97,8 +110,8 @@ export default function InsuranceControl() {
             {/* Tabs */}
             <Tabs defaultValue="register" className="space-y-4">
               <TabsList>
-                <TabsTrigger value="register">
-                  Insured Register
+              <TabsTrigger value="register">
+                  Insured List
                 </TabsTrigger>
                 <TabsTrigger value="changes" className="relative">
                   Pending Changes
@@ -152,13 +165,28 @@ export default function InsuranceControl() {
                   settings={settings}
                   onSaveSettings={saveSettings}
                   onCloseTheLoop={closeTheLoop}
-                  onApplyPolicyImport={applyPolicyImport}
-                  existingEquipment={equipment}
                 />
               </TabsContent>
             </Tabs>
           </>
         )}
+
+        <InsurancePolicyImport
+          open={importModalOpen}
+          onOpenChange={setImportModalOpen}
+          onPolicyExtracted={(data) => {
+            setExtractedPolicyData(data);
+            setReviewModalOpen(true);
+          }}
+        />
+
+        <InsurancePolicyImportReview
+          open={reviewModalOpen}
+          onOpenChange={setReviewModalOpen}
+          extractedData={extractedPolicyData}
+          existingEquipment={equipment}
+          onApplyImport={applyPolicyImport}
+        />
       </div>
     </Layout>
   );
