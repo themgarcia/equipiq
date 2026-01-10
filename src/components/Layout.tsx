@@ -73,7 +73,7 @@ const navigationGroups = [
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Equipment', href: '/equipment', icon: Package },
-      { name: 'Insurance Control', href: '/insurance', icon: ShieldCheck },
+      { name: 'Insurance', href: '/insurance', icon: ShieldCheck },
     ]
   },
   {
