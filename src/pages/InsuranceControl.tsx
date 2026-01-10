@@ -166,7 +166,6 @@ export default function InsuranceControl() {
                   changes={pendingChanges}
                   allChanges={changeLogs}
                   settings={settings}
-                  insuredEquipment={insuredEquipment}
                   userProfile={userProfile}
                   onUpdateStatus={updateChangeStatus}
                   onMarkAllAsSent={markAllAsSent}

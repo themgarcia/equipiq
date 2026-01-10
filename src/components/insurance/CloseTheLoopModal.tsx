@@ -9,8 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { InsuranceSettings } from '@/types/insurance';
 
@@ -24,17 +22,15 @@ interface CloseTheLoopModalProps {
 export function CloseTheLoopModal({
   open,
   onOpenChange,
-  settings,
   onConfirm,
 }: CloseTheLoopModalProps) {
-  const [policyNumber, setPolicyNumber] = useState(settings?.policyNumber || '');
   const [confirmed, setConfirmed] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const handleConfirm = async () => {
     setSaving(true);
     try {
-      await onConfirm(policyNumber || undefined);
+      await onConfirm();
       onOpenChange(false);
     } finally {
       setSaving(false);
@@ -52,17 +48,7 @@ export function CloseTheLoopModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="policyNumber">Policy Number (if changed)</Label>
-            <Input
-              id="policyNumber"
-              value={policyNumber}
-              onChange={(e) => setPolicyNumber(e.target.value)}
-              placeholder={settings?.policyNumber || 'POL-123456'}
-            />
-          </div>
-
-          <div className="flex items-start space-x-3 pt-2">
+          <div className="flex items-start space-x-3">
             <Checkbox
               id="confirmed"
               checked={confirmed}

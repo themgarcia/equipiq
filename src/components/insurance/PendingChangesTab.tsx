@@ -17,17 +17,31 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { InsuranceChangeLog, InsuranceSettings, InsuredEquipment } from '@/types/insurance';
+import { InsuranceChangeLog, InsuranceSettings } from '@/types/insurance';
 import { generateChangeSummaryTemplate } from '@/lib/insuranceTemplates';
 import { format } from 'date-fns';
-import { BrokerEmailModal } from './BrokerEmailModal';
 
 interface PendingChangesTabProps {
   changes: InsuranceChangeLog[];
   allChanges: InsuranceChangeLog[];
   settings: InsuranceSettings | null;
-  insuredEquipment: InsuredEquipment[];
   userProfile: { fullName: string; companyName: string; email: string } | null;
   onUpdateStatus: (changeId: string, status: 'sent' | 'confirmed') => Promise<void>;
   onMarkAllAsSent: () => Promise<void>;
@@ -37,14 +51,13 @@ export function PendingChangesTab({
   changes,
   allChanges,
   settings,
-  insuredEquipment,
   userProfile,
   onUpdateStatus,
   onMarkAllAsSent,
 }: PendingChangesTabProps) {
   const { toast } = useToast();
-  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
+  const [markAsSentDialogOpen, setMarkAsSentDialogOpen] = useState(false);
 
   const displayChanges = activeTab === 'pending' ? changes : allChanges;
 
@@ -61,6 +74,16 @@ export function PendingChangesTab({
       title: "Copied to clipboard",
       description: "Change summary is ready to paste into your email.",
     });
+    
+    // Show the mark as sent dialog after copying
+    if (changes.length > 0) {
+      setMarkAsSentDialogOpen(true);
+    }
+  };
+
+  const handleMarkAsSent = async () => {
+    await onMarkAllAsSent();
+    setMarkAsSentDialogOpen(false);
   };
 
   const getChangeTypeBadge = (type: string) => {
@@ -102,137 +125,155 @@ export function PendingChangesTab({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <CardTitle>Insurance Changes</CardTitle>
-            <CardDescription>
-              {changes.length} pending changes require broker communication
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCopySummary} disabled={changes.length === 0}>
-              <Copy className="h-4 w-4 mr-2" />
-              Copy Summary
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={() => setEmailModalOpen(true)}
-              disabled={changes.length === 0 || !settings?.brokerEmail}
-            >
-              <Send className="h-4 w-4 mr-2" />
-              Send to Broker
-            </Button>
-            {changes.length > 0 && (
-              <Button variant="outline" onClick={onMarkAllAsSent}>
-                <Check className="h-4 w-4 mr-2" />
-                Mark All Sent
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>Insurance Changes</CardTitle>
+              <CardDescription>
+                {changes.length} pending changes require broker communication
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCopySummary} disabled={changes.length === 0}>
+                <Copy className="h-4 w-4 mr-2" />
+                Copy Summary
               </Button>
-            )}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button 
+                        variant="secondary" 
+                        disabled
+                        className="opacity-50 cursor-not-allowed"
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Send to Broker
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Coming Soon</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              {changes.length > 0 && (
+                <Button variant="outline" onClick={onMarkAllAsSent}>
+                  <Check className="h-4 w-4 mr-2" />
+                  Mark All Sent
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-        
-        {/* Tab Toggle */}
-        <div className="flex gap-2 mt-4">
-          <Button
-            variant={activeTab === 'pending' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('pending')}
-          >
-            Pending ({changes.length})
-          </Button>
-          <Button
-            variant={activeTab === 'history' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('history')}
-          >
-            All History ({allChanges.length})
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {displayChanges.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            {activeTab === 'pending' ? (
-              <>
-                <p>No pending changes.</p>
-                <p className="text-sm mt-1">Changes will appear here when equipment is added or removed from insurance.</p>
-              </>
-            ) : (
-              <p>No change history yet.</p>
-            )}
+          
+          {/* Tab Toggle */}
+          <div className="flex gap-2 mt-4">
+            <Button
+              variant={activeTab === 'pending' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('pending')}
+            >
+              Pending ({changes.length})
+            </Button>
+            <Button
+              variant={activeTab === 'history' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('history')}
+            >
+              All History ({allChanges.length})
+            </Button>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Equipment</TableHead>
-                  <TableHead>Change</TableHead>
-                  <TableHead className="text-right">Value</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Status</TableHead>
-                  {activeTab === 'pending' && <TableHead className="text-right">Actions</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayChanges.map((change) => (
-                  <TableRow key={change.id}>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(change.effectiveDate), 'MMM d, yyyy')}
-                    </TableCell>
-                    <TableCell className="font-medium">{change.equipmentName}</TableCell>
-                    <TableCell>{getChangeTypeBadge(change.changeType)}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {change.changeType === 'removed' 
-                        ? `$${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()}`
-                        : change.changeType === 'added'
-                        ? `$${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}`
-                        : `$${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()} → $${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}`
-                      }
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{formatReason(change.reason)}</TableCell>
-                    <TableCell>{getStatusBadge(change.status)}</TableCell>
-                    {activeTab === 'pending' && (
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              Update
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onUpdateStatus(change.id, 'sent')}>
-                              <Check className="h-4 w-4 mr-2" />
-                              Mark as Sent
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onUpdateStatus(change.id, 'confirmed')}>
-                              <CheckCheck className="h-4 w-4 mr-2" />
-                              Mark as Confirmed
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    )}
+        </CardHeader>
+        <CardContent>
+          {displayChanges.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              {activeTab === 'pending' ? (
+                <>
+                  <p>No pending changes.</p>
+                  <p className="text-sm mt-1">Changes will appear here when equipment is added or removed from insurance.</p>
+                </>
+              ) : (
+                <p>No change history yet.</p>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Equipment</TableHead>
+                    <TableHead>Change</TableHead>
+                    <TableHead className="text-right">Value</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead>Status</TableHead>
+                    {activeTab === 'pending' && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
+                </TableHeader>
+                <TableBody>
+                  {displayChanges.map((change) => (
+                    <TableRow key={change.id}>
+                      <TableCell className="text-muted-foreground">
+                        {format(new Date(change.effectiveDate), 'MMM d, yyyy')}
+                      </TableCell>
+                      <TableCell className="font-medium">{change.equipmentName}</TableCell>
+                      <TableCell>{getChangeTypeBadge(change.changeType)}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {change.changeType === 'removed' 
+                          ? `$${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()}`
+                          : change.changeType === 'added'
+                          ? `$${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}`
+                          : `$${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()} → $${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}`
+                        }
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{formatReason(change.reason)}</TableCell>
+                      <TableCell>{getStatusBadge(change.status)}</TableCell>
+                      {activeTab === 'pending' && (
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                Update
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => onUpdateStatus(change.id, 'sent')}>
+                                <Check className="h-4 w-4 mr-2" />
+                                Mark as Sent
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onUpdateStatus(change.id, 'confirmed')}>
+                                <CheckCheck className="h-4 w-4 mr-2" />
+                                Mark as Confirmed
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      <BrokerEmailModal
-        open={emailModalOpen}
-        onOpenChange={setEmailModalOpen}
-        type="changes"
-        settings={settings}
-        changes={changes}
-        equipment={insuredEquipment}
-        userProfile={userProfile}
-      />
-    </Card>
+      <AlertDialog open={markAsSentDialogOpen} onOpenChange={setMarkAsSentDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark Changes as Sent?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You've copied the change summary to your clipboard. Would you like to mark these changes as sent to your broker?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, Just Copied</AlertDialogCancel>
+            <AlertDialogAction onClick={handleMarkAsSent}>Yes, Mark as Sent</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
