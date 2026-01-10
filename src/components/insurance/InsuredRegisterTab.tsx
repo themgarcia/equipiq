@@ -18,6 +18,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,7 +31,6 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { InsuredEquipment, InsuranceSettings } from '@/types/insurance';
 import { generateFullRegisterTemplate } from '@/lib/insuranceTemplates';
-import { BrokerEmailModal } from './BrokerEmailModal';
 
 interface InsuredRegisterTabProps {
   equipment: InsuredEquipment[];
@@ -43,7 +48,6 @@ export function InsuredRegisterTab({
   onRemoveFromInsurance,
 }: InsuredRegisterTabProps) {
   const { toast } = useToast();
-  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<InsuredEquipment | null>(null);
   const [editDeclaredValue, setEditDeclaredValue] = useState('');
@@ -141,14 +145,25 @@ export function InsuredRegisterTab({
               <Copy className="h-4 w-4 mr-2" />
               Copy Full List
             </Button>
-            <Button 
-              variant="secondary" 
-              onClick={() => setEmailModalOpen(true)}
-              disabled={equipment.length === 0 || !settings?.brokerEmail}
-            >
-              <Send className="h-4 w-4 mr-2" />
-              Send to Broker
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button 
+                      variant="secondary" 
+                      disabled
+                      className="opacity-50 cursor-not-allowed"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Send to Broker
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Coming Soon</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </CardHeader>
@@ -199,15 +214,6 @@ export function InsuredRegisterTab({
           </div>
         )}
       </CardContent>
-
-      <BrokerEmailModal
-        open={emailModalOpen}
-        onOpenChange={setEmailModalOpen}
-        type="full_register"
-        settings={settings}
-        equipment={equipment}
-        userProfile={userProfile}
-      />
 
       {/* Edit Insurance Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>

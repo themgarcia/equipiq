@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { InsuranceSettings } from '@/types/insurance';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { CloseTheLoopModal } from './CloseTheLoopModal';
@@ -35,7 +36,6 @@ export function InsuranceSettingsTab({
     brokerCompany: '',
     brokerEmail: '',
     brokerPhone: '',
-    policyNumber: '',
     policyRenewalDate: '',
     renewalReminderDays: 60,
   });
@@ -49,7 +49,6 @@ export function InsuranceSettingsTab({
         brokerCompany: settings.brokerCompany || '',
         brokerEmail: settings.brokerEmail || '',
         brokerPhone: formatPhoneNumber(settings.brokerPhone || ''),
-        policyNumber: settings.policyNumber || '',
         policyRenewalDate: settings.policyRenewalDate || '',
         renewalReminderDays: settings.renewalReminderDays || 60,
       });
@@ -64,7 +63,6 @@ export function InsuranceSettingsTab({
         brokerCompany: formData.brokerCompany || null,
         brokerEmail: formData.brokerEmail || null,
         brokerPhone: formData.brokerPhone || null,
-        policyNumber: formData.policyNumber || null,
         policyRenewalDate: formData.policyRenewalDate || null,
         renewalReminderDays: formData.renewalReminderDays,
       });
@@ -83,14 +81,17 @@ export function InsuranceSettingsTab({
     <>
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Broker Contact */}
-        <Card>
-          <CardHeader>
+        <Card className="relative">
+          <div className="absolute top-4 right-4">
+            <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
+          </div>
+          <CardHeader className="opacity-60">
             <CardTitle>Broker Contact</CardTitle>
             <CardDescription>
               Your insurance broker's contact information for policy updates
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 opacity-60 pointer-events-none">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="brokerName">Contact Name</Label>
@@ -99,6 +100,7 @@ export function InsuranceSettingsTab({
                   value={formData.brokerName}
                   onChange={(e) => setFormData(prev => ({ ...prev, brokerName: e.target.value }))}
                   placeholder="John Smith"
+                  disabled
                 />
               </div>
               <div className="space-y-2">
@@ -108,6 +110,7 @@ export function InsuranceSettingsTab({
                   value={formData.brokerCompany}
                   onChange={(e) => setFormData(prev => ({ ...prev, brokerCompany: e.target.value }))}
                   placeholder="ABC Insurance"
+                  disabled
                 />
               </div>
             </div>
@@ -119,6 +122,7 @@ export function InsuranceSettingsTab({
                 value={formData.brokerEmail}
                 onChange={(e) => setFormData(prev => ({ ...prev, brokerEmail: e.target.value }))}
                 placeholder="john@abcinsurance.com"
+                disabled
               />
             </div>
             <div className="space-y-2">
@@ -129,6 +133,7 @@ export function InsuranceSettingsTab({
                 value={formData.brokerPhone}
                 onChange={(e) => setFormData(prev => ({ ...prev, brokerPhone: formatPhoneNumber(e.target.value) }))}
                 placeholder="(555) 123-4567"
+                disabled
               />
             </div>
           </CardContent>
@@ -143,15 +148,6 @@ export function InsuranceSettingsTab({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="policyNumber">Policy Number</Label>
-              <Input
-                id="policyNumber"
-                value={formData.policyNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, policyNumber: e.target.value }))}
-                placeholder="POL-123456"
-              />
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="policyRenewalDate">Renewal Date</Label>
