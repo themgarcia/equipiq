@@ -82,6 +82,7 @@ export function EquipmentDocuments({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<EquipmentDocument | null>(null);
   const [lightboxImage, setLightboxImage] = useState<DocumentWithPreview | null>(null);
+  const [pdfViewerDoc, setPdfViewerDoc] = useState<DocumentWithPreview | null>(null);
 
   const loadDocuments = useCallback(async () => {
     setLoading(true);
@@ -210,9 +211,14 @@ export function EquipmentDocuments({
     
     if (doc.previewUrl && doc.fileType.includes('pdf')) {
       return (
-        <div className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center border">
+        <button
+          type="button"
+          onClick={() => setPdfViewerDoc(doc)}
+          className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center border cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+          title="Click to view PDF"
+        >
           <span className="text-2xl">📄</span>
-        </div>
+        </button>
       );
     }
     
@@ -402,6 +408,40 @@ export function EquipmentDocuments({
               />
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* PDF Viewer Modal */}
+      <Dialog open={!!pdfViewerDoc} onOpenChange={(open) => !open && setPdfViewerDoc(null)}>
+        <DialogContent className="max-w-4xl h-[85vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="p-4 pb-2 flex-shrink-0">
+            <div className="flex items-center justify-between pr-8">
+              <DialogTitle className="text-sm font-medium truncate">
+                {pdfViewerDoc?.fileName}
+              </DialogTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => pdfViewerDoc && handleDownload(pdfViewerDoc)}
+                className="ml-2 flex-shrink-0"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Download
+              </Button>
+            </div>
+          </DialogHeader>
+          {pdfViewerDoc?.previewUrl && (
+            <div className="flex-1 p-4 pt-0 min-h-0">
+              <iframe
+                src={pdfViewerDoc.previewUrl}
+                className="w-full h-full rounded border"
+                title={pdfViewerDoc.fileName}
+              />
+            </div>
+          )}
+          <div className="p-3 border-t bg-muted/30 text-center text-xs text-muted-foreground flex-shrink-0">
+            PDF not displaying? <button onClick={() => pdfViewerDoc && handleDownload(pdfViewerDoc)} className="text-primary hover:underline">Download the file</button> instead.
+          </div>
         </DialogContent>
       </Dialog>
     </>
