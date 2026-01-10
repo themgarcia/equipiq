@@ -79,7 +79,15 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Send email via Resend
-    const emailResponse = await resend.emails.send(emailOptions);
+    const emailRes = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify(emailOptions),
+    });
+    const emailResponse = await emailRes.json();
     console.log("Email sent successfully:", emailResponse);
 
     // If this was a changes email, update the change log status to 'sent'
