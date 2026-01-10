@@ -118,7 +118,7 @@ export function UnreviewedAssetsTab({
                       <TableCell className="text-muted-foreground">{item.category}</TableCell>
                       <TableCell>{formatFinancing(item.financingType)}</TableCell>
                       <TableCell className="text-right font-medium">
-                        ${item.purchasePrice.toLocaleString()}
+                        ${Math.ceil(item.purchasePrice).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -168,7 +168,7 @@ export function UnreviewedAssetsTab({
                 onChange={(e) => setDeclaredValue(parseFloat(e.target.value) || 0)}
               />
               <p className="text-xs text-muted-foreground">
-                Defaults to purchase price (${selectedEquipment?.purchasePrice.toLocaleString()})
+                Defaults to purchase price (${Math.ceil(selectedEquipment?.purchasePrice || 0).toLocaleString()})
               </p>
             </div>
             <div className="space-y-2">

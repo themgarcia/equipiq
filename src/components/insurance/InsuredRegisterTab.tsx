@@ -62,7 +62,7 @@ export function InsuredRegisterTab({ equipment, settings, userProfile }: Insured
           <div>
             <CardTitle>Insured Equipment List</CardTitle>
             <CardDescription>
-              {equipment.length} items • ${totalPurchasePrice.toLocaleString()} total purchase price • ${totalValue.toLocaleString()} total declared value
+              {equipment.length} items • ${Math.ceil(totalPurchasePrice).toLocaleString()} total purchase price • ${Math.ceil(totalValue).toLocaleString()} total declared value
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -108,10 +108,10 @@ export function InsuredRegisterTab({ equipment, settings, userProfile }: Insured
                     <TableCell className="text-muted-foreground">{item.category}</TableCell>
                     <TableCell className="font-mono text-sm">{item.serialVin || '—'}</TableCell>
                     <TableCell className="text-right text-muted-foreground">
-                      ${item.purchasePrice.toLocaleString()}
+                      ${Math.ceil(item.purchasePrice).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      ${item.declaredValue.toLocaleString()}
+                      ${Math.ceil(item.declaredValue).toLocaleString()}
                     </TableCell>
                     <TableCell>{formatFinancing(item.financingType)}</TableCell>
                     <TableCell className="max-w-[200px] truncate text-muted-foreground">
