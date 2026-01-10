@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           depreciation_milestones: boolean
           id: string
+          insurance_renewal_reminders: boolean
           product_updates: boolean
           replacement_alerts: boolean
           updated_at: string
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           depreciation_milestones?: boolean
           id?: string
+          insurance_renewal_reminders?: boolean
           product_updates?: boolean
           replacement_alerts?: boolean
           updated_at?: string
@@ -40,6 +42,7 @@ export type Database = {
           created_at?: string
           depreciation_milestones?: boolean
           id?: string
+          insurance_renewal_reminders?: boolean
           product_updates?: boolean
           replacement_alerts?: boolean
           updated_at?: string
@@ -61,6 +64,10 @@ export type Database = {
           financing_type: string
           freight_setup: number
           id: string
+          insurance_declared_value: number | null
+          insurance_notes: string | null
+          insurance_reviewed_at: string | null
+          is_insured: boolean | null
           make: string
           model: string
           monthly_payment: number
@@ -95,6 +102,10 @@ export type Database = {
           financing_type?: string
           freight_setup?: number
           id?: string
+          insurance_declared_value?: number | null
+          insurance_notes?: string | null
+          insurance_reviewed_at?: string | null
+          is_insured?: boolean | null
           make: string
           model: string
           monthly_payment?: number
@@ -129,6 +140,10 @@ export type Database = {
           financing_type?: string
           freight_setup?: number
           id?: string
+          insurance_declared_value?: number | null
+          insurance_notes?: string | null
+          insurance_reviewed_at?: string | null
+          is_insured?: boolean | null
           make?: string
           model?: string
           monthly_payment?: number
@@ -158,6 +173,8 @@ export type Database = {
           description: string | null
           equipment_id: string
           id: string
+          insurance_declared_value: number | null
+          is_insured: boolean | null
           name: string
           photo_path: string | null
           serial_number: string | null
@@ -169,6 +186,8 @@ export type Database = {
           description?: string | null
           equipment_id: string
           id?: string
+          insurance_declared_value?: number | null
+          is_insured?: boolean | null
           name: string
           photo_path?: string | null
           serial_number?: string | null
@@ -180,6 +199,8 @@ export type Database = {
           description?: string | null
           equipment_id?: string
           id?: string
+          insurance_declared_value?: number | null
+          is_insured?: boolean | null
           name?: string
           photo_path?: string | null
           serial_number?: string | null
@@ -310,6 +331,105 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      insurance_change_log: {
+        Row: {
+          change_type: string
+          confirmed_at: string | null
+          created_at: string
+          effective_date: string
+          equipment_id: string | null
+          equipment_name: string
+          id: string
+          new_declared_value: number | null
+          previous_declared_value: number | null
+          reason: string
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          change_type: string
+          confirmed_at?: string | null
+          created_at?: string
+          effective_date?: string
+          equipment_id?: string | null
+          equipment_name: string
+          id?: string
+          new_declared_value?: number | null
+          previous_declared_value?: number | null
+          reason: string
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          change_type?: string
+          confirmed_at?: string | null
+          created_at?: string
+          effective_date?: string
+          equipment_id?: string | null
+          equipment_name?: string
+          id?: string
+          new_declared_value?: number | null
+          previous_declared_value?: number | null
+          reason?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      insurance_settings: {
+        Row: {
+          broker_company: string | null
+          broker_email: string | null
+          broker_name: string | null
+          broker_phone: string | null
+          created_at: string
+          id: string
+          last_post_renewal_reminder_at: string | null
+          last_pre_renewal_reminder_at: string | null
+          policy_number: string | null
+          policy_renewal_date: string | null
+          renewal_confirmed_at: string | null
+          renewal_reminder_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          broker_company?: string | null
+          broker_email?: string | null
+          broker_name?: string | null
+          broker_phone?: string | null
+          created_at?: string
+          id?: string
+          last_post_renewal_reminder_at?: string | null
+          last_pre_renewal_reminder_at?: string | null
+          policy_number?: string | null
+          policy_renewal_date?: string | null
+          renewal_confirmed_at?: string | null
+          renewal_reminder_days?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          broker_company?: string | null
+          broker_email?: string | null
+          broker_name?: string | null
+          broker_phone?: string | null
+          created_at?: string
+          id?: string
+          last_post_renewal_reminder_at?: string | null
+          last_pre_renewal_reminder_at?: string | null
+          policy_number?: string | null
+          policy_renewal_date?: string | null
+          renewal_confirmed_at?: string | null
+          renewal_reminder_days?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       metered_usage: {
         Row: {
