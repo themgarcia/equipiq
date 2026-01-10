@@ -65,14 +65,15 @@ export default function CategoryLifespans() {
 
         {/* Table */}
         <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="table-header-cell w-[250px]">Category</TableHead>
-                <TableHead className="table-header-cell text-center w-[140px]">Useful Life (yrs)</TableHead>
-                <TableHead className="table-header-cell text-center w-[140px]">Resale %</TableHead>
-                <TableHead className="table-header-cell">Notes & Assumptions</TableHead>
-                <TableHead className="table-header-cell w-[100px]"></TableHead>
+                <TableHead className="table-header-cell min-w-[150px]">Category</TableHead>
+                <TableHead className="table-header-cell text-center min-w-[100px]">Useful Life (yrs)</TableHead>
+                <TableHead className="table-header-cell text-center min-w-[80px]">Resale %</TableHead>
+                <TableHead className="table-header-cell min-w-[200px] hidden sm:table-cell">Notes & Assumptions</TableHead>
+                <TableHead className="table-header-cell w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -116,7 +117,7 @@ export default function CategoryLifespans() {
                         <span className="font-mono-nums">{category.defaultResalePercent}%</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {isEditing ? (
                         <Input
                           value={editValues.notes || ''}
@@ -166,6 +167,7 @@ export default function CategoryLifespans() {
               })}
             </TableBody>
           </Table>
+          </div>
         </div>
 
         {/* Footer Note */}

@@ -170,7 +170,7 @@ export default function Profile() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-2xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Profile Settings</h1>
           <p className="text-muted-foreground">Manage your personal and company information</p>
