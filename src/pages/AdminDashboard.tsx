@@ -56,6 +56,7 @@ interface UserStats {
   subscriptionStatus: string;
   billingInterval: string | null;
   isPaidSubscription: boolean;
+  isAdmin: boolean;
 }
 
 interface CategoryStats {
@@ -148,6 +149,7 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [togglingBeta, setTogglingBeta] = useState<string | null>(null);
+  const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null);
   const [changingPlan, setChangingPlan] = useState<string | null>(null);
   const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
   const [updatingFeedback, setUpdatingFeedback] = useState<string | null>(null);
@@ -156,6 +158,7 @@ export default function AdminDashboard() {
   const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [sendingReply, setSendingReply] = useState<string | null>(null);
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const sendTestEmail = async (emailType: 'welcome' | 'password-reset') => {
@@ -216,6 +219,12 @@ export default function AdminDashboard() {
 
   const fetchAdminData = async () => {
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+
       // Fetch all profiles with new columns
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -229,6 +238,16 @@ export default function AdminDashboard() {
         .select('user_id, plan, status, billing_interval, beta_access, beta_access_granted_at, stripe_subscription_id');
       
       if (subscriptionsError) throw subscriptionsError;
+
+      // Fetch admin roles
+      const { data: adminRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .eq('role', 'admin');
+      
+      if (rolesError) throw rolesError;
+
+      const adminUserIds = new Set(adminRoles?.map(r => r.user_id) || []);
 
       // Create a map for quick subscription lookup
       const subscriptionMap = new Map<string, { 
@@ -280,6 +299,7 @@ export default function AdminDashboard() {
           subscriptionStatus: subInfo?.status || 'active',
           billingInterval: subInfo?.billingInterval || null,
           isPaidSubscription: subInfo?.isPaidSubscription || false,
+          isAdmin: adminUserIds.has(profile.id),
         });
       });
 
@@ -652,6 +672,48 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleAdminRole = async (userId: string, makeAdmin: boolean) => {
+    setTogglingAdmin(userId);
+    try {
+      if (makeAdmin) {
+        // Insert admin role
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role: 'admin' });
+        if (error) throw error;
+      } else {
+        // Remove admin role
+        const { error } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId)
+          .eq('role', 'admin');
+        if (error) throw error;
+      }
+
+      // Update local state
+      setUserStats(prev => prev.map(user => 
+        user.id === userId ? { ...user, isAdmin: makeAdmin } : user
+      ));
+
+      toast({
+        title: makeAdmin ? "Admin access granted" : "Admin access revoked",
+        description: makeAdmin 
+          ? "User now has full administrative privileges."
+          : "User has been removed from admin role.",
+      });
+    } catch (error: any) {
+      console.error('Error toggling admin role:', error);
+      toast({
+        title: "Failed to update admin role",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setTogglingAdmin(null);
+    }
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -783,6 +845,7 @@ export default function AdminDashboard() {
                         <TableHead>Plan</TableHead>
                         <TableHead>Source</TableHead>
                         <TableHead className="text-center">Beta Access</TableHead>
+                        <TableHead className="text-center">Admin</TableHead>
                         <TableHead className="text-center">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -846,13 +909,27 @@ export default function AdminDashboard() {
                             </div>
                           </TableCell>
                           <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Switch 
+                                checked={user.isAdmin}
+                                onCheckedChange={(checked) => toggleAdminRole(user.id, checked)}
+                                disabled={togglingAdmin === user.id || user.id === currentUserId}
+                              />
+                              {user.isAdmin && (
+                                <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 border-red-500/30">
+                                  Admin
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button 
                                   variant="ghost" 
                                   size="sm"
                                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  disabled={deletingUser === user.id}
+                                  disabled={deletingUser === user.id || user.isAdmin}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
