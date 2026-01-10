@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,7 +80,7 @@ export function InsurancePolicyImportReview({
   const [unmatchedEquipment, setUnmatchedEquipment] = useState<UnmatchedEquipment[]>([]);
 
   // Initialize state when extractedData changes
-  useMemo(() => {
+  useEffect(() => {
     if (!extractedData) return;
 
     // Set broker info
