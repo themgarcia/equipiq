@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminMode } from '@/contexts/AdminModeContext';
 import { useToast } from '@/hooks/use-toast';
 import {
   InsuranceChangeLog,
@@ -11,9 +12,11 @@ import {
   dbToInsuranceSettings,
 } from '@/types/insurance';
 import { differenceInDays, parseISO } from 'date-fns';
+import { getDemoInsuranceData } from '@/data/demoInsuranceData';
 
 export function useInsurance() {
   const { user } = useAuth();
+  const { adminModeActive, demoDataEnabled, demoPlan } = useAdminMode();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<InsuranceSettings | null>(null);
@@ -21,6 +24,16 @@ export function useInsurance() {
   const [insuredEquipment, setInsuredEquipment] = useState<InsuredEquipment[]>([]);
   const [unreviewedEquipment, setUnreviewedEquipment] = useState<InsuredEquipment[]>([]);
 
+  // Check if we should use demo data
+  const isDemoData = adminModeActive && demoDataEnabled && demoPlan;
+
+  // Demo mode blocked action
+  const blockDemoAction = useCallback(() => {
+    toast({
+      title: "Demo mode active",
+      description: "Changes are not saved in demo mode.",
+    });
+  }, [toast]);
   // Fetch insurance settings
   const fetchSettings = useCallback(async () => {
     if (!user) return;
@@ -438,6 +451,28 @@ export function useInsurance() {
       fetchAll();
     }
   }, [user, fetchSettings, fetchChangeLogs, fetchInsuredEquipment, fetchUnreviewedEquipment]);
+
+  // If in demo mode, return demo data
+  if (isDemoData) {
+    const demoData = getDemoInsuranceData(demoPlan);
+    return {
+      loading: false,
+      settings: demoData.settings,
+      changeLogs: demoData.changeLogs,
+      insuredEquipment: demoData.insuredEquipment,
+      unreviewedEquipment: demoData.unreviewedEquipment,
+      metrics: demoData.metrics,
+      pendingChanges: demoData.changeLogs.filter(c => c.status === 'pending'),
+      saveSettings: async () => { blockDemoAction(); },
+      markAsInsured: async () => { blockDemoAction(); },
+      excludeFromInsurance: async () => { blockDemoAction(); },
+      updateChangeStatus: async () => { blockDemoAction(); },
+      markAllAsSent: async () => { blockDemoAction(); },
+      closeTheLoop: async () => { blockDemoAction(); },
+      applyPolicyImport: async () => { blockDemoAction(); },
+      refetch: async () => {},
+    };
+  }
 
   return {
     loading,
