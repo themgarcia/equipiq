@@ -152,7 +152,7 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Monthly Obligations</p>
                 <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalMonthlyPayments)}</p>

@@ -176,7 +176,7 @@ function PaybackDialog({ equipment, calculated, open, onOpenChange }: PaybackDia
           </div>
           
           {/* Key metrics */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-xs text-muted-foreground">
                 {equipment.financingType === 'owned' ? 'Paid in Full' : 'Total Deposit'}

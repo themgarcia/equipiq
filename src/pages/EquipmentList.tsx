@@ -334,7 +334,7 @@ export default function EquipmentList() {
                                       )}
                                       <div className="truncate min-w-0">
                                         <div className="flex items-center gap-2">
-                                          <p className="font-medium truncate">{equipment.name}</p>
+                                          <p className="font-medium truncate text-sm md:text-base">{equipment.name}</p>
                                           {hasAttachments && (
                                             <span className="text-xs text-muted-foreground shrink-0">
                                               ({equipmentAttachments.length})

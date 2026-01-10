@@ -25,6 +25,7 @@ interface ColumnConfig {
   format: (value: FMSExportData[ColumnKey]) => string;
   align: 'left' | 'right';
   sortType: 'string' | 'number';
+  hideOnMobile?: boolean;
 }
 
 const columns: ColumnConfig[] = [
@@ -54,21 +55,24 @@ const columns: ColumnConfig[] = [
     label: 'End Value', 
     format: (v) => String(v),
     align: 'right',
-    sortType: 'number'
+    sortType: 'number',
+    hideOnMobile: true,
   },
   { 
     key: 'cogsAllocatedCost', 
     label: 'COGS $', 
     format: (v) => String(v),
     align: 'right',
-    sortType: 'number'
+    sortType: 'number',
+    hideOnMobile: true,
   },
   { 
     key: 'overheadAllocatedCost', 
     label: 'OH $', 
     format: (v) => String(v),
     align: 'right',
-    sortType: 'number'
+    sortType: 'number',
+    hideOnMobile: true,
   },
 ];
 
@@ -252,7 +256,7 @@ export default function FMSExport() {
                   {columns.map(col => (
                     <TableHead 
                       key={col.key} 
-                      className={`table-header-cell cursor-pointer hover:bg-muted/70 transition-colors ${col.align === 'right' ? 'text-right' : ''}`}
+                      className={`table-header-cell cursor-pointer hover:bg-muted/70 transition-colors ${col.align === 'right' ? 'text-right' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
                       onClick={() => handleSort(col.key)}
                     >
                       <div className={`flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
@@ -285,7 +289,7 @@ export default function FMSExport() {
                         return (
                           <TableCell 
                             key={col.key}
-                            className={`${col.align === 'right' ? 'text-right' : ''} ${col.key === 'equipmentName' ? 'font-medium' : ''}`}
+                            className={`${col.align === 'right' ? 'text-right' : ''} ${col.key === 'equipmentName' ? 'font-medium' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
                           >
                             <div className={`flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
                               <span className={col.align === 'right' ? 'font-mono-nums' : ''}>
