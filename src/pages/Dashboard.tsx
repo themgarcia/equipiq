@@ -238,9 +238,9 @@ export default function Dashboard() {
               <CardTitle className="text-lg">Cost Basis by Category</CardTitle>
               <CardDescription>Distribution across equipment types</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col items-center md:items-start">
               {categoryData.length > 0 ? (
-                <ChartContainer config={{}} className="h-[200px]">
+                <ChartContainer config={{}} className="h-[200px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -277,11 +277,11 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                 </ChartContainer>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                <div className="h-[200px] flex items-center justify-center text-muted-foreground w-full">
                   No equipment data available
                 </div>
               )}
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 space-y-2 w-full">
                 {categoryData.map((cat, index) => (
                   <div key={cat.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">

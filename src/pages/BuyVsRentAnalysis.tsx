@@ -171,7 +171,7 @@ export default function BuyVsRentAnalysis() {
         {/* Demo-only banner for free users */}
         {!canUseBuyVsRent && (
           <div className="mb-6 p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
               <Lock className="h-5 w-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0" />
               <div className="flex-1">
                 <p className="font-medium text-yellow-700 dark:text-yellow-400">Demo Mode</p>

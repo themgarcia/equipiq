@@ -985,15 +985,32 @@ export default function AdminDashboard() {
 
         {/* Tabs for different views */}
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList className="w-full justify-start overflow-x-auto">
-          <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="feedback">Feedback</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="market">Market Insights</TabsTrigger>
-            <TabsTrigger value="categories">Equipment Data</TabsTrigger>
-            <TabsTrigger value="financing">Financing</TabsTrigger>
-            <TabsTrigger value="marketing">Marketing</TabsTrigger>
-          </TabsList>
+          {isMobileOrTablet ? (
+            <Select defaultValue="users">
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="users">Users</SelectItem>
+                <SelectItem value="feedback">Feedback</SelectItem>
+                <SelectItem value="activity">Activity</SelectItem>
+                <SelectItem value="market">Market Insights</SelectItem>
+                <SelectItem value="categories">Equipment Data</SelectItem>
+                <SelectItem value="financing">Financing</SelectItem>
+                <SelectItem value="marketing">Marketing</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : (
+            <TabsList className="w-full justify-start overflow-x-auto">
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="feedback">Feedback</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="market">Market Insights</TabsTrigger>
+              <TabsTrigger value="categories">Equipment Data</TabsTrigger>
+              <TabsTrigger value="financing">Financing</TabsTrigger>
+              <TabsTrigger value="marketing">Marketing</TabsTrigger>
+            </TabsList>
+          )}
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4">

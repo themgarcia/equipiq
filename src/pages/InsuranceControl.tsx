@@ -10,16 +10,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInsurance } from '@/hooks/useInsurance';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { useDeviceType } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { InsuranceMetricsRow } from '@/components/insurance/InsuranceMetricsRow';
 import { InsuredRegisterTab } from '@/components/insurance/InsuredRegisterTab';
 import { PendingChangesTab } from '@/components/insurance/PendingChangesTab';
 import { UnreviewedAssetsTab } from '@/components/insurance/UnreviewedAssetsTab';
 import { InsuranceSettingsTab } from '@/components/insurance/InsuranceSettingsTab';
+import { MobileTabSelect } from '@/components/MobileTabSelect';
 
 export default function InsuranceControl() {
   const { user } = useAuth();
   const { equipment } = useEquipment();
+  const deviceType = useDeviceType();
+  const isMobile = deviceType === 'phone';
   const {
     loading,
     settings,
@@ -37,6 +41,7 @@ export default function InsuranceControl() {
     applyPolicyImport,
   } = useInsurance();
 
+  const [activeTab, setActiveTab] = useState('register');
   const [userProfile, setUserProfile] = useState<{
     fullName: string;
     companyName: string;
@@ -45,6 +50,13 @@ export default function InsuranceControl() {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [extractedPolicyData, setExtractedPolicyData] = useState<ExtractedPolicyData | null>(null);
+
+  const tabOptions = [
+    { value: 'register', label: 'Insured List' },
+    { value: 'changes', label: 'Pending Changes', badge: pendingChanges.length },
+    { value: 'unreviewed', label: 'Unreviewed', badge: unreviewedEquipment.length },
+    { value: 'settings', label: 'Settings' },
+  ];
 
   // Fetch user profile for email templates
   useEffect(() => {
@@ -104,29 +116,38 @@ export default function InsuranceControl() {
             <InsuranceMetricsRow metrics={metrics} />
 
             {/* Tabs */}
-            <Tabs defaultValue="register" className="space-y-4">
-              <TabsList className="w-full justify-start overflow-x-auto">
-              <TabsTrigger value="register">
-                  Insured List
-                </TabsTrigger>
-                <TabsTrigger value="changes" className="relative">
-                  Pending Changes
-                  {pendingChanges.length > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium bg-amber-500 text-white rounded-full">
-                      {pendingChanges.length}
-                    </span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="unreviewed" className="relative">
-                  Unreviewed
-                  {unreviewedEquipment.length > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium bg-muted-foreground text-muted rounded-full">
-                      {unreviewedEquipment.length}
-                    </span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
-              </TabsList>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              {isMobile ? (
+                <MobileTabSelect
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                  tabs={tabOptions}
+                  className="w-full"
+                />
+              ) : (
+                <TabsList className="w-full justify-start overflow-x-auto">
+                  <TabsTrigger value="register">
+                    Insured List
+                  </TabsTrigger>
+                  <TabsTrigger value="changes" className="relative">
+                    Pending Changes
+                    {pendingChanges.length > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium bg-amber-500 text-white rounded-full">
+                        {pendingChanges.length}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="unreviewed" className="relative">
+                    Unreviewed
+                    {unreviewedEquipment.length > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium bg-muted-foreground text-muted rounded-full">
+                        {unreviewedEquipment.length}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="settings">Settings</TabsTrigger>
+                </TabsList>
+              )}
 
               <TabsContent value="register">
                 <InsuredRegisterTab
