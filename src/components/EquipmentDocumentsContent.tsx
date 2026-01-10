@@ -20,6 +20,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface EquipmentDocumentsContentProps {
   equipmentId: string;
@@ -70,6 +76,7 @@ export function EquipmentDocumentsContent({
   const [notes, setNotes] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<EquipmentDocument | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<DocumentWithPreview | null>(null);
 
   const loadDocuments = useCallback(async () => {
     setLoading(true);
@@ -169,20 +176,27 @@ export function EquipmentDocumentsContent({
   };
 
   const renderThumbnail = (doc: DocumentWithPreview) => {
-    if (doc.previewUrl && doc.fileType.includes('image')) {
+    const isImage = doc.fileType.includes('image');
+    const canPreview = isImage && doc.previewUrl;
+    
+    if (doc.previewUrl && isImage) {
       return (
-        <div className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => setLightboxImage(doc)}
+          className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+          title="Click to view full size"
+        >
           <img 
             src={doc.previewUrl} 
             alt={doc.fileName}
             className="w-full h-full object-cover"
             onError={(e) => {
-              // Fallback to icon on error
               e.currentTarget.style.display = 'none';
               e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl flex items-center justify-center w-full h-full">🖼️</span>';
             }}
           />
-        </div>
+        </button>
       );
     }
     
@@ -348,6 +362,26 @@ export function EquipmentDocumentsContent({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Lightbox */}
+      <Dialog open={!!lightboxImage} onOpenChange={(open) => !open && setLightboxImage(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle className="text-sm font-medium truncate pr-8">
+              {lightboxImage?.fileName}
+            </DialogTitle>
+          </DialogHeader>
+          {lightboxImage?.previewUrl && (
+            <div className="flex items-center justify-center p-4 pt-0 max-h-[calc(90vh-80px)] overflow-auto">
+              <img
+                src={lightboxImage.previewUrl}
+                alt={lightboxImage.fileName}
+                className="max-w-full max-h-full object-contain rounded"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
