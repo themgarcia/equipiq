@@ -75,17 +75,13 @@ export default function InsuranceControl() {
     <Layout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <ShieldCheck className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Insurance Control</h1>
-              <p className="text-muted-foreground">
-                Manage insured equipment and communicate changes to your broker
-              </p>
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <div className="accent-line mb-4" />
+            <h1 className="text-3xl font-bold">Insurance Control</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage insured equipment and communicate changes to your broker
+            </p>
           </div>
           <Button variant="outline" onClick={() => setImportModalOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />

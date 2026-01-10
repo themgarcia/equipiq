@@ -113,7 +113,7 @@ const allNavItems = navigationGroups.flatMap(group => group.items);
 // Feedback is separate - shown in footer
 const feedbackItem = { name: 'Feedback', href: '/feedback', icon: MessageSquare };
 
-function SidebarToggleButton() {
+function SidebarToggleButton({ className }: { className?: string }) {
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
   
@@ -122,7 +122,10 @@ function SidebarToggleButton() {
       variant="ghost"
       size="icon"
       onClick={toggleSidebar}
-      className="h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+      className={cn(
+        "h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
+        className
+      )}
     >
       {isCollapsed ? (
         <PanelLeft className="h-4 w-4" />
@@ -158,7 +161,7 @@ function AppSidebar() {
               <h1 className="text-sm font-semibold text-sidebar-foreground">equipIQ</h1>
             </>
           )}
-          <SidebarToggleButton />
+          <SidebarToggleButton className={!isCollapsed ? "ml-auto" : undefined} />
         </div>
       </SidebarHeader>
 
