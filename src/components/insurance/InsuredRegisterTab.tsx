@@ -211,7 +211,7 @@ export function InsuredRegisterTab({
 
       {/* Edit Insurance Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-4 sm:mx-auto overflow-hidden">
           <DialogHeader>
             <DialogTitle>{selectedEquipment?.name}</DialogTitle>
             <DialogDescription>
@@ -263,7 +263,7 @@ export function InsuredRegisterTab({
             </div>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
             <Button
               variant="destructive"
               onClick={handleRemove}
