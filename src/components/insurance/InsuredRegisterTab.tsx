@@ -27,6 +27,7 @@ export function InsuredRegisterTab({ equipment, settings, userProfile }: Insured
   const [emailModalOpen, setEmailModalOpen] = useState(false);
 
   const totalValue = equipment.reduce((sum, e) => sum + e.declaredValue, 0);
+  const totalPurchasePrice = equipment.reduce((sum, e) => sum + e.purchasePrice, 0);
 
   const handleCopyRegister = () => {
     const template = generateFullRegisterTemplate(equipment, {
@@ -59,15 +60,15 @@ export function InsuredRegisterTab({ equipment, settings, userProfile }: Insured
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <CardTitle>Insured Equipment Register</CardTitle>
+            <CardTitle>Insured Equipment List</CardTitle>
             <CardDescription>
-              {equipment.length} items • ${totalValue.toLocaleString()} total declared value
+              {equipment.length} items • ${totalPurchasePrice.toLocaleString()} total purchase price • ${totalValue.toLocaleString()} total declared value
             </CardDescription>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleCopyRegister} disabled={equipment.length === 0}>
               <Copy className="h-4 w-4 mr-2" />
-              Copy Full Register
+              Copy Full List
             </Button>
             <Button 
               variant="secondary" 
@@ -94,6 +95,7 @@ export function InsuredRegisterTab({ equipment, settings, userProfile }: Insured
                   <TableHead>Equipment</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Serial/VIN</TableHead>
+                  <TableHead className="text-right">Purchase Price</TableHead>
                   <TableHead className="text-right">Declared Value</TableHead>
                   <TableHead>Financing</TableHead>
                   <TableHead>Notes</TableHead>
@@ -105,6 +107,9 @@ export function InsuredRegisterTab({ equipment, settings, userProfile }: Insured
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell className="text-muted-foreground">{item.category}</TableCell>
                     <TableCell className="font-mono text-sm">{item.serialVin || '—'}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      ${item.purchasePrice.toLocaleString()}
+                    </TableCell>
                     <TableCell className="text-right font-medium">
                       ${item.declaredValue.toLocaleString()}
                     </TableCell>

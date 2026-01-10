@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Save, CheckCircle2, Upload } from 'lucide-react';
+import { Save, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { InsuranceSettings, ExtractedPolicyData } from '@/types/insurance';
-import { Equipment } from '@/types/equipment';
-import { format, differenceInDays, parseISO, addDays } from 'date-fns';
+import { InsuranceSettings } from '@/types/insurance';
+import { format, differenceInDays, parseISO } from 'date-fns';
 import { CloseTheLoopModal } from './CloseTheLoopModal';
-import { InsurancePolicyImport } from './InsurancePolicyImport';
-import { InsurancePolicyImportReview } from './InsurancePolicyImportReview';
 
 // Format phone number to (XXX) XXX-XXXX
 function formatPhoneNumber(value: string): string {
@@ -27,19 +23,12 @@ interface InsuranceSettingsTabProps {
   settings: InsuranceSettings | null;
   onSaveSettings: (updates: Partial<InsuranceSettings>) => Promise<void>;
   onCloseTheLoop: (policyNumber?: string, updates?: Partial<InsuranceSettings>) => Promise<void>;
-  onApplyPolicyImport: (
-    settingsUpdates: Partial<InsuranceSettings>,
-    matchedEquipmentUpdates: { id: string; declaredValue: number }[]
-  ) => Promise<void>;
-  existingEquipment: Equipment[];
 }
 
 export function InsuranceSettingsTab({
   settings,
   onSaveSettings,
   onCloseTheLoop,
-  onApplyPolicyImport,
-  existingEquipment,
 }: InsuranceSettingsTabProps) {
   const [formData, setFormData] = useState({
     brokerName: '',
@@ -52,9 +41,6 @@ export function InsuranceSettingsTab({
   });
   const [saving, setSaving] = useState(false);
   const [closeLoopModalOpen, setCloseLoopModalOpen] = useState(false);
-  const [importModalOpen, setImportModalOpen] = useState(false);
-  const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [extractedPolicyData, setExtractedPolicyData] = useState<ExtractedPolicyData | null>(null);
 
   useEffect(() => {
     if (settings) {
@@ -216,14 +202,10 @@ export function InsuranceSettingsTab({
         </Card>
 
         {/* Buttons */}
-        <div className="lg:col-span-2 flex gap-2">
+        <div className="lg:col-span-2">
           <Button onClick={handleSave} disabled={saving}>
             <Save className="h-4 w-4 mr-2" />
             {saving ? 'Saving...' : 'Save Settings'}
-          </Button>
-          <Button variant="outline" onClick={() => setImportModalOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Import from Policy
           </Button>
         </div>
       </div>
@@ -233,23 +215,6 @@ export function InsuranceSettingsTab({
         onOpenChange={setCloseLoopModalOpen}
         settings={settings}
         onConfirm={onCloseTheLoop}
-      />
-
-      <InsurancePolicyImport
-        open={importModalOpen}
-        onOpenChange={setImportModalOpen}
-        onPolicyExtracted={(data) => {
-          setExtractedPolicyData(data);
-          setReviewModalOpen(true);
-        }}
-      />
-
-      <InsurancePolicyImportReview
-        open={reviewModalOpen}
-        onOpenChange={setReviewModalOpen}
-        extractedData={extractedPolicyData}
-        existingEquipment={existingEquipment}
-        onApplyImport={onApplyPolicyImport}
       />
     </>
   );

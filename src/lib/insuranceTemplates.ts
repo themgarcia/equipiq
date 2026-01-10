@@ -72,19 +72,21 @@ ${context.userEmail}`;
 }
 
 /**
- * Generate a full insured equipment register for broker communication
+ * Generate a full insured equipment list for broker communication
  */
 export function generateFullRegisterTemplate(
   equipment: InsuredEquipment[],
   context: TemplateContext
 ): string {
   const totalValue = equipment.reduce((sum, e) => sum + e.declaredValue, 0);
+  const totalPurchasePrice = equipment.reduce((sum, e) => sum + e.purchasePrice, 0);
 
   let template = `Hi ${context.brokerName || 'there'},
 
-Please find our complete insured equipment register for policy review:
+Please find our complete insured equipment list for policy review:
 
-INSURED EQUIPMENT (${equipment.length} items)
+INSURED EQUIPMENT LIST (${equipment.length} items)
+Total Purchase Price: $${totalPurchasePrice.toLocaleString()}
 Total Declared Value: $${totalValue.toLocaleString()}
 
 `;
@@ -95,6 +97,7 @@ Total Declared Value: $${totalValue.toLocaleString()}
     if (item.serialVin) {
       template += `   Serial/VIN: ${item.serialVin}\n`;
     }
+    template += `   Purchase Price: $${item.purchasePrice.toLocaleString()}\n`;
     template += `   Declared Value: $${item.declaredValue.toLocaleString()}\n`;
     template += `   Financing: ${formatFinancingType(item.financingType)}\n`;
     if (item.insuranceNotes) {
@@ -122,10 +125,10 @@ export function generateChangeEmailSubject(companyName: string): string {
 }
 
 /**
- * Generate email subject line for full register
+ * Generate email subject line for full list
  */
 export function generateRegisterEmailSubject(companyName: string): string {
-  return `Complete Insured Equipment Register - ${companyName}`;
+  return `Insured Equipment List - ${companyName}`;
 }
 
 function formatReason(reason: string): string {
