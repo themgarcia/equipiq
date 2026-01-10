@@ -135,7 +135,7 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           Identification
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label htmlFor="category">Category *</Label>
             <Select 
@@ -232,7 +232,7 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
             />
           </div>
 
-          <div className="sm:col-span-2">
+          <div>
             <Label htmlFor="serialVin">Serial / VIN (optional)</Label>
             <Input
               id="serialVin"
@@ -248,7 +248,7 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           Cost Basis
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label htmlFor="purchaseDate">Purchase Date</Label>
             <Input
@@ -307,7 +307,7 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           Allocation
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label htmlFor="allocationType">Allocation Type</Label>
             <Select 
@@ -362,7 +362,7 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           Replacement & Resale
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label htmlFor="replacementCostNew">Replacement Cost (Today)</Label>
             <Input
@@ -405,7 +405,7 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             Disposal
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <Label htmlFor="saleDate">Sale Date</Label>
               <Input
@@ -444,7 +444,7 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <Label htmlFor="financingType">Financing Type</Label>
               <Select 
