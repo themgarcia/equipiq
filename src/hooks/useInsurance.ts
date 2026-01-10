@@ -277,6 +277,126 @@ export function useInsurance() {
     }
   }, [user, fetchInsuredEquipment, fetchUnreviewedEquipment, toast]);
 
+  // Update insured equipment (declared value and notes)
+  const updateInsuredEquipment = useCallback(async (
+    equipmentId: string,
+    declaredValue: number,
+    notes?: string
+  ) => {
+    if (!user) return;
+
+    try {
+      const { data: equipment, error: fetchError } = await supabase
+        .from('equipment')
+        .select('name, insurance_declared_value')
+        .eq('id', equipmentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const previousValue = Number(equipment.insurance_declared_value) || 0;
+      const valueChanged = previousValue !== declaredValue;
+
+      // Update equipment
+      const { error: updateError } = await supabase
+        .from('equipment')
+        .update({
+          insurance_declared_value: declaredValue,
+          insurance_notes: notes || null,
+          insurance_reviewed_at: new Date().toISOString(),
+        })
+        .eq('id', equipmentId)
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Create change log entry if value changed
+      if (valueChanged) {
+        await supabase
+          .from('insurance_change_log')
+          .insert({
+            user_id: user.id,
+            equipment_id: equipmentId,
+            equipment_name: equipment.name,
+            change_type: 'updated',
+            reason: 'value_change',
+            previous_declared_value: previousValue,
+            new_declared_value: declaredValue,
+            effective_date: new Date().toISOString().split('T')[0],
+            status: 'pending',
+          });
+      }
+
+      await Promise.all([fetchInsuredEquipment(), fetchChangeLogs()]);
+
+      toast({
+        title: "Insurance updated",
+        description: `${equipment.name} has been updated.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to update insurance",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  }, [user, fetchInsuredEquipment, fetchChangeLogs, toast]);
+
+  // Remove equipment from insurance (move back to unreviewed)
+  const removeFromInsurance = useCallback(async (equipmentId: string) => {
+    if (!user) return;
+
+    try {
+      const { data: equipment, error: fetchError } = await supabase
+        .from('equipment')
+        .select('name, insurance_declared_value')
+        .eq('id', equipmentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update equipment - set is_insured to null (unreviewed)
+      const { error: updateError } = await supabase
+        .from('equipment')
+        .update({
+          is_insured: null,
+          insurance_reviewed_at: null,
+        })
+        .eq('id', equipmentId)
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Create change log entry for removal
+      await supabase
+        .from('insurance_change_log')
+        .insert({
+          user_id: user.id,
+          equipment_id: equipmentId,
+          equipment_name: equipment.name,
+          change_type: 'removed',
+          reason: 'removed_from_policy',
+          previous_declared_value: Number(equipment.insurance_declared_value) || null,
+          new_declared_value: null,
+          effective_date: new Date().toISOString().split('T')[0],
+          status: 'pending',
+        });
+
+      await Promise.all([fetchInsuredEquipment(), fetchUnreviewedEquipment(), fetchChangeLogs()]);
+
+      toast({
+        title: "Equipment removed",
+        description: `${equipment.name} has been removed from your insured list.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to remove equipment",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  }, [user, fetchInsuredEquipment, fetchUnreviewedEquipment, fetchChangeLogs, toast]);
+
   // Update change log status
   const updateChangeStatus = useCallback(async (changeId: string, status: 'sent' | 'confirmed') => {
     if (!user) return;
@@ -466,6 +586,8 @@ export function useInsurance() {
       saveSettings: async () => { blockDemoAction(); },
       markAsInsured: async () => { blockDemoAction(); },
       excludeFromInsurance: async () => { blockDemoAction(); },
+      updateInsuredEquipment: async () => { blockDemoAction(); },
+      removeFromInsurance: async () => { blockDemoAction(); },
       updateChangeStatus: async () => { blockDemoAction(); },
       markAllAsSent: async () => { blockDemoAction(); },
       closeTheLoop: async () => { blockDemoAction(); },
@@ -485,6 +607,8 @@ export function useInsurance() {
     saveSettings,
     markAsInsured,
     excludeFromInsurance,
+    updateInsuredEquipment,
+    removeFromInsurance,
     updateChangeStatus,
     markAllAsSent,
     closeTheLoop,

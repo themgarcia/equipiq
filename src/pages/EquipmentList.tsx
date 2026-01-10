@@ -24,12 +24,6 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -41,7 +35,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight, User, Building2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight, User, Building2 } from 'lucide-react';
 import { Equipment, EquipmentStatus, EquipmentCalculated } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
 import { Badge } from '@/components/ui/badge';
@@ -277,7 +271,7 @@ export default function EquipmentList() {
             />
           ) : (
             <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-              <TabsList className="w-full justify-start overflow-x-auto">
+              <TabsList className="h-auto flex-wrap justify-start gap-1">
                 <TabsTrigger value="Active">Active</TabsTrigger>
                 <TabsTrigger value="Sold">Sold</TabsTrigger>
                 <TabsTrigger value="Retired">Retired</TabsTrigger>
@@ -371,7 +365,6 @@ export default function EquipmentList() {
                               </TableHead>
                               <TableHead className="table-header-cell w-[80px] text-right hidden sm:table-cell">Years Left</TableHead>
                               <TableHead className="table-header-cell w-[120px] text-right hidden md:table-cell">Replacement</TableHead>
-                              <TableHead className="table-header-cell w-[50px]"></TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -381,7 +374,7 @@ export default function EquipmentList() {
                               const isAttachmentsExpanded = expandedAttachments.has(equipment.id);
                               return (
                                 <>
-                                  <TableRow key={equipment.id} className="group hover:bg-muted/30">
+                                  <TableRow key={equipment.id} className="group hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedEquipmentForSheet(equipment)}>
                                     <TableCell>
                                       <div className="flex items-center gap-2">
                                         {hasAttachments && (
@@ -450,40 +443,6 @@ export default function EquipmentList() {
                                     <TableCell className="w-[120px] text-right font-mono-nums hidden md:table-cell">
                                       {formatCurrency(equipment.replacementCostUsed)}
                                     </TableCell>
-                                    <TableCell className="w-[50px]">
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-8 w-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                                          >
-                                            <MoreHorizontal className="h-4 w-4" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem onClick={() => handleEdit(equipment)}>
-                                            <Pencil className="h-4 w-4 mr-2" />
-                                            Edit
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem onClick={() => handleOpenDocuments(equipment)}>
-                                            <FileText className="h-4 w-4 mr-2" />
-                                            Documents
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem onClick={() => handleOpenAttachments(equipment)}>
-                                            <Package className="h-4 w-4 mr-2" />
-                                            Attachments
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem 
-                                            onClick={() => handleDelete(equipment.id)}
-                                            className="text-destructive"
-                                          >
-                                            <Trash2 className="h-4 w-4 mr-2" />
-                                            Delete
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    </TableCell>
                                   </TableRow>
                                   {/* Collapsible attachment rows */}
                                   {hasAttachments && isAttachmentsExpanded && equipmentAttachments.map(attachment => (
@@ -508,7 +467,6 @@ export default function EquipmentList() {
                                       <TableCell className="w-[110px]"></TableCell>
                                       <TableCell className="w-[80px]"></TableCell>
                                       <TableCell className="w-[120px]"></TableCell>
-                                      <TableCell className="w-[50px]"></TableCell>
                                     </TableRow>
                                   ))}
                                 </>
