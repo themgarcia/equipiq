@@ -77,6 +77,12 @@ export interface Equipment {
   
   // Purchase condition
   purchaseCondition: PurchaseCondition;
+  
+  // Insurance
+  isInsured?: boolean;
+  insuranceDeclaredValue?: number;
+  insuranceNotes?: string;
+  insuranceReviewedAt?: string;
 }
 
 // Calculated fields (derived from Equipment)
