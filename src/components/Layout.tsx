@@ -69,7 +69,7 @@ interface LayoutProps {
 
 const navigationGroups = [
   {
-    label: '', // Primary items - no label needed
+    label: 'Overview',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Equipment', href: '/equipment', icon: Package },
@@ -142,19 +142,8 @@ function AppSidebar() {
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
-  // Add admin item to reference group if in admin mode
-  const groups = adminModeActive
-    ? [
-        ...navigationGroups.slice(0, -1),
-        {
-          ...navigationGroups[navigationGroups.length - 1],
-          items: [
-            ...navigationGroups[navigationGroups.length - 1].items,
-            { name: 'Admin', href: '/admin', icon: Shield }
-          ]
-        }
-      ]
-    : navigationGroups;
+  // Use standard navigation groups (Admin moved to footer)
+  const groups = navigationGroups;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -166,10 +155,7 @@ function AppSidebar() {
           {!isCollapsed && (
             <>
               <EquipIQIcon size="lg" className="flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <h1 className="text-sm font-semibold text-sidebar-foreground truncate">equipIQ</h1>
-                <p className="text-xs text-sidebar-foreground/60 truncate">Equipment intelligence for contractors</p>
-              </div>
+              <h1 className="text-sm font-semibold text-sidebar-foreground">equipIQ</h1>
             </>
           )}
           <SidebarToggleButton />
@@ -256,6 +242,37 @@ function AppSidebar() {
               </TooltipContent>
             )}
           </Tooltip>
+
+          {/* Admin Link - only when admin mode is active */}
+          {adminModeActive && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === '/admin'}
+                  className={cn(
+                    'transition-all',
+                    location.pathname === '/admin'
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  )}
+                >
+                  <Link to="/admin">
+                    <Shield className={cn(
+                      'h-5 w-5 flex-shrink-0',
+                      location.pathname === '/admin' ? 'text-sidebar-primary' : 'text-sidebar-foreground/50'
+                    )} />
+                    <span>Admin</span>
+                  </Link>
+                </SidebarMenuButton>
+              </TooltipTrigger>
+              {isCollapsed && (
+                <TooltipContent side="right">
+                  Admin
+                </TooltipContent>
+              )}
+            </Tooltip>
+          )}
           
           {/* Demo Mode Controls - only show when sidebar is expanded and admin mode is active */}
           {!isCollapsed && adminModeActive && <DemoModeControls />}
@@ -324,12 +341,6 @@ function AppSidebar() {
           </DropdownMenu>
 
           {!isCollapsed && <ThemeToggle />}
-
-          {!isCollapsed && (
-            <p className="text-xs text-sidebar-foreground/50">
-              Designed for contractors.
-            </p>
-          )}
         </div>
       </SidebarFooter>
     </Sidebar>
@@ -342,19 +353,8 @@ function PhoneHeader() {
   const { isAdmin, adminModeActive, toggleAdminMode } = useAdminMode();
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
-  // Build navigation groups with admin item if in admin mode
-  const groups = adminModeActive
-    ? [
-        ...navigationGroups.slice(0, -1),
-        {
-          ...navigationGroups[navigationGroups.length - 1],
-          items: [
-            ...navigationGroups[navigationGroups.length - 1].items,
-            { name: 'Admin', href: '/admin', icon: Shield }
-          ]
-        }
-      ]
-    : navigationGroups;
+  // Use standard navigation groups (Admin moved to footer)
+  const groups = navigationGroups;
 
   return (
     <header className="sticky top-0 z-50 h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4">
@@ -373,10 +373,7 @@ function PhoneHeader() {
             {/* Logo */}
             <div className="flex h-16 items-center gap-3 px-6 border-b border-sidebar-border">
               <EquipIQIcon size="lg" />
-              <div>
-                <h1 className="text-sm font-semibold text-sidebar-foreground">equipIQ</h1>
-                <p className="text-xs text-sidebar-foreground/60">Equipment intelligence for contractors</p>
-              </div>
+              <h1 className="text-sm font-semibold text-sidebar-foreground">equipIQ</h1>
             </div>
 
             {/* Navigation - Grouped */}
@@ -434,6 +431,24 @@ function PhoneHeader() {
                 <span className="flex-1">{feedbackItem.name}</span>
               </Link>
               
+              {/* Admin Link - only when admin mode is active */}
+              {adminModeActive && (
+                <Link
+                  to="/admin"
+                  className={cn(
+                    'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
+                    location.pathname === '/admin'
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  )}
+                >
+                  <Shield className={cn(
+                    'h-5 w-5 flex-shrink-0 transition-colors',
+                    location.pathname === '/admin' ? 'text-sidebar-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70'
+                  )} />
+                  <span className="flex-1">Admin</span>
+                </Link>
+              )}
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -494,12 +509,6 @@ function PhoneHeader() {
               </DropdownMenu>
 
               <ThemeToggle />
-
-              <p className="text-xs text-sidebar-foreground/50">
-                Designed for contractors.
-                <br />
-                No accounting expertise required.
-              </p>
             </div>
           </div>
         </SheetContent>
