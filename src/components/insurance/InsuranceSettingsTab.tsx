@@ -9,6 +9,17 @@ import { InsuranceSettings } from '@/types/insurance';
 import { format, differenceInDays, parseISO, addDays } from 'date-fns';
 import { CloseTheLoopModal } from './CloseTheLoopModal';
 
+// Format phone number to (XXX) XXX-XXXX
+function formatPhoneNumber(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  const limited = digits.slice(0, 10);
+  
+  if (limited.length === 0) return '';
+  if (limited.length <= 3) return `(${limited}`;
+  if (limited.length <= 6) return `(${limited.slice(0, 3)}) ${limited.slice(3)}`;
+  return `(${limited.slice(0, 3)}) ${limited.slice(3, 6)}-${limited.slice(6)}`;
+}
+
 interface InsuranceSettingsTabProps {
   settings: InsuranceSettings | null;
   onSaveSettings: (updates: Partial<InsuranceSettings>) => Promise<void>;
@@ -38,7 +49,7 @@ export function InsuranceSettingsTab({
         brokerName: settings.brokerName || '',
         brokerCompany: settings.brokerCompany || '',
         brokerEmail: settings.brokerEmail || '',
-        brokerPhone: settings.brokerPhone || '',
+        brokerPhone: formatPhoneNumber(settings.brokerPhone || ''),
         policyNumber: settings.policyNumber || '',
         policyRenewalDate: settings.policyRenewalDate || '',
         renewalReminderDays: settings.renewalReminderDays || 60,
@@ -117,7 +128,7 @@ export function InsuranceSettingsTab({
                 id="brokerPhone"
                 type="tel"
                 value={formData.brokerPhone}
-                onChange={(e) => setFormData(prev => ({ ...prev, brokerPhone: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, brokerPhone: formatPhoneNumber(e.target.value) }))}
                 placeholder="(555) 123-4567"
               />
             </div>
