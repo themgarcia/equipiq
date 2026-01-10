@@ -231,15 +231,15 @@ export function InsurancePolicyImportReview({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-3xl h-[90vh] p-0 flex flex-col gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4 flex-shrink-0">
           <DialogTitle>Review Imported Policy Data</DialogTitle>
           <DialogDescription>
             Review and edit the extracted information before applying to your settings and equipment.
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
+        <div className="flex-1 overflow-y-auto px-6 min-h-0">
           <div className="space-y-6 pb-4">
             {/* Broker & Policy Info */}
             <div className="grid gap-4 md:grid-cols-2">
