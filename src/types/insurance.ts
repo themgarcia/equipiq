@@ -1,4 +1,4 @@
-// Insurance Control Types
+// Insurance Types
 
 export type InsuranceChangeType = 'added' | 'removed' | 'value_changed';
 export type InsuranceChangeReason = 'sold' | 'retired' | 'lost' | 'traded' | 'new_equipment' | 'manual';
