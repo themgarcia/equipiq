@@ -98,10 +98,11 @@ const navigationGroups = [
   },
 ];
 
-// Content header with notification bell
+// Content header with theme toggle and notification bell
 function ContentHeader() {
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center justify-end gap-2 border-b bg-background px-4 md:px-6">
+    <header className="sticky top-0 z-40 flex h-14 items-center justify-end gap-1 border-b bg-background px-4 md:px-6">
+      <ThemeToggle variant="icon" />
       <NotificationBell />
     </header>
   );
@@ -343,7 +344,6 @@ function AppSidebar() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {!isCollapsed && <ThemeToggle />}
         </div>
       </SidebarFooter>
     </Sidebar>
@@ -365,7 +365,10 @@ function PhoneHeader() {
         <EquipIQIcon size="md" className="h-8 w-8" />
         <span className="text-sm font-semibold text-sidebar-foreground">equipIQ</span>
       </div>
-      <Sheet>
+      <div className="flex items-center gap-1">
+        <ThemeToggle variant="icon" />
+        <NotificationBell />
+        <Sheet>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="text-sidebar-foreground">
             <Menu className="h-5 w-5" />
@@ -511,11 +514,11 @@ function PhoneHeader() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <ThemeToggle />
             </div>
           </div>
         </SheetContent>
       </Sheet>
+      </div>
     </header>
   );
 }
