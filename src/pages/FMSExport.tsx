@@ -87,7 +87,7 @@ const columns: ColumnConfig[] = [
 export default function FMSExport() {
   const { calculatedEquipment, attachmentsByEquipmentId } = useEquipment();
   const deviceType = useDeviceType();
-  const isMobile = deviceType === 'phone';
+  const isMobile = deviceType === 'phone' || deviceType === 'tablet';
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
   const [sortColumn, setSortColumn] = useState<ColumnKey>('equipmentName');
