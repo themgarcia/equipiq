@@ -22,12 +22,13 @@ export function EquipIQIcon({ size = 'md', className }: EquipIQIconProps) {
     <div
       className={cn(
         sizeClasses[size],
-        'flex items-center justify-center rounded bg-primary font-bold',
+        'flex items-center justify-center rounded font-bold',
+        'bg-[hsl(38,92%,50%)]', // Always amber background (dark mode brand)
         className
       )}
     >
-      <span className="text-primary-foreground">E</span>
-      <sup className={cn('text-primary-foreground font-semibold -ml-0.5', supSizeClasses[size])}>iq</sup>
+      <span className="text-[hsl(215,25%,15%)]">E</span>
+      <sup className={cn('text-[hsl(215,25%,15%)] font-semibold -ml-0.5', supSizeClasses[size])}>iq</sup>
     </div>
   );
 }
