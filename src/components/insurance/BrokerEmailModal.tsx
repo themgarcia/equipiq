@@ -9,6 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { InsuranceChangeLog, InsuranceSettings, InsuredEquipment } from '@/types/insurance';
@@ -158,14 +164,25 @@ export function BrokerEmailModal({
             <Copy className="h-4 w-4 mr-2" />
             Copy to Clipboard
           </Button>
-          <Button 
-            variant="secondary" 
-            onClick={handleSendEmail} 
-            disabled={sending || !settings?.brokerEmail}
-          >
-            <Send className="h-4 w-4 mr-2" />
-            {sending ? 'Sending...' : 'Send Email (CC me)'}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button 
+                    variant="secondary" 
+                    disabled
+                    className="opacity-50 cursor-not-allowed"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Email (CC me)
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming Soon</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </DialogFooter>
       </DialogContent>
     </Dialog>
