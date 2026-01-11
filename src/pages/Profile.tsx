@@ -27,7 +27,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Save, User, Building2 } from 'lucide-react';
+import { Loader2, Save, User, Building2, AlertTriangle } from 'lucide-react';
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 import {
   industryOptions,
   fieldEmployeesOptions,
@@ -390,6 +391,30 @@ export default function Profile() {
             </Button>
           </form>
         </Form>
+
+        {/* Danger Zone */}
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Danger Zone
+            </CardTitle>
+            <CardDescription>
+              Irreversible account actions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">Delete Account</p>
+                <p className="text-sm text-muted-foreground">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+              </div>
+              <DeleteAccountDialog />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );
