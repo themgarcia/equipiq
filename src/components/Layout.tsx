@@ -199,7 +199,11 @@ function AppSidebar() {
                                 'h-5 w-5 flex-shrink-0',
                                 isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/50'
                               )} />
-                              <span>{item.name}</span>
+                              {isCollapsed ? (
+                                <span className="sr-only">{item.name}</span>
+                              ) : (
+                                <span>{item.name}</span>
+                              )}
                             </Link>
                           </SidebarMenuButton>
                         </TooltipTrigger>
@@ -238,7 +242,11 @@ function AppSidebar() {
                     'h-5 w-5 flex-shrink-0',
                     location.pathname === feedbackItem.href ? 'text-sidebar-primary' : 'text-sidebar-foreground/50'
                   )} />
-                  <span>{feedbackItem.name}</span>
+                  {isCollapsed ? (
+                    <span className="sr-only">{feedbackItem.name}</span>
+                  ) : (
+                    <span>{feedbackItem.name}</span>
+                  )}
                 </Link>
               </SidebarMenuButton>
             </TooltipTrigger>
@@ -268,7 +276,11 @@ function AppSidebar() {
                       'h-5 w-5 flex-shrink-0',
                       location.pathname === '/admin' ? 'text-sidebar-primary' : 'text-sidebar-foreground/50'
                     )} />
-                    <span>Admin</span>
+                    {isCollapsed ? (
+                      <span className="sr-only">Admin</span>
+                    ) : (
+                      <span>Admin</span>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </TooltipTrigger>
