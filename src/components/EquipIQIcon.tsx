@@ -13,9 +13,9 @@ export function EquipIQIcon({ size = 'md', className }: EquipIQIconProps) {
   };
 
   const supSizeClasses = {
-    sm: 'text-[0.5rem]',
-    md: 'text-[0.6rem]',
-    lg: 'text-[0.75rem]'
+    sm: 'text-[0.55rem]',
+    md: 'text-[0.7rem]',
+    lg: 'text-[0.85rem]'
   };
 
   return (
