@@ -26,6 +26,7 @@ import Feedback from "./pages/Feedback";
 import InsuranceControl from "./pages/InsuranceControl";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ConfirmDeleteAccount from "./pages/ConfirmDeleteAccount";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,7 +48,7 @@ const App = () => (
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/confirm-delete" element={<ConfirmDeleteAccount />} />
                   
                   {/* Protected routes */}
                   <Route path="/dashboard" element={
