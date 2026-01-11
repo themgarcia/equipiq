@@ -42,13 +42,13 @@ export default function Billing() {
             </Card>
           )}
 
-          {/* Open Beta Access Card */}
+          {/* Beta Plan Card */}
           <Card className="border-primary">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-3">
-                    Open Beta Access
+                    Beta Plan
                     <Badge className="bg-primary text-primary-foreground">
                       <Sparkles className="h-3 w-3 mr-1" />
                       Beta
