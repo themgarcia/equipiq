@@ -26,8 +26,8 @@ export function EquipIQIcon({ size = 'md', className }: EquipIQIconProps) {
         className
       )}
     >
-      <span className="text-accent">E</span>
-      <sup className={cn('text-accent font-semibold -ml-0.5', supSizeClasses[size])}>iq</sup>
+      <span className="text-primary-foreground">E</span>
+      <sup className={cn('text-primary-foreground font-semibold -ml-0.5', supSizeClasses[size])}>iq</sup>
     </div>
   );
 }
