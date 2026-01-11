@@ -30,6 +30,7 @@ import { calculateBuyVsRent, formatCurrency, formatDays, calculateRentalCostByTy
 import { cn } from '@/lib/utils';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
+import { BuyVsRentSkeleton } from '@/components/PageSkeletons';
 
 // Derive categories from categoryDefaults
 const categories: EquipmentCategory[] = categoryDefaults.map(c => c.category);
@@ -169,9 +170,7 @@ export default function BuyVsRentAnalysis() {
   if (subscription.loading) {
     return (
       <Layout>
-        <div className="p-8 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <BuyVsRentSkeleton />
       </Layout>
     );
   }

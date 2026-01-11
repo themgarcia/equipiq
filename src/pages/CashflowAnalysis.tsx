@@ -49,6 +49,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, Area, Tooltip, ComposedChart } from 'recharts';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
+import { CashflowSkeleton } from '@/components/PageSkeletons';
 
 type StatusFilter = 'all' | 'surplus' | 'neutral' | 'shortfall';
 type FinancingFilter = 'all' | 'owned' | 'financed' | 'leased';
@@ -294,9 +295,7 @@ export default function CashflowAnalysis() {
   if (subscription.loading) {
     return (
       <Layout>
-        <div className="p-8 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <CashflowSkeleton />
       </Layout>
     );
   }
@@ -364,9 +363,7 @@ export default function CashflowAnalysis() {
   if (loading) {
     return (
       <Layout>
-        <div className="p-8 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <CashflowSkeleton />
       </Layout>
     );
   }
