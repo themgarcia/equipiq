@@ -6,7 +6,7 @@ import { InsurancePolicyImport } from '@/components/insurance/InsurancePolicyImp
 import { InsurancePolicyImportReview } from '@/components/insurance/InsurancePolicyImportReview';
 import { Layout } from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
+import { InsuranceContentSkeleton } from '@/components/PageSkeletons';
 import { useInsurance } from '@/hooks/useInsurance';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEquipment } from '@/contexts/EquipmentContext';
@@ -104,14 +104,7 @@ export default function InsuranceControl() {
         </div>
 
         {loading ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map(i => (
-                <Skeleton key={i} className="h-24" />
-              ))}
-            </div>
-            <Skeleton className="h-64" />
-          </div>
+          <InsuranceContentSkeleton />
         ) : (
           <>
             {/* Metrics */}

@@ -20,9 +20,18 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
+import { DashboardSkeleton } from '@/components/PageSkeletons';
 
 export default function Dashboard() {
-  const { calculatedEquipment } = useEquipment();
+  const { calculatedEquipment, loading } = useEquipment();
+  
+  if (loading) {
+    return (
+      <Layout>
+        <DashboardSkeleton />
+      </Layout>
+    );
+  }
   
   const activeEquipment = calculatedEquipment.filter(e => e.status === 'Active');
   
