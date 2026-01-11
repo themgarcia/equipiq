@@ -733,59 +733,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const toggleBetaAccess = async (userId: string, enabled: boolean) => {
-    setTogglingBeta(userId);
-    try {
-      const targetUser = userStats.find(u => u.id === userId);
-
-      const upsertData = {
-        user_id: userId,
-        plan: 'free',
-        status: 'active',
-        beta_access: enabled,
-        beta_access_granted_at: enabled ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error } = await supabase
-        .from('subscriptions')
-        .upsert(upsertData, { onConflict: 'user_id' });
-
-      if (error) throw error;
-
-      // Log the action
-      await logAdminAction('beta_toggled', userId, targetUser?.email || 'Unknown', {
-        beta_access: enabled
-      });
-
-      // Update local state
-      setUserStats(prev => prev.map(user => 
-        user.id === userId 
-          ? { 
-              ...user, 
-              betaAccess: enabled, 
-              betaAccessGrantedAt: enabled ? new Date().toISOString() : null 
-            } 
-          : user
-      ));
-
-      toast({
-        title: enabled ? "Beta access granted" : "Beta access revoked",
-        description: enabled 
-          ? "User now has full Business tier access." 
-          : "User has been reverted to their subscription plan.",
-      });
-    } catch (error: any) {
-      console.error('Error toggling beta access:', error);
-      toast({
-        title: "Failed to update beta access",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setTogglingBeta(null);
-    }
-  };
+  // toggleBetaAccess removed - beta is now just a plan type
 
   const updateUserPlan = async (userId: string, newPlan: string) => {
     setChangingPlan(userId);
@@ -899,17 +847,17 @@ export default function AdminDashboard() {
     }).format(value);
   };
 
-  const getPlanBadgeVariant = (plan: string, betaAccess: boolean): "default" | "secondary" | "destructive" | "outline" => {
-    if (betaAccess) return "default";
+  const getPlanBadgeVariant = (plan: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (plan) {
       case 'business': return "default";
+      case 'beta': return "default";
       case 'professional': return "secondary";
       default: return "outline";
     }
   };
 
-  const formatPlanDisplay = (plan: string, interval: string | null, betaAccess: boolean): string => {
-    if (betaAccess && plan === 'free') return "Business (Beta)";
+  const formatPlanDisplay = (plan: string, interval: string | null): string => {
+    if (plan === 'beta') return 'Beta';
     
     const planName = plan === 'professional' ? 'Pro' : plan.charAt(0).toUpperCase() + plan.slice(1);
     
@@ -1041,9 +989,9 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-2 ml-3">
                           <Badge 
                             variant="outline" 
-                            className={`text-xs ${getPlanBadgeVariant(user.subscriptionPlan, user.betaAccess)}`}
+                            className={`text-xs ${getPlanBadgeVariant(user.subscriptionPlan)}`}
                           >
-                            {formatPlanDisplay(user.subscriptionPlan, user.billingInterval, user.betaAccess)}
+                            {formatPlanDisplay(user.subscriptionPlan, user.billingInterval)}
                           </Badge>
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
@@ -1082,9 +1030,9 @@ export default function AdminDashboard() {
                           <TableCell>
                             <Badge 
                               variant="outline" 
-                              className={`text-xs ${getPlanBadgeVariant(user.subscriptionPlan, user.betaAccess)}`}
+                              className={`text-xs ${getPlanBadgeVariant(user.subscriptionPlan)}`}
                             >
-                              {formatPlanDisplay(user.subscriptionPlan, user.billingInterval, user.betaAccess)}
+                              {formatPlanDisplay(user.subscriptionPlan, user.billingInterval)}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -1196,32 +1144,15 @@ export default function AdminDashboard() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="free">Free</SelectItem>
+                            <SelectItem value="beta">Beta</SelectItem>
                             <SelectItem value="professional">Professional</SelectItem>
                             <SelectItem value="business">Business</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
-                      {/* Toggles */}
+                      {/* Admin Toggle */}
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium">Beta Access</p>
-                            {selectedUserForSheet.betaAccess && selectedUserForSheet.betaAccessGrantedAt && (
-                              <p className="text-xs text-muted-foreground">
-                                Granted {format(new Date(selectedUserForSheet.betaAccessGrantedAt), 'MMM d, yyyy')}
-                              </p>
-                            )}
-                          </div>
-                          <Switch 
-                            checked={selectedUserForSheet.betaAccess}
-                            onCheckedChange={(checked) => {
-                              toggleBetaAccess(selectedUserForSheet.id, checked);
-                              setSelectedUserForSheet({ ...selectedUserForSheet, betaAccess: checked });
-                            }}
-                            disabled={togglingBeta === selectedUserForSheet.id}
-                          />
-                        </div>
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium">Admin Role</p>

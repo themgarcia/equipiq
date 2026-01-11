@@ -62,6 +62,22 @@ const DEMO_INSURANCE_SETTINGS: Record<SubscriptionPlan, InsuranceSettings> = {
     createdAt: '2024-01-15T00:00:00Z',
     updatedAt: '2024-12-01T00:00:00Z',
   },
+  beta: {
+    id: 'demo-settings-beta',
+    userId: 'demo-user',
+    brokerName: 'John Smith',
+    brokerCompany: 'ABC Insurance Brokerage',
+    brokerEmail: 'jsmith@abcinsurance.com',
+    brokerPhone: '(555) 123-4567',
+    policyNumber: 'EQ-2025-001234',
+    policyRenewalDate: getRenewalDate(30),
+    renewalReminderDays: 30,
+    renewalConfirmedAt: null,
+    lastPreRenewalReminderAt: null,
+    lastPostRenewalReminderAt: null,
+    createdAt: '2024-01-15T00:00:00Z',
+    updatedAt: '2024-12-01T00:00:00Z',
+  },
 };
 
 // Demo Insured Equipment - uses equipment from demoEquipmentData
@@ -193,6 +209,20 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
       insuranceReviewedAt: '2024-12-01T00:00:00Z',
     },
   ],
+  beta: [
+    // Beta uses same demo data as business
+    {
+      id: 'demo-1',
+      name: '2022 Kubota KX040-4',
+      category: 'Excavator – Compact (≤ 6 ton)',
+      serialVin: 'DEMO123456',
+      declaredValue: 55000,
+      purchasePrice: 58000,
+      financingType: 'financed',
+      insuranceNotes: 'Primary excavator - full coverage',
+      insuranceReviewedAt: '2024-11-15T00:00:00Z',
+    },
+  ],
 };
 
 // Demo Unreviewed Equipment
@@ -224,6 +254,19 @@ const DEMO_UNREVIEWED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = 
     },
   ],
   business: [
+    {
+      id: 'demo-4',
+      name: '2023 Big Tex 14ET',
+      category: 'Trailer',
+      serialVin: 'DEMO901234',
+      declaredValue: 8500,
+      purchasePrice: 8500,
+      financingType: 'owned',
+      insuranceNotes: null,
+      insuranceReviewedAt: null,
+    },
+  ],
+  beta: [
     {
       id: 'demo-4',
       name: '2023 Big Tex 14ET',
@@ -349,6 +392,24 @@ const DEMO_CHANGE_LOGS: Record<SubscriptionPlan, InsuranceChangeLog[]> = {
       sentAt: format(addDays(new Date(), -28), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
       confirmedAt: format(addDays(new Date(), -25), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
       createdAt: format(addDays(new Date(), -30), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+    },
+  ],
+  beta: [
+    // Beta uses same demo change logs as free
+    {
+      id: 'demo-change-1',
+      userId: 'demo-user',
+      equipmentId: 'demo-1',
+      equipmentName: '2022 Kubota KX040-4',
+      changeType: 'added',
+      reason: 'new_equipment',
+      previousDeclaredValue: null,
+      newDeclaredValue: 55000,
+      effectiveDate: format(addDays(new Date(), -5), 'yyyy-MM-dd'),
+      status: 'pending',
+      sentAt: null,
+      confirmedAt: null,
+      createdAt: format(addDays(new Date(), -5), "yyyy-MM-dd'T'HH:mm:ss'Z'"),
     },
   ],
 };

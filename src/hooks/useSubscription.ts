@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdminMode } from '@/contexts/AdminModeContext';
 import { DEMO_USAGE } from '@/data/demoEquipmentData';
 
-export type SubscriptionPlan = 'free' | 'professional' | 'business';
+export type SubscriptionPlan = 'free' | 'professional' | 'business' | 'beta';
 
 export interface PlanLimits {
   maxItems: number;
@@ -23,7 +23,6 @@ export interface SubscriptionState {
   subscriptionEnd: string | null;
   inGracePeriod: boolean;
   gracePeriodEndsAt: string | null;
-  hasBetaAccess: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -36,7 +35,7 @@ export interface UsageState {
   loading: boolean;
 }
 
-// Plan limits configuration
+// Plan limits configuration - beta has same access as business
 const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
   free: {
     maxItems: 5,
@@ -65,6 +64,15 @@ const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     hasPrioritySupport: true,
     aiParsingIncluded: true,
   },
+  beta: {
+    maxItems: Infinity,
+    maxStorageBytes: Infinity,
+    hasFullBuyVsRent: true,
+    hasCashflow: true,
+    hasEmailAlerts: true,
+    hasPrioritySupport: true,
+    aiParsingIncluded: true,
+  },
 };
 
 export function useSubscription() {
@@ -78,7 +86,6 @@ export function useSubscription() {
     subscriptionEnd: null,
     inGracePeriod: false,
     gracePeriodEndsAt: null,
-    hasBetaAccess: false,
     loading: true,
     error: null,
   });
@@ -100,7 +107,6 @@ export function useSubscription() {
         subscriptionEnd: null,
         inGracePeriod: false,
         gracePeriodEndsAt: null,
-        hasBetaAccess: false,
         loading: false,
         error: null,
       });
@@ -112,16 +118,16 @@ export function useSubscription() {
       
       if (error) throw error;
 
-      const effectivePlan = data.in_grace_period ? data.plan : (data.subscribed ? data.plan : 'free');
+      // Plan comes directly from the edge function now - no special beta_access handling needed
+      const plan = data.plan as SubscriptionPlan;
 
       setSubscription({
-        plan: effectivePlan,
+        plan,
         isSubscribed: data.subscribed,
         billingInterval: data.billing_interval || null,
         subscriptionEnd: data.subscription_end || null,
         inGracePeriod: data.in_grace_period || false,
         gracePeriodEndsAt: data.grace_period_ends_at || null,
-        hasBetaAccess: data.beta_access || false,
         loading: false,
         error: null,
       });
@@ -221,7 +227,7 @@ export function useSubscription() {
   const canUseCashflow = limits.hasCashflow || subscription.inGracePeriod;
   const hasEmailAlerts = limits.hasEmailAlerts;
   const hasPrioritySupport = limits.hasPrioritySupport;
-  const canUseAIParsing = limits.aiParsingIncluded || subscription.hasBetaAccess;
+  const canUseAIParsing = limits.aiParsingIncluded;
 
   const itemsRemaining = Math.max(0, limits.maxItems - effectiveUsage.totalItemCount);
   const storageRemaining = Math.max(0, limits.maxStorageBytes - effectiveUsage.storageUsedBytes);
@@ -249,7 +255,6 @@ export function useSubscription() {
     hasEmailAlerts,
     hasPrioritySupport,
     canUseAIParsing,
-    hasBetaAccess: subscription.hasBetaAccess,
 
     // Computed
     itemsRemaining,

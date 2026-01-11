@@ -144,6 +144,9 @@ export const DEMO_DOCUMENTS: Record<SubscriptionPlan, Record<string, EquipmentDo
       },
     ],
   },
+  beta: {
+    // Beta tier uses same demo documents as business
+  },
 };
 
 export function getDemoDocumentsForPlan(plan: SubscriptionPlan): Record<string, EquipmentDocument[]> {
@@ -309,6 +312,9 @@ export const DEMO_ATTACHMENTS: Record<SubscriptionPlan, Record<string, Equipment
       },
     ],
   },
+  beta: {
+    // Beta tier uses same demo attachments as business
+  },
 };
 
 export function getDemoAttachmentsForPlan(plan: SubscriptionPlan): Record<string, EquipmentAttachment[]> {
@@ -336,6 +342,13 @@ export const DEMO_USAGE: Record<SubscriptionPlan, UsageState> = {
     attachmentCount: 10,
     totalItemCount: 150,
     storageUsedBytes: 8 * 1024 * 1024 * 1024, // 8GB
+    loading: false,
+  },
+  beta: {
+    equipmentCount: 140,
+    attachmentCount: 10,
+    totalItemCount: 150,
+    storageUsedBytes: 8 * 1024 * 1024 * 1024, // 8GB - same as business
     loading: false,
   },
 };
@@ -617,6 +630,7 @@ export const DEMO_EQUIPMENT: Record<SubscriptionPlan, Equipment[]> = {
   free: FREE_TIER_EQUIPMENT,
   professional: PROFESSIONAL_TIER_EQUIPMENT,
   business: BUSINESS_TIER_EQUIPMENT,
+  beta: BUSINESS_TIER_EQUIPMENT, // Beta uses same demo data as business
 };
 
 export function getDemoEquipmentForPlan(plan: SubscriptionPlan): Equipment[] {
