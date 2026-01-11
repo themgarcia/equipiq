@@ -49,7 +49,7 @@ const defaultInput: BuyVsRentInput = {
 };
 
 export default function BuyVsRentAnalysis() {
-  const { canUseBuyVsRent, effectivePlan } = useSubscription();
+  const { canUseBuyVsRent, effectivePlan, subscription } = useSubscription();
   const [input, setInput] = useState<BuyVsRentInput>(defaultInput);
   const [selectedRateType, setSelectedRateType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
@@ -164,6 +164,17 @@ export default function BuyVsRentAnalysis() {
       case 'monthly': return `${formatCurrency(input.rentalRateMonthly!)}/month`;
     }
   };
+
+  // Show loading state while subscription is being fetched
+  if (subscription.loading) {
+    return (
+      <Layout>
+        <div className="p-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

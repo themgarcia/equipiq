@@ -215,7 +215,7 @@ function PaybackDialog({ equipment, calculated, open, onOpenChange }: PaybackDia
 
 export default function CashflowAnalysis() {
   const { equipment, calculatedEquipment, loading } = useEquipment();
-  const { canUseCashflow, effectivePlan } = useSubscription();
+  const { canUseCashflow, effectivePlan, subscription } = useSubscription();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [financingFilter, setFinancingFilter] = useState<FinancingFilter>('all');
   const [selectedEquipment, setSelectedEquipment] = useState<{
@@ -289,6 +289,17 @@ export default function CashflowAnalysis() {
       </Badge>
     );
   };
+  
+  // Show loading state while subscription is being fetched
+  if (subscription.loading) {
+    return (
+      <Layout>
+        <div className="p-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
+  }
   
   // Block access for free users - AFTER all hooks
   if (!canUseCashflow) {
