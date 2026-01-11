@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminMode } from '@/contexts/AdminModeContext';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 import { DemoModeControls } from '@/components/DemoModeControls';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
@@ -102,6 +103,7 @@ const navigationGroups = [
 function ContentHeader() {
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-end gap-1 border-b bg-background px-4 md:px-6">
+      <ThemeToggle variant="icon" />
       <NotificationBell />
     </header>
   );
@@ -365,6 +367,7 @@ function PhoneHeader() {
         <span className="text-sm font-semibold text-sidebar-foreground">equipIQ</span>
       </div>
       <div className="flex items-center gap-1">
+        <ThemeToggle variant="icon" />
         <NotificationBell />
         <Sheet>
         <SheetTrigger asChild>
