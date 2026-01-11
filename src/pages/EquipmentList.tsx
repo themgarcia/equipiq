@@ -51,6 +51,7 @@ import { Equipment, EquipmentStatus, EquipmentCalculated } from '@/types/equipme
 import { categoryDefaults } from '@/data/categoryDefaults';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { EquipmentListSkeleton } from '@/components/PageSkeletons';
 
 type SheetView = 'details' | 'edit' | 'documents' | 'attachments';
 
@@ -77,7 +78,7 @@ interface ExtractedEquipment {
 const statuses: EquipmentStatus[] = ['Active', 'Sold', 'Retired', 'Lost'];
 
 export default function EquipmentList() {
-  const { calculatedEquipment, addEquipment, updateEquipment, deleteEquipment, attachmentsByEquipmentId } = useEquipment();
+  const { calculatedEquipment, addEquipment, updateEquipment, deleteEquipment, attachmentsByEquipmentId, loading } = useEquipment();
   const { canUseAIParsing } = useSubscription();
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'phone';
@@ -228,6 +229,14 @@ export default function EquipmentList() {
       addEquipment(data);
     }
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <EquipmentListSkeleton />
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
