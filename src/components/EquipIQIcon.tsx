@@ -7,16 +7,27 @@ interface EquipIQIconProps {
 
 export function EquipIQIcon({ size = 'md', className }: EquipIQIconProps) {
   const sizeClasses = {
-    sm: 'h-6 w-6',
-    md: 'h-8 w-8',
-    lg: 'h-10 w-10'
+    sm: 'h-6 w-6 text-base',
+    md: 'h-8 w-8 text-xl',
+    lg: 'h-10 w-10 text-2xl'
+  };
+
+  const supSizeClasses = {
+    sm: 'text-[0.5rem]',
+    md: 'text-[0.6rem]',
+    lg: 'text-[0.75rem]'
   };
 
   return (
-    <img
-      src="/equipiq-icon-v2.png?v=3"
-      alt="equipIQ"
-      className={cn(sizeClasses[size], 'rounded', className)}
-    />
+    <div
+      className={cn(
+        sizeClasses[size],
+        'flex items-center justify-center rounded bg-primary font-bold',
+        className
+      )}
+    >
+      <span className="text-accent">E</span>
+      <sup className={cn('text-accent font-semibold -ml-0.5', supSizeClasses[size])}>iq</sup>
+    </div>
   );
 }
