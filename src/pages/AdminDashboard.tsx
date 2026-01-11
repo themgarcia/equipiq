@@ -1008,7 +1008,6 @@ export default function AdminDashboard() {
                         <TableHead>Joined</TableHead>
                         <TableHead>Plan</TableHead>
                         <TableHead>Source</TableHead>
-                        <TableHead className="text-center">Beta</TableHead>
                         <TableHead className="text-center">Admin</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1040,7 +1039,7 @@ export default function AdminDashboard() {
                               <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/30">
                                 Paid
                               </Badge>
-                            ) : user.betaAccess ? (
+                            ) : user.subscriptionPlan === 'beta' ? (
                               <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
                                 Beta
                               </Badge>
@@ -1050,13 +1049,6 @@ export default function AdminDashboard() {
                               </Badge>
                             ) : (
                               <span className="text-xs text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {user.betaAccess ? (
-                              <Check className="h-4 w-4 text-blue-600 mx-auto" />
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
                             )}
                           </TableCell>
                           <TableCell className="text-center">
