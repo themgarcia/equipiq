@@ -176,11 +176,11 @@ function AppSidebar() {
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu className={cn(isCollapsed && "items-center")}>
+              <SidebarMenu>
                 {group.items.map((item) => {
                   const isActive = location.pathname === item.href;
                   return (
-                    <SidebarMenuItem key={item.name} className={cn(isCollapsed && "flex justify-center")}>
+                    <SidebarMenuItem key={item.name} className={cn(isCollapsed && "w-full flex justify-center")}>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <SidebarMenuButton
@@ -188,7 +188,7 @@ function AppSidebar() {
                             isActive={isActive}
                             className={cn(
                               'transition-all',
-                              isCollapsed && 'justify-center',
+                              isCollapsed && 'w-8 justify-center',
                               isActive
                                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
