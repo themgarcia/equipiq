@@ -131,7 +131,7 @@ export function InsuredRegisterTab({
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden min-w-0 w-full">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
