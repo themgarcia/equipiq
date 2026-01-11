@@ -111,7 +111,7 @@ export default function InsuranceControl() {
             <InsuranceMetricsRow metrics={metrics} />
 
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 min-w-0">
               {isMobile ? (
                 <MobileTabSelect
                   value={activeTab}
