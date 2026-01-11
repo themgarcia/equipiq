@@ -269,24 +269,24 @@ export function InsuredRegisterTab({
             </div>
           </div>
 
-            <DialogFooter className="flex flex-col-reverse gap-2 pt-4">
-              <Button
-                variant="destructive"
-                onClick={handleRemove}
-                disabled={isSaving || !onRemoveFromInsurance}
-                className="w-full"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Remove from Insurance
-              </Button>
-              <Button variant="outline" onClick={() => setEditModalOpen(false)} disabled={isSaving} className="w-full">
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={isSaving || !onUpdateInsurance} className="w-full">
-                <Pencil className="h-4 w-4 mr-2" />
-                Save Changes
-              </Button>
-            </DialogFooter>
+          <DialogFooter className="flex flex-col-reverse gap-2 pt-4 sm:flex-col-reverse sm:space-x-0 sm:justify-start">
+            <Button
+              variant="destructive"
+              onClick={handleRemove}
+              disabled={isSaving || !onRemoveFromInsurance}
+              className="w-full"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Remove from Insurance
+            </Button>
+            <Button variant="outline" onClick={() => setEditModalOpen(false)} disabled={isSaving} className="w-full">
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving || !onUpdateInsurance} className="w-full">
+              <Pencil className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>
