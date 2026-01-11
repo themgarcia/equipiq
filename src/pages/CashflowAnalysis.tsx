@@ -223,67 +223,7 @@ export default function CashflowAnalysis() {
     calculated: EquipmentCalculated;
   } | null>(null);
   
-  // Block access for free users
-  if (!canUseCashflow) {
-    return (
-      <Layout>
-        <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
-          <div className="mb-6">
-            <div className="accent-line mb-4" />
-            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
-              <Wallet className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-              Cashflow Analysis
-            </h1>
-          </div>
-          
-          <Card className="max-w-2xl mx-auto">
-            <CardContent className="p-8 text-center">
-              <div className="mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                  <Lock className="h-8 w-8 text-primary" />
-                </div>
-                <h2 className="text-xl font-semibold mb-2">Cashflow Analysis is a Premium Feature</h2>
-                <p className="text-muted-foreground">
-                  Understand how equipment financing decisions affect cash leaving your business. 
-                  Track payment schedules, recovery rates, and project future cashflow with confidence.
-                </p>
-              </div>
-              
-              <div className="space-y-3 text-left mb-6 bg-muted/50 rounded-lg p-4">
-                <p className="text-sm font-medium">With Cashflow Analysis, you can:</p>
-                <ul className="text-sm text-muted-foreground space-y-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                    View portfolio-level cashflow summaries
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                    Track individual equipment payback timelines
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                    Project when financing obligations stabilize
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                    Compare recovery vs. payment outflow
-                  </li>
-                </ul>
-              </div>
-              
-              <UpgradePrompt
-                feature="Cashflow Analysis"
-                description="Get full access to cashflow analysis and projections."
-                variant="inline"
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
-    );
-  }
-  
-  // Calculate cashflow for all equipment
+  // Calculate cashflow for all equipment - MUST be before any conditional returns
   const equipmentWithCashflow = useMemo(() => {
     return equipment.map((eq, index) => {
       const calculated = calculatedEquipment[index];
@@ -349,6 +289,66 @@ export default function CashflowAnalysis() {
       </Badge>
     );
   };
+  
+  // Block access for free users - AFTER all hooks
+  if (!canUseCashflow) {
+    return (
+      <Layout>
+        <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
+          <div className="mb-6">
+            <div className="accent-line mb-4" />
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
+              <Wallet className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              Cashflow Analysis
+            </h1>
+          </div>
+          
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="p-8 text-center">
+              <div className="mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                  <Lock className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="text-xl font-semibold mb-2">Cashflow Analysis is a Premium Feature</h2>
+                <p className="text-muted-foreground">
+                  Understand how equipment financing decisions affect cash leaving your business. 
+                  Track payment schedules, recovery rates, and project future cashflow with confidence.
+                </p>
+              </div>
+              
+              <div className="space-y-3 text-left mb-6 bg-muted/50 rounded-lg p-4">
+                <p className="text-sm font-medium">With Cashflow Analysis, you can:</p>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                    View portfolio-level cashflow summaries
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                    Track individual equipment payback timelines
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                    Project when financing obligations stabilize
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                    Compare recovery vs. payment outflow
+                  </li>
+                </ul>
+              </div>
+              
+              <UpgradePrompt
+                feature="Cashflow Analysis"
+                description="Get full access to cashflow analysis and projections."
+                variant="inline"
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
   
   if (loading) {
     return (
