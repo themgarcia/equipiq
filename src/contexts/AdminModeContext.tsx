@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-export type SubscriptionPlan = 'free' | 'professional' | 'business';
+export type SubscriptionPlan = 'free' | 'professional' | 'business' | 'beta';
 
 interface AdminModeContextType {
   isAdmin: boolean;
@@ -72,7 +72,7 @@ export function AdminModeProvider({ children }: { children: ReactNode }) {
         
         // Restore demo settings
         const storedDemoPlan = localStorage.getItem('demoPlan');
-        if (storedDemoPlan && ['free', 'professional', 'business'].includes(storedDemoPlan)) {
+        if (storedDemoPlan && ['free', 'professional', 'business', 'beta'].includes(storedDemoPlan)) {
           setDemoPlanState(storedDemoPlan as SubscriptionPlan);
         }
         

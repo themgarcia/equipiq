@@ -50,24 +50,28 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
+    // No Stripe customer - return database plan directly (supports beta, free, etc.)
     if (customers.data.length === 0) {
-      logStep("No Stripe customer found, returning free plan");
+      logStep("No Stripe customer found, checking database subscription");
       
-      // Check for grace period in database
       const { data: subscription } = await supabaseClient
         .from("subscriptions")
-        .select("*")
+        .select("plan, grace_period_ends_at")
         .eq("user_id", user.id)
         .maybeSingle();
+
+      const plan = subscription?.plan || "free";
 
       const now = new Date();
       const inGracePeriod = subscription?.grace_period_ends_at 
         ? new Date(subscription.grace_period_ends_at) > now 
         : false;
 
+      logStep("Returning database plan", { plan, inGracePeriod });
+      
       return new Response(JSON.stringify({ 
         subscribed: false,
-        plan: "free",
+        plan: plan,
         in_grace_period: inGracePeriod,
         grace_period_ends_at: subscription?.grace_period_ends_at || null,
       }), {
@@ -79,16 +83,6 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
-    // Check for beta access in database
-    const { data: dbSubscription } = await supabaseClient
-      .from("subscriptions")
-      .select("beta_access, beta_access_granted_at, plan")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    const hasBetaAccess = dbSubscription?.beta_access === true;
-    logStep("Beta access check", { hasBetaAccess, grantedAt: dbSubscription?.beta_access_granted_at });
-
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
@@ -96,23 +90,9 @@ serve(async (req) => {
     });
 
     const hasActiveSub = subscriptions.data.length > 0;
-    let plan: "free" | "professional" | "business" = "free";
+    let plan: string = "free";
     let subscriptionEnd: string | null = null;
     let billingInterval: "monthly" | "annual" | null = null;
-
-    // If user has beta access but no active subscription, grant business tier
-    if (!hasActiveSub && hasBetaAccess) {
-      logStep("Granting business tier via beta access");
-      return new Response(JSON.stringify({
-        subscribed: false,
-        plan: "business",
-        beta_access: true,
-        in_grace_period: false,
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
@@ -148,12 +128,12 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
     } else {
-      logStep("No active subscription found");
+      logStep("No active Stripe subscription found");
       
-      // Check for grace period
+      // Check for grace period or other plan in database
       const { data: dbSubscription } = await supabaseClient
         .from("subscriptions")
-        .select("*")
+        .select("plan, grace_period_ends_at")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -162,17 +142,30 @@ serve(async (req) => {
         ? new Date(dbSubscription.grace_period_ends_at) > now 
         : false;
 
-      if (inGracePeriod && dbSubscription) {
+      // Return database plan (could be beta, free, etc.)
+      const dbPlan = dbSubscription?.plan || "free";
+
+      if (inGracePeriod) {
         return new Response(JSON.stringify({
           subscribed: false,
-          plan: dbSubscription.plan,
+          plan: dbPlan,
           in_grace_period: true,
-          grace_period_ends_at: dbSubscription.grace_period_ends_at,
+          grace_period_ends_at: dbSubscription?.grace_period_ends_at,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
         });
       }
+
+      // Return database plan
+      return new Response(JSON.stringify({
+        subscribed: false,
+        plan: dbPlan,
+        in_grace_period: false,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
 
     return new Response(JSON.stringify({
@@ -181,7 +174,6 @@ serve(async (req) => {
       billing_interval: billingInterval,
       subscription_end: subscriptionEnd,
       in_grace_period: false,
-      beta_access: hasBetaAccess,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
