@@ -217,7 +217,7 @@ export function InsuredRegisterTab({
 
       {/* Edit Insurance Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-4 sm:mx-auto overflow-hidden">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-4 sm:mx-auto">
           <DialogHeader>
             <DialogTitle>{selectedEquipment?.name}</DialogTitle>
             <DialogDescription>
@@ -269,24 +269,24 @@ export function InsuredRegisterTab({
             </div>
           </div>
 
-          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
-            <Button
-              variant="destructive"
-              onClick={handleRemove}
-              disabled={isSaving || !onRemoveFromInsurance}
-              className="w-full sm:w-auto sm:mr-auto"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Remove from Insurance
-            </Button>
-            <Button variant="outline" onClick={() => setEditModalOpen(false)} disabled={isSaving}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={isSaving || !onUpdateInsurance}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="flex flex-col-reverse gap-2 pt-4">
+              <Button
+                variant="destructive"
+                onClick={handleRemove}
+                disabled={isSaving || !onRemoveFromInsurance}
+                className="w-full"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remove from Insurance
+              </Button>
+              <Button variant="outline" onClick={() => setEditModalOpen(false)} disabled={isSaving} className="w-full">
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving || !onUpdateInsurance} className="w-full">
+                <Pencil className="h-4 w-4 mr-2" />
+                Save Changes
+              </Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>
