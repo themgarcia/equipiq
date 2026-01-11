@@ -1,4 +1,4 @@
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,29 +12,13 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ variant = "full" }: ThemeToggleProps) {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
-  const cycleTheme = () => {
-    if (theme === "light") {
-      setTheme("dark");
-    } else if (theme === "dark") {
-      setTheme("system");
-    } else {
-      setTheme("light");
-    }
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
 
-  const getIcon = () => {
-    if (theme === "light") return <Sun className="h-4 w-4" />;
-    if (theme === "dark") return <Moon className="h-4 w-4" />;
-    return <Monitor className="h-4 w-4" />;
-  };
-
-  const getLabel = () => {
-    if (theme === "light") return "Light mode";
-    if (theme === "dark") return "Dark mode";
-    return "System theme";
-  };
+  const isDark = resolvedTheme === "dark";
 
   if (variant === "icon") {
     return (
@@ -43,15 +27,15 @@ export function ThemeToggle({ variant = "full" }: ThemeToggleProps) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={cycleTheme}
+            onClick={toggleTheme}
             className="h-9 w-9"
           >
-            {getIcon()}
-            <span className="sr-only">{getLabel()}</span>
+            {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            <span className="sr-only">{isDark ? "Dark mode" : "Light mode"}</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{getLabel()}</p>
+          <p>Switch to {isDark ? "light" : "dark"} mode</p>
         </TooltipContent>
       </Tooltip>
     );
@@ -63,15 +47,15 @@ export function ThemeToggle({ variant = "full" }: ThemeToggleProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={cycleTheme}
+          onClick={toggleTheme}
           className="w-full justify-start gap-2"
         >
-          {getIcon()}
-          <span>{getLabel()}</span>
+          {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          <span>{isDark ? "Dark mode" : "Light mode"}</span>
         </Button>
       </TooltipTrigger>
       <TooltipContent side="right">
-        <p>Click to switch theme</p>
+        <p>Switch to {isDark ? "light" : "dark"} mode</p>
       </TooltipContent>
     </Tooltip>
   );
