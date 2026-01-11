@@ -167,20 +167,20 @@ function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-2">
+      <SidebarContent className={cn("py-2", isCollapsed ? "px-0" : "px-2")}>
         {groups.map((group, groupIndex) => (
-          <SidebarGroup key={group.label || `group-${groupIndex}`} className="py-1">
+          <SidebarGroup key={group.label || `group-${groupIndex}`} className={cn("py-1", isCollapsed && "px-0")}>
             {!isCollapsed && group.label && (
               <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 font-medium px-3 mb-1">
                 {group.label}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className={cn(isCollapsed && "items-center")}>
                 {group.items.map((item) => {
                   const isActive = location.pathname === item.href;
                   return (
-                    <SidebarMenuItem key={item.name}>
+                    <SidebarMenuItem key={item.name} className={cn(isCollapsed && "flex justify-center")}>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <SidebarMenuButton
@@ -188,6 +188,7 @@ function AppSidebar() {
                             isActive={isActive}
                             className={cn(
                               'transition-all',
+                              isCollapsed && 'justify-center',
                               isActive
                                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
@@ -217,8 +218,8 @@ function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-3">
-        <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center")}>
+      <SidebarFooter className={cn("border-t border-sidebar-border", isCollapsed ? "p-0 py-3" : "p-3")}>
+        <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center px-0")}>
           {/* Feedback Link */}
           <Tooltip>
             <TooltipTrigger asChild>
