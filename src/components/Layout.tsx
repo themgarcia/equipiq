@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { APP_VERSION, APP_STAGE } from '@/lib/version';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -358,6 +359,12 @@ function AppSidebar() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Version display - only when expanded */}
+          {!isCollapsed && (
+            <p className="text-[10px] text-sidebar-foreground/40 text-center mt-2">
+              v{APP_VERSION} {APP_STAGE}
+            </p>
+          )}
         </div>
       </SidebarFooter>
     </Sidebar>
@@ -528,6 +535,10 @@ function PhoneHeader() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* Version display */}
+              <p className="text-[10px] text-sidebar-foreground/40 text-center mt-2">
+                v{APP_VERSION} {APP_STAGE}
+              </p>
             </div>
           </div>
         </SheetContent>
