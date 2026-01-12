@@ -250,3 +250,60 @@ export interface EquipmentAttachment {
   photoPath?: string;
   createdAt: string;
 }
+
+// Document Import Types
+
+// Summary of what was extracted from each document in batch mode
+export interface DocumentSummary {
+  fileName: string;
+  extracted: string[];
+  itemsFound: string[];
+}
+
+// Conflict detected between documents when extracting data
+export interface FieldConflict {
+  field: string;
+  values: any[];
+  sources: string[];
+  resolved: any;
+}
+
+// Extended extracted equipment with source tracking for batch imports
+export interface ExtractedEquipmentBase {
+  make: string;
+  model: string;
+  year: number | null;
+  serialVin: string | null;
+  purchaseDate: string | null;
+  purchasePrice: number | null;
+  salesTax: number | null;
+  freightSetup: number | null;
+  financingType: 'owned' | 'financed' | 'leased' | null;
+  depositAmount: number | null;
+  financedAmount: number | null;
+  monthlyPayment: number | null;
+  termMonths: number | null;
+  buyoutAmount: number | null;
+  confidence: 'high' | 'medium' | 'low';
+  notes: string | null;
+  suggestedType?: 'equipment' | 'attachment';
+  suggestedParentIndex?: number | null;
+  purchaseCondition?: 'new' | 'used' | null;
+  suggestedCategory?: EquipmentCategory | null;
+  sourceDocumentIndices?: number[];
+}
+
+// Import mode for batch processing
+export type ImportMode = 'single_asset' | 'multi_asset';
+
+// Batch import response from edge function
+export interface BatchImportResponse {
+  success: boolean;
+  equipment: ExtractedEquipmentBase[];
+  documentSummaries: DocumentSummary[];
+  conflicts: FieldConflict[];
+  processingNotes: string;
+  mode: ImportMode;
+  documentCount: number;
+  fileNames: string[];
+}
