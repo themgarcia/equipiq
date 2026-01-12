@@ -8,7 +8,18 @@ import {
   TrendingUp,
   ArrowRight,
   CheckCircle2,
-  Menu
+  Menu,
+  Sparkles,
+  ShieldCheck,
+  Upload,
+  Brain,
+  FileCheck,
+  FileText,
+  Truck,
+  DollarSign,
+  Calendar,
+  Users,
+  Wrench
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,14 +29,21 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const features = [
   {
+    icon: Sparkles,
+    title: 'AI Document Import',
+    description: 'Upload invoices, POs, or financing docs. AI extracts make, model, pricing, financing terms, and auto-categorizes—no manual entry required.',
+    featured: true,
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Insurance Control',
+    description: 'Manage insured equipment, import policies with AI, track changes, and email broker updates with one click.',
+    featured: true,
+  },
+  {
     icon: Package,
     title: 'Equipment Tracking',
     description: 'Track your entire fleet with cost basis, financing terms, and real-time depreciation calculations.',
-  },
-  {
-    icon: FileSpreadsheet,
-    title: 'FMS Export',
-    description: 'Export equipment data directly to your FMS for seamless Field Management Software integration.',
   },
   {
     icon: Scale,
@@ -38,9 +56,14 @@ const features = [
     description: 'Understand your monthly obligations, payment schedules, and upcoming buyouts.',
   },
   {
+    icon: FileSpreadsheet,
+    title: 'FMS Export',
+    description: 'Export equipment data directly to your Field Management Software for seamless integration.',
+  },
+  {
     icon: Clock,
     title: 'Category Lifespans',
-    description: 'Industry-standard useful life defaults for accurate depreciation across equipment categories.',
+    description: 'Industry-standard useful life defaults for accurate depreciation across 18 equipment categories.',
   },
   {
     icon: TrendingUp,
@@ -50,10 +73,49 @@ const features = [
 ];
 
 const benefits = [
-  'No accounting expertise required',
-  'Built specifically for contractors',
-  'Real-time depreciation calculations',
-  'FMS integration ready',
+  'AI extracts equipment data automatically',
+  'Upload invoices, leases, or policies',
+  'No manual data entry required',
+  'Insurance tracking built-in',
+];
+
+const howItWorksSteps = [
+  {
+    icon: Upload,
+    step: '1',
+    title: 'Drop Your Document',
+    description: 'Upload purchase orders, invoices, financing agreements, or insurance policies. PDF or photo—both work great.',
+  },
+  {
+    icon: Brain,
+    step: '2',
+    title: 'AI Does the Work',
+    description: 'Our AI reads the document and extracts make, model, year, pricing, financing terms, serial numbers—even auto-categorizes equipment type.',
+  },
+  {
+    icon: FileCheck,
+    step: '3',
+    title: 'Review & Confirm',
+    description: 'See everything laid out clearly, make any edits, and add to your fleet in one click.',
+  },
+];
+
+const equipmentDataPoints = [
+  { icon: Truck, text: 'Make, Model, Year' },
+  { icon: FileText, text: 'Serial/VIN Number' },
+  { icon: DollarSign, text: 'Purchase Price & Taxes' },
+  { icon: Wallet, text: 'Monthly Payment & Term' },
+  { icon: Package, text: 'Equipment Category' },
+  { icon: Wrench, text: 'Attachments Detected' },
+];
+
+const insuranceDataPoints = [
+  { icon: Users, text: 'Broker Contact Info' },
+  { icon: FileText, text: 'Policy Number' },
+  { icon: Calendar, text: 'Renewal Dates' },
+  { icon: Package, text: 'Scheduled Equipment' },
+  { icon: DollarSign, text: 'Declared Values' },
+  { icon: CheckCircle2, text: 'Fleet Matching' },
 ];
 
 export default function Landing() {
@@ -71,6 +133,15 @@ export default function Landing() {
           
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center gap-4">
+            <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              How It Works
+            </a>
+            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Features
+            </a>
+            <a href="#open-beta" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Open Beta
+            </a>
             {user ? (
               <Button asChild>
                 <Link to="/dashboard">Go to Dashboard</Link>
@@ -97,6 +168,9 @@ export default function Landing() {
             </SheetTrigger>
             <SheetContent side="right" className="w-64">
               <div className="flex flex-col gap-4 pt-8">
+                <a href="#how-it-works" className="text-lg font-medium hover:text-primary transition-colors">
+                  How It Works
+                </a>
                 <a href="#features" className="text-lg font-medium hover:text-primary transition-colors">
                   Features
                 </a>
@@ -124,19 +198,20 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section - AI Focused */}
       <section className="container py-24 md:py-32">
         <div className="mx-auto max-w-4xl text-center">
-          <span className="inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
-            Open Beta
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
+            <Sparkles className="h-4 w-4" />
+            AI-Powered Import
           </span>
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-            Equipment Intelligence
-            <span className="block text-primary">for Contractors</span>
+            Upload a Document.
+            <span className="block text-primary">Watch AI Do the Rest.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
-            Track equipment costs, calculate depreciation, analyze buy vs rent decisions, 
-            and export directly to your FMS—all without needing accounting expertise.
+            Stop manually entering equipment data. Drop in your invoices, financing agreements, 
+            or insurance policies—our AI extracts everything in seconds.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" asChild className="text-lg px-8">
@@ -157,6 +232,123 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* How It Works Section */}
+      <section id="how-it-works" className="container py-24 bg-muted/30">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
+              <Sparkles className="h-4 w-4" />
+              Simple as 1-2-3
+            </span>
+            <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
+              How AI Import Works
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+              Skip the data entry. Let our AI handle the heavy lifting.
+            </p>
+          </div>
+          
+          <div className="grid gap-8 md:grid-cols-3">
+            {howItWorksSteps.map((step) => (
+              <div key={step.step} className="relative text-center">
+                <div className="flex flex-col items-center">
+                  <div className="relative mb-6">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                      <step.icon className="h-10 w-10 text-primary" />
+                    </div>
+                    <span className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                      {step.step}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-12 text-center">
+            <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-6 py-3 inline-block">
+              <span className="font-medium text-foreground">Works with:</span> Invoices, lease agreements, purchase orders, insurance declarations, and equipment schedules
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* What Our AI Reads Section */}
+      <section className="container py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
+              <Brain className="h-4 w-4" />
+              Intelligent Extraction
+            </span>
+            <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
+              What Our AI Reads
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+              Upload once, get everything. Our AI knows exactly what contractors need.
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2">
+            {/* Equipment Documents Card */}
+            <Card className="border-border bg-card overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-border">
+                <CardTitle className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  Equipment Documents
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-2 gap-4">
+                  {equipmentDataPoints.map((point) => (
+                    <div key={point.text} className="flex items-center gap-3">
+                      <point.icon className="h-5 w-5 text-primary flex-shrink-0" />
+                      <span className="text-sm text-foreground">{point.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-6 text-sm text-muted-foreground border-t border-border pt-4">
+                  Plus: New vs Used detection, financing type, freight charges, and more.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Insurance Policies Card */}
+            <Card className="border-border bg-card overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-border">
+                <CardTitle className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
+                  </div>
+                  Insurance Policies
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-2 gap-4">
+                  {insuranceDataPoints.map((point) => (
+                    <div key={point.text} className="flex items-center gap-3">
+                      <point.icon className="h-5 w-5 text-primary flex-shrink-0" />
+                      <span className="text-sm text-foreground">{point.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-6 text-sm text-muted-foreground border-t border-border pt-4">
+                  Automatically matches scheduled equipment to your existing fleet.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section id="features" className="container py-24 bg-muted/30">
         <div className="mx-auto max-w-6xl">
@@ -168,17 +360,30 @@ export default function Landing() {
               Purpose-built tools for contractors who want to understand their true equipment costs.
             </p>
           </div>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {features.map((feature) => (
-              <Card key={feature.title} className="border-border bg-card hover:shadow-lg transition-shadow">
+              <Card 
+                key={feature.title} 
+                className={`border-border bg-card hover:shadow-lg transition-shadow ${
+                  feature.featured ? 'ring-2 ring-primary/20 bg-gradient-to-br from-card to-primary/5' : ''
+                }`}
+              >
                 <CardContent className="pt-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-4">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-lg mb-4 ${
+                    feature.featured ? 'bg-primary text-primary-foreground' : 'bg-primary/10'
+                  }`}>
+                    <feature.icon className={`h-6 w-6 ${feature.featured ? '' : 'text-primary'}`} />
                   </div>
-                  <h3 className="text-xl font-semibold text-card-foreground mb-2">
+                  {feature.featured && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-primary mb-2">
+                      <Sparkles className="h-3 w-3" />
+                      AI-Powered
+                    </span>
+                  )}
+                  <h3 className="text-lg font-semibold text-card-foreground mb-2">
                     {feature.title}
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {feature.description}
                   </p>
                 </CardContent>
@@ -216,24 +421,24 @@ export default function Landing() {
             <CardContent className="space-y-6">
               <ul className="space-y-3">
                 <li className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Track your entire equipment fleet</span>
+                  <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span><strong>AI-powered import</strong> – just upload your documents</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>Insurance tracking with broker email integration</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Full Buy vs Rent analysis</span>
+                  <span>Full Buy vs Rent and Cashflow analysis</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Cashflow analysis and projections</span>
+                  <span>FMS export and replacement planning</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Export directly to your FMS</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Document storage and AI parsing</span>
+                  <span>Free during beta—get started in minutes</span>
                 </li>
               </ul>
               
@@ -275,10 +480,10 @@ export default function Landing() {
       <section className="container py-24 bg-muted/30">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl mb-4">
-            Ready to Take Control of Your Equipment Costs?
+            Ready to Stop Manual Data Entry?
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join the open beta and start making smarter equipment decisions today.
+            Join the open beta and let AI handle your equipment tracking.
           </p>
           <Button size="lg" asChild className="text-lg px-8">
             <Link to="/auth">
@@ -298,6 +503,7 @@ export default function Landing() {
               <span className="font-semibold text-foreground">equipIQ</span>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+              <a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a>
               <a href="#features" className="hover:text-foreground transition-colors">Features</a>
               <a href="#open-beta" className="hover:text-foreground transition-colors">Open Beta</a>
               <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
