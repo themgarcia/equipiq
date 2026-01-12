@@ -140,11 +140,6 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     return equipment;
   }, [isDemoData, demoPlan, equipment]);
 
-  const calculatedEquipment = useMemo(() => 
-    effectiveEquipment.map(e => calculateEquipment(e, categoryDefaultsState)),
-    [effectiveEquipment, categoryDefaultsState]
-  );
-
   // Use demo attachments when demo mode is active with demo data enabled
   const effectiveAttachmentsByEquipmentId = useMemo(() => {
     if (isDemoData) {
@@ -152,6 +147,15 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     }
     return attachmentsByEquipmentId;
   }, [isDemoData, demoPlan, attachmentsByEquipmentId]);
+
+  const calculatedEquipment = useMemo(() => 
+    effectiveEquipment.map(e => {
+      const attachments = effectiveAttachmentsByEquipmentId[e.id] || [];
+      const attachmentTotal = attachments.reduce((sum, a) => sum + a.value, 0);
+      return calculateEquipment(e, categoryDefaultsState, attachmentTotal);
+    }),
+    [effectiveEquipment, categoryDefaultsState, effectiveAttachmentsByEquipmentId]
+  );
 
   const fetchEquipment = useCallback(async () => {
     if (!user) {

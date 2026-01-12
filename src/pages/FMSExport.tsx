@@ -85,7 +85,7 @@ const columns: ColumnConfig[] = [
 ];
 
 export default function FMSExport() {
-  const { calculatedEquipment, attachmentsByEquipmentId } = useEquipment();
+  const { calculatedEquipment } = useEquipment();
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'phone' || deviceType === 'tablet';
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -97,11 +97,10 @@ export default function FMSExport() {
   const activeEquipment = calculatedEquipment.filter(e => e.status === 'Active');
   
   const exportData = useMemo(() => {
-    const data = activeEquipment.map(e => {
-      const attachments = attachmentsByEquipmentId[e.id] || [];
-      const attachmentTotal = attachments.reduce((sum, a) => sum + a.value, 0);
-      return { id: e.id, data: toFMSExport(e, attachmentTotal) };
-    });
+    const data = activeEquipment.map(e => ({
+      id: e.id,
+      data: toFMSExport(e) // Attachments already included in replacementCostUsed
+    }));
     
     const columnConfig = columns.find(c => c.key === sortColumn);
     if (!columnConfig) return data;
@@ -119,7 +118,7 @@ export default function FMSExport() {
       
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [activeEquipment, attachmentsByEquipmentId, sortColumn, sortDirection]);
+  }, [activeEquipment, sortColumn, sortDirection]);
 
   const handleSort = (columnKey: ColumnKey) => {
     if (sortColumn === columnKey) {

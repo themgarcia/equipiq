@@ -92,7 +92,7 @@ export interface Equipment {
 
 // Calculated fields (derived from Equipment)
 export interface EquipmentCalculated extends Equipment {
-  totalCostBasis: number;
+  totalCostBasis: number;  // Includes equipment + attachments
   overheadPercent: number;
   cogsAllocatedCost: number;
   overheadAllocatedCost: number;
@@ -102,13 +102,12 @@ export interface EquipmentCalculated extends Equipment {
   defaultResalePercent: number;
   expectedResaleDefault: number;
   expectedResaleUsed: number;
-  replacementCostUsed: number;
+  replacementCostUsed: number;  // Includes equipment + attachments
   replacementCostSource: 'manual' | 'inflationAdjusted';
   inflationYears: number;
   roiPercent?: number;
-  // Attachment values (populated from context)
+  // Attachment total value (for display purposes)
   attachmentTotalValue?: number;
-  totalCostBasisWithAttachments?: number;
 }
 
 // FMS Export format
