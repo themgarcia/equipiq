@@ -5,7 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight, Check, ShieldCheck } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight, Check, ShieldCheck, Activity, AlertTriangle } from 'lucide-react';
+import { UserActivityTab } from '@/components/admin/UserActivityTab';
+import { ErrorLogTab } from '@/components/admin/ErrorLogTab';
 import { useDeviceType } from '@/hooks/use-mobile';
 import {
   Sheet,
@@ -943,6 +945,8 @@ export default function AdminDashboard() {
                 { value: 'users', label: 'Users' },
                 { value: 'feedback', label: 'Feedback' },
                 { value: 'activity', label: 'Activity' },
+                { value: 'user-activity', label: 'User Activity' },
+                { value: 'errors', label: 'Errors' },
                 { value: 'market', label: 'Market Insights' },
                 { value: 'categories', label: 'Equipment Data' },
                 { value: 'financing', label: 'Financing' },
@@ -955,6 +959,8 @@ export default function AdminDashboard() {
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="feedback">Feedback</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="user-activity">User Activity</TabsTrigger>
+              <TabsTrigger value="errors">Errors</TabsTrigger>
               <TabsTrigger value="market">Market Insights</TabsTrigger>
               <TabsTrigger value="categories">Equipment Data</TabsTrigger>
               <TabsTrigger value="financing">Financing</TabsTrigger>
@@ -1815,6 +1821,16 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* User Activity Tab */}
+          <TabsContent value="user-activity">
+            <UserActivityTab />
+          </TabsContent>
+
+          {/* Error Log Tab */}
+          <TabsContent value="errors">
+            <ErrorLogTab />
           </TabsContent>
         </Tabs>
       </div>
