@@ -6,10 +6,12 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertTriangle, Check, Copy, AlertCircle, RefreshCw, FileText, ChevronDown, ChevronUp, Link } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Loader2, AlertTriangle, Check, Copy, AlertCircle, RefreshCw, FileText, ChevronDown, ChevronUp, Link, Package, DollarSign, CreditCard, RotateCcw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useEquipment } from "@/contexts/EquipmentContext";
-import { Equipment, EquipmentCategory, FinancingType, UpdatableField } from "@/types/equipment";
+import { Equipment, EquipmentCategory, FinancingType, UpdatableField, DocumentSummary, FieldConflict } from "@/types/equipment";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface ExtractedEquipment {
@@ -35,12 +37,13 @@ interface ExtractedEquipment {
   suggestedCategory?: EquipmentCategory | null;
   sourceFile?: File;
   sourceFiles?: File[]; // For merged items with multiple source documents
+  sourceDocumentIndices?: number[];
 }
 
 type DuplicateStatus = 'none' | 'exact' | 'potential';
 type DuplicateFilter = 'all' | 'no-duplicates' | 'only-duplicates';
 type DuplicateReason = 'serial' | 'year' | 'price' | 'date' | null;
-type ImportMode = 'new' | 'update_existing' | 'skip' | 'attachment';
+type ImportModeType = 'new' | 'update_existing' | 'skip' | 'attachment';
 
 // Batch duplicate: potential match within the same import batch
 interface BatchDuplicateGroup {
@@ -59,7 +62,7 @@ interface EditableEquipment extends ExtractedEquipment {
   matchedEquipmentName?: string;
   matchedPurchaseDate?: string;
   matchedEquipment?: Equipment;
-  importMode: ImportMode;
+  importMode: ImportModeType;
   updatableFields: UpdatableField[];
   // Attachment-specific fields
   suggestedType: 'equipment' | 'attachment';
@@ -70,12 +73,22 @@ interface EditableEquipment extends ExtractedEquipment {
   // Batch duplicate tracking
   batchDuplicateOf?: string; // tempId of item this was merged into
   mergedFrom?: string[]; // tempIds of items merged into this one
+  // Field source tracking
+  fieldSources?: Record<string, string>;
+  // Conflict resolutions (user overrides)
+  conflictResolutions?: Record<string, any>;
+  // Original AI values (for reset)
+  originalValues?: Partial<ExtractedEquipment>;
 }
 
 interface EquipmentImportReviewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   extractedEquipment: ExtractedEquipment[];
+  documentSummaries?: DocumentSummary[];
+  conflicts?: FieldConflict[];
+  processingNotes?: string;
+  sourceFiles?: File[];
   onComplete: () => void;
 }
 
@@ -102,6 +115,8 @@ const CATEGORIES: EquipmentCategory[] = [
 
 // Field labels for display
 const FIELD_LABELS: Record<string, string> = {
+  make: 'Make',
+  model: 'Model',
   serialVin: 'Serial/VIN',
   purchaseDate: 'Purchase Date',
   purchasePrice: 'Purchase Price',
@@ -205,7 +220,7 @@ const guessCategory = (make: string, model: string): EquipmentCategory => {
   if (combined.includes('excavator') || combined.includes('mini ex') || combined.includes('digger')) {
     return 'Excavator – Compact (≤ 6 ton)';
   }
-if (combined.includes('compactor') || combined.includes('roller') || combined.includes('plate') || 
+  if (combined.includes('compactor') || combined.includes('roller') || combined.includes('plate') || 
       combined.includes('rammer') || combined.includes('tamping') || combined.includes('tamper')) {
     if (combined.includes('walk') || combined.includes('plate') || combined.includes('jumping') || 
         combined.includes('rammer') || combined.includes('tamping') || combined.includes('tamper')) {
@@ -282,10 +297,20 @@ const formatValue = (value: any, field: string): string => {
   return String(value);
 };
 
+// Format currency for display
+const formatCurrency = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '$0';
+  return `$${value.toLocaleString()}`;
+};
+
 export function EquipmentImportReview({ 
   open, 
   onOpenChange, 
   extractedEquipment,
+  documentSummaries,
+  conflicts,
+  processingNotes,
+  sourceFiles,
   onComplete
 }: EquipmentImportReviewProps) {
   const { addEquipment, updateEquipment, equipment, uploadDocument, addAttachment } = useEquipment();
@@ -295,8 +320,55 @@ export function EquipmentImportReview({
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [batchDuplicateGroups, setBatchDuplicateGroups] = useState<BatchDuplicateGroup[]>([]);
   const [showMergeDialog, setShowMergeDialog] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, Set<string>>>({});
   
   const [editableEquipment, setEditableEquipment] = useState<EditableEquipment[]>([]);
+
+  // Toggle section expansion
+  const toggleSection = (tempId: string, section: string) => {
+    setExpandedSections(prev => {
+      const itemSections = prev[tempId] || new Set();
+      const newSections = new Set(itemSections);
+      if (newSections.has(section)) {
+        newSections.delete(section);
+      } else {
+        newSections.add(section);
+      }
+      return { ...prev, [tempId]: newSections };
+    });
+  };
+
+  const isSectionExpanded = (tempId: string, section: string): boolean => {
+    return expandedSections[tempId]?.has(section) || false;
+  };
+
+  // Reset item to original AI values
+  const resetToAIValues = (tempId: string) => {
+    setEditableEquipment(prev => prev.map(eq => {
+      if (eq.tempId !== tempId || !eq.originalValues) return eq;
+      return {
+        ...eq,
+        ...eq.originalValues,
+        conflictResolutions: {},
+      };
+    }));
+  };
+
+  // Clear financing fields
+  const clearFinancing = (tempId: string) => {
+    setEditableEquipment(prev => prev.map(eq => {
+      if (eq.tempId !== tempId) return eq;
+      return {
+        ...eq,
+        financingType: 'owned',
+        depositAmount: null,
+        financedAmount: null,
+        monthlyPayment: null,
+        termMonths: null,
+        buyoutAmount: null,
+      };
+    }));
+  };
 
   // Duplicate checking function
   const checkForDuplicates = useCallback((extracted: Partial<EditableEquipment>): { 
@@ -549,8 +621,36 @@ export function EquipmentImportReview({
     });
   }, [batchDuplicateGroups, mergeEquipmentItems]);
 
+  // Build field sources from document summaries
+  const buildFieldSources = useCallback((docSummaries?: DocumentSummary[]): Record<string, string> => {
+    if (!docSummaries) return {};
+    const sources: Record<string, string> = {};
+    for (const summary of docSummaries) {
+      for (const field of summary.extracted) {
+        // Map common field names
+        const normalizedField = field.toLowerCase().replace(/[^a-z]/g, '');
+        if (normalizedField.includes('serial') || normalizedField.includes('vin')) {
+          sources['serialVin'] = summary.fileName;
+        } else if (normalizedField.includes('price') || normalizedField.includes('amount')) {
+          sources['purchasePrice'] = summary.fileName;
+        } else if (normalizedField.includes('tax')) {
+          sources['salesTax'] = summary.fileName;
+        } else if (normalizedField.includes('payment') || normalizedField.includes('monthly')) {
+          sources['monthlyPayment'] = summary.fileName;
+        } else if (normalizedField.includes('term')) {
+          sources['termMonths'] = summary.fileName;
+        } else if (normalizedField.includes('date')) {
+          sources['purchaseDate'] = summary.fileName;
+        }
+      }
+    }
+    return sources;
+  }, []);
+
   // Initialize editable equipment when extractedEquipment changes
   useEffect(() => {
+    const fieldSources = buildFieldSources(documentSummaries);
+    
     const mapped = extractedEquipment.map((eq, index) => {
       const duplicateCheck = checkForDuplicates(eq);
       const hasUpdatableFields = duplicateCheck.updatableFields.length > 0;
@@ -561,7 +661,7 @@ export function EquipmentImportReview({
       // - attachment if AI suggests it
       // - update_existing if there are fields to update
       // - new otherwise (or skip for exact with no updates)
-      let defaultMode: ImportMode = 'new';
+      let defaultMode: ImportModeType = 'new';
       if (suggestedType === 'attachment') {
         defaultMode = 'attachment';
       } else if (duplicateCheck.status === 'exact') {
@@ -594,6 +694,9 @@ export function EquipmentImportReview({
         suggestedParentIndex,
         // Pre-select parent if AI suggested one
         selectedParentTempId: suggestedParentIndex !== null ? `import-${suggestedParentIndex}-${Date.now()}` : undefined,
+        fieldSources,
+        originalValues: { ...eq },
+        conflictResolutions: {},
       };
     });
     
@@ -619,7 +722,24 @@ export function EquipmentImportReview({
       }
     });
     setExpandedItems(toExpand);
-  }, [extractedEquipment, checkForDuplicates, checkForBatchDuplicates]);
+    
+    // Initialize section expansion - auto-expand basic info and any section with data
+    const sectionExpansion: Record<string, Set<string>> = {};
+    mapped.forEach(eq => {
+      const sections = new Set<string>();
+      sections.add('basic'); // Always expand basic
+      // Auto-expand pricing if has data
+      if (eq.purchasePrice || eq.salesTax || eq.freightSetup) {
+        sections.add('pricing');
+      }
+      // Auto-expand financing if has data
+      if (eq.financingType !== 'owned' && eq.financingType !== null) {
+        sections.add('financing');
+      }
+      sectionExpansion[eq.tempId] = sections;
+    });
+    setExpandedSections(sectionExpansion);
+  }, [extractedEquipment, checkForDuplicates, checkForBatchDuplicates, documentSummaries, buildFieldSources]);
 
   // Duplicate counts
   const duplicateCounts = useMemo(() => {
@@ -697,7 +817,7 @@ export function EquipmentImportReview({
     });
   };
 
-  const setImportMode = (tempId: string, mode: ImportMode) => {
+  const setImportMode = (tempId: string, mode: ImportModeType) => {
     setEditableEquipment(prev => 
       prev.map((eq) => {
         if (eq.tempId !== tempId) return eq;
@@ -734,6 +854,18 @@ export function EquipmentImportReview({
     );
   };
 
+  // Resolve conflict with user selection
+  const resolveConflict = (tempId: string, field: string, value: any) => {
+    setEditableEquipment(prev => prev.map(eq => {
+      if (eq.tempId !== tempId) return eq;
+      return {
+        ...eq,
+        [field]: value,
+        conflictResolutions: { ...eq.conflictResolutions, [field]: value },
+      };
+    }));
+  };
+
   const getDuplicateBadge = (eq: EditableEquipment) => {
     if (eq.duplicateStatus === 'exact') {
       return (
@@ -768,6 +900,31 @@ export function EquipmentImportReview({
     return null;
   };
 
+  // Get document source badge for a field
+  const getSourceBadge = (eq: EditableEquipment, field: string) => {
+    const source = eq.fieldSources?.[field];
+    if (!source) return null;
+    return (
+      <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 ml-1 text-muted-foreground">
+        <FileText className="h-2.5 w-2.5 mr-0.5" />
+        {source.length > 15 ? source.substring(0, 12) + '...' : source}
+      </Badge>
+    );
+  };
+
+  // Count documents that will be attached
+  const documentCount = useMemo(() => {
+    let count = 0;
+    for (const eq of editableEquipment.filter(e => e.selected)) {
+      if (eq.sourceFiles?.length) {
+        count += eq.sourceFiles.length;
+      } else if (eq.sourceFile) {
+        count += 1;
+      }
+    }
+    return count;
+  }, [editableEquipment]);
+
   const handleImport = async () => {
     const toProcess = editableEquipment.filter(eq => eq.selected);
     if (toProcess.length === 0) {
@@ -794,8 +951,8 @@ export function EquipmentImportReview({
 
     setIsImporting(true);
 
-    let newCount = 0;
-    let updateCount = 0;
+    let newCountResult = 0;
+    let updateCountResult = 0;
     let attachmentImportCount = 0;
     const importedEquipmentIds: string[] = [];
     const tempIdToRealId: Map<string, string> = new Map();
@@ -817,7 +974,7 @@ export function EquipmentImportReview({
             await updateEquipment(eq.matchedEquipmentId, updates);
             importedEquipmentIds.push(eq.matchedEquipmentId);
             tempIdToRealId.set(eq.tempId, eq.matchedEquipmentId);
-            updateCount++;
+            updateCountResult++;
           }
         } else if (eq.importMode === 'new') {
           const newId = await addEquipment({
@@ -848,7 +1005,7 @@ export function EquipmentImportReview({
             importedEquipmentIds.push(newId);
             tempIdToRealId.set(eq.tempId, newId);
           }
-          newCount++;
+          newCountResult++;
         }
       }
 
@@ -890,14 +1047,17 @@ export function EquipmentImportReview({
           
           if (eq.importMode === 'new') {
             equipmentId = tempIdToRealId.get(eq.tempId);
-          } else if (eq.importMode === 'update_existing' && eq.matchedEquipmentId) {
+          } else if (eq.importMode === 'update_existing') {
             equipmentId = eq.matchedEquipmentId;
+          } else if (eq.importMode === 'attachment') {
+            // For attachments, attach documents to the parent equipment
+            equipmentId = eq.selectedParentId || (eq.selectedParentTempId ? tempIdToRealId.get(eq.selectedParentTempId) : undefined);
           }
           
           if (equipmentId) {
             for (const file of filesToAttach) {
               try {
-                await uploadDocument(equipmentId, file, 'Source document from import');
+                await uploadDocument(equipmentId, file);
               } catch (error) {
                 console.error(`Failed to attach source document to equipment ${equipmentId}:`, error);
               }
@@ -908,8 +1068,8 @@ export function EquipmentImportReview({
 
       // Build success message
       const parts = [];
-      if (newCount > 0) parts.push(`${newCount} new equipment`);
-      if (updateCount > 0) parts.push(`${updateCount} updated`);
+      if (newCountResult > 0) parts.push(`${newCountResult} new equipment`);
+      if (updateCountResult > 0) parts.push(`${updateCountResult} updated`);
       if (attachmentImportCount > 0) parts.push(`${attachmentImportCount} attachment${attachmentImportCount !== 1 ? 's' : ''}`);
 
       toast({
@@ -942,6 +1102,37 @@ export function EquipmentImportReview({
     }
   };
 
+  // Render a collapsible field section
+  const renderFieldSection = (
+    eq: EditableEquipment, 
+    sectionId: string, 
+    title: string, 
+    icon: React.ReactNode, 
+    summary: string | null,
+    children: React.ReactNode
+  ) => {
+    const isExpanded = isSectionExpanded(eq.tempId, sectionId);
+    return (
+      <Collapsible open={isExpanded} onOpenChange={() => toggleSection(eq.tempId, sectionId)}>
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center justify-between w-full p-2 rounded-md hover:bg-muted/50 transition-colors text-left">
+            <div className="flex items-center gap-2">
+              {icon}
+              <span className="text-sm font-medium">{title}</span>
+              {!isExpanded && summary && (
+                <span className="text-xs text-muted-foreground ml-2">{summary}</span>
+              )}
+            </div>
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pl-8 pr-2 pb-2 space-y-2">
+          {children}
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh]">
@@ -953,6 +1144,74 @@ export function EquipmentImportReview({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Conflict Resolution Banner */}
+          {conflicts && conflicts.length > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-amber-600 mb-2">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="font-medium">AI detected conflicting values</span>
+              </div>
+              <div className="space-y-2">
+                {conflicts.map((conflict, idx) => (
+                  <div key={idx} className="bg-muted/30 rounded p-2 text-sm">
+                    <p className="font-medium mb-1">{FIELD_LABELS[conflict.field] || conflict.field}</p>
+                    <RadioGroup
+                      value={editableEquipment[0]?.conflictResolutions?.[conflict.field] ?? conflict.resolved}
+                      onValueChange={(value) => {
+                        // Apply to the first equipment item (for single asset mode)
+                        if (editableEquipment.length > 0) {
+                          resolveConflict(editableEquipment[0].tempId, conflict.field, value);
+                        }
+                      }}
+                      className="space-y-1"
+                    >
+                      {conflict.values.map((val, valIdx) => (
+                        <div key={valIdx} className="flex items-center space-x-2">
+                          <RadioGroupItem value={val} id={`conflict-${idx}-${valIdx}`} />
+                          <Label htmlFor={`conflict-${idx}-${valIdx}`} className="text-xs flex items-center gap-2">
+                            <span className="font-medium">{formatValue(val, conflict.field)}</span>
+                            {conflict.sources[valIdx] && (
+                              <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+                                {conflict.sources[valIdx]}
+                              </Badge>
+                            )}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Document Summaries */}
+          {documentSummaries && documentSummaries.length > 0 && (
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between text-xs h-8">
+                  <span className="flex items-center gap-2">
+                    <FileText className="h-3.5 w-3.5" />
+                    {documentSummaries.length} source document{documentSummaries.length !== 1 ? 's' : ''} processed
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1 mt-2">
+                {documentSummaries.map((summary, idx) => (
+                  <div key={idx} className="text-xs bg-muted/30 rounded p-2">
+                    <span className="font-medium">{summary.fileName}</span>
+                    {summary.itemsFound.length > 0 && (
+                      <span className="text-muted-foreground ml-2">
+                        → {summary.itemsFound.join(', ')}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
           {/* Batch Duplicate Detection Banner */}
           {batchDuplicateGroups.length > 0 && (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
@@ -1055,7 +1314,7 @@ export function EquipmentImportReview({
           )}
 
           {/* Equipment List */}
-          <ScrollArea className="h-[400px] pr-4">
+          <ScrollArea className="h-[350px] pr-4">
             <div className="space-y-4">
               {filteredEquipment.map((eq) => (
                 <div
@@ -1080,7 +1339,24 @@ export function EquipmentImportReview({
                         onCheckedChange={(checked) => updateEquipmentItem(eq.tempId, 'selected', !!checked)}
                       />
                       <div className="space-y-1">
-                        <p className="font-medium">{eq.make} {eq.model}</p>
+                        {/* Editable Make/Model */}
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={eq.make}
+                            onChange={(e) => updateEquipmentItem(eq.tempId, 'make', e.target.value)}
+                            className="h-7 w-28 text-sm font-medium"
+                            placeholder="Make"
+                          />
+                          <Input
+                            value={eq.model}
+                            onChange={(e) => updateEquipmentItem(eq.tempId, 'model', e.target.value)}
+                            className="h-7 w-36 text-sm font-medium"
+                            placeholder="Model"
+                          />
+                          {eq.year && (
+                            <span className="text-sm text-muted-foreground">({eq.year})</span>
+                          )}
+                        </div>
                         {getDuplicateBadge(eq)}
                         {eq.notes && (
                           <p className="text-xs text-muted-foreground">{eq.notes}</p>
@@ -1089,20 +1365,27 @@ export function EquipmentImportReview({
                     </div>
                     <div className="flex items-center gap-2">
                       {getConfidenceBadge(eq.confidence)}
-                      {eq.duplicateStatus !== 'none' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2"
-                          onClick={() => toggleExpanded(eq.tempId)}
-                        >
-                          {expandedItems.has(eq.tempId) ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => resetToAIValues(eq.tempId)}
+                        title="Reset to AI values"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2"
+                        onClick={() => toggleExpanded(eq.tempId)}
+                      >
+                        {expandedItems.has(eq.tempId) ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
                   </div>
 
@@ -1208,6 +1491,7 @@ export function EquipmentImportReview({
                             <span className="text-muted-foreground">{formatValue(field.existingValue, field.field)}</span>
                             <span className="text-muted-foreground">→</span>
                             <span className="text-green-600 font-medium">{formatValue(field.importedValue, field.field)}</span>
+                            {getSourceBadge(eq, field.field)}
                           </div>
                         ))}
                       </div>
@@ -1222,159 +1506,264 @@ export function EquipmentImportReview({
                     </div>
                   )}
 
-                  {eq.selected && eq.importMode === 'new' && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pl-7">
-                      <div>
-                        <label className="text-xs text-muted-foreground">Category *</label>
-                        <Select
-                          value={eq.category}
-                          onValueChange={(value) => updateEquipmentItem(eq.tempId, 'category', value)}
-                        >
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {CATEGORIES.map(cat => (
-                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-muted-foreground flex items-center gap-1">
-                          Year
-                          {eq.yearDefaultedFromPurchase && (
-                            <span className="inline-flex items-center gap-0.5 text-amber-600" title="Year defaulted from purchase date — please verify">
-                              <AlertTriangle className="h-3 w-3" />
-                              <span className="text-[10px] font-medium">Review</span>
-                            </span>
-                          )}
-                        </label>
-                        <Input
-                          type="number"
-                          value={eq.year || ''}
-                          onChange={(e) => {
-                            const newYear = e.target.value ? parseInt(e.target.value) : null;
-                            setEditableEquipment(prev => prev.map(item => 
-                              item.tempId === eq.tempId 
-                                ? { ...item, year: newYear, yearDefaultedFromPurchase: false }
-                                : item
-                            ));
-                          }}
-                          className={`h-8 text-sm ${eq.yearDefaultedFromPurchase ? 'border-amber-500/50' : ''}`}
-                          placeholder="Year"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-muted-foreground">Serial/VIN</label>
-                        <Input
-                          value={eq.serialVin || ''}
-                          onChange={(e) => updateEquipmentItem(eq.tempId, 'serialVin', e.target.value || null)}
-                          className="h-8 text-sm"
-                          placeholder="Serial/VIN"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-muted-foreground">Purchase Date</label>
-                        <Input
-                          type="date"
-                          value={eq.purchaseDate || ''}
-                          onChange={(e) => updateEquipmentItem(eq.tempId, 'purchaseDate', e.target.value || null)}
-                          className="h-8 text-sm"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-muted-foreground">Purchase Price</label>
-                        <Input
-                          type="number"
-                          value={eq.purchasePrice || ''}
-                          onChange={(e) => updateEquipmentItem(eq.tempId, 'purchasePrice', e.target.value ? parseFloat(e.target.value) : null)}
-                          className="h-8 text-sm"
-                          placeholder="$0.00"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-muted-foreground">Sales Tax</label>
-                        <Input
-                          type="number"
-                          value={eq.salesTax || ''}
-                          onChange={(e) => updateEquipmentItem(eq.tempId, 'salesTax', e.target.value ? parseFloat(e.target.value) : null)}
-                          className="h-8 text-sm"
-                          placeholder="$0.00"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-muted-foreground">Freight/Setup</label>
-                        <Input
-                          type="number"
-                          value={eq.freightSetup || ''}
-                          onChange={(e) => updateEquipmentItem(eq.tempId, 'freightSetup', e.target.value ? parseFloat(e.target.value) : null)}
-                          className="h-8 text-sm"
-                          placeholder="$0.00"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-muted-foreground">Financing</label>
-                        <Select
-                          value={eq.financingType || 'owned'}
-                          onValueChange={(value) => updateEquipmentItem(eq.tempId, 'financingType', value)}
-                        >
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="owned">Owned (Cash)</SelectItem>
-                            <SelectItem value="financed">Financed</SelectItem>
-                            <SelectItem value="leased">Leased</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {(eq.financingType === 'financed' || eq.financingType === 'leased') && (
-                        <>
+                  {/* Expanded Edit Fields for New Equipment */}
+                  {eq.selected && eq.importMode === 'new' && expandedItems.has(eq.tempId) && (
+                    <div className="pl-7 space-y-1">
+                      {/* Basic Info Section */}
+                      {renderFieldSection(
+                        eq,
+                        'basic',
+                        'Basic Information',
+                        <Package className="h-4 w-4 text-muted-foreground" />,
+                        !isSectionExpanded(eq.tempId, 'basic') ? `${eq.category}` : null,
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                           <div>
-                            <label className="text-xs text-muted-foreground">Monthly Payment</label>
+                            <label className="text-xs text-muted-foreground">Category *</label>
+                            <Select
+                              value={eq.category}
+                              onValueChange={(value) => updateEquipmentItem(eq.tempId, 'category', value)}
+                            >
+                              <SelectTrigger className="h-8 text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CATEGORIES.map(cat => (
+                                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <label className="text-xs text-muted-foreground flex items-center gap-1">
+                              Year
+                              {eq.yearDefaultedFromPurchase && (
+                                <span className="inline-flex items-center gap-0.5 text-amber-600" title="Year defaulted from purchase date — please verify">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  <span className="text-[10px] font-medium">Review</span>
+                                </span>
+                              )}
+                              {getSourceBadge(eq, 'year')}
+                            </label>
                             <Input
                               type="number"
-                              value={eq.monthlyPayment || ''}
-                              onChange={(e) => updateEquipmentItem(eq.tempId, 'monthlyPayment', e.target.value ? parseFloat(e.target.value) : null)}
+                              value={eq.year || ''}
+                              onChange={(e) => {
+                                const newYear = e.target.value ? parseInt(e.target.value) : null;
+                                setEditableEquipment(prev => prev.map(item => 
+                                  item.tempId === eq.tempId 
+                                    ? { ...item, year: newYear, yearDefaultedFromPurchase: false }
+                                    : item
+                                ));
+                              }}
+                              className={`h-8 text-sm ${eq.yearDefaultedFromPurchase ? 'border-amber-500/50' : ''}`}
+                              placeholder="Year"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-xs text-muted-foreground flex items-center">
+                              Serial/VIN
+                              {getSourceBadge(eq, 'serialVin')}
+                            </label>
+                            <Input
+                              value={eq.serialVin || ''}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'serialVin', e.target.value || null)}
+                              className="h-8 text-sm"
+                              placeholder="Serial/VIN"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-xs text-muted-foreground flex items-center">
+                              Purchase Date
+                              {getSourceBadge(eq, 'purchaseDate')}
+                            </label>
+                            <Input
+                              type="date"
+                              value={eq.purchaseDate || ''}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'purchaseDate', e.target.value || null)}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Pricing Section */}
+                      {renderFieldSection(
+                        eq,
+                        'pricing',
+                        'Pricing',
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />,
+                        !isSectionExpanded(eq.tempId, 'pricing') && eq.purchasePrice 
+                          ? `${formatCurrency(eq.purchasePrice)}${eq.salesTax ? ` + ${formatCurrency(eq.salesTax)} tax` : ''}`
+                          : null,
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-xs text-muted-foreground flex items-center">
+                              Purchase Price
+                              {getSourceBadge(eq, 'purchasePrice')}
+                            </label>
+                            <Input
+                              type="number"
+                              value={eq.purchasePrice || ''}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'purchasePrice', e.target.value ? parseFloat(e.target.value) : null)}
                               className="h-8 text-sm"
                               placeholder="$0.00"
                             />
                           </div>
 
                           <div>
-                            <label className="text-xs text-muted-foreground">Term (Months)</label>
+                            <label className="text-xs text-muted-foreground flex items-center">
+                              Sales Tax
+                              {getSourceBadge(eq, 'salesTax')}
+                            </label>
                             <Input
                               type="number"
-                              value={eq.termMonths || ''}
-                              onChange={(e) => updateEquipmentItem(eq.tempId, 'termMonths', e.target.value ? parseInt(e.target.value) : null)}
+                              value={eq.salesTax || ''}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'salesTax', e.target.value ? parseFloat(e.target.value) : null)}
                               className="h-8 text-sm"
-                              placeholder="Months"
+                              placeholder="$0.00"
                             />
                           </div>
 
-                          {eq.financingType === 'leased' && (
-                            <div>
-                              <label className="text-xs text-muted-foreground">Buyout Amount</label>
-                              <Input
-                                type="number"
-                                value={eq.buyoutAmount || ''}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'buyoutAmount', e.target.value ? parseFloat(e.target.value) : null)}
-                                className="h-8 text-sm"
-                                placeholder="$0.00"
-                              />
+                          <div>
+                            <label className="text-xs text-muted-foreground flex items-center">
+                              Freight/Setup
+                              {getSourceBadge(eq, 'freightSetup')}
+                            </label>
+                            <Input
+                              type="number"
+                              value={eq.freightSetup || ''}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'freightSetup', e.target.value ? parseFloat(e.target.value) : null)}
+                              className="h-8 text-sm"
+                              placeholder="$0.00"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Financing Section */}
+                      {renderFieldSection(
+                        eq,
+                        'financing',
+                        'Financing',
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />,
+                        !isSectionExpanded(eq.tempId, 'financing') && eq.financingType !== 'owned' && eq.financingType !== null
+                          ? `${eq.financingType === 'financed' ? 'Financed' : 'Leased'}${eq.monthlyPayment ? ` - ${formatCurrency(eq.monthlyPayment)}/mo` : ''}`
+                          : (!isSectionExpanded(eq.tempId, 'financing') ? 'Owned (Cash)' : null),
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Select
+                              value={eq.financingType || 'owned'}
+                              onValueChange={(value) => updateEquipmentItem(eq.tempId, 'financingType', value)}
+                            >
+                              <SelectTrigger className="h-8 text-sm w-40">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="owned">Owned (Cash)</SelectItem>
+                                <SelectItem value="financed">Financed</SelectItem>
+                                <SelectItem value="leased">Leased</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {(eq.financingType === 'financed' || eq.financingType === 'leased') && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => clearFinancing(eq.tempId)}
+                              >
+                                Clear Financing
+                              </Button>
+                            )}
+                          </div>
+
+                          {(eq.financingType === 'financed' || eq.financingType === 'leased') && (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              <div>
+                                <label className="text-xs text-muted-foreground flex items-center">
+                                  Deposit
+                                  {getSourceBadge(eq, 'depositAmount')}
+                                </label>
+                                <Input
+                                  type="number"
+                                  value={eq.depositAmount || ''}
+                                  onChange={(e) => updateEquipmentItem(eq.tempId, 'depositAmount', e.target.value ? parseFloat(e.target.value) : null)}
+                                  className="h-8 text-sm"
+                                  placeholder="$0.00"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs text-muted-foreground flex items-center">
+                                  Financed Amount
+                                  {getSourceBadge(eq, 'financedAmount')}
+                                </label>
+                                <Input
+                                  type="number"
+                                  value={eq.financedAmount || ''}
+                                  onChange={(e) => updateEquipmentItem(eq.tempId, 'financedAmount', e.target.value ? parseFloat(e.target.value) : null)}
+                                  className="h-8 text-sm"
+                                  placeholder="$0.00"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs text-muted-foreground flex items-center">
+                                  Monthly Payment
+                                  {getSourceBadge(eq, 'monthlyPayment')}
+                                </label>
+                                <Input
+                                  type="number"
+                                  value={eq.monthlyPayment || ''}
+                                  onChange={(e) => updateEquipmentItem(eq.tempId, 'monthlyPayment', e.target.value ? parseFloat(e.target.value) : null)}
+                                  className="h-8 text-sm"
+                                  placeholder="$0.00"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs text-muted-foreground flex items-center">
+                                  Term (Months)
+                                  {getSourceBadge(eq, 'termMonths')}
+                                </label>
+                                <Input
+                                  type="number"
+                                  value={eq.termMonths || ''}
+                                  onChange={(e) => updateEquipmentItem(eq.tempId, 'termMonths', e.target.value ? parseInt(e.target.value) : null)}
+                                  className="h-8 text-sm"
+                                  placeholder="Months"
+                                />
+                              </div>
+
+                              {eq.financingType === 'leased' && (
+                                <div>
+                                  <label className="text-xs text-muted-foreground flex items-center">
+                                    Buyout Amount
+                                    {getSourceBadge(eq, 'buyoutAmount')}
+                                  </label>
+                                  <Input
+                                    type="number"
+                                    value={eq.buyoutAmount || ''}
+                                    onChange={(e) => updateEquipmentItem(eq.tempId, 'buyoutAmount', e.target.value ? parseFloat(e.target.value) : null)}
+                                    className="h-8 text-sm"
+                                    placeholder="$0.00"
+                                  />
+                                </div>
+                              )}
                             </div>
                           )}
-                        </>
+                        </div>
                       )}
+                    </div>
+                  )}
+                  
+                  {/* Collapsed summary for new equipment */}
+                  {eq.selected && eq.importMode === 'new' && !expandedItems.has(eq.tempId) && (
+                    <div className="pl-7 text-xs text-muted-foreground">
+                      {eq.category} • {eq.purchasePrice ? formatCurrency(eq.purchasePrice) : 'No price'} 
+                      {eq.financingType && eq.financingType !== 'owned' && ` • ${eq.financingType === 'financed' ? 'Financed' : 'Leased'}`}
                     </div>
                   )}
                 </div>
@@ -1382,37 +1771,62 @@ export function EquipmentImportReview({
             </div>
           </ScrollArea>
 
+          {/* Pre-Import Summary Panel */}
+          <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+            <p className="text-sm font-medium">Import Summary</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              {newCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-green-600" />
+                  <span>{newCount} new equipment</span>
+                </div>
+              )}
+              {updateCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4 text-blue-600" />
+                  <span>{updateCount} to update</span>
+                </div>
+              )}
+              {attachmentCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <Link className="h-4 w-4 text-purple-600" />
+                  <span>{attachmentCount} attachment{attachmentCount !== 1 ? 's' : ''}</span>
+                </div>
+              )}
+              {attachSourceDocument && documentCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span>{documentCount} document{documentCount !== 1 ? 's' : ''} to attach</span>
+                </div>
+              )}
+            </div>
+            {selectedCount === 0 && (
+              <p className="text-xs text-muted-foreground">No items selected for import</p>
+            )}
+          </div>
+
           {/* Actions */}
-          <div className="flex justify-between items-center gap-2 pt-2">
-            <div className="text-sm text-muted-foreground">
-              {newCount > 0 && <span>{newCount} new</span>}
-              {newCount > 0 && (updateCount > 0 || attachmentCount > 0) && <span>, </span>}
-              {updateCount > 0 && <span>{updateCount} updates</span>}
-              {updateCount > 0 && attachmentCount > 0 && <span>, </span>}
-              {attachmentCount > 0 && <span>{attachmentCount} attachments</span>}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isImporting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleImport}
-                disabled={selectedCount === 0 || isImporting}
-              >
-                {isImporting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  `Import ${selectedCount} Item${selectedCount !== 1 ? 's' : ''}`
-                )}
-              </Button>
-            </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isImporting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={selectedCount === 0 || isImporting}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                `Import ${selectedCount} Item${selectedCount !== 1 ? 's' : ''}`
+              )}
+            </Button>
           </div>
         </div>
       </DialogContent>

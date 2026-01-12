@@ -48,12 +48,13 @@ interface FieldConflict {
 interface EquipmentImportProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onEquipmentExtracted: (equipment: ExtractedEquipment[], metadata?: {
-    documentSummaries?: DocumentSummary[];
-    conflicts?: FieldConflict[];
-    processingNotes?: string;
-    sourceFiles?: File[];
-  }) => void;
+  onEquipmentExtracted: (
+    equipment: ExtractedEquipment[], 
+    documentSummaries?: DocumentSummary[],
+    conflicts?: FieldConflict[],
+    processingNotes?: string,
+    sourceFiles?: File[]
+  ) => void;
 }
 
 interface UploadedFile {
@@ -221,12 +222,13 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
             sourceFiles: allSourceFiles,
           }));
 
-          onEquipmentExtracted(equipmentWithSources, {
-            documentSummaries: data.documentSummaries,
-            conflicts: data.conflicts,
-            processingNotes: data.processingNotes,
-            sourceFiles: allSourceFiles,
-          });
+          onEquipmentExtracted(
+            equipmentWithSources, 
+            data.documentSummaries,
+            data.conflicts,
+            data.processingNotes,
+            allSourceFiles
+          );
           
           setFiles([]);
           onOpenChange(false);
@@ -298,9 +300,7 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
             sourceFiles: [file],
           }));
           
-          onEquipmentExtracted(equipmentWithSource, {
-            sourceFiles: [file],
-          });
+          onEquipmentExtracted(equipmentWithSource, undefined, undefined, undefined, [file]);
           
           setFiles([]);
           onOpenChange(false);
