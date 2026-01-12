@@ -951,30 +951,30 @@ export function EquipmentImportReview({
 
     setIsImporting(true);
 
-    let newCountResult = 0;
+    const results = {
+      succeeded: [] as string[],
+      failed: [] as { name: string; error: string }[],
+    };
     let updateCountResult = 0;
     let attachmentImportCount = 0;
-    const importedEquipmentIds: string[] = [];
     const tempIdToRealId: Map<string, string> = new Map();
+    const uploadedDocumentKeys = new Set<string>(); // Track uploaded docs to prevent duplicates
 
-    try {
-      // First pass: Import all equipment (non-attachments) and updates
-      for (const eq of toProcess) {
+    // First pass: Import all equipment (non-attachments) and updates
+    for (const eq of toProcess) {
+      try {
         if (eq.importMode === 'update_existing' && eq.matchedEquipmentId) {
-          // Build updates object with only the fields we want to fill in
           const updates: Partial<Equipment> = {};
-          
           for (const field of eq.updatableFields) {
             if (field.willUpdate) {
               (updates as any)[field.field] = field.importedValue;
             }
           }
-          
           if (Object.keys(updates).length > 0) {
             await updateEquipment(eq.matchedEquipmentId, updates);
-            importedEquipmentIds.push(eq.matchedEquipmentId);
             tempIdToRealId.set(eq.tempId, eq.matchedEquipmentId);
             updateCountResult++;
+            results.succeeded.push(`${eq.make} ${eq.model} (updated)`);
           }
         } else if (eq.importMode === 'new') {
           const newId = await addEquipment({
@@ -1002,22 +1002,25 @@ export function EquipmentImportReview({
             allocationType: 'operational',
           });
           if (newId) {
-            importedEquipmentIds.push(newId);
             tempIdToRealId.set(eq.tempId, newId);
+            results.succeeded.push(`${eq.make} ${eq.model}`);
           }
-          newCountResult++;
         }
+      } catch (error) {
+        results.failed.push({
+          name: `${eq.make} ${eq.model}`,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
+    }
 
-      // Second pass: Import attachments
-      for (const eq of toProcess.filter(e => e.importMode === 'attachment')) {
+    // Second pass: Import attachments
+    for (const eq of toProcess.filter(e => e.importMode === 'attachment')) {
+      try {
         let parentId = eq.selectedParentId;
-        
-        // If parent was from this import batch, get its real ID
         if (eq.selectedParentTempId) {
           parentId = tempIdToRealId.get(eq.selectedParentTempId);
         }
-        
         if (parentId) {
           await addAttachment(parentId, {
             name: `${eq.make} ${eq.model}`,
@@ -1026,69 +1029,66 @@ export function EquipmentImportReview({
             description: eq.notes || undefined,
           });
           attachmentImportCount++;
+          results.succeeded.push(`${eq.make} ${eq.model} (attachment)`);
         }
+      } catch (error) {
+        results.failed.push({
+          name: `${eq.make} ${eq.model}`,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
+    }
 
-      // Attach source documents to their respective equipment items
-      if (attachSourceDocument) {
-        for (const eq of toProcess) {
-          // Get all source files (handle both sourceFile and sourceFiles for merged items)
-          const filesToAttach: File[] = [];
-          if (eq.sourceFiles?.length) {
-            filesToAttach.push(...eq.sourceFiles);
-          } else if (eq.sourceFile) {
-            filesToAttach.push(eq.sourceFile);
-          }
-          
-          if (filesToAttach.length === 0) continue;
-          
-          // Find the real equipment ID for this item
-          let equipmentId: string | undefined;
-          
-          if (eq.importMode === 'new') {
-            equipmentId = tempIdToRealId.get(eq.tempId);
-          } else if (eq.importMode === 'update_existing') {
-            equipmentId = eq.matchedEquipmentId;
-          } else if (eq.importMode === 'attachment') {
-            // For attachments, attach documents to the parent equipment
-            equipmentId = eq.selectedParentId || (eq.selectedParentTempId ? tempIdToRealId.get(eq.selectedParentTempId) : undefined);
-          }
-          
-          if (equipmentId) {
-            for (const file of filesToAttach) {
-              try {
-                await uploadDocument(equipmentId, file);
-              } catch (error) {
-                console.error(`Failed to attach source document to equipment ${equipmentId}:`, error);
-              }
+    // Attach source documents - only to primary equipment, prevent duplicates
+    if (attachSourceDocument) {
+      const primaryEquipment = toProcess.filter(e => e.importMode === 'new' && e.suggestedType !== 'attachment');
+      
+      for (const eq of primaryEquipment) {
+        const filesToAttach: File[] = eq.sourceFiles?.length ? eq.sourceFiles : (eq.sourceFile ? [eq.sourceFile] : []);
+        const equipmentId = tempIdToRealId.get(eq.tempId);
+        
+        if (equipmentId && filesToAttach.length > 0) {
+          for (const file of filesToAttach) {
+            const uploadKey = `${equipmentId}:${file.name}`;
+            if (uploadedDocumentKeys.has(uploadKey)) continue; // Skip duplicate
+            uploadedDocumentKeys.add(uploadKey);
+            try {
+              await uploadDocument(equipmentId, file);
+            } catch (error) {
+              console.error(`Failed to attach document ${file.name}:`, error);
             }
           }
         }
       }
+    }
 
-      // Build success message
+    // Report results with partial failure handling
+    if (results.failed.length === 0 && results.succeeded.length > 0) {
       const parts = [];
-      if (newCountResult > 0) parts.push(`${newCountResult} new equipment`);
+      const newCount = results.succeeded.filter(s => !s.includes('updated') && !s.includes('attachment')).length;
+      if (newCount > 0) parts.push(`${newCount} new equipment`);
       if (updateCountResult > 0) parts.push(`${updateCountResult} updated`);
       if (attachmentImportCount > 0) parts.push(`${attachmentImportCount} attachment${attachmentImportCount !== 1 ? 's' : ''}`);
-
-      toast({
-        title: "Import Successful",
-        description: parts.join(', '),
-      });
-
+      
+      toast({ title: "Import Successful", description: parts.join(', ') });
       onComplete();
       onOpenChange(false);
-    } catch (error) {
-      console.error('Error importing equipment:', error);
+    } else if (results.succeeded.length > 0 && results.failed.length > 0) {
+      toast({
+        title: "Partial Import",
+        description: `${results.succeeded.length} succeeded, ${results.failed.length} failed: ${results.failed.map(f => f.name).join(', ')}`,
+      });
+      onComplete();
+      onOpenChange(false);
+    } else if (results.failed.length > 0) {
       toast({
         title: "Import Failed",
-        description: "An error occurred while importing equipment",
+        description: `All ${results.failed.length} items failed to import`,
         variant: "destructive",
       });
-    } finally {
-      setIsImporting(false);
     }
+
+    setIsImporting(false);
   };
 
   const getConfidenceBadge = (confidence: 'high' | 'medium' | 'low') => {
