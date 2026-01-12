@@ -145,21 +145,8 @@ export default function EquipmentList() {
     setAttachmentsOpen(true);
   };
 
-  // Add attachment totals to equipment
-  const equipmentWithAttachments = useMemo(() => {
-    return calculatedEquipment.map(eq => {
-      const attachments = attachmentsByEquipmentId[eq.id] || [];
-      const attachmentTotalValue = attachments.reduce((sum, a) => sum + a.value, 0);
-      return {
-        ...eq,
-        attachmentTotalValue,
-        totalCostBasisWithAttachments: eq.totalCostBasis + attachmentTotalValue,
-      } as EquipmentCalculated;
-    });
-  }, [calculatedEquipment, attachmentsByEquipmentId]);
-
   const filteredEquipment = useMemo(() => {
-    return equipmentWithAttachments.filter(equipment => {
+    return calculatedEquipment.filter(equipment => {
       const matchesSearch = equipment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         equipment.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
         equipment.model.toLowerCase().includes(searchQuery.toLowerCase());
@@ -168,7 +155,7 @@ export default function EquipmentList() {
       
       return matchesSearch && matchesStatus;
     });
-  }, [equipmentWithAttachments, searchQuery, statusFilter]);
+  }, [calculatedEquipment, searchQuery, statusFilter]);
 
   // Group equipment by category (already alphabetically sorted in categoryDefaults)
   const groupedEquipment = useMemo(() => {
@@ -333,7 +320,7 @@ export default function EquipmentList() {
                       </span>
                     </div>
                     <span className="text-sm font-mono-nums text-muted-foreground">
-                      {formatCurrency(items.reduce((sum, e) => sum + (e.totalCostBasisWithAttachments || e.totalCostBasis), 0))}
+                      {formatCurrency(items.reduce((sum, e) => sum + e.totalCostBasis, 0))}
                     </span>
                   </CollapsibleTrigger>
                   
@@ -494,11 +481,11 @@ export default function EquipmentList() {
         {/* Summary */}
         <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
           <p>
-            Showing {filteredEquipment.length} of {equipmentWithAttachments.length} items in {groupedEquipment.length} categories
+            Showing {filteredEquipment.length} of {calculatedEquipment.length} items in {groupedEquipment.length} categories
           </p>
           <p>
             Total Value (incl. attachments): <span className="font-mono-nums font-medium text-foreground">
-              {formatCurrency(filteredEquipment.reduce((sum, e) => sum + (e.totalCostBasisWithAttachments || e.totalCostBasis), 0))}
+              {formatCurrency(filteredEquipment.reduce((sum, e) => sum + e.totalCostBasis, 0))}
             </span>
           </p>
         </div>
