@@ -71,6 +71,7 @@ interface BatchDocument {
 
 // Input validation constants
 const MAX_BASE64_SIZE = 20 * 1024 * 1024 * 1.37; // ~27MB base64 for 20MB file
+const MAX_DOCUMENTS = 10; // Maximum documents per batch
 const ALLOWED_DOCUMENT_TYPES = [
   'application/pdf',
   'image/jpeg',
@@ -125,24 +126,27 @@ async function logActivity(
   }
 }
 
-// System prompt for single asset mode (consolidation)
-const getSingleAssetSystemPrompt = () => `You are an equipment data extraction assistant specialized in reading purchase orders, invoices, financing agreements, and lease agreements for landscaping equipment.
+// System prompt for auto-detection mode (consolidation with smart detection)
+const getAutoDetectSystemPrompt = () => `You are an equipment data extraction assistant specialized in reading purchase orders, invoices, financing agreements, and lease agreements for landscaping equipment.
 
-SINGLE ASSET MODE INSTRUCTIONS:
-You are analyzing MULTIPLE documents that ALL relate to the SAME purchase transaction (e.g., a purchase order, registration, and financing agreement for ONE piece of equipment).
+AUTO-DETECTION MODE INSTRUCTIONS:
+Analyze the uploaded documents and intelligently determine if they describe:
+A) The SAME equipment purchase (multiple docs for one asset - e.g., invoice + registration + financing)
+B) DIFFERENT equipment purchases (separate invoices for different assets)
 
-Your task is to:
-1. IDENTIFY PRIMARY EQUIPMENT: Extract ONE primary equipment record with the best-supported values from ALL documents
-2. IDENTIFY ATTACHMENTS: If documents also include accessories/attachments (buckets, plows, etc.), extract those as separate items with suggestedType: "attachment"
-3. CONSOLIDATE DATA: Use the best value for each field across all documents
+DETECTION RULES:
+- If documents share the SAME VIN/serial number, make/model, or are clearly related (e.g., invoice and financing for same purchase) → Consolidate into ONE record
+- If documents have DIFFERENT VINs/serials, different make/models, or are clearly separate transactions → Return MULTIPLE records
 
-CONSOLIDATION RULES:
-- For conflicting values, prefer:
-  - Registration documents for VIN/serial number
-  - Purchase orders/invoices for pricing  
-  - Financing agreements for loan terms (monthly payment, term, buyout)
-- If you find conflicting values you cannot resolve, note them in the "notes" field
-- All extracted items should reference their source documents via sourceDocumentIndices
+For CONSOLIDATION (multiple docs for same equipment):
+1. Extract ONE primary equipment record with the best-supported values from ALL documents
+2. Identify attachments (buckets, plows, etc.) as separate items with suggestedType: "attachment"
+3. Use the best value for each field across all documents
+4. Prefer: Registration docs for VIN/serial, Purchase orders for pricing, Financing agreements for loan terms
+
+For SEPARATE ASSETS:
+1. Extract each equipment item as a separate record
+2. Each record should reference its source document(s) via sourceDocumentIndices
 
 CATEGORY CLASSIFICATION (REQUIRED):
 You MUST suggest a category for each piece of equipment. Valid categories:
@@ -165,34 +169,22 @@ You MUST suggest a category for each piece of equipment. Valid categories:
 - "Vehicle (Commercial)": Dump trucks, cab-and-chassis, service body trucks, F-450+
 - "Vehicle (Light-Duty)": Pickups, vans, SUVs, F-150/F-250/F-350
 
-YEAR EXTRACTION (CRITICAL - READ CAREFULLY):
-- "year" = the MODEL YEAR of the equipment (manufacturing year, what year the equipment IS)
-- "purchaseDate" = the invoice/transaction date (when it was purchased)
-- These are DIFFERENT values, especially for USED equipment!
+YEAR EXTRACTION (CRITICAL):
+- "year" = the MODEL YEAR (manufacturing year)
+- "purchaseDate" = the invoice/transaction date
+- These are DIFFERENT, especially for USED equipment!
 
 PURCHASE CONDITION (CRITICAL):
-Set to "used" if ANY of these apply:
-- Document explicitly says: "USED", "PRE-OWNED", "CERTIFIED PRE-OWNED", "REFURBISHED", "RECONDITIONED"
-- From auction, dealer trade-in, rental fleet sale, or consignment
-
-Set to "new" if:
-- From authorized dealer with no "used" indicators
-- Full manufacturer warranty included
+Set to "used" if: explicitly says "USED", "PRE-OWNED", from auction, rental fleet sale, "as-is" language
+Set to "new" if: from authorized dealer with no "used" indicators, full manufacturer warranty
 
 ATTACHMENT DETECTION:
-Identify items that are attachments/accessories rather than primary equipment:
 - Buckets, forks, blades, augers, trenchers, grapples, pallet forks, plows, spreaders
 - Items with significantly lower value than the main equipment
-- Items described as "includes", "with", or "accessory"
-
-For attachments, set:
-- suggestedType: "attachment"
-- suggestedParentIndex: 0 (pointing to the primary equipment)
+- For attachments: suggestedType: "attachment", suggestedParentIndex: 0 (pointing to parent)
 
 DOCUMENT SOURCE TRACKING:
-For each item, include sourceDocumentIndices as an array of 0-based indices indicating which documents contributed to this item's data.
-
-If documents appear to describe COMPLETELY DIFFERENT equipment (different VINs, wildly different make/model), still consolidate as best you can but note the discrepancy.`;
+Include sourceDocumentIndices as an array of 0-based indices for which documents contributed to each item.`;
 
 // System prompt for multi-asset mode (legacy behavior)
 const getMultiAssetSystemPrompt = () => `You are an equipment data extraction assistant specialized in reading purchase orders, invoices, financing agreements, and lease agreements for landscaping equipment.
@@ -493,7 +485,17 @@ serve(async (req) => {
         });
       }
       
-      console.log(`Processing batch of ${documents.length} documents in ${mode} mode`);
+      // Validate document count limit
+      if (documents.length > MAX_DOCUMENTS) {
+        return new Response(JSON.stringify({ 
+          error: `Too many documents. Maximum ${MAX_DOCUMENTS} per batch.` 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      console.log(`Processing batch of ${documents.length} documents in auto-detect mode`);
       
       // Validate all documents
       for (let i = 0; i < documents.length; i++) {
@@ -521,13 +523,11 @@ serve(async (req) => {
         }
       }
       
-      // Build the prompt with document file names
+      // Build the prompt with document file names - AI auto-detects mode
       const fileNames = documents.map(d => d.fileName).join(', ');
-      const userPrompt = mode === 'single_asset'
-        ? `I'm uploading ${documents.length} documents (${fileNames}) that all relate to the SAME equipment purchase. Please analyze all documents together and extract a single consolidated equipment record with any attachments. Track which document each field came from.`
-        : `Please analyze these ${documents.length} documents (${fileNames}) and extract all equipment information from each. Return the data using the extract_equipment function.`;
+      const userPrompt = `Please analyze these ${documents.length} documents (${fileNames}). Determine if they describe the same equipment purchase or different ones, and extract all equipment information accordingly. Return the data using the extract_equipment function.`;
       
-      const systemPrompt = mode === 'single_asset' ? getSingleAssetSystemPrompt() : getMultiAssetSystemPrompt();
+      const systemPrompt = getAutoDetectSystemPrompt();
       
       // Build content array with all documents
       const contentArray: any[] = [
@@ -568,7 +568,6 @@ serve(async (req) => {
         
         await logError(serviceClient, userId, userEmail, 'ai_gateway_error', `AI gateway returned ${response.status}`, {
           documentCount: documents.length,
-          mode,
           processingTimeMs,
           aiStatus: response.status,
           aiErrorText: errorText.substring(0, 500),
@@ -597,7 +596,6 @@ serve(async (req) => {
       if (!toolCall || toolCall.function.name !== "extract_equipment") {
         await logError(serviceClient, userId, userEmail, 'ai_extraction_failed', 'No equipment data extracted from documents', {
           documentCount: documents.length,
-          mode,
           processingTimeMs,
           aiResponse: JSON.stringify(data).substring(0, 1000),
         });
@@ -619,7 +617,6 @@ serve(async (req) => {
       // Log successful extraction
       await logActivity(serviceClient, userId, userEmail!, 'equipment_import_batch_success', {
         documentCount: documents.length,
-        mode,
         processingTimeMs,
         equipmentCount: equipment.length,
         attachmentCount: equipment.filter(e => e.suggestedType === 'attachment').length,
@@ -632,7 +629,6 @@ serve(async (req) => {
         documentSummaries,
         conflicts,
         processingNotes,
-        mode,
         documentCount: documents.length,
         fileNames: documents.map(d => d.fileName),
       }), {
