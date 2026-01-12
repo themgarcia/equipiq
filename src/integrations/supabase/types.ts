@@ -357,6 +357,48 @@ export type Database = {
           },
         ]
       }
+      error_log: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          error_details: Json | null
+          error_message: string
+          error_source: string
+          error_type: string
+          id: string
+          resolved: boolean
+          severity: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          error_details?: Json | null
+          error_message: string
+          error_source: string
+          error_type: string
+          id?: string
+          resolved?: boolean
+          severity?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          error_details?: Json | null
+          error_message?: string
+          error_source?: string
+          error_type?: string
+          id?: string
+          resolved?: boolean
+          severity?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           admin_notes: string | null
@@ -691,6 +733,33 @@ export type Database = {
           month?: string
           storage_bytes_used?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_activity_log: {
+        Row: {
+          action_details: Json | null
+          action_type: string
+          created_at: string
+          id: string
+          user_email: string
+          user_id: string
+        }
+        Insert: {
+          action_details?: Json | null
+          action_type: string
+          created_at?: string
+          id?: string
+          user_email: string
+          user_id: string
+        }
+        Update: {
+          action_details?: Json | null
+          action_type?: string
+          created_at?: string
+          id?: string
+          user_email?: string
           user_id?: string
         }
         Relationships: []

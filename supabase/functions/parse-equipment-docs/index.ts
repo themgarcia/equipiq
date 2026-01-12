@@ -60,10 +60,68 @@ const ALLOWED_DOCUMENT_TYPES = [
   'image/heif'
 ];
 
+// Helper function to log errors to the database
+async function logError(
+  serviceClient: any,
+  userId: string | null,
+  userEmail: string | null,
+  errorType: string,
+  errorMessage: string,
+  errorDetails: Record<string, any>,
+  severity: 'error' | 'warning' | 'info' = 'error'
+) {
+  try {
+    await serviceClient.from('error_log').insert({
+      user_id: userId,
+      user_email: userEmail,
+      error_source: 'parse-equipment-docs',
+      error_type: errorType,
+      error_message: errorMessage,
+      error_details: errorDetails,
+      severity,
+    });
+  } catch (logErr) {
+    console.error('Failed to log error to database:', logErr);
+  }
+}
+
+// Helper function to log user activity
+async function logActivity(
+  serviceClient: any,
+  userId: string,
+  userEmail: string,
+  actionType: string,
+  actionDetails: Record<string, any>
+) {
+  try {
+    await serviceClient.from('user_activity_log').insert({
+      user_id: userId,
+      user_email: userEmail,
+      action_type: actionType,
+      action_details: actionDetails,
+    });
+  } catch (logErr) {
+    console.error('Failed to log activity to database:', logErr);
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Create service role client for logging (bypasses RLS)
+  const serviceClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
+  let userId: string | null = null;
+  let userEmail: string | null = null;
+  let fileName: string | null = null;
+  let documentType: string | null = null;
+  let fileSizeBytes: number | null = null;
+  const startTime = Date.now();
 
   try {
     // Verify authentication manually (verify_jwt is disabled in config)
@@ -72,6 +130,7 @@ serve(async (req) => {
     
     if (!authHeader) {
       console.error('No authorization header provided');
+      await logError(serviceClient, null, null, 'auth_error', 'No authorization header provided', {});
       return new Response(JSON.stringify({ error: 'Unauthorized - no auth header' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -82,6 +141,7 @@ serve(async (req) => {
     const token = authHeader.replace(/^Bearer\s+/i, '');
     if (!token) {
       console.error('No token found in auth header');
+      await logError(serviceClient, null, null, 'auth_error', 'No token found in auth header', {});
       return new Response(JSON.stringify({ error: 'Unauthorized - no token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -97,24 +157,38 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) {
       console.error('Auth verification failed:', authError?.message || 'No user found');
+      await logError(serviceClient, null, null, 'auth_error', 'Invalid token', {
+        authError: authError?.message,
+      });
       return new Response(JSON.stringify({ error: 'Unauthorized - invalid token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    userId = user.id;
+    userEmail = user.email || null;
     console.log(`Authenticated user: ${user.id}`);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
+      await logError(serviceClient, userId, userEmail, 'config_error', 'LOVABLE_API_KEY is not configured', {});
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const { documentBase64, documentType, fileName } = await req.json();
+    const body = await req.json();
+    const documentBase64 = body.documentBase64;
+    documentType = body.documentType;
+    fileName = body.fileName;
+    fileSizeBytes = documentBase64 ? Math.round(documentBase64.length * 0.75) : null; // Approximate original file size
 
     // Input validation: Check document presence
     if (!documentBase64 || typeof documentBase64 !== 'string') {
       console.error('No document provided or invalid format');
+      await logError(serviceClient, userId, userEmail, 'validation_error', 'No document provided', {
+        fileName,
+        documentType,
+      });
       return new Response(JSON.stringify({ error: 'No document provided' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -124,6 +198,12 @@ serve(async (req) => {
     // Input validation: Check document size (prevent oversized uploads)
     if (documentBase64.length > MAX_BASE64_SIZE) {
       console.error(`Document too large: ${documentBase64.length} bytes (max: ${MAX_BASE64_SIZE})`);
+      await logError(serviceClient, userId, userEmail, 'validation_error', 'Document too large', {
+        fileName,
+        documentType,
+        fileSizeBytes,
+        maxSizeBytes: MAX_BASE64_SIZE * 0.75,
+      });
       return new Response(JSON.stringify({ error: 'Document too large. Maximum size is 20MB.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -133,6 +213,11 @@ serve(async (req) => {
     // Input validation: Check document type
     if (!documentType || !ALLOWED_DOCUMENT_TYPES.includes(documentType)) {
       console.error(`Invalid document type: ${documentType}`);
+      await logError(serviceClient, userId, userEmail, 'validation_error', 'Invalid document type', {
+        fileName,
+        documentType,
+        allowedTypes: ALLOWED_DOCUMENT_TYPES,
+      });
       return new Response(JSON.stringify({ error: 'Invalid document type. Supported: PDF, JPEG, PNG, WebP, HEIC' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -143,6 +228,10 @@ serve(async (req) => {
     const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
     if (!base64Regex.test(documentBase64)) {
       console.error('Invalid base64 format');
+      await logError(serviceClient, userId, userEmail, 'validation_error', 'Invalid base64 format', {
+        fileName,
+        documentType,
+      });
       return new Response(JSON.stringify({ error: 'Invalid document format' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -350,9 +439,20 @@ Set confidence to "high" if the data is clearly legible, "medium" if somewhat un
       }),
     });
 
+    const processingTimeMs = Date.now() - startTime;
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
+      
+      await logError(serviceClient, userId, userEmail, 'ai_gateway_error', `AI gateway returned ${response.status}`, {
+        fileName,
+        documentType,
+        fileSizeBytes,
+        processingTimeMs,
+        aiStatus: response.status,
+        aiErrorText: errorText.substring(0, 500),
+      });
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
@@ -376,6 +476,13 @@ Set confidence to "high" if the data is clearly legible, "medium" if somewhat un
     // Extract the tool call result
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall || toolCall.function.name !== "extract_equipment") {
+      await logError(serviceClient, userId, userEmail, 'ai_extraction_failed', 'No equipment data extracted from document', {
+        fileName,
+        documentType,
+        fileSizeBytes,
+        processingTimeMs,
+        aiResponse: JSON.stringify(data).substring(0, 1000),
+      });
       throw new Error("No equipment data extracted from document");
     }
 
@@ -383,6 +490,16 @@ Set confidence to "high" if the data is clearly legible, "medium" if somewhat un
     const equipment: ExtractedEquipment[] = extractedData.equipment || [];
 
     console.log(`Extracted ${equipment.length} equipment items`);
+
+    // Log successful extraction
+    await logActivity(serviceClient, userId, userEmail!, 'equipment_import_success', {
+      fileName,
+      documentType,
+      fileSizeBytes,
+      processingTimeMs,
+      equipmentCount: equipment.length,
+      extractedMakes: equipment.map(e => e.make).join(', '),
+    });
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -393,7 +510,18 @@ Set confidence to "high" if the data is clearly legible, "medium" if somewhat un
     });
 
   } catch (error) {
+    const processingTimeMs = Date.now() - startTime;
     console.error('Error in parse-equipment-docs function:', error);
+    
+    // Log the error
+    await logError(serviceClient, userId, userEmail, 'unexpected_error', error instanceof Error ? error.message : 'Unknown error occurred', {
+      fileName,
+      documentType,
+      fileSizeBytes,
+      processingTimeMs,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Unknown error occurred' 
     }), {
