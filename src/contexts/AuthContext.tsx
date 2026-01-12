@@ -13,6 +13,16 @@ export interface CompanyProfileData {
   companyWebsite?: string;
 }
 
+export interface RateLimitResult {
+  allowed: boolean;
+  attemptsRemaining?: number;
+  blockedUntil?: string;
+  retryAfterSeconds?: number;
+  message?: string;
+  warning?: string;
+  cleared?: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -20,6 +30,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string, companyData: CompanyProfileData) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  checkRateLimit: (action: 'login' | 'signup' | 'password_reset', email?: string) => Promise<RateLimitResult>;
+  clearRateLimit: (action: 'login' | 'signup' | 'password_reset', email?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +60,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  const checkRateLimit = useCallback(async (
+    action: 'login' | 'signup' | 'password_reset',
+    email?: string
+  ): Promise<RateLimitResult> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('check-auth-rate-limit', {
+        body: { action, email },
+      });
+
+      if (error) {
+        console.error('Rate limit check error:', error);
+        // Fail open - allow the request if rate limit check fails
+        return { allowed: true };
+      }
+
+      return data as RateLimitResult;
+    } catch (err) {
+      console.error('Rate limit check failed:', err);
+      // Fail open - allow the request if rate limit check fails
+      return { allowed: true };
+    }
+  }, []);
+
+  const clearRateLimit = useCallback(async (
+    action: 'login' | 'signup' | 'password_reset',
+    email?: string
+  ): Promise<void> => {
+    try {
+      await supabase.functions.invoke('check-auth-rate-limit', {
+        body: { action, email, success: true },
+      });
+    } catch (err) {
+      console.error('Failed to clear rate limit:', err);
+    }
   }, []);
 
   const signUp = useCallback(async (
@@ -80,6 +128,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error };
     }
 
+    // Clear rate limit on successful signup
+    await clearRateLimit('signup', email);
+
     // Send welcome email (fire and forget)
     try {
       await supabase.functions.invoke('send-welcome-email', {
@@ -90,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     return { error: null };
-  }, []);
+  }, [clearRateLimit]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -102,8 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error };
     }
 
+    // Clear rate limit on successful login
+    await clearRateLimit('login', email);
+
     return { error: null };
-  }, []);
+  }, [clearRateLimit]);
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
@@ -124,6 +178,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signIn,
       signOut,
+      checkRateLimit,
+      clearRateLimit,
     }}>
       {children}
     </AuthContext.Provider>

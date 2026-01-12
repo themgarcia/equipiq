@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { z } from 'zod';
-import { useAuth, CompanyProfileData } from '@/contexts/AuthContext';
+import { useAuth, CompanyProfileData, RateLimitResult } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Lock, User, Building2, Users, DollarSign, MapPin, Globe, Calendar } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Mail, Lock, User, Building2, Users, DollarSign, MapPin, Globe, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { 
@@ -55,7 +56,11 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   
-  const { signIn, signUp, user, loading } = useAuth();
+  // Rate limiting state
+  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitResult | null>(null);
+  const [retryCountdown, setRetryCountdown] = useState<number>(0);
+  
+  const { signIn, signUp, user, loading, checkRateLimit, clearRateLimit } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -68,6 +73,23 @@ export default function Auth() {
       navigate(from, { replace: true });
     }
   }, [user, loading, navigate, from]);
+
+  // Countdown timer for rate limiting
+  useEffect(() => {
+    if (retryCountdown <= 0) return;
+
+    const timer = setInterval(() => {
+      setRetryCountdown((prev) => {
+        if (prev <= 1) {
+          setRateLimitInfo(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [retryCountdown]);
 
   const resetForm = () => {
     setEmail('');
@@ -82,6 +104,17 @@ export default function Auth() {
     setCompanyWebsite('');
     setErrors({});
     setResetEmailSent(false);
+    setRateLimitInfo(null);
+    setRetryCountdown(0);
+  };
+
+  const formatCountdown = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+      return `${mins}m ${secs}s`;
+    }
+    return `${secs}s`;
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -101,6 +134,20 @@ export default function Auth() {
         return;
       }
 
+      // Check rate limit before attempting password reset
+      const rateLimitResult = await checkRateLimit('password_reset', email);
+      if (!rateLimitResult.allowed) {
+        setRateLimitInfo(rateLimitResult);
+        setRetryCountdown(rateLimitResult.retryAfterSeconds || 0);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Store warning if present
+      if (rateLimitResult.warning) {
+        setRateLimitInfo(rateLimitResult);
+      }
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
@@ -114,6 +161,10 @@ export default function Auth() {
         setIsSubmitting(false);
         return;
       }
+
+      // Clear rate limit on success
+      await clearRateLimit('password_reset', email);
+      setRateLimitInfo(null);
 
       setResetEmailSent(true);
       toast({
@@ -149,6 +200,20 @@ export default function Auth() {
           return;
         }
 
+        // Check rate limit before attempting login
+        const rateLimitResult = await checkRateLimit('login', email);
+        if (!rateLimitResult.allowed) {
+          setRateLimitInfo(rateLimitResult);
+          setRetryCountdown(rateLimitResult.retryAfterSeconds || 0);
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Store warning if present
+        if (rateLimitResult.warning) {
+          setRateLimitInfo(rateLimitResult);
+        }
+
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
@@ -167,6 +232,9 @@ export default function Auth() {
           setIsSubmitting(false);
           return;
         }
+
+        // Clear rate limit info on success
+        setRateLimitInfo(null);
 
         toast({
           title: "Welcome back!",
@@ -197,6 +265,20 @@ export default function Auth() {
           return;
         }
 
+        // Check rate limit before attempting signup
+        const rateLimitResult = await checkRateLimit('signup', email);
+        if (!rateLimitResult.allowed) {
+          setRateLimitInfo(rateLimitResult);
+          setRetryCountdown(rateLimitResult.retryAfterSeconds || 0);
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Store warning if present
+        if (rateLimitResult.warning) {
+          setRateLimitInfo(rateLimitResult);
+        }
+
         const companyData: CompanyProfileData = {
           companyName,
           industry,
@@ -225,6 +307,9 @@ export default function Auth() {
           setIsSubmitting(false);
           return;
         }
+
+        // Clear rate limit info on success
+        setRateLimitInfo(null);
 
         toast({
           title: "Account created!",
@@ -346,6 +431,28 @@ export default function Auth() {
               )
             ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Rate Limit Warning/Error */}
+              {rateLimitInfo && !rateLimitInfo.allowed && (
+                <Alert variant="destructive">
+                  <Clock className="h-4 w-4" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span>{rateLimitInfo.message || 'Too many attempts. Please try again later.'}</span>
+                    {retryCountdown > 0 && (
+                      <span className="font-mono text-sm ml-2">
+                        {formatCountdown(retryCountdown)}
+                      </span>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {rateLimitInfo && rateLimitInfo.allowed && rateLimitInfo.warning && (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    {rateLimitInfo.warning}
+                  </AlertDescription>
+                </Alert>
+              )}
               {!isLogin && (
                 <>
                   {/* Personal Info Section */}
