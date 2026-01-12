@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.insurance-renewal-check]
 verify_jwt = false
+
+[functions.check-auth-rate-limit]
+verify_jwt = false
