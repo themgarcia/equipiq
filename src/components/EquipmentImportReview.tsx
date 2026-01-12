@@ -313,7 +313,7 @@ export function EquipmentImportReview({
   sourceFiles,
   onComplete
 }: EquipmentImportReviewProps) {
-  const { addEquipment, updateEquipment, equipment, uploadDocument, addAttachment } = useEquipment();
+  const { addEquipment, updateEquipment, equipment, uploadDocument, getDocuments, addAttachment } = useEquipment();
   const [isImporting, setIsImporting] = useState(false);
   const [duplicateFilter, setDuplicateFilter] = useState<DuplicateFilter>('all');
   const [attachSourceDocument, setAttachSourceDocument] = useState(true);
@@ -1039,18 +1039,39 @@ export function EquipmentImportReview({
       }
     }
 
-    // Attach source documents - only to primary equipment, prevent duplicates
+    // Attach source documents - to new AND updated equipment, prevent duplicates
     if (attachSourceDocument) {
-      const primaryEquipment = toProcess.filter(e => e.importMode === 'new' && e.suggestedType !== 'attachment');
+      // Include both new equipment AND updated existing equipment
+      const equipmentWithDocuments = toProcess.filter(e => 
+        (e.importMode === 'new' || e.importMode === 'update_existing') && 
+        e.suggestedType !== 'attachment'
+      );
       
-      for (const eq of primaryEquipment) {
+      for (const eq of equipmentWithDocuments) {
         const filesToAttach: File[] = eq.sourceFiles?.length ? eq.sourceFiles : (eq.sourceFile ? [eq.sourceFile] : []);
-        const equipmentId = tempIdToRealId.get(eq.tempId);
+        
+        // For new items, get ID from tempIdToRealId
+        // For updated items, use matchedEquipmentId directly
+        const equipmentId = eq.importMode === 'update_existing' 
+          ? eq.matchedEquipmentId 
+          : tempIdToRealId.get(eq.tempId);
         
         if (equipmentId && filesToAttach.length > 0) {
+          // Fetch existing documents to check for duplicates in database
+          const existingDocs = await getDocuments(equipmentId);
+          const existingFileNames = new Set(existingDocs.map(d => d.fileName));
+          
           for (const file of filesToAttach) {
+            // Skip if already uploaded in this session
             const uploadKey = `${equipmentId}:${file.name}`;
-            if (uploadedDocumentKeys.has(uploadKey)) continue; // Skip duplicate
+            if (uploadedDocumentKeys.has(uploadKey)) continue;
+            
+            // Skip if document already exists on this equipment
+            if (existingFileNames.has(file.name)) {
+              console.log(`Document ${file.name} already exists on equipment, skipping`);
+              continue;
+            }
+            
             uploadedDocumentKeys.add(uploadKey);
             try {
               await uploadDocument(equipmentId, file);
