@@ -477,7 +477,16 @@ export function EquipmentImportReview({
         const b = items[j];
         
         // Check if same make/model (fuzzy)
-        if (!modelsMatch(a.make, a.model, b.make, b.model)) continue;
+        const modelMatch = modelsMatch(a.make, a.model, b.make, b.model);
+        
+        // NEW: Check if same manufacturer with overlapping source documents
+        // This catches AI fragmentation where same attachment is split into multiple items
+        const aMake = normalizeKey(a.make);
+        const bMake = normalizeKey(b.make);
+        const sameMake = aMake === bMake && aMake.length >= 3;
+        const overlappingDocs = a.sourceDocumentIndices?.some(
+          idx => b.sourceDocumentIndices?.includes(idx)
+        ) || false;
         
         // Additional signals they're the same equipment:
         const serialA = normalizeSerial(a.serialVin);
@@ -504,13 +513,19 @@ export function EquipmentImportReview({
           duplicateIndices.push(j);
           reasons.push('same serial/VIN');
           alreadyGrouped.add(j);
-        } else if (yearMatch && datesClose && complementaryDocs) {
+        } else if (modelMatch && yearMatch && datesClose && complementaryDocs) {
           duplicateIndices.push(j);
           reasons.push('complementary documents (purchase + financing)');
           alreadyGrouped.add(j);
-        } else if (yearMatch && datesClose) {
+        } else if (modelMatch && yearMatch && datesClose) {
           duplicateIndices.push(j);
           reasons.push('same make/model with similar dates');
+          alreadyGrouped.add(j);
+        } 
+        // NEW: Flag same-manufacturer items from same document as potential fragments
+        else if (sameMake && overlappingDocs && yearMatch) {
+          duplicateIndices.push(j);
+          reasons.push('same manufacturer from same document - likely fragments of same item');
           alreadyGrouped.add(j);
         }
       }

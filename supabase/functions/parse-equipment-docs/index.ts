@@ -138,6 +138,24 @@ DETECTION RULES:
 - If documents share the SAME VIN/serial number, make/model, or are clearly related (e.g., invoice and financing for same purchase) → Consolidate into ONE record
 - If documents have DIFFERENT VINs/serials, different make/models, or are clearly separate transactions → Return MULTIPLE records
 
+CRITICAL - AVOID FRAGMENTATION:
+- A single piece of equipment should produce ONE record
+- Do NOT create separate records for different description lines, features, or specifications of the SAME item
+- If an invoice lists "Eloquip Aluminum Dump Body with fold-down sides, tarp system, and rake rack":
+  - This is ONE attachment, not four separate items
+  - Extract as: make: "Eloquip", model: "Aluminum Dump Body", notes: "Includes fold-down sides, tarp system, rake rack"
+- Line items describing FEATURES of equipment are NOT separate equipment items
+- Only create separate records when there are clearly DISTINCT pieces of equipment with their own prices
+- If line items share the same manufacturer and are on the same invoice/document, they are likely the SAME item unless they have different prices
+
+ATTACHMENT HANDLING:
+- Attachments include: buckets, forks, blades, augers, trenchers, grapples, pallet forks, plows, spreaders, dump bodies, toolboxes, racks
+- If multiple line items refer to the SAME attachment (same manufacturer, similar descriptions):
+  - Consolidate into ONE attachment record
+  - Combine features/descriptions into the notes field
+  - Sum up any additional line item costs if applicable
+- For attachments: suggestedType: "attachment", suggestedParentIndex: 0 (pointing to parent equipment)
+
 For CONSOLIDATION (multiple docs for same equipment):
 1. Extract ONE primary equipment record with the best-supported values from ALL documents
 2. Identify attachments (buckets, plows, etc.) as separate items with suggestedType: "attachment"
@@ -177,11 +195,6 @@ YEAR EXTRACTION (CRITICAL):
 PURCHASE CONDITION (CRITICAL):
 Set to "used" if: explicitly says "USED", "PRE-OWNED", from auction, rental fleet sale, "as-is" language
 Set to "new" if: from authorized dealer with no "used" indicators, full manufacturer warranty
-
-ATTACHMENT DETECTION:
-- Buckets, forks, blades, augers, trenchers, grapples, pallet forks, plows, spreaders
-- Items with significantly lower value than the main equipment
-- For attachments: suggestedType: "attachment", suggestedParentIndex: 0 (pointing to parent)
 
 DOCUMENT SOURCE TRACKING:
 Include sourceDocumentIndices as an array of 0-based indices for which documents contributed to each item.`;
