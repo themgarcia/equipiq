@@ -1700,22 +1700,37 @@ export function EquipmentImportReview({
                         onCheckedChange={(checked) => updateEquipmentItem(eq.tempId, 'selected', !!checked)}
                       />
                       <div className="space-y-1">
-                        {/* Editable Make/Model */}
+                        {/* Header - show read-only label for attachments, editable for equipment */}
                         <div className="flex items-center gap-2">
-                          <Input
-                            value={eq.make}
-                            onChange={(e) => updateEquipmentItem(eq.tempId, 'make', e.target.value)}
-                            className="h-7 w-28 text-sm font-medium"
-                            placeholder="Make"
-                          />
-                          <Input
-                            value={eq.model}
-                            onChange={(e) => updateEquipmentItem(eq.tempId, 'model', e.target.value)}
-                            className="h-7 w-36 text-sm font-medium"
-                            placeholder="Model"
-                          />
-                          {eq.year && (
-                            <span className="text-sm text-muted-foreground">({eq.year})</span>
+                          {eq.importMode === 'attachment' ? (
+                            // Read-only display for attachment mode
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-muted-foreground">
+                                {eq.attachmentName || `${eq.make} ${eq.model}`.trim() || 'Unnamed Attachment'}
+                              </span>
+                              {eq.year && (
+                                <span className="text-sm text-muted-foreground">({eq.year})</span>
+                              )}
+                            </div>
+                          ) : (
+                            // Editable Make/Model for equipment modes
+                            <>
+                              <Input
+                                value={eq.make}
+                                onChange={(e) => updateEquipmentItem(eq.tempId, 'make', e.target.value)}
+                                className="h-7 w-28 text-sm font-medium"
+                                placeholder="Make"
+                              />
+                              <Input
+                                value={eq.model}
+                                onChange={(e) => updateEquipmentItem(eq.tempId, 'model', e.target.value)}
+                                className="h-7 w-36 text-sm font-medium"
+                                placeholder="Model"
+                              />
+                              {eq.year && (
+                                <span className="text-sm text-muted-foreground">({eq.year})</span>
+                              )}
+                            </>
                           )}
                         </div>
                         {getDuplicateBadge(eq)}
