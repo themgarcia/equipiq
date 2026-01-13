@@ -1904,65 +1904,62 @@ export function EquipmentImportReview({
                         </div>
                       )}
                       
-                      {/* Attachment Details Section - Always show, but disabled for skip */}
-                      <div className={`border-t pt-3 space-y-3 ${eq.attachmentAction === 'skip' ? 'opacity-50' : ''}`}>
-                        <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                          <Package className="h-3.5 w-3.5" />
-                          Attachment Details
-                          {eq.make && eq.model && (
-                            <span className="font-normal text-muted-foreground/70 ml-1">
-                              (extracted: {eq.make} {eq.model})
-                            </span>
-                          )}
-                        </p>
-                        
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-xs text-muted-foreground">Name *</label>
-                            <Input
-                              value={eq.attachmentName || `${eq.make} ${eq.model}`}
-                              onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentName', e.target.value)}
-                              className="h-8 text-sm"
-                              placeholder="Attachment name"
-                              disabled={eq.attachmentAction === 'skip'}
-                            />
-                          </div>
+                      {/* Attachment Details Section - Collapsible, disabled for skip */}
+                      {expandedItems.has(eq.tempId) && (
+                        <div className={`border-t pt-3 space-y-3 ${eq.attachmentAction === 'skip' ? 'opacity-50' : ''}`}>
+                          <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                            <Package className="h-3.5 w-3.5" />
+                            Attachment Details
+                          </p>
                           
-                          <div>
-                            <label className="text-xs text-muted-foreground">Value</label>
-                            <Input
-                              type="number"
-                              value={eq.attachmentValue ?? eq.purchasePrice ?? ''}
-                              onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentValue', e.target.value ? parseFloat(e.target.value) : 0)}
-                              className="h-8 text-sm"
-                              placeholder="$0.00"
-                              disabled={eq.attachmentAction === 'skip'}
-                            />
-                          </div>
-                          
-                          <div>
-                            <label className="text-xs text-muted-foreground">Serial Number</label>
-                            <Input
-                              value={eq.attachmentSerial ?? eq.serialVin ?? ''}
-                              onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentSerial', e.target.value)}
-                              className="h-8 text-sm"
-                              placeholder="Serial number (optional)"
-                              disabled={eq.attachmentAction === 'skip'}
-                            />
-                          </div>
-                          
-                          <div className="col-span-2">
-                            <label className="text-xs text-muted-foreground">Description/Notes</label>
-                            <Textarea
-                              value={eq.attachmentDescription ?? eq.notes ?? ''}
-                              onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentDescription', e.target.value)}
-                              className="text-sm min-h-[60px]"
-                              placeholder="Additional notes (optional)"
-                              disabled={eq.attachmentAction === 'skip'}
-                            />
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs text-muted-foreground">Name *</label>
+                              <Input
+                                value={eq.attachmentName || `${eq.make} ${eq.model}`}
+                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentName', e.target.value)}
+                                className="h-8 text-sm"
+                                placeholder="Attachment name"
+                                disabled={eq.attachmentAction === 'skip'}
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="text-xs text-muted-foreground">Value</label>
+                              <Input
+                                type="number"
+                                value={eq.attachmentValue ?? eq.purchasePrice ?? ''}
+                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentValue', e.target.value ? parseFloat(e.target.value) : 0)}
+                                className="h-8 text-sm"
+                                placeholder="$0.00"
+                                disabled={eq.attachmentAction === 'skip'}
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="text-xs text-muted-foreground">Serial Number</label>
+                              <Input
+                                value={eq.attachmentSerial ?? eq.serialVin ?? ''}
+                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentSerial', e.target.value)}
+                                className="h-8 text-sm"
+                                placeholder="Serial number (optional)"
+                                disabled={eq.attachmentAction === 'skip'}
+                              />
+                            </div>
+                            
+                            <div className="col-span-2">
+                              <label className="text-xs text-muted-foreground">Description/Notes</label>
+                              <Textarea
+                                value={eq.attachmentDescription ?? eq.notes ?? ''}
+                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentDescription', e.target.value)}
+                                className="text-sm min-h-[60px]"
+                                placeholder="Additional notes (optional)"
+                                disabled={eq.attachmentAction === 'skip'}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
 
