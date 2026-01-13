@@ -19,10 +19,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { AlertTriangle, RefreshCw, Search, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { AlertTriangle, RefreshCw, Search, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { useUserProfiles } from '@/hooks/useUserProfiles';
+import { UserDisplayCell } from './UserDisplayCell';
 
 interface ErrorLogEntry {
   id: string;
@@ -60,6 +63,7 @@ export function ErrorLogTab() {
   const [adminNotes, setAdminNotes] = useState('');
   const [updating, setUpdating] = useState(false);
   const { toast } = useToast();
+  const { fetchProfiles, getDisplayName } = useUserProfiles();
 
   const fetchErrors = async () => {
     setLoading(true);
@@ -76,6 +80,10 @@ export function ErrorLogTab() {
         error_details: (item.error_details as Record<string, any>) || {},
       }));
       setErrors(typedData);
+      
+      // Fetch user profiles for all user IDs
+      const userIds = typedData.map(e => e.user_id);
+      await fetchProfiles(userIds);
     } catch (error) {
       console.error('Failed to fetch error logs:', error);
     } finally {
@@ -88,7 +96,10 @@ export function ErrorLogTab() {
   }, []);
 
   const filteredErrors = errors.filter(error => {
+    const displayInfo = getDisplayName(error.user_id);
     const matchesSearch = searchTerm === '' || 
+      displayInfo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (displayInfo.company?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
       (error.user_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       error.error_message.toLowerCase().includes(searchTerm.toLowerCase()) ||
       error.error_type.toLowerCase().includes(searchTerm.toLowerCase());
@@ -168,8 +179,10 @@ export function ErrorLogTab() {
     setAdminNotes(error.admin_notes || '');
   };
 
+  const selectedUserDisplay = selectedError ? getDisplayName(selectedError.user_id) : null;
+
   return (
-    <>
+    <TooltipProvider>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -197,7 +210,7 @@ export function ErrorLogTab() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by user ID, message, or type..."
+                placeholder="Search by name, company, message, or type..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -253,7 +266,7 @@ export function ErrorLogTab() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Time</TableHead>
-                    <TableHead>User ID</TableHead>
+                    <TableHead>User</TableHead>
                     <TableHead>Source</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Message</TableHead>
@@ -271,8 +284,11 @@ export function ErrorLogTab() {
                       <TableCell className="whitespace-nowrap text-sm">
                         {format(new Date(error.created_at), 'MMM d, h:mm a')}
                       </TableCell>
-                      <TableCell className="max-w-[150px] truncate text-sm font-mono text-xs" title={error.user_id || 'Anonymous'}>
-                        {error.user_id ? error.user_id.slice(0, 8) + '...' : 'Anonymous'}
+                      <TableCell>
+                        <UserDisplayCell
+                          userId={error.user_id}
+                          displayName={getDisplayName(error.user_id)}
+                        />
                       </TableCell>
                       <TableCell className="text-sm">
                         {sourceLabels[error.error_source] || error.error_source}
@@ -307,7 +323,7 @@ export function ErrorLogTab() {
       {/* Error Details Dialog */}
       <Dialog open={!!selectedError} onOpenChange={(open) => !open && setSelectedError(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {selectedError && (
+          {selectedError && selectedUserDisplay && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
@@ -320,12 +336,30 @@ export function ErrorLogTab() {
               </DialogHeader>
 
               <div className="space-y-4">
+                {/* User Info */}
+                <div className="p-3 bg-muted rounded-md space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">User:</span>
+                    <span className="font-medium">{selectedUserDisplay.name}</span>
+                  </div>
+                  {selectedUserDisplay.company && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Company:</span>
+                      <span className="text-sm">{selectedUserDisplay.company}</span>
+                    </div>
+                  )}
+                  {selectedError.user_id && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">User ID:</span>
+                      <span className="font-mono text-xs text-muted-foreground break-all">
+                        {selectedError.user_id}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
                 {/* Basic Info */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">User ID:</span>
-                    <p className="font-medium font-mono text-xs break-all">{selectedError.user_id || 'Anonymous'}</p>
-                  </div>
                   <div>
                     <span className="text-muted-foreground">Source:</span>
                     <p className="font-medium">{sourceLabels[selectedError.error_source] || selectedError.error_source}</p>
@@ -395,6 +429,6 @@ export function ErrorLogTab() {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </TooltipProvider>
   );
 }
