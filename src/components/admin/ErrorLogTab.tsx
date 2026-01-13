@@ -27,7 +27,6 @@ import { useToast } from '@/hooks/use-toast';
 interface ErrorLogEntry {
   id: string;
   user_id: string | null;
-  user_email: string | null;
   error_source: string;
   error_type: string;
   error_message: string;
@@ -90,7 +89,7 @@ export function ErrorLogTab() {
 
   const filteredErrors = errors.filter(error => {
     const matchesSearch = searchTerm === '' || 
-      (error.user_email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (error.user_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       error.error_message.toLowerCase().includes(searchTerm.toLowerCase()) ||
       error.error_type.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -198,7 +197,7 @@ export function ErrorLogTab() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by email, message, or type..."
+                placeholder="Search by user ID, message, or type..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -254,7 +253,7 @@ export function ErrorLogTab() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Time</TableHead>
-                    <TableHead>User</TableHead>
+                    <TableHead>User ID</TableHead>
                     <TableHead>Source</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Message</TableHead>
@@ -272,8 +271,8 @@ export function ErrorLogTab() {
                       <TableCell className="whitespace-nowrap text-sm">
                         {format(new Date(error.created_at), 'MMM d, h:mm a')}
                       </TableCell>
-                      <TableCell className="max-w-[150px] truncate text-sm" title={error.user_email || 'Anonymous'}>
-                        {error.user_email || 'Anonymous'}
+                      <TableCell className="max-w-[150px] truncate text-sm font-mono text-xs" title={error.user_id || 'Anonymous'}>
+                        {error.user_id ? error.user_id.slice(0, 8) + '...' : 'Anonymous'}
                       </TableCell>
                       <TableCell className="text-sm">
                         {sourceLabels[error.error_source] || error.error_source}
@@ -324,8 +323,8 @@ export function ErrorLogTab() {
                 {/* Basic Info */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-muted-foreground">User:</span>
-                    <p className="font-medium">{selectedError.user_email || 'Anonymous'}</p>
+                    <span className="text-muted-foreground">User ID:</span>
+                    <p className="font-medium font-mono text-xs break-all">{selectedError.user_id || 'Anonymous'}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Source:</span>

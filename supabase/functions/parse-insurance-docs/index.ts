@@ -51,7 +51,6 @@ const ALLOWED_DOCUMENT_TYPES = [
 async function logError(
   serviceClient: any,
   userId: string | null,
-  userEmail: string | null,
   errorType: string,
   errorMessage: string,
   errorDetails: Record<string, any>,
@@ -60,7 +59,6 @@ async function logError(
   try {
     await serviceClient.from('error_log').insert({
       user_id: userId,
-      user_email: userEmail,
       error_source: 'parse-insurance-docs',
       error_type: errorType,
       error_message: errorMessage,
@@ -117,7 +115,7 @@ serve(async (req) => {
     
     if (!authHeader) {
       console.error('No authorization header provided');
-      await logError(serviceClient, null, null, 'auth_error', 'No authorization header provided', {});
+      await logError(serviceClient, null, 'auth_error', 'No authorization header provided', {});
       return new Response(JSON.stringify({ error: 'Unauthorized - no auth header' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -128,7 +126,7 @@ serve(async (req) => {
     const token = authHeader.replace(/^Bearer\s+/i, '');
     if (!token) {
       console.error('No token found in auth header');
-      await logError(serviceClient, null, null, 'auth_error', 'No token found in auth header', {});
+      await logError(serviceClient, null, 'auth_error', 'No token found in auth header', {});
       return new Response(JSON.stringify({ error: 'Unauthorized - no token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -144,7 +142,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) {
       console.error('Auth verification failed:', authError?.message || 'No user found');
-      await logError(serviceClient, null, null, 'auth_error', 'Invalid token', {
+      await logError(serviceClient, null, 'auth_error', 'Invalid token', {
         authError: authError?.message,
       });
       return new Response(JSON.stringify({ error: 'Unauthorized - invalid token' }), {
@@ -159,7 +157,7 @@ serve(async (req) => {
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
-      await logError(serviceClient, userId, userEmail, 'config_error', 'LOVABLE_API_KEY is not configured', {});
+      await logError(serviceClient, userId, 'config_error', 'LOVABLE_API_KEY is not configured', {});
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
@@ -172,7 +170,7 @@ serve(async (req) => {
     // Input validation: Check document presence
     if (!documentBase64 || typeof documentBase64 !== 'string') {
       console.error('No document provided or invalid format');
-      await logError(serviceClient, userId, userEmail, 'validation_error', 'No document provided', {
+      await logError(serviceClient, userId, 'validation_error', 'No document provided', {
         fileName,
         documentType,
       });
@@ -185,7 +183,7 @@ serve(async (req) => {
     // Input validation: Check document size (prevent oversized uploads)
     if (documentBase64.length > MAX_BASE64_SIZE) {
       console.error(`Document too large: ${documentBase64.length} bytes (max: ${MAX_BASE64_SIZE})`);
-      await logError(serviceClient, userId, userEmail, 'validation_error', 'Document too large', {
+      await logError(serviceClient, userId, 'validation_error', 'Document too large', {
         fileName,
         documentType,
         fileSizeBytes,
@@ -200,7 +198,7 @@ serve(async (req) => {
     // Input validation: Check document type
     if (!documentType || !ALLOWED_DOCUMENT_TYPES.includes(documentType)) {
       console.error(`Invalid document type: ${documentType}`);
-      await logError(serviceClient, userId, userEmail, 'validation_error', 'Invalid document type', {
+      await logError(serviceClient, userId, 'validation_error', 'Invalid document type', {
         fileName,
         documentType,
         allowedTypes: ALLOWED_DOCUMENT_TYPES,
@@ -215,7 +213,7 @@ serve(async (req) => {
     const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
     if (!base64Regex.test(documentBase64)) {
       console.error('Invalid base64 format');
-      await logError(serviceClient, userId, userEmail, 'validation_error', 'Invalid base64 format', {
+      await logError(serviceClient, userId, 'validation_error', 'Invalid base64 format', {
         fileName,
         documentType,
       });
@@ -355,7 +353,7 @@ PARSING EQUIPMENT DESCRIPTIONS:
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
       
-      await logError(serviceClient, userId, userEmail, 'ai_gateway_error', `AI gateway returned ${response.status}`, {
+      await logError(serviceClient, userId, 'ai_gateway_error', `AI gateway returned ${response.status}`, {
         fileName,
         documentType,
         fileSizeBytes,
@@ -386,7 +384,7 @@ PARSING EQUIPMENT DESCRIPTIONS:
     // Extract the tool call result
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall || toolCall.function.name !== "extract_insurance_policy") {
-      await logError(serviceClient, userId, userEmail, 'ai_extraction_failed', 'No policy data extracted from document', {
+      await logError(serviceClient, userId, 'ai_extraction_failed', 'No policy data extracted from document', {
         fileName,
         documentType,
         fileSizeBytes,
@@ -424,7 +422,7 @@ PARSING EQUIPMENT DESCRIPTIONS:
     console.error('Error in parse-insurance-docs function:', error);
     
     // Log the error
-    await logError(serviceClient, userId, userEmail, 'unexpected_error', error instanceof Error ? error.message : 'Unknown error occurred', {
+    await logError(serviceClient, userId, 'unexpected_error', error instanceof Error ? error.message : 'Unknown error occurred', {
       fileName,
       documentType,
       fileSizeBytes,
