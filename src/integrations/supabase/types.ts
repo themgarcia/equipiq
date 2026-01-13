@@ -740,7 +740,6 @@ export type Database = {
           action_type: string
           created_at: string
           id: string
-          user_email: string
           user_id: string
         }
         Insert: {
@@ -748,7 +747,6 @@ export type Database = {
           action_type: string
           created_at?: string
           id?: string
-          user_email: string
           user_id: string
         }
         Update: {
@@ -756,7 +754,6 @@ export type Database = {
           action_type?: string
           created_at?: string
           id?: string
-          user_email?: string
           user_id?: string
         }
         Relationships: []

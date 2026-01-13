@@ -18,7 +18,6 @@ import { format } from 'date-fns';
 interface ActivityLogEntry {
   id: string;
   user_id: string;
-  user_email: string;
   action_type: string;
   action_details: Record<string, any> | null;
   created_at: string;
@@ -81,7 +80,7 @@ export function UserActivityTab() {
 
   const filteredActivities = activities.filter(activity => {
     const matchesSearch = searchTerm === '' || 
-      activity.user_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity.user_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.action_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
       JSON.stringify(activity.action_details).toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -129,7 +128,7 @@ export function UserActivityTab() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by email or details..."
+              placeholder="Search by user ID or details..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9"
@@ -166,7 +165,7 @@ export function UserActivityTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Time</TableHead>
-                  <TableHead>User</TableHead>
+                  <TableHead>User ID</TableHead>
                   <TableHead>Action</TableHead>
                   <TableHead>Details</TableHead>
                 </TableRow>
@@ -177,8 +176,8 @@ export function UserActivityTab() {
                     <TableCell className="whitespace-nowrap text-sm">
                       {format(new Date(activity.created_at), 'MMM d, h:mm a')}
                     </TableCell>
-                    <TableCell className="max-w-[200px] truncate" title={activity.user_email}>
-                      {activity.user_email}
+                    <TableCell className="max-w-[200px] truncate font-mono text-xs" title={activity.user_id}>
+                      {activity.user_id.slice(0, 8)}...
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
