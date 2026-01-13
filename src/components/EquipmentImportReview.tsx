@@ -1220,6 +1220,50 @@ export function EquipmentImportReview({
           }
         }
       }
+      
+      // ALSO attach source documents for attachments to their PARENT equipment
+      const attachmentsWithDocuments = toProcess.filter(e => e.importMode === 'attachment');
+      
+      for (const eq of attachmentsWithDocuments) {
+        const filesToAttach: File[] = eq.sourceFiles?.length ? eq.sourceFiles : (eq.sourceFile ? [eq.sourceFile] : []);
+        
+        // Resolve the parent equipment ID
+        let parentEquipmentId = eq.selectedParentId;
+        if (eq.selectedParentTempId) {
+          parentEquipmentId = tempIdToRealId.get(eq.selectedParentTempId);
+        }
+        
+        if (parentEquipmentId && filesToAttach.length > 0) {
+          console.log(`Attaching ${filesToAttach.length} document(s) to parent equipment ${parentEquipmentId} for attachment "${eq.attachmentName || eq.make + ' ' + eq.model}"`);
+          
+          // Fetch existing documents to check for duplicates in database
+          const existingDocs = await getDocuments(parentEquipmentId);
+          const existingFileNames = new Set(existingDocs.map(d => d.fileName));
+          
+          for (const file of filesToAttach) {
+            // Skip if already uploaded in this session
+            const uploadKey = `${parentEquipmentId}:${file.name}`;
+            if (uploadedDocumentKeys.has(uploadKey)) {
+              console.log(`Document ${file.name} already uploaded in this session, skipping`);
+              continue;
+            }
+            
+            // Skip if document already exists on this equipment
+            if (existingFileNames.has(file.name)) {
+              console.log(`Document ${file.name} already exists on parent equipment, skipping`);
+              continue;
+            }
+            
+            uploadedDocumentKeys.add(uploadKey);
+            try {
+              await uploadDocument(parentEquipmentId, file);
+              console.log(`Successfully attached document ${file.name} to parent equipment`);
+            } catch (error) {
+              console.error(`Failed to attach document ${file.name} to parent:`, error);
+            }
+          }
+        }
+      }
     }
 
     // Report results with partial failure handling
