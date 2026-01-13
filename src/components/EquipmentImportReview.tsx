@@ -1702,18 +1702,20 @@ export function EquipmentImportReview({
                       <div className="space-y-1">
                         {/* Header - show read-only label for attachments, editable for equipment */}
                         <div className="flex items-center gap-2">
-                          {eq.importMode === 'attachment' ? (
-                            // Read-only display for attachment mode
+                          {eq.importMode === 'attachment' || eq.duplicateStatus !== 'none' ? (
+                            // Read-only display for attachment mode OR matched equipment
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-muted-foreground">
-                                {eq.attachmentName || `${eq.make} ${eq.model}`.trim() || 'Unnamed Attachment'}
+                              <span className="text-sm font-medium">
+                                {eq.importMode === 'attachment' 
+                                  ? (eq.attachmentName || `${eq.make} ${eq.model}`.trim() || 'Unnamed Attachment')
+                                  : `${eq.make} ${eq.model}`.trim() || 'Unknown Equipment'}
                               </span>
                               {eq.year && (
                                 <span className="text-sm text-muted-foreground">({eq.year})</span>
                               )}
                             </div>
                           ) : (
-                            // Editable Make/Model for equipment modes
+                            // Editable Make/Model only for NEW equipment with no match
                             <>
                               <Input
                                 value={eq.make}
@@ -1781,11 +1783,11 @@ export function EquipmentImportReview({
                         size="sm"
                         className="h-7 text-xs"
                         onClick={() => setImportMode(eq.tempId, 'update_existing')}
-                        disabled={eq.updatableFields.length === 0}
                       >
                         <RefreshCw className="h-3 w-3 mr-1" />
-                        Update Existing
-                        {eq.updatableFields.length > 0 && ` (${eq.updatableFields.length} fields)`}
+                        {eq.updatableFields.length > 0 
+                          ? `Update Existing (${eq.updatableFields.length} fields)` 
+                          : 'Match Existing'}
                       </Button>
                     )}
                     <Button
@@ -1839,11 +1841,12 @@ export function EquipmentImportReview({
                                     // For skipped items with matchedEquipmentId, use the real ID
                                     const useRealId = other.importMode === 'skip' && other.matchedEquipmentId;
                                     const value = useRealId ? other.matchedEquipmentId! : `temp:${other.tempId}`;
-                                    const label = other.matchedEquipmentName || `${other.make} ${other.model} ${other.year ? `(${other.year})` : ''}`;
+                                    const label = useRealId 
+                                      ? `${other.year || ''} ${other.make} ${other.model}`.trim()
+                                      : `${other.make} ${other.model}${other.year ? ` (${other.year})` : ''}`;
                                     return (
                                       <SelectItem key={other.tempId} value={value}>
-                                        {label}
-                                        {useRealId && <span className="text-muted-foreground ml-1">(existing)</span>}
+                                        {label}{useRealId ? ' (existing)' : ''}
                                       </SelectItem>
                                     );
                                   })}
@@ -1852,11 +1855,21 @@ export function EquipmentImportReview({
                             {equipment.length > 0 && (
                               <SelectGroup>
                                 <SelectLabel>Existing equipment</SelectLabel>
-                                {equipment.map(existing => (
-                                  <SelectItem key={existing.id} value={existing.id}>
-                                    {existing.year} {existing.make} {existing.model}
-                                  </SelectItem>
-                                ))}
+                                {equipment
+                                  .filter(existing => {
+                                    // Exclude if this equipment is already shown via a skipped import item
+                                    const isShownViaImport = potentialParentsFromImport.some(
+                                      other => other.importMode === 'skip' && 
+                                               other.matchedEquipmentId === existing.id &&
+                                               other.tempId !== eq.tempId
+                                    );
+                                    return !isShownViaImport;
+                                  })
+                                  .map(existing => (
+                                    <SelectItem key={existing.id} value={existing.id}>
+                                      {existing.year} {existing.make} {existing.model}
+                                    </SelectItem>
+                                  ))}
                               </SelectGroup>
                             )}
                           </SelectContent>
