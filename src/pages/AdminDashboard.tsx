@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight, Check, ShieldCheck, Activity, AlertTriangle } from 'lucide-react';
 import { UserActivityTab } from '@/components/admin/UserActivityTab';
 import { ErrorLogTab } from '@/components/admin/ErrorLogTab';
+import { UserDisplayCell } from '@/components/admin/UserDisplayCell';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { useUserProfiles } from '@/hooks/useUserProfiles';
 import { useDeviceType } from '@/hooks/use-mobile';
 import {
   Sheet,
@@ -188,6 +191,7 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const deviceType = useDeviceType();
   const isMobileOrTablet = deviceType !== 'desktop';
+  const { fetchProfiles, getDisplayName } = useUserProfiles();
 
   // Helper function to log admin actions
   const logAdminAction = async (
@@ -227,6 +231,10 @@ export default function AdminDashboard() {
 
       if (error) throw error;
       setActivityLog(data || []);
+      
+      // Fetch user profiles for target users
+      const targetUserIds = (data || []).map(entry => entry.target_user_id);
+      await fetchProfiles(targetUserIds);
     } catch (error) {
       console.error('Failed to fetch activity log:', error);
     } finally {
@@ -1375,43 +1383,48 @@ export default function AdminDashboard() {
                     No activity logged yet. Actions will appear here as they are performed.
                   </div>
                 ) : (
-                  <ScrollArea className="w-full">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date & Time</TableHead>
-                          <TableHead>Action</TableHead>
-                          <TableHead>Target User</TableHead>
-                          <TableHead>Performed By</TableHead>
-                          <TableHead>Details</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {activityLog.map((entry) => (
-                          <TableRow key={entry.id}>
-                            <TableCell className="whitespace-nowrap">
-                              {format(new Date(entry.created_at), 'MMM d, yyyy h:mm a')}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={getActionBadgeVariant(entry.action_type)}>
-                                {formatActionType(entry.action_type)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="max-w-[200px] truncate">
-                              {entry.target_user_email}
-                            </TableCell>
-                            <TableCell className="max-w-[200px] truncate">
-                              {entry.performed_by_email}
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground max-w-[200px]">
-                              {formatDetails(entry.details)}
-                            </TableCell>
+                  <TooltipProvider>
+                    <ScrollArea className="w-full">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date & Time</TableHead>
+                            <TableHead>Action</TableHead>
+                            <TableHead>Target User</TableHead>
+                            <TableHead>Performed By</TableHead>
+                            <TableHead>Details</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
+                        </TableHeader>
+                        <TableBody>
+                          {activityLog.map((entry) => (
+                            <TableRow key={entry.id}>
+                              <TableCell className="whitespace-nowrap">
+                                {format(new Date(entry.created_at), 'MMM d, yyyy h:mm a')}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={getActionBadgeVariant(entry.action_type)}>
+                                  {formatActionType(entry.action_type)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <UserDisplayCell
+                                  userId={entry.target_user_id}
+                                  displayName={getDisplayName(entry.target_user_id)}
+                                />
+                              </TableCell>
+                              <TableCell className="max-w-[200px] truncate">
+                                {entry.performed_by_email}
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground max-w-[200px]">
+                                {formatDetails(entry.details)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      <ScrollBar orientation="horizontal" />
+                    </ScrollArea>
+                  </TooltipProvider>
                 )}
                 <Button variant="outline" className="mt-4" onClick={fetchActivityLog}>
                   Refresh Activity Log
