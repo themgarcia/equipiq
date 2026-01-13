@@ -53,6 +53,9 @@ interface BatchDuplicateGroup {
   reason: string;
 }
 
+// Attachment action when duplicate is found
+type AttachmentActionType = 'create' | 'skip' | 'update_existing' | 'import_anyway';
+
 interface EditableEquipment extends ExtractedEquipment {
   tempId: string;
   selected: boolean;
@@ -89,6 +92,8 @@ interface EditableEquipment extends ExtractedEquipment {
   matchedAttachmentId?: string;
   matchedAttachmentName?: string;
   attachmentDuplicateStatus?: 'none' | 'match';
+  // What to do when attachment is a duplicate
+  attachmentAction?: AttachmentActionType;
 }
 
 interface EquipmentImportReviewProps {
@@ -361,7 +366,7 @@ export function EquipmentImportReview({
   sourceFiles,
   onComplete
 }: EquipmentImportReviewProps) {
-  const { addEquipment, updateEquipment, equipment, uploadDocument, getDocuments, addAttachment, getAttachments } = useEquipment();
+  const { addEquipment, updateEquipment, equipment, uploadDocument, getDocuments, addAttachment, getAttachments, updateAttachment } = useEquipment();
   const [isImporting, setIsImporting] = useState(false);
   const [duplicateFilter, setDuplicateFilter] = useState<DuplicateFilter>('all');
   const [attachSourceDocument, setAttachSourceDocument] = useState(true);
@@ -369,6 +374,7 @@ export function EquipmentImportReview({
   const [batchDuplicateGroups, setBatchDuplicateGroups] = useState<BatchDuplicateGroup[]>([]);
   const [showMergeDialog, setShowMergeDialog] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, Set<string>>>({});
+  const [attachmentDuplicateChecked, setAttachmentDuplicateChecked] = useState<Set<string>>(new Set());
   
   const [editableEquipment, setEditableEquipment] = useState<EditableEquipment[]>([]);
 
@@ -710,6 +716,31 @@ export function EquipmentImportReview({
     return sources;
   }, []);
 
+  // Helper function to check attachment duplicates for a given parent
+  const checkAttachmentDuplicateForParent = useCallback(async (
+    item: EditableEquipment,
+    parentId: string
+  ): Promise<{ matchedAttachmentId?: string; matchedAttachmentName?: string; isDuplicate: boolean }> => {
+    try {
+      const existingAttachments = await getAttachments(parentId);
+      const checkName = item.attachmentName || `${item.make} ${item.model}`;
+      const checkSerial = item.attachmentSerial || item.serialVin;
+      
+      for (const existing of existingAttachments) {
+        if (attachmentMatches(checkName, '', checkSerial, existing)) {
+          return {
+            matchedAttachmentId: existing.id,
+            matchedAttachmentName: existing.name,
+            isDuplicate: true,
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check attachment duplicates:', error);
+    }
+    return { isDuplicate: false };
+  }, [getAttachments]);
+
   // Initialize editable equipment when extractedEquipment changes
   useEffect(() => {
     const fieldSources = buildFieldSources(documentSummaries);
@@ -755,11 +786,15 @@ export function EquipmentImportReview({
         updatableFields: duplicateCheck.updatableFields,
         suggestedType,
         suggestedParentIndex,
-        // Pre-select parent if AI suggested one
+        // Initialize parent IDs (will be fixed up in next pass)
+        selectedParentId: undefined as string | undefined,
         selectedParentTempId: suggestedParentIndex !== null ? `import-${suggestedParentIndex}-${Date.now()}` : undefined,
         fieldSources,
         originalValues: { ...eq },
         conflictResolutions: {},
+        // Default attachment action
+        attachmentAction: 'create' as AttachmentActionType,
+        attachmentDuplicateStatus: 'none' as 'none' | 'match',
       };
     });
     
@@ -767,7 +802,17 @@ export function EquipmentImportReview({
     const tempIds = mapped.map(m => m.tempId);
     mapped.forEach((eq, index) => {
       if (eq.suggestedParentIndex !== null && eq.suggestedParentIndex >= 0 && eq.suggestedParentIndex < tempIds.length) {
-        eq.selectedParentTempId = tempIds[eq.suggestedParentIndex];
+        const suggestedParent = mapped[eq.suggestedParentIndex];
+        
+        // KEY FIX: If the suggested parent is a matched existing equipment, 
+        // use selectedParentId (real ID) instead of selectedParentTempId
+        if (suggestedParent && suggestedParent.matchedEquipmentId) {
+          eq.selectedParentId = suggestedParent.matchedEquipmentId;
+          eq.selectedParentTempId = undefined;
+        } else {
+          eq.selectedParentTempId = tempIds[eq.suggestedParentIndex];
+          eq.selectedParentId = undefined;
+        }
       }
     });
     
@@ -776,6 +821,9 @@ export function EquipmentImportReview({
     // Check for batch duplicates (items from this import that might be the same equipment)
     const batchDups = checkForBatchDuplicates(extractedEquipment);
     setBatchDuplicateGroups(batchDups);
+    
+    // Reset the attachment duplicate check tracking
+    setAttachmentDuplicateChecked(new Set());
     
     // Auto-expand items with updatable fields or attachments
     const toExpand = new Set<string>();
@@ -803,6 +851,52 @@ export function EquipmentImportReview({
     });
     setExpandedSections(sectionExpansion);
   }, [extractedEquipment, checkForDuplicates, checkForBatchDuplicates, documentSummaries, buildFieldSources]);
+
+  // Proactive attachment duplicate detection - runs after initialization
+  useEffect(() => {
+    const checkAttachmentDuplicates = async () => {
+      const attachmentsWithParents = editableEquipment.filter(eq => 
+        eq.importMode === 'attachment' && 
+        eq.selectedParentId && // Has a real parent ID (not temp)
+        !attachmentDuplicateChecked.has(eq.tempId)
+      );
+      
+      if (attachmentsWithParents.length === 0) return;
+      
+      const newChecked = new Set(attachmentDuplicateChecked);
+      const updates: { tempId: string; matchedId: string; matchedName: string }[] = [];
+      
+      for (const item of attachmentsWithParents) {
+        newChecked.add(item.tempId);
+        const result = await checkAttachmentDuplicateForParent(item, item.selectedParentId!);
+        if (result.isDuplicate && result.matchedAttachmentId) {
+          updates.push({
+            tempId: item.tempId,
+            matchedId: result.matchedAttachmentId,
+            matchedName: result.matchedAttachmentName || '',
+          });
+        }
+      }
+      
+      setAttachmentDuplicateChecked(newChecked);
+      
+      if (updates.length > 0) {
+        setEditableEquipment(prev => prev.map(eq => {
+          const update = updates.find(u => u.tempId === eq.tempId);
+          if (!update) return eq;
+          return {
+            ...eq,
+            matchedAttachmentId: update.matchedId,
+            matchedAttachmentName: update.matchedName,
+            attachmentDuplicateStatus: 'match',
+            attachmentAction: 'skip', // Default to skip for duplicates
+          };
+        }));
+      }
+    };
+    
+    checkAttachmentDuplicates();
+  }, [editableEquipment, attachmentDuplicateChecked, checkAttachmentDuplicateForParent]);
 
   // Duplicate counts
   const duplicateCounts = useMemo(() => {
@@ -912,8 +1006,11 @@ export function EquipmentImportReview({
   const attachmentCount = editableEquipment.filter(eq => eq.selected && eq.importMode === 'attachment').length;
 
   // Get potential parents for attachment selection
+  // Include: new items, update_existing items, AND skipped items that have a matched existing equipment
   const potentialParentsFromImport = editableEquipment.filter(eq => 
-    eq.importMode === 'new' || eq.importMode === 'update_existing'
+    eq.importMode === 'new' || 
+    eq.importMode === 'update_existing' ||
+    (eq.importMode === 'skip' && eq.matchedEquipmentId) // Skipped duplicates with real equipment
   );
 
   // Check for existing attachments when setting parent
@@ -934,13 +1031,24 @@ export function EquipmentImportReview({
         attachmentDuplicateStatus: 'none',
         matchedAttachmentId: undefined,
         matchedAttachmentName: undefined,
+        attachmentAction: 'create',
       };
     }));
     
-    // Only check for duplicates if selecting an existing equipment as parent
-    if (!isTemp && parentId) {
+    // Get the equipment ID to check - either direct parentId OR resolve temp parent's matched ID
+    let checkParentId = parentId;
+    if (isTemp && parentTempId) {
+      // Find the temp parent and see if it has a matchedEquipmentId
+      const tempParent = editableEquipment.find(eq => eq.tempId === parentTempId);
+      if (tempParent?.matchedEquipmentId) {
+        checkParentId = tempParent.matchedEquipmentId;
+      }
+    }
+    
+    // Check for duplicates if we have a real equipment ID
+    if (checkParentId) {
       try {
-        const existingAttachments = await getAttachments(parentId);
+        const existingAttachments = await getAttachments(checkParentId);
         const item = editableEquipment.find(eq => eq.tempId === tempId);
         
         if (item && existingAttachments.length > 0) {
@@ -964,9 +1072,7 @@ export function EquipmentImportReview({
                 matchedAttachmentId: matchedAttachment!.id,
                 matchedAttachmentName: matchedAttachment!.name,
                 attachmentDuplicateStatus: 'match',
-                // Auto-skip duplicates by default
-                importMode: 'skip',
-                selected: false,
+                attachmentAction: 'skip', // Default to skip for duplicates but keep importMode
               };
             }));
           }
@@ -975,6 +1081,18 @@ export function EquipmentImportReview({
         console.error('Failed to check for attachment duplicates:', error);
       }
     }
+  };
+
+  // Set attachment action (for handling duplicates)
+  const setAttachmentAction = (tempId: string, action: AttachmentActionType) => {
+    setEditableEquipment(prev => prev.map(eq => {
+      if (eq.tempId !== tempId) return eq;
+      return {
+        ...eq,
+        attachmentAction: action,
+        selected: action !== 'skip',
+      };
+    }));
   };
 
   // Resolve conflict with user selection
@@ -1137,19 +1255,58 @@ export function EquipmentImportReview({
       }
     }
 
-    // Second pass: Import attachments (with duplicate safety net)
+    // Second pass: Import attachments based on attachmentAction
     for (const eq of toProcess.filter(e => e.importMode === 'attachment')) {
       try {
+        // Skip if attachmentAction is 'skip'
+        if (eq.attachmentAction === 'skip') {
+          console.log(`Skipping attachment "${eq.attachmentName || eq.make + ' ' + eq.model}" per user selection`);
+          continue;
+        }
+        
         let parentId = eq.selectedParentId;
         if (eq.selectedParentTempId) {
           parentId = tempIdToRealId.get(eq.selectedParentTempId);
         }
+        // Also check if parent temp ID maps to a matched existing equipment
+        if (!parentId && eq.selectedParentTempId) {
+          const tempParent = editableEquipment.find(e => e.tempId === eq.selectedParentTempId);
+          if (tempParent?.matchedEquipmentId) {
+            parentId = tempParent.matchedEquipmentId;
+          }
+        }
+        
         if (parentId) {
-          // Safety net: Re-check for existing attachments to prevent duplicates
-          const existingAttachments = await getAttachments(parentId);
           const attachmentName = eq.attachmentName || `${eq.make} ${eq.model}`;
           const attachmentSerial = eq.attachmentSerial || eq.serialVin;
           
+          // Handle update_existing action
+          if (eq.attachmentAction === 'update_existing' && eq.matchedAttachmentId) {
+            await updateAttachment(eq.matchedAttachmentId, {
+              name: attachmentName,
+              value: eq.attachmentValue ?? eq.purchasePrice ?? 0,
+              serialNumber: attachmentSerial || undefined,
+              description: eq.attachmentDescription || eq.notes || undefined,
+            });
+            results.succeeded.push(`${attachmentName} (attachment - updated)`);
+            continue;
+          }
+          
+          // Handle import_anyway - skip duplicate check
+          if (eq.attachmentAction === 'import_anyway') {
+            await addAttachment(parentId, {
+              name: attachmentName,
+              value: eq.attachmentValue ?? eq.purchasePrice ?? 0,
+              serialNumber: attachmentSerial || undefined,
+              description: eq.attachmentDescription || eq.notes || undefined,
+            });
+            attachmentImportCount++;
+            results.succeeded.push(`${attachmentName} (attachment - imported as new)`);
+            continue;
+          }
+          
+          // Default 'create' action - re-check for duplicates as safety net
+          const existingAttachments = await getAttachments(parentId);
           const isDuplicate = existingAttachments.some(existing => 
             attachmentMatches(attachmentName, '', attachmentSerial, existing)
           );
@@ -1663,11 +1820,18 @@ export function EquipmentImportReview({
                                 <SelectLabel>From this import</SelectLabel>
                                 {potentialParentsFromImport
                                   .filter(other => other.tempId !== eq.tempId)
-                                  .map(other => (
-                                    <SelectItem key={other.tempId} value={`temp:${other.tempId}`}>
-                                      {other.make} {other.model} {other.year ? `(${other.year})` : ''}
-                                    </SelectItem>
-                                  ))}
+                                  .map(other => {
+                                    // For skipped items with matchedEquipmentId, use the real ID
+                                    const useRealId = other.importMode === 'skip' && other.matchedEquipmentId;
+                                    const value = useRealId ? other.matchedEquipmentId! : `temp:${other.tempId}`;
+                                    const label = other.matchedEquipmentName || `${other.make} ${other.model} ${other.year ? `(${other.year})` : ''}`;
+                                    return (
+                                      <SelectItem key={other.tempId} value={value}>
+                                        {label}
+                                        {useRealId && <span className="text-muted-foreground ml-1">(existing)</span>}
+                                      </SelectItem>
+                                    );
+                                  })}
                               </SelectGroup>
                             )}
                             {equipment.length > 0 && (
@@ -1684,68 +1848,106 @@ export function EquipmentImportReview({
                         </Select>
                       </div>
                       
-                      {/* Attachment Duplicate Warning */}
+                      {/* Attachment Duplicate Detection - Improved UX */}
                       {eq.attachmentDuplicateStatus === 'match' && (
-                        <div className="flex items-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-md border border-amber-200 dark:border-amber-800">
-                          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                          <span className="text-sm">
-                            Already exists: <strong>{eq.matchedAttachmentName}</strong> — will skip to prevent duplicates
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Attachment Details Section */}
-                      {eq.attachmentDuplicateStatus !== 'match' && (
-                        <div className="border-t pt-3 space-y-3">
-                          <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                            <Package className="h-3.5 w-3.5" />
-                            Attachment Details
-                          </p>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-md border border-amber-200 dark:border-amber-800">
+                            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                            <span className="text-sm">
+                              Matches existing attachment: <strong>{eq.matchedAttachmentName}</strong>
+                            </span>
+                          </div>
                           
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="text-xs text-muted-foreground">Name *</label>
-                              <Input
-                                value={eq.attachmentName || `${eq.make} ${eq.model}`}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentName', e.target.value)}
-                                className="h-8 text-sm"
-                                placeholder="Attachment name"
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="text-xs text-muted-foreground">Value</label>
-                              <Input
-                                type="number"
-                                value={eq.attachmentValue ?? eq.purchasePrice ?? ''}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentValue', e.target.value ? parseFloat(e.target.value) : 0)}
-                                className="h-8 text-sm"
-                                placeholder="$0.00"
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="text-xs text-muted-foreground">Serial Number</label>
-                              <Input
-                                value={eq.attachmentSerial ?? eq.serialVin ?? ''}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentSerial', e.target.value)}
-                                className="h-8 text-sm"
-                                placeholder="Serial number (optional)"
-                              />
-                            </div>
-                            
-                            <div className="col-span-2">
-                              <label className="text-xs text-muted-foreground">Description/Notes</label>
-                              <Textarea
-                                value={eq.attachmentDescription ?? eq.notes ?? ''}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentDescription', e.target.value)}
-                                className="text-sm min-h-[60px]"
-                                placeholder="Additional notes (optional)"
-                              />
-                            </div>
+                          {/* Action buttons for duplicate handling */}
+                          <div className="flex gap-2 flex-wrap">
+                            <Button
+                              variant={eq.attachmentAction === 'skip' ? 'secondary' : 'ghost'}
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => setAttachmentAction(eq.tempId, 'skip')}
+                            >
+                              Skip (Don't Import)
+                            </Button>
+                            <Button
+                              variant={eq.attachmentAction === 'update_existing' ? 'secondary' : 'ghost'}
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => setAttachmentAction(eq.tempId, 'update_existing')}
+                            >
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                              Update Existing
+                            </Button>
+                            <Button
+                              variant={eq.attachmentAction === 'import_anyway' ? 'secondary' : 'ghost'}
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => setAttachmentAction(eq.tempId, 'import_anyway')}
+                            >
+                              Import as New Anyway
+                            </Button>
                           </div>
                         </div>
                       )}
+                      
+                      {/* Attachment Details Section - Always show, but disabled for skip */}
+                      <div className={`border-t pt-3 space-y-3 ${eq.attachmentAction === 'skip' ? 'opacity-50' : ''}`}>
+                        <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                          <Package className="h-3.5 w-3.5" />
+                          Attachment Details
+                          {eq.make && eq.model && (
+                            <span className="font-normal text-muted-foreground/70 ml-1">
+                              (extracted: {eq.make} {eq.model})
+                            </span>
+                          )}
+                        </p>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-muted-foreground">Name *</label>
+                            <Input
+                              value={eq.attachmentName || `${eq.make} ${eq.model}`}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentName', e.target.value)}
+                              className="h-8 text-sm"
+                              placeholder="Attachment name"
+                              disabled={eq.attachmentAction === 'skip'}
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="text-xs text-muted-foreground">Value</label>
+                            <Input
+                              type="number"
+                              value={eq.attachmentValue ?? eq.purchasePrice ?? ''}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentValue', e.target.value ? parseFloat(e.target.value) : 0)}
+                              className="h-8 text-sm"
+                              placeholder="$0.00"
+                              disabled={eq.attachmentAction === 'skip'}
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="text-xs text-muted-foreground">Serial Number</label>
+                            <Input
+                              value={eq.attachmentSerial ?? eq.serialVin ?? ''}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentSerial', e.target.value)}
+                              className="h-8 text-sm"
+                              placeholder="Serial number (optional)"
+                              disabled={eq.attachmentAction === 'skip'}
+                            />
+                          </div>
+                          
+                          <div className="col-span-2">
+                            <label className="text-xs text-muted-foreground">Description/Notes</label>
+                            <Textarea
+                              value={eq.attachmentDescription ?? eq.notes ?? ''}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentDescription', e.target.value)}
+                              className="text-sm min-h-[60px]"
+                              placeholder="Additional notes (optional)"
+                              disabled={eq.attachmentAction === 'skip'}
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
