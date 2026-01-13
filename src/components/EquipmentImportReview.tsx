@@ -1107,16 +1107,22 @@ export function EquipmentImportReview({
     }));
   };
 
-  const getDuplicateBadge = (eq: EditableEquipment) => {
-    if (eq.duplicateStatus === 'exact') {
+  // Unified match alert component - used for ALL card types (equipment and attachments)
+  const renderMatchAlert = (eq: EditableEquipment) => {
+    // Equipment exact match
+    if (eq.importMode !== 'attachment' && eq.duplicateStatus === 'exact') {
       return (
-        <div className="flex items-center gap-1.5 text-xs text-destructive bg-destructive/10 px-2 py-1 rounded">
-          <Copy className="h-3 w-3" />
-          <span>Matches "{eq.matchedEquipmentName}" (same serial/VIN)</span>
+        <div className="flex items-center gap-2 text-destructive bg-destructive/10 px-3 py-2 rounded-md border border-destructive/20">
+          <Copy className="h-4 w-4 flex-shrink-0" />
+          <span className="text-sm">
+            Exact match: <strong>{eq.matchedEquipmentName}</strong> (same serial/VIN)
+          </span>
         </div>
       );
     }
-    if (eq.duplicateStatus === 'potential') {
+    
+    // Equipment potential match
+    if (eq.importMode !== 'attachment' && eq.duplicateStatus === 'potential') {
       let reasonText = 'similar to';
       if (eq.duplicateReason === 'year') {
         reasonText = 'same make/model/year as';
@@ -1125,19 +1131,24 @@ export function EquipmentImportReview({
       } else if (eq.duplicateReason === 'date') {
         const dateInfo = eq.matchedPurchaseDate ? ` (purchased ${eq.matchedPurchaseDate})` : '';
         return (
-          <div className="flex items-center gap-1.5 text-xs text-yellow-600 bg-yellow-500/10 px-2 py-1 rounded">
-            <AlertCircle className="h-3 w-3" />
-            <span>Possible match: same make/model, date within 30 days of "{eq.matchedEquipmentName}"{dateInfo}</span>
+          <div className="flex items-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-md border border-amber-200 dark:border-amber-800">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span className="text-sm">
+              Possible match: same make/model, date within 30 days of <strong>{eq.matchedEquipmentName}</strong>{dateInfo}
+            </span>
           </div>
         );
       }
       return (
-        <div className="flex items-center gap-1.5 text-xs text-yellow-600 bg-yellow-500/10 px-2 py-1 rounded">
-          <AlertCircle className="h-3 w-3" />
-          <span>Possible match: {reasonText} "{eq.matchedEquipmentName}"</span>
+        <div className="flex items-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-md border border-amber-200 dark:border-amber-800">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <span className="text-sm">
+            Possible match: {reasonText} <strong>{eq.matchedEquipmentName}</strong>
+          </span>
         </div>
       );
     }
+    
     return null;
   };
 
@@ -1699,43 +1710,20 @@ export function EquipmentImportReview({
                         disabled={eq.importMode === 'skip' && eq.updatableFields.length === 0}
                         onCheckedChange={(checked) => updateEquipmentItem(eq.tempId, 'selected', !!checked)}
                       />
-                      <div className="space-y-1">
-                        {/* Header - show read-only label for attachments, editable for equipment */}
+                    <div className="space-y-1">
+                        {/* Header - ALWAYS read-only for consistent card appearance */}
                         <div className="flex items-center gap-2">
-                          {eq.importMode === 'attachment' || eq.duplicateStatus !== 'none' ? (
-                            // Read-only display for attachment mode OR matched equipment
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">
-                                {eq.importMode === 'attachment' 
-                                  ? (eq.attachmentName || `${eq.make} ${eq.model}`.trim() || 'Unnamed Attachment')
-                                  : `${eq.make} ${eq.model}`.trim() || 'Unknown Equipment'}
-                              </span>
-                              {eq.year && (
-                                <span className="text-sm text-muted-foreground">({eq.year})</span>
-                              )}
-                            </div>
-                          ) : (
-                            // Editable Make/Model only for NEW equipment with no match
-                            <>
-                              <Input
-                                value={eq.make}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'make', e.target.value)}
-                                className="h-7 w-28 text-sm font-medium"
-                                placeholder="Make"
-                              />
-                              <Input
-                                value={eq.model}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'model', e.target.value)}
-                                className="h-7 w-36 text-sm font-medium"
-                                placeholder="Model"
-                              />
-                              {eq.year && (
-                                <span className="text-sm text-muted-foreground">({eq.year})</span>
-                              )}
-                            </>
+                          <span className="text-sm font-medium">
+                            {eq.importMode === 'attachment' 
+                              ? (eq.attachmentName || `${eq.make} ${eq.model}`.trim() || 'Unnamed Attachment')
+                              : `${eq.make} ${eq.model}`.trim() || 'Unknown Equipment'}
+                          </span>
+                          {eq.year && (
+                            <span className="text-sm text-muted-foreground">({eq.year})</span>
                           )}
                         </div>
-                        {getDuplicateBadge(eq)}
+                        {/* Unified match warning - same style for all card types */}
+                        {renderMatchAlert(eq)}
                         {eq.notes && (
                           <p className="text-xs text-muted-foreground">{eq.notes}</p>
                         )}
@@ -1775,8 +1763,8 @@ export function EquipmentImportReview({
                     </div>
                   )}
 
-                  {/* Import Mode Selection - always show for all items */}
-                  <div className="flex gap-2 pl-7 flex-wrap">
+                  {/* Single Action Row - ONE unified control for import mode (same for all card types) */}
+                  <div className="flex gap-1.5 pl-7 flex-wrap">
                     {eq.duplicateStatus !== 'none' && (
                       <Button
                         variant={eq.importMode === 'update_existing' ? 'secondary' : 'ghost'}
@@ -1785,9 +1773,12 @@ export function EquipmentImportReview({
                         onClick={() => setImportMode(eq.tempId, 'update_existing')}
                       >
                         <RefreshCw className="h-3 w-3 mr-1" />
-                        {eq.updatableFields.length > 0 
-                          ? `Update Existing (${eq.updatableFields.length} fields)` 
-                          : 'Match Existing'}
+                        Use Existing Equipment
+                        {eq.updatableFields.length > 0 && (
+                          <Badge variant="outline" className="ml-1 text-[10px] py-0 h-4">
+                            {eq.updatableFields.length} fields
+                          </Badge>
+                        )}
                       </Button>
                     )}
                     <Button
@@ -1796,7 +1787,8 @@ export function EquipmentImportReview({
                       className="h-7 text-xs"
                       onClick={() => setImportMode(eq.tempId, 'new')}
                     >
-                      Import as Equipment
+                      <Package className="h-3 w-3 mr-1" />
+                      Add as New Equipment
                     </Button>
                     <Button
                       variant={eq.importMode === 'attachment' ? 'secondary' : 'ghost'}
@@ -1805,7 +1797,7 @@ export function EquipmentImportReview({
                       onClick={() => setImportMode(eq.tempId, 'attachment')}
                     >
                       <Link className="h-3 w-3 mr-1" />
-                      Import as Attachment
+                      Add as Attachment
                       {eq.suggestedType === 'attachment' && <Badge variant="outline" className="ml-1 text-[10px] py-0 h-4">Suggested</Badge>}
                     </Button>
                     <Button
@@ -1814,11 +1806,11 @@ export function EquipmentImportReview({
                       className="h-7 text-xs"
                       onClick={() => setImportMode(eq.tempId, 'skip')}
                     >
-                      Skip
+                      Skip This Item
                     </Button>
                   </div>
 
-                  {/* Parent Selection and Attachment Details */}
+                  {/* Attachment Section - Parent Selection and Details (shown when mode is attachment) */}
                   {eq.importMode === 'attachment' && (
                     <div className="pl-7 pt-2 space-y-3">
                       {/* Parent Equipment Selector */}
@@ -1838,15 +1830,18 @@ export function EquipmentImportReview({
                                 {potentialParentsFromImport
                                   .filter(other => other.tempId !== eq.tempId)
                                   .map(other => {
-                                    // For skipped items with matchedEquipmentId, use the real ID
-                                    const useRealId = other.importMode === 'skip' && other.matchedEquipmentId;
-                                    const value = useRealId ? other.matchedEquipmentId! : `temp:${other.tempId}`;
-                                    const label = useRealId 
-                                      ? `${other.year || ''} ${other.make} ${other.model}`.trim()
-                                      : `${other.make} ${other.model}${other.year ? ` (${other.year})` : ''}`;
+                                    // ALWAYS use temp: prefix for consistent unique values
+                                    const value = `temp:${other.tempId}`;
+                                    // Add status suffix to clarify what will happen
+                                    const statusLabel = other.importMode === 'update_existing' || (other.importMode === 'skip' && other.matchedEquipmentId)
+                                      ? '(will use existing)'
+                                      : other.importMode === 'new'
+                                        ? '(will be created)'
+                                        : '';
+                                    const displayName = `${other.year || ''} ${other.make} ${other.model}`.trim();
                                     return (
                                       <SelectItem key={other.tempId} value={value}>
-                                        {label}{useRealId ? ' (existing)' : ''}
+                                        {displayName} {statusLabel}
                                       </SelectItem>
                                     );
                                   })}
@@ -1857,10 +1852,9 @@ export function EquipmentImportReview({
                                 <SelectLabel>Existing equipment</SelectLabel>
                                 {equipment
                                   .filter(existing => {
-                                    // Exclude if this equipment is already shown via a skipped import item
+                                    // Exclude if this equipment is already shown via an import item
                                     const isShownViaImport = potentialParentsFromImport.some(
-                                      other => other.importMode === 'skip' && 
-                                               other.matchedEquipmentId === existing.id &&
+                                      other => other.matchedEquipmentId === existing.id &&
                                                other.tempId !== eq.tempId
                                     );
                                     return !isShownViaImport;
@@ -1876,99 +1870,103 @@ export function EquipmentImportReview({
                         </Select>
                       </div>
                       
-                      {/* Attachment Duplicate Detection - Improved UX */}
-                      {eq.attachmentDuplicateStatus === 'match' && (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-md border border-amber-200 dark:border-amber-800">
-                            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                            <span className="text-sm">
-                              Matches existing attachment: <strong>{eq.matchedAttachmentName}</strong>
-                            </span>
-                          </div>
-                          
-                          {/* Action buttons for duplicate handling */}
-                          <div className="flex gap-2 flex-wrap">
-                            <Button
-                              variant={eq.attachmentAction === 'skip' ? 'secondary' : 'ghost'}
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => setAttachmentAction(eq.tempId, 'skip')}
-                            >
-                              Skip (Don't Import)
-                            </Button>
-                            <Button
-                              variant={eq.attachmentAction === 'update_existing' ? 'secondary' : 'ghost'}
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => setAttachmentAction(eq.tempId, 'update_existing')}
-                            >
-                              <RefreshCw className="h-3 w-3 mr-1" />
-                              Update Existing
-                            </Button>
-                            <Button
-                              variant={eq.attachmentAction === 'import_anyway' ? 'secondary' : 'ghost'}
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => setAttachmentAction(eq.tempId, 'import_anyway')}
-                            >
-                              Import as New Anyway
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Attachment Details Section - Collapsible, disabled for skip */}
+                      {/* Attachment Details Section - shown when expanded */}
                       {expandedItems.has(eq.tempId) && (
-                        <div className={`border-t pt-3 space-y-3 ${eq.attachmentAction === 'skip' ? 'opacity-50' : ''}`}>
-                          <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                            <Package className="h-3.5 w-3.5" />
-                            Attachment Details
-                          </p>
+                        <div className={`space-y-3 ${eq.attachmentAction === 'skip' ? 'opacity-50' : ''}`}>
+                          {/* Attachment Duplicate Warning - inside expanded area */}
+                          {eq.attachmentDuplicateStatus === 'match' && (
+                            <div className="space-y-2 bg-muted/30 rounded-md p-3">
+                              <div className="flex items-center gap-2 text-amber-600">
+                                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                                <span className="text-sm">
+                                  Matches existing attachment: <strong>{eq.matchedAttachmentName}</strong>
+                                </span>
+                              </div>
+                              
+                              {/* Duplicate handling buttons - clear, non-conflicting labels */}
+                              <p className="text-xs text-muted-foreground">How to handle this duplicate:</p>
+                              <div className="flex gap-1.5 flex-wrap">
+                                <Button
+                                  variant={eq.attachmentAction === 'skip' ? 'secondary' : 'ghost'}
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => setAttachmentAction(eq.tempId, 'skip')}
+                                >
+                                  Don't Add (Duplicate)
+                                </Button>
+                                <Button
+                                  variant={eq.attachmentAction === 'update_existing' ? 'secondary' : 'ghost'}
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => setAttachmentAction(eq.tempId, 'update_existing')}
+                                >
+                                  <RefreshCw className="h-3 w-3 mr-1" />
+                                  Update Existing Attachment
+                                </Button>
+                                <Button
+                                  variant={eq.attachmentAction === 'import_anyway' ? 'secondary' : 'ghost'}
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => setAttachmentAction(eq.tempId, 'import_anyway')}
+                                >
+                                  Add as Another Copy
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                           
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="text-xs text-muted-foreground">Name *</label>
-                              <Input
-                                value={eq.attachmentName || `${eq.make} ${eq.model}`}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentName', e.target.value)}
-                                className="h-8 text-sm"
-                                placeholder="Attachment name"
-                                disabled={eq.attachmentAction === 'skip'}
-                              />
-                            </div>
+                          {/* Attachment Details Fields */}
+                          <div className="border-t pt-3 space-y-3">
+                            <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                              <Package className="h-3.5 w-3.5" />
+                              Attachment Details
+                            </p>
                             
-                            <div>
-                              <label className="text-xs text-muted-foreground">Value</label>
-                              <Input
-                                type="number"
-                                value={eq.attachmentValue ?? eq.purchasePrice ?? ''}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentValue', e.target.value ? parseFloat(e.target.value) : 0)}
-                                className="h-8 text-sm"
-                                placeholder="$0.00"
-                                disabled={eq.attachmentAction === 'skip'}
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="text-xs text-muted-foreground">Serial Number</label>
-                              <Input
-                                value={eq.attachmentSerial ?? eq.serialVin ?? ''}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentSerial', e.target.value)}
-                                className="h-8 text-sm"
-                                placeholder="Serial number (optional)"
-                                disabled={eq.attachmentAction === 'skip'}
-                              />
-                            </div>
-                            
-                            <div className="col-span-2">
-                              <label className="text-xs text-muted-foreground">Description/Notes</label>
-                              <Textarea
-                                value={eq.attachmentDescription ?? eq.notes ?? ''}
-                                onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentDescription', e.target.value)}
-                                className="text-sm min-h-[60px]"
-                                placeholder="Additional notes (optional)"
-                                disabled={eq.attachmentAction === 'skip'}
-                              />
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs text-muted-foreground">Name *</label>
+                                <Input
+                                  value={eq.attachmentName || `${eq.make} ${eq.model}`}
+                                  onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentName', e.target.value)}
+                                  className="h-8 text-sm"
+                                  placeholder="Attachment name"
+                                  disabled={eq.attachmentAction === 'skip'}
+                                />
+                              </div>
+                              
+                              <div>
+                                <label className="text-xs text-muted-foreground">Value</label>
+                                <Input
+                                  type="number"
+                                  value={eq.attachmentValue ?? eq.purchasePrice ?? ''}
+                                  onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentValue', e.target.value ? parseFloat(e.target.value) : 0)}
+                                  className="h-8 text-sm"
+                                  placeholder="$0.00"
+                                  disabled={eq.attachmentAction === 'skip'}
+                                />
+                              </div>
+                              
+                              <div>
+                                <label className="text-xs text-muted-foreground">Serial Number</label>
+                                <Input
+                                  value={eq.attachmentSerial ?? eq.serialVin ?? ''}
+                                  onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentSerial', e.target.value)}
+                                  className="h-8 text-sm"
+                                  placeholder="Serial number (optional)"
+                                  disabled={eq.attachmentAction === 'skip'}
+                                />
+                              </div>
+                              
+                              <div className="col-span-2">
+                                <label className="text-xs text-muted-foreground">Description/Notes</label>
+                                <Textarea
+                                  value={eq.attachmentDescription ?? eq.notes ?? ''}
+                                  onChange={(e) => updateEquipmentItem(eq.tempId, 'attachmentDescription', e.target.value)}
+                                  className="text-sm min-h-[60px]"
+                                  placeholder="Additional notes (optional)"
+                                  disabled={eq.attachmentAction === 'skip'}
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2006,7 +2004,7 @@ export function EquipmentImportReview({
                   {/* Expanded Edit Fields for New Equipment */}
                   {eq.selected && eq.importMode === 'new' && expandedItems.has(eq.tempId) && (
                     <div className="pl-7 space-y-1">
-                      {/* Basic Info Section */}
+                      {/* Basic Info Section - now includes Make/Model editing */}
                       {renderFieldSection(
                         eq,
                         'basic',
@@ -2014,6 +2012,28 @@ export function EquipmentImportReview({
                         <Package className="h-4 w-4 text-muted-foreground" />,
                         !isSectionExpanded(eq.tempId, 'basic') ? `${eq.category}` : null,
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {/* Make - editable here for new equipment */}
+                          <div>
+                            <label className="text-xs text-muted-foreground">Make *</label>
+                            <Input
+                              value={eq.make}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'make', e.target.value)}
+                              className="h-8 text-sm"
+                              placeholder="Make"
+                            />
+                          </div>
+                          
+                          {/* Model - editable here for new equipment */}
+                          <div>
+                            <label className="text-xs text-muted-foreground">Model *</label>
+                            <Input
+                              value={eq.model}
+                              onChange={(e) => updateEquipmentItem(eq.tempId, 'model', e.target.value)}
+                              className="h-8 text-sm"
+                              placeholder="Model"
+                            />
+                          </div>
+                          
                           <div>
                             <label className="text-xs text-muted-foreground">Category *</label>
                             <Select
