@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight, Check, ShieldCheck, Activity, AlertTriangle, CalendarIcon, Download, X, Search, RefreshCw, UserCheck } from 'lucide-react';
 import { UserActivityTab } from '@/components/admin/UserActivityTab';
 import { ErrorLogTab } from '@/components/admin/ErrorLogTab';
+import { ImpersonationHistoryTab } from '@/components/admin/ImpersonationHistoryTab';
 import { UserDisplayCell } from '@/components/admin/UserDisplayCell';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useUserProfiles } from '@/hooks/useUserProfiles';
@@ -1018,6 +1019,7 @@ export default function AdminDashboard() {
                 { value: 'users', label: 'Users' },
                 { value: 'feedback', label: 'Feedback' },
                 { value: 'activity', label: 'Activity' },
+                { value: 'impersonation', label: 'Impersonation' },
                 { value: 'user-activity', label: 'User Activity' },
                 { value: 'errors', label: 'Errors' },
                 { value: 'market', label: 'Market Insights' },
@@ -1032,6 +1034,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="feedback">Feedback</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="impersonation">Impersonation</TabsTrigger>
               <TabsTrigger value="user-activity">User Activity</TabsTrigger>
               <TabsTrigger value="errors">Errors</TabsTrigger>
               <TabsTrigger value="market">Market Insights</TabsTrigger>
@@ -2009,6 +2012,11 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Impersonation History Tab */}
+          <TabsContent value="impersonation">
+            <ImpersonationHistoryTab />
           </TabsContent>
 
           {/* User Activity Tab */}
