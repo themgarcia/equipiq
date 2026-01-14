@@ -230,6 +230,20 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     fetchAllAttachments();
   }, [fetchAllAttachments]);
 
+  // Helper to log user activity
+  const logActivity = useCallback(async (actionType: string, actionDetails: Record<string, any>) => {
+    if (!user) return;
+    try {
+      await supabase.from('user_activity_log').insert({
+        user_id: user.id,
+        action_type: actionType,
+        action_details: actionDetails,
+      });
+    } catch (error) {
+      console.error('Failed to log activity:', error);
+    }
+  }, [user]);
+
   const addEquipment = useCallback(async (newEquipment: Omit<Equipment, 'id'>): Promise<string | undefined> => {
     if (!user) return undefined;
 
@@ -259,6 +273,15 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       setEquipment(prev => [dbToEquipment(data), ...prev]);
+      
+      // Log the activity
+      await logActivity('equipment_create', {
+        equipmentId: data.id,
+        equipmentName: equipmentWithName.name,
+        category: equipmentWithName.category,
+        purchasePrice: equipmentWithName.purchasePrice,
+      });
+      
       toast({
         title: "Equipment added",
         description: `${equipmentWithName.name} has been added to your inventory.`,
@@ -273,7 +296,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       });
       return undefined;
     }
-  }, [user, toast, isDemoData]);
+  }, [user, toast, isDemoData, logActivity]);
 
   const updateEquipment = useCallback(async (id: string, updates: Partial<Equipment>) => {
     if (!user) return;
@@ -344,6 +367,14 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       setEquipment(prev => 
         prev.map(e => e.id === id ? { ...e, ...updatesWithName } : e)
       );
+      
+      // Log the activity
+      await logActivity('equipment_update', {
+        equipmentId: id,
+        equipmentName: generatedName,
+        updatedFields: Object.keys(updates),
+      });
+      
       toast({
         title: "Equipment updated",
         description: "Your changes have been saved.",
@@ -355,7 +386,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
         variant: "destructive",
       });
     }
-  }, [user, equipment, toast, isDemoData]);
+  }, [user, equipment, toast, isDemoData, logActivity]);
 
   const deleteEquipment = useCallback(async (id: string) => {
     if (!user) return;
@@ -371,6 +402,9 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      // Get equipment name before deleting for logging
+      const equipmentToDelete = equipment.find(e => e.id === id);
+      
       const { error } = await supabase
         .from('equipment')
         .delete()
@@ -380,6 +414,16 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       setEquipment(prev => prev.filter(e => e.id !== id));
+      
+      // Log the activity
+      if (equipmentToDelete) {
+        await logActivity('equipment_delete', {
+          equipmentId: id,
+          equipmentName: equipmentToDelete.name,
+          category: equipmentToDelete.category,
+        });
+      }
+      
       toast({
         title: "Equipment deleted",
         description: "The equipment has been removed from your inventory.",
@@ -391,7 +435,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
         variant: "destructive",
       });
     }
-  }, [user, toast, isDemoData]);
+  }, [user, equipment, toast, isDemoData, logActivity]);
 
   const updateCategoryDefaults = useCallback((category: string, updates: Partial<CategoryDefaults>) => {
     setCategoryDefaults(prev =>
