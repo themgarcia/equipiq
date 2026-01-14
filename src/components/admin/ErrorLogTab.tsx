@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -20,12 +22,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { AlertTriangle, RefreshCw, Search, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Search, CheckCircle, Clock, Loader2, CalendarIcon, Download, X, Copy, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfiles } from '@/hooks/useUserProfiles';
 import { UserDisplayCell } from './UserDisplayCell';
+import { downloadCSV } from '@/lib/csvExport';
+import { cn } from '@/lib/utils';
 
 interface ErrorLogEntry {
   id: string;
@@ -59,9 +63,13 @@ export function ErrorLogTab() {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [resolvedFilter, setResolvedFilter] = useState<string>('unresolved');
+  const [userIdFilter, setUserIdFilter] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedError, setSelectedError] = useState<ErrorLogEntry | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [copiedUserId, setCopiedUserId] = useState(false);
   const { toast } = useToast();
   const { fetchProfiles, getDisplayName } = useUserProfiles();
 
@@ -110,11 +118,18 @@ export function ErrorLogTab() {
       resolvedFilter === 'all' ||
       (resolvedFilter === 'resolved' && error.resolved) ||
       (resolvedFilter === 'unresolved' && !error.resolved);
+    const matchesUser = !userIdFilter || error.user_id === userIdFilter;
     
-    return matchesSearch && matchesSource && matchesSeverity && matchesResolved;
+    // Date filtering
+    const errorDate = new Date(error.created_at);
+    const matchesStartDate = !startDate || isAfter(errorDate, startOfDay(startDate));
+    const matchesEndDate = !endDate || isBefore(errorDate, endOfDay(endDate));
+    
+    return matchesSearch && matchesSource && matchesSeverity && matchesResolved && matchesUser && matchesStartDate && matchesEndDate;
   });
 
   const unresolvedCount = errors.filter(e => !e.resolved).length;
+  const filteredUserDisplay = userIdFilter ? getDisplayName(userIdFilter) : null;
 
   const handleMarkResolved = async (errorId: string, notes: string) => {
     setUpdating(true);
@@ -177,6 +192,51 @@ export function ErrorLogTab() {
   const openErrorDetails = (error: ErrorLogEntry) => {
     setSelectedError(error);
     setAdminNotes(error.admin_notes || '');
+    setCopiedUserId(false);
+  };
+
+  const handleCopyUserId = async () => {
+    if (!selectedError?.user_id) return;
+    try {
+      await navigator.clipboard.writeText(selectedError.user_id);
+      setCopiedUserId(true);
+      toast({ title: 'User ID copied' });
+      setTimeout(() => setCopiedUserId(false), 2000);
+    } catch {
+      toast({ title: 'Failed to copy', variant: 'destructive' });
+    }
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Time', 'User Name', 'Company', 'User ID', 'Source', 'Type', 'Message', 'Severity', 'Resolved', 'Admin Notes'];
+    const rows = [headers];
+    
+    filteredErrors.forEach(error => {
+      const displayInfo = getDisplayName(error.user_id);
+      rows.push([
+        format(new Date(error.created_at), 'MMM d, yyyy h:mm a'),
+        displayInfo.name,
+        displayInfo.company || '',
+        error.user_id || '',
+        sourceLabels[error.error_source] || error.error_source,
+        error.error_type,
+        error.error_message,
+        error.severity,
+        error.resolved ? 'Yes' : 'No',
+        error.admin_notes || '',
+      ]);
+    });
+    
+    downloadCSV(rows, `error-log-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+  };
+
+  const handleUserClick = (userId: string) => {
+    setUserIdFilter(userId);
+  };
+
+  const clearDateFilters = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
   };
 
   const selectedUserDisplay = selectedError ? getDisplayName(selectedError.user_id) : null;
@@ -198,56 +258,133 @@ export function ErrorLogTab() {
               </CardTitle>
               <CardDescription>Track and diagnose errors from document imports and other operations</CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={fetchErrors} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={filteredErrors.length === 0}>
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={fetchErrors} disabled={loading}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, company, message, or type..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, company, message, or type..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="parse-equipment-docs">Equipment Import</SelectItem>
+                  <SelectItem value="parse-insurance-docs">Insurance Import</SelectItem>
+                  <SelectItem value="client">Client App</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={severityFilter} onValueChange={setSeverityFilter}>
+                <SelectTrigger className="w-full sm:w-32">
+                  <SelectValue placeholder="Severity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="error">Error</SelectItem>
+                  <SelectItem value="warning">Warning</SelectItem>
+                  <SelectItem value="info">Info</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={resolvedFilter} onValueChange={setResolvedFilter}>
+                <SelectTrigger className="w-full sm:w-36">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="unresolved">Unresolved</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Source" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sources</SelectItem>
-                <SelectItem value="parse-equipment-docs">Equipment Import</SelectItem>
-                <SelectItem value="parse-insurance-docs">Insurance Import</SelectItem>
-                <SelectItem value="client">Client App</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={severityFilter} onValueChange={setSeverityFilter}>
-              <SelectTrigger className="w-full sm:w-32">
-                <SelectValue placeholder="Severity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="info">Info</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={resolvedFilter} onValueChange={setResolvedFilter}>
-              <SelectTrigger className="w-full sm:w-36">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="unresolved">Unresolved</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-              </SelectContent>
-            </Select>
+            
+            {/* Date filters row */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "MMM d") : "From"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "MMM d") : "To"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              {(startDate || endDate) && (
+                <Button variant="ghost" size="sm" onClick={clearDateFilters}>
+                  <X className="h-4 w-4 mr-1" />
+                  Clear dates
+                </Button>
+              )}
+              
+              {userIdFilter && filteredUserDisplay && (
+                <Badge variant="secondary" className="gap-1">
+                  Filtering: {filteredUserDisplay.name}
+                  <button onClick={() => setUserIdFilter(null)} className="ml-1 hover:text-destructive">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* Error Table */}
@@ -288,6 +425,7 @@ export function ErrorLogTab() {
                         <UserDisplayCell
                           userId={error.user_id}
                           displayName={getDisplayName(error.user_id)}
+                          onUserClick={handleUserClick}
                         />
                       </TableCell>
                       <TableCell className="text-sm">
@@ -351,9 +489,21 @@ export function ErrorLogTab() {
                   {selectedError.user_id && (
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-muted-foreground">User ID:</span>
-                      <span className="font-mono text-xs text-muted-foreground break-all">
+                      <span className="font-mono text-xs text-muted-foreground break-all flex-1">
                         {selectedError.user_id}
                       </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2"
+                        onClick={handleCopyUserId}
+                      >
+                        {copiedUserId ? (
+                          <Check className="h-3 w-3 text-green-600" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </Button>
                     </div>
                   )}
                 </div>
