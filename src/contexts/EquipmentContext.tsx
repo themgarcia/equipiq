@@ -388,8 +388,29 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, equipment, toast, isDemoData, logActivity]);
 
+  // Get impersonation state - we need to access this via a ref pattern to avoid circular deps
+  const impersonationState = (() => {
+    try {
+      const storedState = localStorage.getItem('equipiq_impersonation_state');
+      return storedState ? JSON.parse(storedState) : null;
+    } catch {
+      return null;
+    }
+  })();
+  const isImpersonating = !!impersonationState;
+
   const deleteEquipment = useCallback(async (id: string) => {
     if (!user) return;
+
+    // Block destructive operations during impersonation
+    if (isImpersonating) {
+      toast({
+        title: "Action blocked",
+        description: "Destructive actions are disabled while impersonating a user.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Block operations when viewing demo data
     if (isDemoData) {
@@ -534,6 +555,16 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
   // Delete a document
   const deleteDocument = useCallback(async (documentId: string, filePath: string): Promise<void> => {
     if (!user) return;
+
+    // Block destructive operations during impersonation
+    if (isImpersonating) {
+      toast({
+        title: "Action blocked",
+        description: "Destructive actions are disabled while impersonating a user.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Block operations when viewing demo data
     if (isDemoData) {
@@ -758,6 +789,16 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
   // Delete an attachment
   const deleteAttachment = useCallback(async (id: string, photoPath?: string): Promise<void> => {
     if (!user) return;
+
+    // Block destructive operations during impersonation
+    if (isImpersonating) {
+      toast({
+        title: "Action blocked",
+        description: "Destructive actions are disabled while impersonating a user.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Block operations when viewing demo data
     if (isDemoData) {
