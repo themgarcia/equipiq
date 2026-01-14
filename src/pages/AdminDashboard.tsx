@@ -5,13 +5,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight, Check, ShieldCheck, Activity, AlertTriangle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight, Check, ShieldCheck, Activity, AlertTriangle, CalendarIcon, Download, X, Search, RefreshCw } from 'lucide-react';
 import { UserActivityTab } from '@/components/admin/UserActivityTab';
 import { ErrorLogTab } from '@/components/admin/ErrorLogTab';
 import { UserDisplayCell } from '@/components/admin/UserDisplayCell';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useUserProfiles } from '@/hooks/useUserProfiles';
 import { useDeviceType } from '@/hooks/use-mobile';
+import { downloadCSV } from '@/lib/csvExport';
+import { cn } from '@/lib/utils';
 import {
   Sheet,
   SheetContent,
@@ -31,7 +36,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -45,7 +50,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { MobileTabSelect } from '@/components/MobileTabSelect';
-import {
+import { 
   getIndustryLabel, 
   getFieldEmployeesLabel, 
   getAnnualRevenueLabel, 
@@ -188,6 +193,9 @@ export default function AdminDashboard() {
   const [loadingActivityLog, setLoadingActivityLog] = useState(false);
   const [selectedUserForSheet, setSelectedUserForSheet] = useState<UserStats | null>(null);
   const [activeTab, setActiveTab] = useState('users');
+  const [activityStartDate, setActivityStartDate] = useState<Date | undefined>(undefined);
+  const [activityEndDate, setActivityEndDate] = useState<Date | undefined>(undefined);
+  const [activitySearchTerm, setActivitySearchTerm] = useState('');
   const { toast } = useToast();
   const deviceType = useDeviceType();
   const isMobileOrTablet = deviceType !== 'desktop';
@@ -232,14 +240,64 @@ export default function AdminDashboard() {
       if (error) throw error;
       setActivityLog(data || []);
       
-      // Fetch user profiles for target users
+      // Fetch user profiles for target users AND performed by users
       const targetUserIds = (data || []).map(entry => entry.target_user_id);
-      await fetchProfiles(targetUserIds);
+      const performedByUserIds = (data || []).map(entry => entry.performed_by_user_id);
+      const allUserIds = [...new Set([...targetUserIds, ...performedByUserIds])];
+      await fetchProfiles(allUserIds);
     } catch (error) {
       console.error('Failed to fetch activity log:', error);
     } finally {
       setLoadingActivityLog(false);
     }
+  };
+
+  // Filter activity log
+  const filteredActivityLog = activityLog.filter(entry => {
+    const targetDisplayInfo = getDisplayName(entry.target_user_id);
+    const performedByDisplayInfo = getDisplayName(entry.performed_by_user_id);
+    
+    const matchesSearch = activitySearchTerm === '' ||
+      targetDisplayInfo.name.toLowerCase().includes(activitySearchTerm.toLowerCase()) ||
+      (targetDisplayInfo.company?.toLowerCase().includes(activitySearchTerm.toLowerCase()) ?? false) ||
+      performedByDisplayInfo.name.toLowerCase().includes(activitySearchTerm.toLowerCase()) ||
+      entry.action_type.toLowerCase().includes(activitySearchTerm.toLowerCase()) ||
+      entry.target_user_email.toLowerCase().includes(activitySearchTerm.toLowerCase()) ||
+      entry.performed_by_email.toLowerCase().includes(activitySearchTerm.toLowerCase());
+    
+    // Date filtering
+    const entryDate = new Date(entry.created_at);
+    const matchesStartDate = !activityStartDate || isAfter(entryDate, startOfDay(activityStartDate));
+    const matchesEndDate = !activityEndDate || isBefore(entryDate, endOfDay(activityEndDate));
+    
+    return matchesSearch && matchesStartDate && matchesEndDate;
+  });
+
+  const handleExportActivityLog = () => {
+    const headers = ['Date & Time', 'Action', 'Target User', 'Target Company', 'Target Email', 'Performed By', 'Performed By Email', 'Details'];
+    const rows = [headers];
+    
+    filteredActivityLog.forEach(entry => {
+      const targetDisplay = getDisplayName(entry.target_user_id);
+      const performedByDisplay = getDisplayName(entry.performed_by_user_id);
+      rows.push([
+        format(new Date(entry.created_at), 'MMM d, yyyy h:mm a'),
+        formatActionType(entry.action_type),
+        targetDisplay.name,
+        targetDisplay.company || '',
+        entry.target_user_email,
+        performedByDisplay.name,
+        entry.performed_by_email,
+        formatDetails(entry.details),
+      ]);
+    });
+    
+    downloadCSV(rows, `admin-activity-log-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+  };
+
+  const clearActivityDateFilters = () => {
+    setActivityStartDate(undefined);
+    setActivityEndDate(undefined);
   };
 
   const formatActionType = (action: string): string => {
@@ -1365,20 +1423,105 @@ export default function AdminDashboard() {
           <TabsContent value="activity" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <History className="h-5 w-5" />
-                  Admin Activity Log
-                </CardTitle>
-                <CardDescription>
-                  Recent administrative actions and audit trail
-                </CardDescription>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <History className="h-5 w-5" />
+                      Admin Activity Log
+                    </CardTitle>
+                    <CardDescription>
+                      Recent administrative actions and audit trail
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={handleExportActivityLog} disabled={filteredActivityLog.length === 0}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export CSV
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={fetchActivityLog} disabled={loadingActivityLog}>
+                      <RefreshCw className={`h-4 w-4 mr-2 ${loadingActivityLog ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
+                {/* Filters */}
+                <div className="flex flex-col gap-3 mb-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name, email, or action..."
+                      value={activitySearchTerm}
+                      onChange={(e) => setActivitySearchTerm(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "justify-start text-left font-normal",
+                            !activityStartDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {activityStartDate ? format(activityStartDate, "MMM d") : "From"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={activityStartDate}
+                          onSelect={setActivityStartDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "justify-start text-left font-normal",
+                            !activityEndDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {activityEndDate ? format(activityEndDate, "MMM d") : "To"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={activityEndDate}
+                          onSelect={setActivityEndDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    
+                    {(activityStartDate || activityEndDate) && (
+                      <Button variant="ghost" size="sm" onClick={clearActivityDateFilters}>
+                        <X className="h-4 w-4 mr-1" />
+                        Clear dates
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
                 {loadingActivityLog ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
-                ) : activityLog.length === 0 ? (
+                ) : filteredActivityLog.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     No activity logged yet. Actions will appear here as they are performed.
                   </div>
@@ -1396,7 +1539,7 @@ export default function AdminDashboard() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {activityLog.map((entry) => (
+                          {filteredActivityLog.map((entry) => (
                             <TableRow key={entry.id}>
                               <TableCell className="whitespace-nowrap">
                                 {format(new Date(entry.created_at), 'MMM d, yyyy h:mm a')}
@@ -1412,8 +1555,11 @@ export default function AdminDashboard() {
                                   displayName={getDisplayName(entry.target_user_id)}
                                 />
                               </TableCell>
-                              <TableCell className="max-w-[200px] truncate">
-                                {entry.performed_by_email}
+                              <TableCell>
+                                <UserDisplayCell
+                                  userId={entry.performed_by_user_id}
+                                  displayName={getDisplayName(entry.performed_by_user_id)}
+                                />
                               </TableCell>
                               <TableCell className="text-xs text-muted-foreground max-w-[200px]">
                                 {formatDetails(entry.details)}
@@ -1426,9 +1572,6 @@ export default function AdminDashboard() {
                     </ScrollArea>
                   </TooltipProvider>
                 )}
-                <Button variant="outline" className="mt-4" onClick={fetchActivityLog}>
-                  Refresh Activity Log
-                </Button>
               </CardContent>
             </Card>
           </TabsContent>
