@@ -13,17 +13,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Trash2, AlertTriangle, Mail, CheckCircle2 } from 'lucide-react';
+import { Loader2, Trash2, AlertTriangle, Mail, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 export function DeleteAccountDialog() {
   const { user } = useAuth();
+  const { isImpersonating } = useImpersonation();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [isRequesting, setIsRequesting] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+
+  // Block account deletion during impersonation
+  if (isImpersonating) {
+    return (
+      <Button variant="destructive" className="w-full sm:w-auto" disabled>
+        <ShieldAlert className="mr-2 h-4 w-4" />
+        Disabled During Impersonation
+      </Button>
+    );
+  }
 
   const handleRequestDeletion = async () => {
     if (!user) return;
