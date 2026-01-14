@@ -30,6 +30,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { DemoModeControls } from '@/components/DemoModeControls';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { GracePeriodBanner } from '@/components/GracePeriodBanner';
+import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 import { useSubscription } from '@/hooks/useSubscription';
 import {
   DropdownMenu,
@@ -558,6 +559,7 @@ export function Layout({ children }: LayoutProps) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <PhoneHeader />
+        <ImpersonationBanner />
         <DemoModeBanner />
         {subscription.inGracePeriod && daysLeftInGrace !== null && (
           <GracePeriodBanner daysLeft={daysLeftInGrace} plan={subscription.plan} />
@@ -577,6 +579,7 @@ export function Layout({ children }: LayoutProps) {
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <ContentHeader />
+          <ImpersonationBanner />
           <DemoModeBanner />
           {subscription.inGracePeriod && daysLeftInGrace !== null && (
             <GracePeriodBanner daysLeft={daysLeftInGrace} plan={subscription.plan} />

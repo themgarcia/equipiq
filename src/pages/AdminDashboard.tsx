@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight, Check, ShieldCheck, Activity, AlertTriangle, CalendarIcon, Download, X, Search, RefreshCw } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight, Check, ShieldCheck, Activity, AlertTriangle, CalendarIcon, Download, X, Search, RefreshCw, UserCheck } from 'lucide-react';
 import { UserActivityTab } from '@/components/admin/UserActivityTab';
 import { ErrorLogTab } from '@/components/admin/ErrorLogTab';
 import { UserDisplayCell } from '@/components/admin/UserDisplayCell';
@@ -56,6 +56,8 @@ import {
   getAnnualRevenueLabel, 
   getRegionLabel 
 } from '@/data/signupOptions';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useNavigate } from 'react-router-dom';
 
 interface UserStats {
   id: string;
@@ -196,10 +198,13 @@ export default function AdminDashboard() {
   const [activityStartDate, setActivityStartDate] = useState<Date | undefined>(undefined);
   const [activityEndDate, setActivityEndDate] = useState<Date | undefined>(undefined);
   const [activitySearchTerm, setActivitySearchTerm] = useState('');
+  const [impersonating, setImpersonating] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const deviceType = useDeviceType();
   const isMobileOrTablet = deviceType !== 'desktop';
   const { fetchProfiles, getDisplayName } = useUserProfiles();
+  const { startImpersonation } = useImpersonation();
 
   // Helper function to log admin actions
   const logAdminAction = async (
@@ -309,6 +314,7 @@ export default function AdminDashboard() {
       'user_deleted': 'User Deleted',
       'feedback_status_changed': 'Feedback Updated',
       'admin_reply_sent': 'Reply Sent',
+      'impersonation_started': 'Impersonation Started',
     };
     return labels[action] || action;
   };
@@ -322,6 +328,7 @@ export default function AdminDashboard() {
       'beta_toggled': 'outline',
       'feedback_status_changed': 'secondary',
       'admin_reply_sent': 'outline',
+      'impersonation_started': 'secondary',
     };
     return variants[action] || 'outline';
   };
@@ -1232,6 +1239,31 @@ export default function AdminDashboard() {
                           />
                         </div>
                       </div>
+
+                      {/* Impersonate Button */}
+                      {selectedUserForSheet.id !== currentUserId && (
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          disabled={impersonating === selectedUserForSheet.id}
+                          onClick={async () => {
+                            setImpersonating(selectedUserForSheet.id);
+                            const success = await startImpersonation(selectedUserForSheet.id);
+                            setImpersonating(null);
+                            if (success) {
+                              setSelectedUserForSheet(null);
+                              navigate('/dashboard');
+                            }
+                          }}
+                        >
+                          {impersonating === selectedUserForSheet.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <UserCheck className="h-4 w-4 mr-2" />
+                          )}
+                          Impersonate User
+                        </Button>
+                      )}
 
                       {/* Delete Button */}
                       {!selectedUserForSheet.isAdmin && (
