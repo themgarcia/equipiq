@@ -467,6 +467,36 @@ export type Database = {
           },
         ]
       }
+      impersonation_sessions: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          impersonated_user_id: string
+          reason: string | null
+          started_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          impersonated_user_id: string
+          reason?: string | null
+          started_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          impersonated_user_id?: string
+          reason?: string | null
+          started_at?: string
+        }
+        Relationships: []
+      }
       insurance_change_log: {
         Row: {
           change_type: string

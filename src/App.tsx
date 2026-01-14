@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminModeProvider } from "@/contexts/AdminModeContext";
+import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { EquipmentProvider } from "@/contexts/EquipmentContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
@@ -37,9 +38,10 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <AdminModeProvider>
-            <EquipmentProvider>
-              <Toaster />
-              <Sonner />
+            <ImpersonationProvider>
+              <EquipmentProvider>
+                <Toaster />
+                <Sonner />
               <BrowserRouter>
               <Routes>
                   {/* Public routes */}
@@ -117,7 +119,8 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
-            </EquipmentProvider>
+              </EquipmentProvider>
+            </ImpersonationProvider>
           </AdminModeProvider>
         </AuthProvider>
       </TooltipProvider>
