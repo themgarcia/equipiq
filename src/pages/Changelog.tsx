@@ -5,7 +5,6 @@ import { History, Plus, RefreshCw, Sparkles, Shield, Bug } from "lucide-react";
 
 interface ChangelogEntry {
   version: string;
-  date: string;
   changes: {
     type: "added" | "changed" | "improved" | "security" | "fixed";
     items: string[];
@@ -15,7 +14,6 @@ interface ChangelogEntry {
 const changelogData: ChangelogEntry[] = [
   {
     version: "1.3.1",
-    date: "2026-01-15",
     changes: [
       {
         type: "added",
@@ -24,8 +22,8 @@ const changelogData: ChangelogEntry[] = [
       {
         type: "changed",
         items: [
-          "Cashflow projection chart now dynamically adjusts based on actual equipment payoff dates (ends 2 years after last payoff, minimum 3 years)",
-          'Added "Today" marker on x-axis of cashflow projection chart for clearer timeline orientation',
+          "Cashflow projection chart now dynamically adjusts based on your equipment payoff dates",
+          "Added 'Today' marker on cashflow chart for clearer timeline orientation",
         ],
       },
       {
@@ -36,36 +34,30 @@ const changelogData: ChangelogEntry[] = [
   },
   {
     version: "1.3.0",
-    date: "2026-01-12",
     changes: [
       {
         type: "added",
         items: [
-          "Authentication rate limiting to prevent brute-force attacks",
           "Version display in sidebar footer",
-          "Changelog documentation",
+          "Change log documentation",
         ],
       },
       {
         type: "security",
         items: [
-          "Rate limiting on login (5 attempts per 15 minutes)",
-          "Rate limiting on signup (3 attempts per hour)",
-          "Rate limiting on password reset (3 attempts per hour)",
-          "Enhanced RLS policies for auth_rate_limits table",
+          "Enhanced account security protections",
         ],
       },
     ],
   },
   {
     version: "1.2.0",
-    date: "Previous Release",
     changes: [
       {
         type: "added",
         items: [
-          "Insurance Control module with full broker email integration",
-          "Policy import with AI-powered document parsing",
+          "Insurance Control module with broker email integration",
+          "Policy import with smart document parsing",
           "Insured register with comprehensive change tracking",
           "Insurance metrics dashboard and renewal notifications",
           "Broker update email functionality with customizable templates",
@@ -83,24 +75,22 @@ const changelogData: ChangelogEntry[] = [
   },
   {
     version: "1.1.0",
-    date: "Earlier Release",
     changes: [
       {
         type: "added",
         items: [
-          "Demo mode for showcasing features without requiring an account",
-          "Admin dashboard for user and subscription management",
+          "Demo mode for exploring features before signing up",
           "Welcome email sent automatically on signup",
           "Password reset confirmation emails",
-          "Document attachments with AI-powered parsing",
+          "Document attachments with smart parsing",
           "Equipment document storage with file management",
-          "Notification system with bell icon and unread tracking",
+          "Notification system with unread tracking",
         ],
       },
       {
         type: "changed",
         items: [
-          "Improved mobile navigation with sheet-based menu",
+          "Improved mobile navigation",
           "Enhanced sidebar with collapsible state persistence",
         ],
       },
@@ -108,12 +98,11 @@ const changelogData: ChangelogEntry[] = [
   },
   {
     version: "1.0.0",
-    date: "Initial Release",
     changes: [
       {
         type: "added",
         items: [
-          "Equipment tracking with full CRUD operations",
+          "Complete equipment tracking and management",
           "Equipment attachments and parent-child relationships",
           "Category lifespan management with customizable defaults",
           "Buy vs Rent analysis tool with detailed calculations",
@@ -121,7 +110,7 @@ const changelogData: ChangelogEntry[] = [
           "FMS (Fleet Management System) export functionality",
           "User authentication (signup, login, password reset)",
           "Profile management with company information",
-          "Subscription management with Stripe integration",
+          "Subscription management",
           "Dark/light theme support with system preference detection",
           "Mobile-responsive layout with adaptive navigation",
           "Dashboard with key metrics and equipment overview",
@@ -131,9 +120,9 @@ const changelogData: ChangelogEntry[] = [
       {
         type: "security",
         items: [
-          "Row Level Security (RLS) on all user data tables",
-          "Secure authentication flow with email verification",
-          "Protected routes requiring authentication",
+          "Enterprise-grade data security for all user data",
+          "Secure account verification",
+          "Protected access to your data",
         ],
       },
     ],
@@ -194,17 +183,14 @@ export default function Changelog() {
           {changelogData.map((entry, index) => (
             <Card key={entry.version} className={index === 0 ? "border-primary/50" : ""}>
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <span className="text-lg font-semibold">v{entry.version}</span>
-                    {index === 0 && (
-                      <Badge variant="default" className="text-xs">
-                        Latest
-                      </Badge>
-                    )}
-                  </CardTitle>
-                  <span className="text-sm text-muted-foreground">{entry.date}</span>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-lg font-semibold">v{entry.version}</span>
+                  {index === 0 && (
+                    <Badge variant="default" className="text-xs">
+                      Latest
+                    </Badge>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {entry.changes.map((change) => {
