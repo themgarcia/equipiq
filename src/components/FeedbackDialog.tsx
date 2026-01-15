@@ -129,13 +129,6 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
     };
   }, [screenshotPreview]);
 
-  // Cleanup voice dictation on unmount
-  useEffect(() => {
-    return () => {
-      descriptionScribe.stopListening();
-    };
-  }, []);
-
   const removeScreenshot = () => {
     if (screenshotPreview) {
       URL.revokeObjectURL(screenshotPreview);
