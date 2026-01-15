@@ -19,6 +19,7 @@ import {
   CreditCard,
   MessageSquare
 } from 'lucide-react';
+import { FeedbackButton } from '@/components/FeedbackButton';
 import { NotificationBell } from '@/components/NotificationBell';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { cn } from '@/lib/utils';
@@ -569,6 +570,7 @@ export function Layout({ children }: LayoutProps) {
             {children}
           </div>
         </main>
+        <FeedbackButton />
       </div>
     );
   }
@@ -588,6 +590,7 @@ export function Layout({ children }: LayoutProps) {
             {children}
           </main>
         </div>
+        <FeedbackButton />
       </div>
     </SidebarProvider>
   );

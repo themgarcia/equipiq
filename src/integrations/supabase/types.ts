@@ -403,6 +403,9 @@ export type Database = {
           created_at: string | null
           description: string
           id: string
+          page_title: string | null
+          page_url: string | null
+          screenshot_url: string | null
           status: string | null
           subject: string
           updated_at: string | null
@@ -414,6 +417,9 @@ export type Database = {
           created_at?: string | null
           description: string
           id?: string
+          page_title?: string | null
+          page_url?: string | null
+          screenshot_url?: string | null
           status?: string | null
           subject: string
           updated_at?: string | null
@@ -425,6 +431,9 @@ export type Database = {
           created_at?: string | null
           description?: string
           id?: string
+          page_title?: string | null
+          page_url?: string | null
+          screenshot_url?: string | null
           status?: string | null
           subject?: string
           updated_at?: string | null

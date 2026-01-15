@@ -21,8 +21,13 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, MessageSquare, Send, CheckCircle2, Bug, Lightbulb, HelpCircle, MessageCircle, ChevronDown, Reply } from 'lucide-react';
+import { Loader2, MessageSquare, Send, CheckCircle2, Bug, Lightbulb, HelpCircle, MessageCircle, ChevronDown, Reply, Image, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface FeedbackReply {
   id: string;
@@ -40,6 +45,9 @@ interface FeedbackItem {
   description: string;
   status: string;
   created_at: string;
+  screenshot_url?: string | null;
+  page_url?: string | null;
+  page_title?: string | null;
   replies?: FeedbackReply[];
 }
 
@@ -404,6 +412,42 @@ export default function Feedback() {
 
                         <CollapsibleContent>
                           <div className="border-t bg-muted/30 p-4 space-y-4">
+                            {/* Page context */}
+                            {item.page_url && (
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <ExternalLink className="h-3 w-3" />
+                                <span>Submitted from: <code className="bg-muted px-1 rounded">{item.page_url}</code></span>
+                              </div>
+                            )}
+
+                            {/* Screenshot preview */}
+                            {item.screenshot_url && (
+                              <div className="space-y-2">
+                                <span className="text-xs font-medium text-muted-foreground uppercase flex items-center gap-1">
+                                  <Image className="h-3 w-3" />
+                                  Screenshot
+                                </span>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <button className="block w-full max-w-xs cursor-pointer hover:opacity-90 transition-opacity">
+                                      <img 
+                                        src={item.screenshot_url} 
+                                        alt="Feedback screenshot" 
+                                        className="rounded-lg border shadow-sm w-full h-24 object-cover"
+                                      />
+                                    </button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-4xl p-2">
+                                    <img 
+                                      src={item.screenshot_url} 
+                                      alt="Feedback screenshot" 
+                                      className="w-full h-auto rounded-lg"
+                                    />
+                                  </DialogContent>
+                                </Dialog>
+                              </div>
+                            )}
+
                             {/* Full description */}
                             <div className="space-y-2">
                               <span className="text-xs font-medium text-muted-foreground uppercase">Your original message</span>
