@@ -16,10 +16,9 @@ import {
   PanelLeft,
   Shield,
   ShieldCheck,
-  CreditCard,
-  MessageSquare
+  CreditCard
 } from 'lucide-react';
-import { FeedbackButton } from '@/components/FeedbackButton';
+import { FeedbackButton } from '@/components/FeedbackDialog';
 import { NotificationBell } from '@/components/NotificationBell';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { cn } from '@/lib/utils';
@@ -114,9 +113,6 @@ function ContentHeader() {
 
 // Flat list for mobile menu
 const allNavItems = navigationGroups.flatMap(group => group.items);
-
-// Feedback is separate - shown in footer
-const feedbackItem = { name: 'Feedback', href: '/feedback', icon: MessageSquare };
 
 function SidebarToggleButton({ className }: { className?: string }) {
   const { state, toggleSidebar } = useSidebar();
@@ -227,39 +223,6 @@ function AppSidebar() {
 
       <SidebarFooter className={cn("border-t border-sidebar-border", isCollapsed ? "p-0 py-3" : "p-3")}>
         <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center px-0")}>
-          {/* Feedback Link */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SidebarMenuButton
-                asChild
-                isActive={location.pathname === feedbackItem.href}
-                className={cn(
-                  'transition-all',
-                  location.pathname === feedbackItem.href
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                )}
-              >
-                <Link to={feedbackItem.href}>
-                  <feedbackItem.icon className={cn(
-                    'h-5 w-5 flex-shrink-0',
-                    location.pathname === feedbackItem.href ? 'text-sidebar-primary' : 'text-sidebar-foreground/50'
-                  )} />
-                  {isCollapsed ? (
-                    <span className="sr-only">{feedbackItem.name}</span>
-                  ) : (
-                    <span>{feedbackItem.name}</span>
-                  )}
-                </Link>
-              </SidebarMenuButton>
-            </TooltipTrigger>
-            {isCollapsed && (
-              <TooltipContent side="right">
-                {feedbackItem.name}
-              </TooltipContent>
-            )}
-          </Tooltip>
-
           {/* Admin Link - only when admin mode is active */}
           {adminModeActive && (
             <Tooltip>
@@ -443,23 +406,6 @@ function PhoneHeader() {
 
             {/* User Menu & Footer */}
             <div className="border-t border-sidebar-border p-4 space-y-4">
-              {/* Feedback Link */}
-              <Link
-                to={feedbackItem.href}
-                className={cn(
-                  'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
-                  location.pathname === feedbackItem.href
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                )}
-              >
-                <feedbackItem.icon className={cn(
-                  'h-5 w-5 flex-shrink-0 transition-colors',
-                  location.pathname === feedbackItem.href ? 'text-sidebar-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70'
-                )} />
-                <span className="flex-1">{feedbackItem.name}</span>
-              </Link>
-              
               {/* Admin Link - only when admin mode is active */}
               {adminModeActive && (
                 <Link
