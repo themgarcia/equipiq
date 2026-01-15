@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -20,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { VoiceDictationButton } from '@/components/ui/voice-dictation-button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -36,9 +36,7 @@ import {
   HelpCircle,
   ImageIcon,
   CheckCircle2,
-  MessageSquarePlus,
-  Mic,
-  MicOff
+  MessageSquarePlus
 } from 'lucide-react';
 
 interface FeedbackDialogProps {
@@ -217,9 +215,19 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
       if (event.error !== 'aborted') {
+        let errorMessage = 'There was an issue with voice recognition. Please try again.';
+        
+        if (event.error === 'network') {
+          errorMessage = 'Voice dictation requires an internet connection. Please check your network and try again.';
+        } else if (event.error === 'not-allowed') {
+          errorMessage = 'Microphone access was denied. Please allow microphone access in your browser settings.';
+        } else if (event.error === 'no-speech') {
+          errorMessage = 'No speech was detected. Please try again.';
+        }
+        
         toast({
           title: 'Voice input error',
-          description: 'There was an issue with voice recognition. Please try again.',
+          description: errorMessage,
           variant: 'destructive',
         });
       }
@@ -366,12 +374,6 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Page Context */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline" className="font-mono text-xs">
-              {pageUrl}
-            </Badge>
-          </div>
 
           {/* Screenshot - Optional */}
           <div className="space-y-2">
@@ -467,76 +469,47 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
           {/* Subject with voice input */}
           <div className="space-y-2">
             <Label htmlFor="subject">Subject *</Label>
-            <div className="flex gap-2">
+            <div className="relative">
               <Input
                 id="subject"
                 placeholder="Brief summary of your feedback"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 maxLength={200}
-                className="flex-1"
+                className="pr-10"
               />
               {speechSupported && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant={isListeningSubject ? "default" : "outline"}
-                      className={isListeningSubject ? "animate-pulse bg-destructive hover:bg-destructive/90" : ""}
-                      onClick={() => isListeningSubject ? stopListening() : startListening('subject')}
-                    >
-                      {isListeningSubject ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isListeningSubject ? 'Stop dictation' : 'Voice input'}
-                  </TooltipContent>
-                </Tooltip>
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                  <VoiceDictationButton
+                    isListening={isListeningSubject}
+                    onToggle={() => isListeningSubject ? stopListening() : startListening('subject')}
+                  />
+                </div>
               )}
             </div>
           </div>
 
           {/* Description with voice input */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">Description *</Label>
+            <div className="relative">
+              <Textarea
+                id="description"
+                placeholder="Please provide as much detail as possible..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                className="pb-10"
+              />
               {speechSupported && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={isListeningDescription ? "default" : "ghost"}
-                      className={isListeningDescription ? "animate-pulse bg-destructive hover:bg-destructive/90 h-7 px-2" : "h-7 px-2"}
-                      onClick={() => isListeningDescription ? stopListening() : startListening('description')}
-                    >
-                      {isListeningDescription ? (
-                        <>
-                          <MicOff className="h-3.5 w-3.5 mr-1" />
-                          Stop
-                        </>
-                      ) : (
-                        <>
-                          <Mic className="h-3.5 w-3.5 mr-1" />
-                          Dictate
-                        </>
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isListeningDescription ? 'Stop dictation' : 'Use voice to describe'}
-                  </TooltipContent>
-                </Tooltip>
+                <div className="absolute right-2 bottom-2">
+                  <VoiceDictationButton
+                    isListening={isListeningDescription}
+                    onToggle={() => isListeningDescription ? stopListening() : startListening('description')}
+                  />
+                </div>
               )}
             </div>
-            <Textarea
-              id="description"
-              placeholder="Please provide as much detail as possible..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-            />
           </div>
 
           {/* Submit */}
