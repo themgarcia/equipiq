@@ -21,6 +21,7 @@ import FMSExport from "./pages/FMSExport";
 import BuyVsRentAnalysis from "./pages/BuyVsRentAnalysis";
 import CashflowAnalysis from "./pages/CashflowAnalysis";
 import Definitions from "./pages/Definitions";
+import Changelog from "./pages/Changelog";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
 import Billing from "./pages/Settings/Billing";
@@ -87,6 +88,11 @@ const App = () => (
                   <Route path="/definitions" element={
                     <ProtectedRoute>
                       <Definitions />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/changelog" element={
+                    <ProtectedRoute>
+                      <Changelog />
                     </ProtectedRoute>
                   } />
                   <Route path="/profile" element={
