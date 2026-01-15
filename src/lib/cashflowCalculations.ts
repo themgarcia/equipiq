@@ -240,11 +240,26 @@ export function calculateCashflowProjection(
     0
   );
   
-  // Build projection for next 10 years
+  // First pass: find the latest payoff date among all financed items
+  let maxPayoffYear = currentYear;
+  for (const item of financedItems) {
+    if (item.cashflow.payoffDate) {
+      const payoffYear = new Date(item.cashflow.payoffDate).getFullYear();
+      if (payoffYear > maxPayoffYear) {
+        maxPayoffYear = payoffYear;
+      }
+    }
+  }
+  
+  // Project to 2 years after the last payoff, minimum of 3 years total
+  const projectionEndYear = Math.max(maxPayoffYear + 2, currentYear + 3);
+  const yearsToProject = projectionEndYear - currentYear;
+  
+  // Build projection for calculated range
   const projection: CashflowProjectionPoint[] = [];
   let lastPayoffYear = currentYear;
   
-  for (let yearOffset = 0; yearOffset <= 10; yearOffset++) {
+  for (let yearOffset = 0; yearOffset <= yearsToProject; yearOffset++) {
     const year = currentYear + yearOffset;
     const yearStart = new Date(year, 0, 1);
     const yearEnd = new Date(year, 11, 31);
