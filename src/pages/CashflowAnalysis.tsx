@@ -606,6 +606,20 @@ export default function CashflowAnalysis() {
                         fill="url(#colorNetCashflow)" 
                         name="netAnnualCashflow"
                       />
+                      {/* Today marker line */}
+                      <ReferenceLine 
+                        x={new Date().getFullYear()} 
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        strokeOpacity={0.7}
+                        label={{
+                          value: 'Today',
+                          position: 'top',
+                          fill: 'hsl(var(--primary))',
+                          fontSize: 11,
+                          fontWeight: 600
+                        }}
+                      />
                       {/* Add reference lines for payoff events */}
                       {projection.filter(p => p.events.length > 0).map((p) => (
                         <ReferenceLine 
