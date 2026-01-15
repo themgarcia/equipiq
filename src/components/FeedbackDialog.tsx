@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import {
   Dialog,
@@ -36,13 +36,19 @@ import {
   HelpCircle,
   ImageIcon,
   CheckCircle2,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Mic,
+  MicOff
 } from 'lucide-react';
 
 interface FeedbackDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+// Check if browser supports speech recognition
+const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+const speechSupported = !!SpeechRecognition;
 
 function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
   const { user } = useAuth();
@@ -60,11 +66,16 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   
+  // Voice dictation state
+  const [isListeningSubject, setIsListeningSubject] = useState(false);
+  const [isListeningDescription, setIsListeningDescription] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  
   // Page context
   const pageUrl = location.pathname;
   const pageTitle = document.title;
 
-  // Capture screenshot when dialog opens
+  // Capture screenshot function
   const captureScreenshot = useCallback(async () => {
     setIsCapturing(true);
     try {
@@ -115,13 +126,6 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
     }
   }, [toast]);
 
-  // Capture screenshot when dialog opens
-  useEffect(() => {
-    if (open && !screenshot && !isCapturing) {
-      captureScreenshot();
-    }
-  }, [open, screenshot, isCapturing, captureScreenshot]);
-
   // Cleanup preview URL
   useEffect(() => {
     return () => {
@@ -130,6 +134,15 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
       }
     };
   }, [screenshotPreview]);
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, []);
 
   const removeScreenshot = () => {
     if (screenshotPreview) {
@@ -145,8 +158,91 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
     onOpenChange(false);
     setTimeout(() => {
       onOpenChange(true);
+      // Capture after dialog reopens
+      setTimeout(() => captureScreenshot(), 300);
     }, 500);
   };
+
+  // Voice dictation functions
+  const startListening = useCallback((field: 'subject' | 'description') => {
+    if (!speechSupported) {
+      toast({
+        title: 'Not supported',
+        description: 'Voice dictation is not supported in your browser.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Stop any existing recognition
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      if (field === 'subject') {
+        setIsListeningSubject(true);
+      } else {
+        setIsListeningDescription(true);
+      }
+    };
+
+    recognition.onresult = (event: any) => {
+      let finalTranscript = '';
+      let interimTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        if (field === 'subject') {
+          setSubject(prev => prev + (prev ? ' ' : '') + finalTranscript.trim());
+        } else {
+          setDescription(prev => prev + (prev ? ' ' : '') + finalTranscript.trim());
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      if (event.error !== 'aborted') {
+        toast({
+          title: 'Voice input error',
+          description: 'There was an issue with voice recognition. Please try again.',
+          variant: 'destructive',
+        });
+      }
+      setIsListeningSubject(false);
+      setIsListeningDescription(false);
+    };
+
+    recognition.onend = () => {
+      setIsListeningSubject(false);
+      setIsListeningDescription(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, [toast]);
+
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListeningSubject(false);
+    setIsListeningDescription(false);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,6 +332,7 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
         setSubject('');
         setDescription('');
       }
+      stopListening();
     }
     onOpenChange(newOpen);
   };
@@ -276,15 +373,15 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
             </Badge>
           </div>
 
-          {/* Screenshot Preview */}
+          {/* Screenshot - Optional */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Camera className="h-4 w-4" />
-              Screenshot
+              Screenshot (optional)
             </Label>
             {isCapturing ? (
-              <div className="flex items-center justify-center h-32 border rounded-lg bg-muted/30">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <div className="flex items-center justify-center h-24 border rounded-lg bg-muted/30">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 <span className="ml-2 text-sm text-muted-foreground">Capturing...</span>
               </div>
             ) : screenshotPreview ? (
@@ -292,28 +389,28 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
                 <img 
                   src={screenshotPreview} 
                   alt="Screenshot preview" 
-                  className="w-full h-32 object-cover rounded-lg border"
+                  className="w-full h-24 object-cover rounded-lg border"
                 />
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
                     type="button"
                     size="icon"
                     variant="secondary"
-                    className="h-8 w-8"
+                    className="h-7 w-7"
                     onClick={retakeScreenshot}
                     title="Retake screenshot"
                   >
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     type="button"
                     size="icon"
                     variant="secondary"
-                    className="h-8 w-8"
+                    className="h-7 w-7"
                     onClick={removeScreenshot}
                     title="Remove screenshot"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
@@ -321,11 +418,12 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-32 flex flex-col gap-2"
+                size="sm"
+                className="w-full h-10"
                 onClick={captureScreenshot}
               >
-                <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Click to capture screenshot</span>
+                <ImageIcon className="h-4 w-4 mr-2" />
+                Add Screenshot
               </Button>
             )}
           </div>
@@ -366,21 +464,72 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
             </Select>
           </div>
 
-          {/* Subject */}
+          {/* Subject with voice input */}
           <div className="space-y-2">
             <Label htmlFor="subject">Subject *</Label>
-            <Input
-              id="subject"
-              placeholder="Brief summary of your feedback"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              maxLength={200}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="subject"
+                placeholder="Brief summary of your feedback"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                maxLength={200}
+                className="flex-1"
+              />
+              {speechSupported && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant={isListeningSubject ? "default" : "outline"}
+                      className={isListeningSubject ? "animate-pulse bg-destructive hover:bg-destructive/90" : ""}
+                      onClick={() => isListeningSubject ? stopListening() : startListening('subject')}
+                    >
+                      {isListeningSubject ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isListeningSubject ? 'Stop dictation' : 'Voice input'}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
           </div>
 
-          {/* Description */}
+          {/* Description with voice input */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">Description *</Label>
+              {speechSupported && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={isListeningDescription ? "default" : "ghost"}
+                      className={isListeningDescription ? "animate-pulse bg-destructive hover:bg-destructive/90 h-7 px-2" : "h-7 px-2"}
+                      onClick={() => isListeningDescription ? stopListening() : startListening('description')}
+                    >
+                      {isListeningDescription ? (
+                        <>
+                          <MicOff className="h-3.5 w-3.5 mr-1" />
+                          Stop
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="h-3.5 w-3.5 mr-1" />
+                          Dictate
+                        </>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isListeningDescription ? 'Stop dictation' : 'Use voice to describe'}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
             <Textarea
               id="description"
               placeholder="Please provide as much detail as possible..."
