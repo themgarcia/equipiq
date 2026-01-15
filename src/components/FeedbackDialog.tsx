@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +35,8 @@ import {
   MessageCircle, 
   HelpCircle,
   ImageIcon,
-  CheckCircle2
+  CheckCircle2,
+  MessageSquarePlus
 } from 'lucide-react';
 
 interface FeedbackDialogProps {
@@ -42,7 +44,7 @@ interface FeedbackDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
+function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
@@ -212,10 +214,11 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
         onOpenChange(false);
       }, 2000);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to submit feedback. Please try again.';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to submit feedback. Please try again.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -411,3 +414,40 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
     </Dialog>
   );
 }
+
+// Floating feedback button component - exported for use in Layout
+export function FeedbackButton() {
+  const [open, setOpen] = useState(false);
+  const location = useLocation();
+  
+  // Don't show on landing, auth, or feedback page
+  const hiddenPaths = ['/', '/auth', '/feedback', '/privacy', '/terms'];
+  if (hiddenPaths.includes(location.pathname)) {
+    return null;
+  }
+
+  return (
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={() => setOpen(true)}
+            size="icon"
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-primary hover:bg-primary/90"
+            aria-label="Send feedback"
+          >
+            <MessageSquarePlus className="h-6 w-6" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="left">
+          <p>Send feedback</p>
+        </TooltipContent>
+      </Tooltip>
+      
+      <FeedbackDialogContent open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+// Also export the dialog for direct use if needed
+export { FeedbackDialogContent as FeedbackDialog };
