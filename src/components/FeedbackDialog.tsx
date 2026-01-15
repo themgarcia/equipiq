@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import {
   Dialog,
@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'react-router-dom';
+import { useElevenLabsScribe } from '@/hooks/useElevenLabsScribe';
 import { 
   Loader2, 
   Send, 
@@ -44,10 +45,6 @@ interface FeedbackDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Check if browser supports speech recognition
-const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-const speechSupported = !!SpeechRecognition;
-
 function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -64,14 +61,30 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   
-  // Voice dictation state
-  const [isListeningSubject, setIsListeningSubject] = useState(false);
-  const [isListeningDescription, setIsListeningDescription] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  // Track which field is being dictated
+  const [activeField, setActiveField] = useState<'subject' | 'description' | null>(null);
   
   // Page context
   const pageUrl = location.pathname;
   const pageTitle = document.title;
+
+  // ElevenLabs voice dictation for subject
+  const subjectScribe = useElevenLabsScribe({
+    onTranscript: (text) => {
+      if (activeField === 'subject') {
+        setSubject(text);
+      }
+    },
+  });
+
+  // ElevenLabs voice dictation for description
+  const descriptionScribe = useElevenLabsScribe({
+    onTranscript: (text) => {
+      if (activeField === 'description') {
+        setDescription(text);
+      }
+    },
+  });
 
   // Capture screenshot function
   const captureScreenshot = useCallback(async () => {
@@ -133,12 +146,11 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
     };
   }, [screenshotPreview]);
 
-  // Cleanup speech recognition on unmount
+  // Cleanup voice dictation on unmount
   useEffect(() => {
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-      }
+      subjectScribe.stopListening();
+      descriptionScribe.stopListening();
     };
   }, []);
 
@@ -161,99 +173,42 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
     }, 500);
   };
 
-  // Voice dictation functions
-  const startListening = useCallback((field: 'subject' | 'description') => {
-    if (!speechSupported) {
-      toast({
-        title: 'Not supported',
-        description: 'Voice dictation is not supported in your browser.',
-        variant: 'destructive',
-      });
-      return;
+  // Voice dictation handlers
+  const handleSubjectVoiceToggle = useCallback(() => {
+    if (subjectScribe.isListening) {
+      subjectScribe.stopListening();
+      setActiveField(null);
+    } else {
+      // Stop description if it's listening
+      if (descriptionScribe.isListening) {
+        descriptionScribe.stopListening();
+      }
+      setActiveField('subject');
+      subjectScribe.startListening();
     }
+  }, [subjectScribe, descriptionScribe]);
 
-    // Stop any existing recognition
-    if (recognitionRef.current) {
-      recognitionRef.current.abort();
+  const handleDescriptionVoiceToggle = useCallback(() => {
+    if (descriptionScribe.isListening) {
+      descriptionScribe.stopListening();
+      setActiveField(null);
+    } else {
+      // Stop subject if it's listening
+      if (subjectScribe.isListening) {
+        subjectScribe.stopListening();
+      }
+      setActiveField('description');
+      descriptionScribe.startListening();
     }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      if (field === 'subject') {
-        setIsListeningSubject(true);
-      } else {
-        setIsListeningDescription(true);
-      }
-    };
-
-    recognition.onresult = (event: any) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-
-      if (finalTranscript) {
-        if (field === 'subject') {
-          setSubject(prev => prev + (prev ? ' ' : '') + finalTranscript.trim());
-        } else {
-          setDescription(prev => prev + (prev ? ' ' : '') + finalTranscript.trim());
-        }
-      }
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      if (event.error !== 'aborted') {
-        let errorMessage = 'There was an issue with voice recognition. Please try again.';
-        
-        if (event.error === 'network') {
-          errorMessage = 'Voice dictation requires an internet connection. Please check your network and try again.';
-        } else if (event.error === 'not-allowed') {
-          errorMessage = 'Microphone access was denied. Please allow microphone access in your browser settings.';
-        } else if (event.error === 'no-speech') {
-          errorMessage = 'No speech was detected. Please try again.';
-        }
-        
-        toast({
-          title: 'Voice input error',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-      }
-      setIsListeningSubject(false);
-      setIsListeningDescription(false);
-    };
-
-    recognition.onend = () => {
-      setIsListeningSubject(false);
-      setIsListeningDescription(false);
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-  }, [toast]);
-
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setIsListeningSubject(false);
-    setIsListeningDescription(false);
-  }, []);
+  }, [subjectScribe, descriptionScribe]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Stop any active dictation
+    subjectScribe.stopListening();
+    descriptionScribe.stopListening();
+    setActiveField(null);
     
     if (!user || !category || !subject.trim() || !description.trim()) {
       toast({
@@ -340,7 +295,9 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
         setSubject('');
         setDescription('');
       }
-      stopListening();
+      subjectScribe.stopListening();
+      descriptionScribe.stopListening();
+      setActiveField(null);
     }
     onOpenChange(newOpen);
   };
@@ -478,14 +435,13 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
                 maxLength={200}
                 className="pr-10"
               />
-              {speechSupported && (
-                <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
-                  <VoiceDictationButton
-                    isListening={isListeningSubject}
-                    onToggle={() => isListeningSubject ? stopListening() : startListening('subject')}
-                  />
-                </div>
-              )}
+              <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                <VoiceDictationButton
+                  isListening={subjectScribe.isListening}
+                  onToggle={handleSubjectVoiceToggle}
+                  disabled={subjectScribe.isConnecting}
+                />
+              </div>
             </div>
           </div>
 
@@ -501,14 +457,13 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
                 rows={4}
                 className="pb-10"
               />
-              {speechSupported && (
-                <div className="absolute right-2 bottom-2">
-                  <VoiceDictationButton
-                    isListening={isListeningDescription}
-                    onToggle={() => isListeningDescription ? stopListening() : startListening('description')}
-                  />
-                </div>
-              )}
+              <div className="absolute right-2 bottom-2">
+                <VoiceDictationButton
+                  isListening={descriptionScribe.isListening}
+                  onToggle={handleDescriptionVoiceToggle}
+                  disabled={descriptionScribe.isConnecting}
+                />
+              </div>
             </div>
           </div>
 
