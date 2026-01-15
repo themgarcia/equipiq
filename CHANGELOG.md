@@ -5,6 +5,18 @@ All notable changes to EquipIQ will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-01-15
+
+### Added
+- In-app Change Log page accessible from sidebar under Reference section
+
+### Changed
+- Cashflow projection chart now dynamically adjusts based on actual equipment payoff dates (ends 2 years after last payoff, minimum 3 years)
+- Added "Today" marker on x-axis of cashflow projection chart for clearer timeline orientation
+
+### Improved
+- More relevant cashflow visualizations that only show years that matter for your portfolio
+
 ## [1.3.0] - 2026-01-12
 
 ### Added

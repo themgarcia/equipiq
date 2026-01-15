@@ -16,7 +16,8 @@ import {
   PanelLeft,
   Shield,
   ShieldCheck,
-  CreditCard
+  CreditCard,
+  History
 } from 'lucide-react';
 import { FeedbackButton } from '@/components/FeedbackDialog';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -97,6 +98,7 @@ const navigationGroups = [
     label: 'Reference',
     items: [
       { name: 'Definitions', href: '/definitions', icon: BookOpen },
+      { name: 'Change Log', href: '/changelog', icon: History },
     ]
   },
 ];
