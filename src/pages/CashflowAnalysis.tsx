@@ -551,6 +551,7 @@ export default function CashflowAnalysis() {
                         dataKey="year" 
                         className="text-xs"
                         tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        tickFormatter={(year) => year === new Date().getFullYear() ? 'Today' : year.toString()}
                       />
                       <YAxis 
                         tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
@@ -612,13 +613,6 @@ export default function CashflowAnalysis() {
                         stroke="hsl(var(--primary))"
                         strokeWidth={2}
                         strokeOpacity={0.7}
-                        label={{
-                          value: 'Today',
-                          position: 'top',
-                          fill: 'hsl(var(--primary))',
-                          fontSize: 11,
-                          fontWeight: 600
-                        }}
                       />
                       {/* Add reference lines for payoff events */}
                       {projection.filter(p => p.events.length > 0).map((p) => (
