@@ -44,7 +44,7 @@ export function VoiceDictationButton({
           )}
         </Button>
       </TooltipTrigger>
-      <TooltipContent>
+      <TooltipContent side="left">
         {isListening ? "Stop dictation" : "Voice input"}
       </TooltipContent>
     </Tooltip>
