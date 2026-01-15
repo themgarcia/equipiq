@@ -51,7 +51,6 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
   const location = useLocation();
   
   const [category, setCategory] = useState('');
-  const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -61,29 +60,13 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   
-  // Track which field is being dictated
-  const [activeField, setActiveField] = useState<'subject' | 'description' | null>(null);
-  
   // Page context
   const pageUrl = location.pathname;
   const pageTitle = document.title;
 
-  // ElevenLabs voice dictation for subject
-  const subjectScribe = useElevenLabsScribe({
-    onTranscript: (text) => {
-      if (activeField === 'subject') {
-        setSubject(text);
-      }
-    },
-  });
-
   // ElevenLabs voice dictation for description
   const descriptionScribe = useElevenLabsScribe({
-    onTranscript: (text) => {
-      if (activeField === 'description') {
-        setDescription(text);
-      }
-    },
+    onTranscript: (text) => setDescription(text),
   });
 
   // Capture screenshot function
@@ -149,7 +132,6 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
   // Cleanup voice dictation on unmount
   useEffect(() => {
     return () => {
-      subjectScribe.stopListening();
       descriptionScribe.stopListening();
     };
   }, []);
@@ -173,51 +155,32 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
     }, 500);
   };
 
-  // Voice dictation handlers
-  const handleSubjectVoiceToggle = useCallback(() => {
-    if (subjectScribe.isListening) {
-      subjectScribe.stopListening();
-      setActiveField(null);
-    } else {
-      // Stop description if it's listening
-      if (descriptionScribe.isListening) {
-        descriptionScribe.stopListening();
-      }
-      setActiveField('subject');
-      subjectScribe.startListening();
-    }
-  }, [subjectScribe, descriptionScribe]);
-
+  // Voice dictation handler
   const handleDescriptionVoiceToggle = useCallback(() => {
     if (descriptionScribe.isListening) {
       descriptionScribe.stopListening();
-      setActiveField(null);
     } else {
-      // Stop subject if it's listening
-      if (subjectScribe.isListening) {
-        subjectScribe.stopListening();
-      }
-      setActiveField('description');
       descriptionScribe.startListening();
     }
-  }, [subjectScribe, descriptionScribe]);
+  }, [descriptionScribe]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Stop any active dictation
-    subjectScribe.stopListening();
     descriptionScribe.stopListening();
-    setActiveField(null);
     
-    if (!user || !category || !subject.trim() || !description.trim()) {
+    if (!user || !category || !description.trim()) {
       toast({
         title: 'Missing fields',
-        description: 'Please fill in all required fields.',
+        description: 'Please select a category and provide a description.',
         variant: 'destructive',
       });
       return;
     }
+
+    // Auto-generate subject from description
+    const autoSubject = description.trim().substring(0, 50) + (description.length > 50 ? '...' : '');
 
     setIsSubmitting(true);
 
@@ -251,7 +214,7 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
       const { error } = await supabase.from('feedback').insert({
         user_id: user.id,
         category,
-        subject: subject.trim(),
+        subject: autoSubject,
         description: description.trim(),
         screenshot_url: screenshotUrl,
         page_url: pageUrl,
@@ -267,7 +230,6 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
       setTimeout(() => {
         setShowSuccess(false);
         setCategory('');
-        setSubject('');
         setDescription('');
         removeScreenshot();
         onOpenChange(false);
@@ -292,12 +254,9 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
       if (!showSuccess) {
         removeScreenshot();
         setCategory('');
-        setSubject('');
         setDescription('');
       }
-      subjectScribe.stopListening();
       descriptionScribe.stopListening();
-      setActiveField(null);
     }
     onOpenChange(newOpen);
   };
@@ -423,38 +382,16 @@ function FeedbackDialogContent({ open, onOpenChange }: FeedbackDialogProps) {
             </Select>
           </div>
 
-          {/* Subject with voice input */}
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject *</Label>
-            <div className="relative">
-              <Input
-                id="subject"
-                placeholder="Brief summary of your feedback"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                maxLength={200}
-                className="pr-10"
-              />
-              <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
-                <VoiceDictationButton
-                  isListening={subjectScribe.isListening}
-                  onToggle={handleSubjectVoiceToggle}
-                  disabled={subjectScribe.isConnecting}
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Description with voice input */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">What's on your mind? *</Label>
             <div className="relative">
               <Textarea
                 id="description"
                 placeholder="Please provide as much detail as possible..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                rows={4}
+                rows={5}
                 className="pb-10"
               />
               <div className="absolute right-2 bottom-2">
