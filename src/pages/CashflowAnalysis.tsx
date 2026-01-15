@@ -46,7 +46,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, Area, Tooltip, ComposedChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ReferenceDot, ResponsiveContainer, Area, Tooltip, ComposedChart } from 'recharts';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { CashflowSkeleton } from '@/components/PageSkeletons';
@@ -566,7 +566,13 @@ export default function CashflowAnalysis() {
                           };
                           return [formatCurrency(value), labels[name] || name];
                         }}
-                        labelFormatter={(label) => `Year ${label}`}
+                        labelFormatter={(label) => {
+                          const point = projection.find(p => p.year === label);
+                          if (point?.events.length) {
+                            return `Year ${label} — ${point.events.join(', ')} payoff`;
+                          }
+                          return `Year ${label}`;
+                        }}
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--card))', 
                           border: '1px solid hsl(var(--border))',
@@ -605,9 +611,29 @@ export default function CashflowAnalysis() {
                         <ReferenceLine 
                           key={p.year}
                           x={p.year} 
-                          stroke="hsl(var(--muted-foreground))" 
-                          strokeDasharray="3 3"
-                          strokeOpacity={0.5}
+                          stroke="hsl(45, 93%, 47%)"
+                          strokeDasharray="5 5"
+                          strokeWidth={2}
+                          strokeOpacity={0.8}
+                          label={{
+                            value: `${p.events.length} payoff${p.events.length > 1 ? 's' : ''}`,
+                            position: 'top',
+                            fill: 'hsl(45, 93%, 47%)',
+                            fontSize: 11,
+                            fontWeight: 500
+                          }}
+                        />
+                      ))}
+                      {/* Add reference dots at payoff points on the payments line */}
+                      {projection.filter(p => p.events.length > 0).map((p) => (
+                        <ReferenceDot
+                          key={`dot-${p.year}`}
+                          x={p.year}
+                          y={p.annualPayments}
+                          r={6}
+                          fill="hsl(45, 93%, 47%)"
+                          stroke="hsl(var(--background))"
+                          strokeWidth={2}
                         />
                       ))}
                     </ComposedChart>
@@ -627,6 +653,10 @@ export default function CashflowAnalysis() {
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-3 bg-green-600/30 rounded-sm"></div>
                     <span className="text-muted-foreground">Net Cashflow (the gap)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-amber-500 border-2 border-background"></div>
+                    <span className="text-muted-foreground">Payoff event</span>
                   </div>
                 </div>
                 
