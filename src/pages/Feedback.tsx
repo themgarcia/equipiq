@@ -78,7 +78,6 @@ export default function Feedback() {
   const { toast } = useToast();
   
   const [category, setCategory] = useState('');
-  const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
@@ -134,14 +133,17 @@ export default function Feedback() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !category || !subject.trim() || !description.trim()) {
+    if (!user || !category || !description.trim()) {
       toast({
         title: 'Missing fields',
-        description: 'Please fill in all required fields.',
+        description: 'Please select a category and provide a description.',
         variant: 'destructive',
       });
       return;
     }
+
+    // Auto-generate subject from description
+    const autoSubject = description.trim().substring(0, 50) + (description.length > 50 ? '...' : '');
 
     setIsSubmitting(true);
 
@@ -149,7 +151,7 @@ export default function Feedback() {
       const { error } = await supabase.from('feedback').insert({
         user_id: user.id,
         category,
-        subject: subject.trim(),
+        subject: autoSubject,
         description: description.trim(),
       });
 
@@ -162,7 +164,6 @@ export default function Feedback() {
 
       // Reset form and show success
       setCategory('');
-      setSubject('');
       setDescription('');
       setShowSuccess(true);
       
@@ -302,24 +303,13 @@ export default function Feedback() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subject">Subject *</Label>
-                    <Input
-                      id="subject"
-                      placeholder="Brief summary of your feedback"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      maxLength={200}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description *</Label>
+                    <Label htmlFor="description">What's on your mind? *</Label>
                     <Textarea
                       id="description"
                       placeholder="Please provide as much detail as possible..."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      rows={5}
+                      rows={6}
                     />
                   </div>
 
