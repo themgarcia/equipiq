@@ -53,7 +53,7 @@ const features = [
   {
     icon: Wallet,
     title: 'Cashflow Analysis',
-    description: 'Understand your monthly obligations, payment schedules, and upcoming buyouts.',
+    description: 'Understand your monthly payments, payment schedules, and upcoming buyouts.',
   },
   {
     icon: FileSpreadsheet,
