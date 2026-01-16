@@ -165,7 +165,7 @@ export default function Changelog() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <div className="h-1 w-8 rounded-full bg-primary" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <span className="text-xs font-medium text-muted-foreground">
               Reference
             </span>
           </div>
