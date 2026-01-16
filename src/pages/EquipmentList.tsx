@@ -662,6 +662,12 @@ export default function EquipmentList() {
                                 <span className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.otherCapEx)}</span>
                               </div>
                             )}
+                            {selectedEquipmentForSheet.attachmentTotalValue > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-sm text-muted-foreground">+ Attachments</span>
+                                <span className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.attachmentTotalValue)}</span>
+                              </div>
+                            )}
                             <div className="flex justify-between pt-1 border-t">
                               <span className="text-sm font-medium">Total Cost Basis</span>
                               <span className="text-sm font-semibold font-mono-nums">{formatCurrency(selectedEquipmentForSheet.totalCostBasis)}</span>
