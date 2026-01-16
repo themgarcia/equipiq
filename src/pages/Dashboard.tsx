@@ -163,11 +163,23 @@ export default function Dashboard() {
           <CardContent className="space-y-6">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Monthly Obligations</p>
+                <p className="text-sm text-muted-foreground">Monthly Payments</p>
                 <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalMonthlyPayments)}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Annual Financing Cost</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-sm text-muted-foreground">Annual Payments</p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Total cash paid per year toward this equipment's financing, including principal and interest.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalMonthlyPayments * 12)}</p>
               </div>
               <div className="space-y-1">

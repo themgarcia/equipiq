@@ -62,6 +62,16 @@ const defaultFormData: Omit<Equipment, 'id'> = {
   allocationType: 'operational',
 };
 
+// Numeric fields that need blur-based validation
+const numericFields = [
+  'year', 'purchasePrice', 'salesTax', 'freightSetup', 'otherCapEx',
+  'cogsPercent', 'replacementCostNew', 'usefulLifeOverride', 'expectedResaleOverride',
+  'salePrice', 'depositAmount', 'financedAmount', 'monthlyPayment',
+  'termMonths', 'buyoutAmount', 'insuranceDeclaredValue'
+] as const;
+
+type NumericField = typeof numericFields[number];
+
 export function EquipmentFormContent({ equipment, onSubmit, onCancel }: EquipmentFormContentProps) {
   const [formData, setFormData] = useState<Omit<Equipment, 'id'>>(
     equipment ? { ...equipment } : { ...defaultFormData }
@@ -69,6 +79,7 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [financingOpen, setFinancingOpen] = useState(false);
   const [insuranceOpen, setInsuranceOpen] = useState(false);
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const initialData = equipment ? { ...equipment } : { ...defaultFormData };
@@ -81,6 +92,7 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
     setErrors({});
     setFinancingOpen(false);
     setInsuranceOpen(false);
+    setRawInputs({});
   }, [equipment]);
 
   const handleChange = (field: keyof Equipment, value: string | number | boolean | undefined) => {
@@ -103,6 +115,37 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
     });
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  // Get the display value for a numeric input field
+  const getNumericInputValue = (field: NumericField, value: number | undefined): string => {
+    if (field in rawInputs) return rawInputs[field];
+    if (value === undefined || value === null) return '';
+    if (value === 0) return '';
+    return value.toString();
+  };
+
+  // Handle typing in numeric fields - just update the raw string
+  const handleNumericInputChange = (field: NumericField, rawValue: string) => {
+    setRawInputs(prev => ({ ...prev, [field]: rawValue }));
+  };
+
+  // Handle blur on numeric fields - parse and validate
+  const handleNumericInputBlur = (field: NumericField, isInteger: boolean = false, allowUndefined: boolean = false) => {
+    const rawValue = rawInputs[field];
+    if (rawValue !== undefined) {
+      if (rawValue.trim() === '' && allowUndefined) {
+        handleChange(field, undefined);
+      } else {
+        const parsed = isInteger ? parseInt(rawValue) : parseFloat(rawValue);
+        handleChange(field, isNaN(parsed) ? 0 : parsed);
+      }
+      setRawInputs(prev => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
     }
   };
 
@@ -214,8 +257,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
             <Input
               id="year"
               type="number"
-              value={formData.year}
-              onChange={(e) => handleChange('year', parseInt(e.target.value))}
+              value={getNumericInputValue('year', formData.year)}
+              onChange={(e) => handleNumericInputChange('year', e.target.value)}
+              onBlur={() => handleNumericInputBlur('year', true)}
             />
             <p className="text-xs text-muted-foreground mt-1">
               {formData.purchaseCondition === 'used' ? 'Year manufactured (may differ from purchase date)' : 'Year manufactured'}
@@ -264,8 +308,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
             <Input
               id="purchasePrice"
               type="number"
-              value={formData.purchasePrice}
-              onChange={(e) => handleChange('purchasePrice', parseFloat(e.target.value) || 0)}
+              value={getNumericInputValue('purchasePrice', formData.purchasePrice)}
+              onChange={(e) => handleNumericInputChange('purchasePrice', e.target.value)}
+              onBlur={() => handleNumericInputBlur('purchasePrice')}
               className={errors.purchasePrice ? 'border-destructive' : ''}
             />
           </div>
@@ -275,8 +320,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
             <Input
               id="salesTax"
               type="number"
-              value={formData.salesTax}
-              onChange={(e) => handleChange('salesTax', parseFloat(e.target.value) || 0)}
+              value={getNumericInputValue('salesTax', formData.salesTax)}
+              onChange={(e) => handleNumericInputChange('salesTax', e.target.value)}
+              onBlur={() => handleNumericInputBlur('salesTax')}
             />
           </div>
 
@@ -285,8 +331,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
             <Input
               id="freightSetup"
               type="number"
-              value={formData.freightSetup}
-              onChange={(e) => handleChange('freightSetup', parseFloat(e.target.value) || 0)}
+              value={getNumericInputValue('freightSetup', formData.freightSetup)}
+              onChange={(e) => handleNumericInputChange('freightSetup', e.target.value)}
+              onBlur={() => handleNumericInputBlur('freightSetup')}
             />
           </div>
 
@@ -295,8 +342,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
             <Input
               id="otherCapEx"
               type="number"
-              value={formData.otherCapEx}
-              onChange={(e) => handleChange('otherCapEx', parseFloat(e.target.value) || 0)}
+              value={getNumericInputValue('otherCapEx', formData.otherCapEx)}
+              onChange={(e) => handleNumericInputChange('otherCapEx', e.target.value)}
+              onBlur={() => handleNumericInputBlur('otherCapEx')}
             />
           </div>
         </div>
@@ -338,8 +386,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
               type="number"
               min="0"
               max="100"
-              value={formData.cogsPercent}
-              onChange={(e) => handleChange('cogsPercent', parseFloat(e.target.value) || 0)}
+              value={getNumericInputValue('cogsPercent', formData.cogsPercent)}
+              onChange={(e) => handleNumericInputChange('cogsPercent', e.target.value)}
+              onBlur={() => handleNumericInputBlur('cogsPercent')}
               className={errors.cogsPercent ? 'border-destructive' : ''}
               disabled={formData.allocationType === 'owner_perk'}
             />
@@ -368,8 +417,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
             <Input
               id="replacementCostNew"
               type="number"
-              value={formData.replacementCostNew || ''}
-              onChange={(e) => handleChange('replacementCostNew', parseFloat(e.target.value) || 0)}
+              value={getNumericInputValue('replacementCostNew', formData.replacementCostNew)}
+              onChange={(e) => handleNumericInputChange('replacementCostNew', e.target.value)}
+              onBlur={() => handleNumericInputBlur('replacementCostNew')}
               placeholder="Auto-calculated with 3% inflation"
             />
             <p className="text-xs text-muted-foreground mt-1">Leave empty for inflation-adjusted estimate</p>
@@ -380,8 +430,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
             <Input
               id="usefulLifeOverride"
               type="number"
-              value={formData.usefulLifeOverride || ''}
-              onChange={(e) => handleChange('usefulLifeOverride', e.target.value ? parseInt(e.target.value) : undefined)}
+              value={getNumericInputValue('usefulLifeOverride', formData.usefulLifeOverride)}
+              onChange={(e) => handleNumericInputChange('usefulLifeOverride', e.target.value)}
+              onBlur={() => handleNumericInputBlur('usefulLifeOverride', true, true)}
               placeholder="Leave empty for category default"
             />
           </div>
@@ -391,8 +442,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
             <Input
               id="expectedResaleOverride"
               type="number"
-              value={formData.expectedResaleOverride || ''}
-              onChange={(e) => handleChange('expectedResaleOverride', e.target.value ? parseFloat(e.target.value) : undefined)}
+              value={getNumericInputValue('expectedResaleOverride', formData.expectedResaleOverride)}
+              onChange={(e) => handleNumericInputChange('expectedResaleOverride', e.target.value)}
+              onBlur={() => handleNumericInputBlur('expectedResaleOverride', false, true)}
               placeholder="Leave empty for default"
             />
           </div>
@@ -420,8 +472,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
               <Input
                 id="salePrice"
                 type="number"
-                value={formData.salePrice || ''}
-                onChange={(e) => handleChange('salePrice', parseFloat(e.target.value) || 0)}
+                value={getNumericInputValue('salePrice', formData.salePrice ?? undefined)}
+                onChange={(e) => handleNumericInputChange('salePrice', e.target.value)}
+                onBlur={() => handleNumericInputBlur('salePrice')}
               />
             </div>
           </div>
@@ -479,8 +532,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
               <Input
                 id="depositAmount"
                 type="number"
-                value={formData.depositAmount || ''}
-                onChange={(e) => handleChange('depositAmount', parseFloat(e.target.value) || 0)}
+                value={getNumericInputValue('depositAmount', formData.depositAmount)}
+                onChange={(e) => handleNumericInputChange('depositAmount', e.target.value)}
+                onBlur={() => handleNumericInputBlur('depositAmount')}
                 disabled={formData.financingType === 'owned'}
                 placeholder="0"
               />
@@ -491,8 +545,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
               <Input
                 id="financedAmount"
                 type="number"
-                value={formData.financedAmount || ''}
-                onChange={(e) => handleChange('financedAmount', parseFloat(e.target.value) || 0)}
+                value={getNumericInputValue('financedAmount', formData.financedAmount)}
+                onChange={(e) => handleNumericInputChange('financedAmount', e.target.value)}
+                onBlur={() => handleNumericInputBlur('financedAmount')}
                 disabled={formData.financingType === 'owned'}
                 placeholder="0"
               />
@@ -503,8 +558,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
               <Input
                 id="monthlyPayment"
                 type="number"
-                value={formData.monthlyPayment || ''}
-                onChange={(e) => handleChange('monthlyPayment', parseFloat(e.target.value) || 0)}
+                value={getNumericInputValue('monthlyPayment', formData.monthlyPayment)}
+                onChange={(e) => handleNumericInputChange('monthlyPayment', e.target.value)}
+                onBlur={() => handleNumericInputBlur('monthlyPayment')}
                 disabled={formData.financingType === 'owned'}
                 placeholder="0"
               />
@@ -515,8 +571,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
               <Input
                 id="termMonths"
                 type="number"
-                value={formData.termMonths || ''}
-                onChange={(e) => handleChange('termMonths', parseInt(e.target.value) || 0)}
+                value={getNumericInputValue('termMonths', formData.termMonths)}
+                onChange={(e) => handleNumericInputChange('termMonths', e.target.value)}
+                onBlur={() => handleNumericInputBlur('termMonths', true)}
                 disabled={formData.financingType === 'owned'}
                 placeholder="0"
               />
@@ -528,8 +585,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
                 <Input
                   id="buyoutAmount"
                   type="number"
-                  value={formData.buyoutAmount || ''}
-                  onChange={(e) => handleChange('buyoutAmount', parseFloat(e.target.value) || 0)}
+                  value={getNumericInputValue('buyoutAmount', formData.buyoutAmount)}
+                  onChange={(e) => handleNumericInputChange('buyoutAmount', e.target.value)}
+                  onBlur={() => handleNumericInputBlur('buyoutAmount')}
                   placeholder="End-of-lease purchase option"
                 />
               </div>
@@ -579,8 +637,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
               <Input
                 id="insuranceDeclaredValue"
                 type="number"
-                value={formData.insuranceDeclaredValue || ''}
-                onChange={(e) => handleChange('insuranceDeclaredValue', e.target.value ? parseFloat(e.target.value) : undefined)}
+                value={getNumericInputValue('insuranceDeclaredValue', formData.insuranceDeclaredValue ?? undefined)}
+                onChange={(e) => handleNumericInputChange('insuranceDeclaredValue', e.target.value)}
+                onBlur={() => handleNumericInputBlur('insuranceDeclaredValue', false, true)}
                 placeholder={formData.purchasePrice?.toString() || '0'}
                 disabled={!formData.isInsured}
               />
