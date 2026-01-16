@@ -196,7 +196,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Identification */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-muted-foreground">
               Identification
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -310,7 +310,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
 
           {/* Cost Basis */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-muted-foreground">
               Cost Basis
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -373,7 +373,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
 
           {/* Allocation */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-muted-foreground">
               Allocation
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -429,7 +429,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
 
           {/* Replacement & Resale */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-muted-foreground">
               Replacement & Resale
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -475,7 +475,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
           {/* Disposal (if sold) */}
           {formData.status === 'Sold' && (
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              <h3 className="text-sm font-medium text-muted-foreground">
                 Disposal
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -505,7 +505,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
           {/* Financing (Cashflow Visibility Only) */}
           <Collapsible open={financingOpen} onOpenChange={setFinancingOpen}>
             <CollapsibleTrigger className="flex items-center justify-between w-full py-2 group">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              <h3 className="text-sm font-medium text-muted-foreground">
                 Financing (Cashflow Visibility Only)
               </h3>
               <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${financingOpen ? 'rotate-180' : ''}`} />
@@ -623,7 +623,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
             <CollapsibleTrigger className="flex items-center justify-between w-full py-2 group">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                <h3 className="text-sm font-medium text-muted-foreground">
                   Insurance
                 </h3>
               </div>
