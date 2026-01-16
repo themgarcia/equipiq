@@ -607,7 +607,7 @@ export default function EquipmentList() {
 
                         {/* IDENTIFICATION */}
                         <div className="space-y-2">
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identification</h4>
+                          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Identification</h4>
                           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                             <div>
                               <p className="text-xs text-muted-foreground">Category</p>
@@ -634,7 +634,7 @@ export default function EquipmentList() {
 
                         {/* PURCHASE & COST */}
                         <div className="space-y-2">
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Purchase & Cost</h4>
+                          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Purchase & Cost</h4>
                           <div className="space-y-1.5">
                             <div className="flex justify-between">
                               <span className="text-sm text-muted-foreground">Purchase Date</span>
@@ -671,7 +671,7 @@ export default function EquipmentList() {
 
                         {/* ALLOCATIONS */}
                         <div className="space-y-2">
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Allocations</h4>
+                          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Allocations</h4>
                           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                             <div>
                               <p className="text-xs text-muted-foreground">COGS</p>
@@ -690,7 +690,7 @@ export default function EquipmentList() {
 
                         {/* LIFECYCLE */}
                         <div className="space-y-2">
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lifecycle</h4>
+                          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Lifecycle</h4>
                           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                             <div>
                               <p className="text-xs text-muted-foreground">Useful Life</p>
@@ -727,7 +727,7 @@ export default function EquipmentList() {
                         {/* FINANCING - Only show if not owned */}
                         {selectedEquipmentForSheet.financingType !== 'owned' && (
                           <div className="space-y-2">
-                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Financing</h4>
+                            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Financing</h4>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                               <div>
                                 <p className="text-xs text-muted-foreground">Type</p>
@@ -776,7 +776,7 @@ export default function EquipmentList() {
                         {/* SALE INFO - Only show if sold */}
                         {selectedEquipmentForSheet.status === 'Sold' && (
                           <div className="space-y-2">
-                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sale Info</h4>
+                            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Sale Info</h4>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                               {selectedEquipmentForSheet.saleDate && (
                                 <div>
