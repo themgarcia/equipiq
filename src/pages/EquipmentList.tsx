@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { format } from 'date-fns';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useDeviceType } from '@/hooks/use-mobile';
@@ -586,8 +587,9 @@ export default function EquipmentList() {
                 <ScrollArea className="flex-1">
                   <div className="p-6">
                     {sheetView === 'details' && (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2">
+                      <div className="space-y-5">
+                        {/* Status & Allocation Badges */}
+                        <div className="flex items-center gap-2 flex-wrap">
                           <StatusBadge status={selectedEquipmentForSheet.status} />
                           {selectedEquipmentForSheet.allocationType === 'owner_perk' && (
                             <Badge variant="outline" className="text-amber-600 border-amber-300">
@@ -602,43 +604,197 @@ export default function EquipmentList() {
                             </Badge>
                           )}
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Cost Basis</p>
-                            <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.totalCostBasis)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">COGS %</p>
-                            <p className="font-medium font-mono-nums">{formatPercent(selectedEquipmentForSheet.cogsPercent)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">COGS $</p>
-                            <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.cogsAllocatedCost)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Overhead $</p>
-                            <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.overheadAllocatedCost)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Years Left</p>
-                            <p className={`font-medium font-mono-nums ${selectedEquipmentForSheet.estimatedYearsLeft <= 1 ? 'text-warning' : ''}`}>
-                              {selectedEquipmentForSheet.estimatedYearsLeft.toFixed(1)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Replacement</p>
-                            <p className="font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.replacementCostUsed)}</p>
+
+                        {/* IDENTIFICATION */}
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identification</h4>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Category</p>
+                              <p className="text-sm font-medium">{selectedEquipmentForSheet.category}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Condition</p>
+                              <p className="text-sm font-medium">{selectedEquipmentForSheet.purchaseCondition}</p>
+                            </div>
+                            {selectedEquipmentForSheet.serialVin && (
+                              <div className="col-span-2">
+                                <p className="text-xs text-muted-foreground">Serial/VIN</p>
+                                <p className="text-sm font-medium font-mono">{selectedEquipmentForSheet.serialVin}</p>
+                              </div>
+                            )}
+                            {selectedEquipmentForSheet.assetId && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Asset ID</p>
+                                <p className="text-sm font-medium">{selectedEquipmentForSheet.assetId}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
-                        
-                        {selectedEquipmentForSheet.assetId && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Asset ID</p>
-                            <p className="font-medium">{selectedEquipmentForSheet.assetId}</p>
+
+                        {/* PURCHASE & COST */}
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Purchase & Cost</h4>
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Purchase Date</span>
+                              <span className="text-sm font-medium">{format(new Date(selectedEquipmentForSheet.purchaseDate), 'MMM d, yyyy')}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Purchase Price</span>
+                              <span className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.purchasePrice)}</span>
+                            </div>
+                            {selectedEquipmentForSheet.salesTax > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-sm text-muted-foreground">+ Sales Tax</span>
+                                <span className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.salesTax)}</span>
+                              </div>
+                            )}
+                            {selectedEquipmentForSheet.freightSetup > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-sm text-muted-foreground">+ Freight/Setup</span>
+                                <span className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.freightSetup)}</span>
+                              </div>
+                            )}
+                            {selectedEquipmentForSheet.otherCapEx > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-sm text-muted-foreground">+ Other CapEx</span>
+                                <span className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.otherCapEx)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between pt-1 border-t">
+                              <span className="text-sm font-medium">Total Cost Basis</span>
+                              <span className="text-sm font-semibold font-mono-nums">{formatCurrency(selectedEquipmentForSheet.totalCostBasis)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ALLOCATIONS */}
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Allocations</h4>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground">COGS</p>
+                              <p className="text-sm font-medium font-mono-nums">
+                                {formatPercent(selectedEquipmentForSheet.cogsPercent)} ({formatCurrency(selectedEquipmentForSheet.cogsAllocatedCost)})
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Overhead</p>
+                              <p className="text-sm font-medium font-mono-nums">
+                                {formatPercent(1 - selectedEquipmentForSheet.cogsPercent)} ({formatCurrency(selectedEquipmentForSheet.overheadAllocatedCost)})
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* LIFECYCLE */}
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lifecycle</h4>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Useful Life</p>
+                              <p className="text-sm font-medium font-mono-nums">
+                                {selectedEquipmentForSheet.usefulLifeOverride ?? 
+                                  (categoryDefaults.find(c => c.category === selectedEquipmentForSheet.category)?.defaultUsefulLife ?? 10)} years
+                                {selectedEquipmentForSheet.usefulLifeOverride && (
+                                  <span className="text-xs text-muted-foreground ml-1">(custom)</span>
+                                )}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Years Left</p>
+                              <p className={`text-sm font-medium font-mono-nums ${selectedEquipmentForSheet.estimatedYearsLeft <= 1 ? 'text-warning' : ''}`}>
+                                {selectedEquipmentForSheet.estimatedYearsLeft.toFixed(1)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Replacement Cost</p>
+                              <p className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.replacementCostUsed)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Expected Resale</p>
+                              <p className="text-sm font-medium font-mono-nums">
+                                {formatCurrency(selectedEquipmentForSheet.expectedResaleUsed)}
+                                {selectedEquipmentForSheet.expectedResaleOverride !== null && (
+                                  <span className="text-xs text-muted-foreground ml-1">(custom)</span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* FINANCING - Only show if not owned */}
+                        {selectedEquipmentForSheet.financingType !== 'owned' && (
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Financing</h4>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Type</p>
+                                <p className="text-sm font-medium capitalize">{selectedEquipmentForSheet.financingType}</p>
+                              </div>
+                              {selectedEquipmentForSheet.depositAmount > 0 && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Deposit</p>
+                                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.depositAmount)}</p>
+                                </div>
+                              )}
+                              {selectedEquipmentForSheet.financedAmount > 0 && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Financed Amount</p>
+                                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.financedAmount)}</p>
+                                </div>
+                              )}
+                              {selectedEquipmentForSheet.monthlyPayment > 0 && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Monthly Payment</p>
+                                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.monthlyPayment)}</p>
+                                </div>
+                              )}
+                              {selectedEquipmentForSheet.termMonths > 0 && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Term</p>
+                                  <p className="text-sm font-medium font-mono-nums">{selectedEquipmentForSheet.termMonths} months</p>
+                                </div>
+                              )}
+                              {selectedEquipmentForSheet.buyoutAmount > 0 && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Buyout</p>
+                                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.buyoutAmount)}</p>
+                                </div>
+                              )}
+                              {selectedEquipmentForSheet.financingStartDate && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Start Date</p>
+                                  <p className="text-sm font-medium">{format(new Date(selectedEquipmentForSheet.financingStartDate), 'MMM d, yyyy')}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* SALE INFO - Only show if sold */}
+                        {selectedEquipmentForSheet.status === 'Sold' && (
+                          <div className="space-y-2">
+                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sale Info</h4>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                              {selectedEquipmentForSheet.saleDate && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Sale Date</p>
+                                  <p className="text-sm font-medium">{format(new Date(selectedEquipmentForSheet.saleDate), 'MMM d, yyyy')}</p>
+                                </div>
+                              )}
+                              {selectedEquipmentForSheet.salePrice !== null && selectedEquipmentForSheet.salePrice !== undefined && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Sale Price</p>
+                                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(selectedEquipmentForSheet.salePrice)}</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                         
+                        {/* ACTION BUTTONS */}
                         <div className="pt-4 border-t space-y-2">
                           <Button 
                             variant="outline" 
