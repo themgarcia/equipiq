@@ -13,6 +13,18 @@ interface ChangelogEntry {
 
 const changelogData: ChangelogEntry[] = [
   {
+    version: "1.3.2",
+    changes: [
+      {
+        type: "improved",
+        items: [
+          "Unified typography across all pages for a cleaner, more consistent look",
+          "Updated section headers in equipment forms and detail views to match dashboard styling",
+        ],
+      },
+    ],
+  },
+  {
     version: "1.3.1",
     changes: [
       {
