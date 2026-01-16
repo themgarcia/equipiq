@@ -39,20 +39,21 @@ export function calculateEquipment(
   const cogsAllocatedCost = (effectiveCogsPercent / 100) * totalCostBasis;
   const overheadAllocatedCost = (overheadPercent / 100) * totalCostBasis;
   
-  // Useful Life
+  // Useful Life - use model year (not purchase date) to correctly handle used equipment
+  // A 2016 vehicle with 8-year useful life should end in 2024, regardless of when purchased
   const usefulLifeUsed = equipment.usefulLifeOverride ?? categoryDefaults.defaultUsefulLife;
-  const purchaseDate = new Date(equipment.purchaseDate);
-  const endOfLifeDate = new Date(purchaseDate);
-  endOfLifeDate.setFullYear(endOfLifeDate.getFullYear() + usefulLifeUsed);
-  const estimatedEndOfLifeYear = endOfLifeDate.getFullYear();
+  const modelYear = equipment.year;
+  const estimatedEndOfLifeYear = modelYear + usefulLifeUsed;
   
-  // Calculate precise years left with decimal precision
+  // Calculate years left based on model year
   const now = new Date();
   const currentYear = now.getFullYear();
-  const purchaseYear = purchaseDate.getFullYear();
-  const msPerYear = 1000 * 60 * 60 * 24 * 365.25;
-  const yearsLeft = (endOfLifeDate.getTime() - now.getTime()) / msPerYear;
+  const yearsLeft = estimatedEndOfLifeYear - currentYear;
   const estimatedYearsLeft = Math.max(0, Math.round(yearsLeft * 10) / 10);
+  
+  // Keep purchase date/year for replacement cost calculations
+  const purchaseDate = new Date(equipment.purchaseDate);
+  const purchaseYear = purchaseDate.getFullYear();
   
   // Replacement Cost - apply 3% annual inflation
   let replacementCostUsed: number;
