@@ -644,10 +644,17 @@ export default function CashflowAnalysis() {
                 <CardTitle className="text-lg flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
                   Cashflow Projection
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>As equipment pays off, payments decrease while recovery stays constant</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  As equipment pays off, payments decrease while recovery stays constant
-                </p>
                 
                 {/* Dynamic insight badge when negative */}
                 {cashflowInsight?.isCurrentlyNegative && (

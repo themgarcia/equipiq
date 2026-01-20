@@ -256,8 +256,19 @@ export default function Dashboard() {
           {/* Category Breakdown */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Cost Basis by Category</CardTitle>
-              <CardDescription>Distribution across equipment types</CardDescription>
+              <CardTitle className="text-lg flex items-center gap-2">
+                Cost Basis by Category
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Distribution of cost basis across equipment types</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center md:items-start">
               {categoryData.length > 0 ? (
@@ -325,8 +336,17 @@ export default function Dashboard() {
               <CardTitle className="text-lg flex items-center gap-2">
                 <Wrench className="h-5 w-5" />
                 Replacement Planning
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Upcoming equipment replacement needs based on useful life</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </CardTitle>
-              <CardDescription>Upcoming equipment replacement needs</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
