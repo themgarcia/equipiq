@@ -31,6 +31,9 @@ import {
   Calendar,
   Target,
   Lock,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
 import { 
@@ -54,6 +57,8 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 
 type StatusFilter = 'all' | 'surplus' | 'neutral' | 'shortfall';
 type FinancingFilter = 'all' | 'owned' | 'financed' | 'leased';
+type SortField = 'name' | 'category' | 'financingType' | 'payoffDate' | 'annualRecovery' | 'annualPayments' | 'surplusShortfall' | 'status';
+type SortDirection = 'asc' | 'desc';
 
 function getStatusIcon(status: 'surplus' | 'neutral' | 'shortfall') {
   switch (status) {
@@ -224,6 +229,8 @@ export default function CashflowAnalysis() {
     equipment: Equipment;
     calculated: EquipmentCalculated;
   } | null>(null);
+  const [sortField, setSortField] = useState<SortField>('payoffDate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
   // Calculate cashflow for all equipment - MUST be before any conditional returns
   const equipmentWithCashflow = useMemo(() => {
@@ -286,6 +293,88 @@ export default function CashflowAnalysis() {
         : null,
     };
   }, [projection]);
+  
+  // Calculate where zero falls in the chart's Y domain for split gradient
+  const chartYDomain = useMemo(() => {
+    if (projection.length === 0) return { minY: 0, maxY: 0, zeroOffset: 0.5 };
+    
+    const netValues = projection.map(p => p.netAnnualCashflow);
+    const minY = Math.min(...netValues, 0);
+    const maxY = Math.max(...netValues, 0);
+    
+    // Calculate where 0 sits as percentage from TOP (SVG gradients go top-to-bottom)
+    const range = maxY - minY;
+    const zeroOffset = range > 0 ? maxY / range : 0.5;
+    
+    return { minY, maxY, zeroOffset };
+  }, [projection]);
+  
+  // Sort equipment
+  const sortedEquipment = useMemo(() => {
+    return [...filteredEquipment].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'name':
+          comparison = a.equipment.name.localeCompare(b.equipment.name);
+          break;
+        case 'category':
+          comparison = a.equipment.category.localeCompare(b.equipment.category);
+          break;
+        case 'financingType':
+          comparison = a.equipment.financingType.localeCompare(b.equipment.financingType);
+          break;
+        case 'payoffDate':
+          // Owned/paid-off items go to bottom when descending (treat as date 0)
+          const aDate = a.cashflow.payoffDate ? new Date(a.cashflow.payoffDate).getTime() : 0;
+          const bDate = b.cashflow.payoffDate ? new Date(b.cashflow.payoffDate).getTime() : 0;
+          comparison = aDate - bDate;
+          break;
+        case 'annualRecovery':
+          comparison = a.cashflow.annualEconomicRecovery - b.cashflow.annualEconomicRecovery;
+          break;
+        case 'annualPayments':
+          comparison = a.cashflow.annualCashOutflow - b.cashflow.annualCashOutflow;
+          break;
+        case 'surplusShortfall':
+          comparison = a.cashflow.annualSurplusShortfall - b.cashflow.annualSurplusShortfall;
+          break;
+        case 'status':
+          const statusOrder = { shortfall: 0, neutral: 1, surplus: 2 };
+          comparison = statusOrder[a.cashflow.cashflowStatus] - statusOrder[b.cashflow.cashflowStatus];
+          break;
+      }
+      
+      return sortDirection === 'desc' ? -comparison : comparison;
+    });
+  }, [filteredEquipment, sortField, sortDirection]);
+  
+  // Handle sort toggle
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+  
+  // Sortable header component
+  const SortableHeader = ({ field, children, className }: { field: SortField; children: React.ReactNode; className?: string }) => (
+    <TableHead 
+      className={`cursor-pointer select-none hover:bg-muted/50 ${className || ''}`}
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortField === field ? (
+          sortDirection === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-30" />
+        )}
+      </div>
+    </TableHead>
+  );
   
   // Helper to format payoff date display
   const getPayoffDateDisplay = (cashflow: EquipmentCashflow, financingType: string) => {
@@ -586,8 +675,12 @@ export default function CashflowAnalysis() {
                     <ComposedChart data={projection} margin={{ top: 25, right: 30, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorNetCashflow" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.4}/>
-                          <stop offset="95%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.1}/>
+                          {/* Green portion (above zero) */}
+                          <stop offset="0%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.4}/>
+                          <stop offset={`${chartYDomain.zeroOffset * 100}%`} stopColor="hsl(142, 76%, 36%)" stopOpacity={0.2}/>
+                          {/* Red portion (below zero) */}
+                          <stop offset={`${chartYDomain.zeroOffset * 100}%`} stopColor="hsl(0, 84%, 60%)" stopOpacity={0.2}/>
+                          <stop offset="100%" stopColor="hsl(0, 84%, 60%)" stopOpacity={0.4}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -641,6 +734,14 @@ export default function CashflowAnalysis() {
                         strokeWidth={2}
                         dot={false}
                         name="annualPayments"
+                      />
+                      {/* Reference line at $0 */}
+                      <ReferenceLine 
+                        y={0} 
+                        stroke="hsl(var(--muted-foreground))"
+                        strokeWidth={1}
+                        strokeDasharray="4 4"
+                        strokeOpacity={0.5}
                       />
                       {/* Shaded area for net cashflow (the gap) */}
                       <Area 
@@ -784,26 +885,26 @@ export default function CashflowAnalysis() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Equipment</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Financing</TableHead>
-                  <TableHead>Payoff Date</TableHead>
-                  <TableHead className="text-right">Annual Recovery</TableHead>
-                  <TableHead className="text-right">Annual Payments</TableHead>
-                  <TableHead className="text-right">Surplus/Shortfall</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableHeader field="name">Equipment</SortableHeader>
+                  <SortableHeader field="category">Category</SortableHeader>
+                  <SortableHeader field="financingType">Financing</SortableHeader>
+                  <SortableHeader field="payoffDate">Payoff Date</SortableHeader>
+                  <SortableHeader field="annualRecovery" className="text-right">Annual Recovery</SortableHeader>
+                  <SortableHeader field="annualPayments" className="text-right">Annual Payments</SortableHeader>
+                  <SortableHeader field="surplusShortfall" className="text-right">Surplus/Shortfall</SortableHeader>
+                  <SortableHeader field="status">Status</SortableHeader>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEquipment.length === 0 ? (
+                {sortedEquipment.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       No active equipment matches your filters
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredEquipment.map(({ equipment: eq, calculated, cashflow }) => (
+                  sortedEquipment.map(({ equipment: eq, calculated, cashflow }) => (
                     <TableRow key={eq.id}>
                       <TableCell className="font-medium">{eq.name}</TableCell>
                       <TableCell className="text-muted-foreground">{eq.category}</TableCell>
