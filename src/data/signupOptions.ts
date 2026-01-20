@@ -123,3 +123,20 @@ export function getRegionLabel(value: string): string {
   const allRegions = [...usStates, ...canadianProvinces];
   return allRegions.find(o => o.value === value)?.label || value;
 }
+
+export const referralSourceOptions = [
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'x', label: 'X.com' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'newsletter', label: 'Newsletter' },
+  { value: 'ai', label: 'AI' },
+  { value: 'google', label: 'Google' },
+  { value: 'reddit', label: 'Reddit' },
+  { value: 'friends', label: 'Friends' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+export function getReferralSourceLabel(value: string): string {
+  return referralSourceOptions.find(o => o.value === value)?.label || value;
+}

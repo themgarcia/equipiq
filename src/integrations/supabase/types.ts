@@ -648,6 +648,7 @@ export type Database = {
           full_name: string | null
           id: string
           industry: string | null
+          referral_source: string | null
           region: string | null
           years_in_business: number | null
         }
@@ -660,6 +661,7 @@ export type Database = {
           full_name?: string | null
           id: string
           industry?: string | null
+          referral_source?: string | null
           region?: string | null
           years_in_business?: number | null
         }
@@ -672,6 +674,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           industry?: string | null
+          referral_source?: string | null
           region?: string | null
           years_in_business?: number | null
         }

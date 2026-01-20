@@ -55,7 +55,8 @@ import {
   getIndustryLabel, 
   getFieldEmployeesLabel, 
   getAnnualRevenueLabel, 
-  getRegionLabel 
+  getRegionLabel,
+  getReferralSourceLabel,
 } from '@/data/signupOptions';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useNavigate } from 'react-router-dom';
@@ -174,6 +175,7 @@ export default function AdminDashboard() {
   const [companySizeStats, setCompanySizeStats] = useState<MarketInsight[]>([]);
   const [revenueStats, setRevenueStats] = useState<MarketInsight[]>([]);
   const [regionStats, setRegionStats] = useState<MarketInsight[]>([]);
+  const [referralSourceStats, setReferralSourceStats] = useState<MarketInsight[]>([]);
   const [totals, setTotals] = useState({
     totalUsers: 0,
     totalEquipment: 0,
@@ -432,7 +434,7 @@ export default function AdminDashboard() {
       // Fetch all profiles with new columns
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, created_at, company_name, industry, field_employees, annual_revenue, region, years_in_business, company_website');
+        .select('id, full_name, created_at, company_name, industry, field_employees, annual_revenue, region, years_in_business, company_website, referral_source');
       
       if (profilesError) throw profilesError;
 
@@ -524,6 +526,7 @@ export default function AdminDashboard() {
       const sizeMap = new Map<string, number>();
       const revenueMap = new Map<string, number>();
       const regionMap = new Map<string, number>();
+      const referralSourceMap = new Map<string, number>();
 
       profiles?.forEach(profile => {
         if (profile.industry) {
@@ -537,6 +540,9 @@ export default function AdminDashboard() {
         }
         if (profile.region) {
           regionMap.set(profile.region, (regionMap.get(profile.region) || 0) + 1);
+        }
+        if (profile.referral_source) {
+          referralSourceMap.set(profile.referral_source, (referralSourceMap.get(profile.referral_source) || 0) + 1);
         }
       });
 
@@ -563,6 +569,12 @@ export default function AdminDashboard() {
         value,
         label: getRegionLabel(name),
       })).sort((a, b) => b.value - a.value).slice(0, 10)); // Top 10 regions
+
+      setReferralSourceStats(Array.from(referralSourceMap.entries()).map(([name, value]) => ({
+        name,
+        value,
+        label: getReferralSourceLabel(name),
+      })).sort((a, b) => b.value - a.value));
 
       // Calculate category stats
       const categoryMap = new Map<string, CategoryStats>();
@@ -1953,6 +1965,109 @@ export default function AdminDashboard() {
 
           {/* Marketing Tab */}
           <TabsContent value="marketing" className="space-y-4">
+            {/* Referral Source Analytics */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Referral Source Analytics</CardTitle>
+                </div>
+                <CardDescription>Track where signups are coming from</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {referralSourceStats.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="font-medium">No referral data yet</p>
+                    <p className="text-sm">Data will appear as users sign up with referral source</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Pie Chart */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-3">Distribution</h4>
+                      <ChartContainer
+                        config={Object.fromEntries(
+                          referralSourceStats.map((stat, index) => [
+                            stat.name,
+                            { label: stat.label, color: CHART_COLORS[index % CHART_COLORS.length] },
+                          ])
+                        )}
+                        className="h-[250px]"
+                      >
+                        <PieChart>
+                          <Pie
+                            data={referralSourceStats}
+                            dataKey="value"
+                            nameKey="label"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            label={({ label, percent }) => `${label} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {referralSourceStats.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                        </PieChart>
+                      </ChartContainer>
+                    </div>
+
+                    {/* Stats Table */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-3">Breakdown</h4>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Source</TableHead>
+                            <TableHead className="text-right">Count</TableHead>
+                            <TableHead className="text-right">%</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {referralSourceStats.map((stat) => {
+                            const totalReferrals = referralSourceStats.reduce((sum, s) => sum + s.value, 0);
+                            const percentage = totalReferrals > 0 ? ((stat.value / totalReferrals) * 100).toFixed(1) : '0';
+                            return (
+                              <TableRow key={stat.name}>
+                                <TableCell className="font-medium">{stat.label}</TableCell>
+                                <TableCell className="text-right">{stat.value}</TableCell>
+                                <TableCell className="text-right">{percentage}%</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Top Sources Cards */}
+            {referralSourceStats.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {referralSourceStats.slice(0, 4).map((stat, index) => (
+                  <Card key={stat.name}>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+                      <Badge variant={index === 0 ? 'default' : 'secondary'}>
+                        #{index + 1}
+                      </Badge>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{stat.value}</div>
+                      <p className="text-xs text-muted-foreground">
+                        {((stat.value / referralSourceStats.reduce((sum, s) => sum + s.value, 0)) * 100).toFixed(1)}% of referrals
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Email Tools Card */}
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
@@ -1998,14 +2113,6 @@ export default function AdminDashboard() {
                       )}
                       Send Password Changed Email
                     </Button>
-                  </div>
-                </div>
-
-                <div className="border-t pt-6">
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="font-medium">More marketing tools coming soon</p>
-                    <p className="text-sm">Bulk emails, announcements, and more</p>
                   </div>
                 </div>
               </CardContent>
