@@ -46,10 +46,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ReferenceDot, ResponsiveContainer, Area, Tooltip, ComposedChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ReferenceDot, ResponsiveContainer, Area, Tooltip as RechartsTooltip, ComposedChart } from 'recharts';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { CashflowSkeleton } from '@/components/PageSkeletons';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 type StatusFilter = 'all' | 'surplus' | 'neutral' | 'shortfall';
 type FinancingFilter = 'all' | 'owned' | 'financed' | 'leased';
@@ -262,6 +263,29 @@ export default function CashflowAnalysis() {
   const { projection, stabilization } = useMemo(() => {
     return calculateCashflowProjection(equipmentWithCashflow);
   }, [equipmentWithCashflow]);
+  
+  // Calculate insight about when cashflow turns positive
+  const cashflowInsight = useMemo(() => {
+    if (projection.length === 0) return null;
+    
+    const currentYear = new Date().getFullYear();
+    const currentPoint = projection.find(p => p.year === currentYear);
+    const isCurrentlyNegative = currentPoint && currentPoint.netAnnualCashflow < 0;
+    
+    // Find the first year where net cashflow becomes positive (after current year if negative)
+    const turnsPositiveYear = isCurrentlyNegative 
+      ? projection.find(p => p.year > currentYear && p.netAnnualCashflow >= 0)
+      : null;
+    
+    return {
+      isCurrentlyNegative,
+      currentNetCashflow: currentPoint?.netAnnualCashflow || 0,
+      turnsPositiveYear: turnsPositiveYear?.year || null,
+      yearsUntilPositive: turnsPositiveYear 
+        ? turnsPositiveYear.year - currentYear 
+        : null,
+    };
+  }, [projection]);
   
   // Helper to format payoff date display
   const getPayoffDateDisplay = (cashflow: EquipmentCashflow, financingType: string) => {
@@ -535,6 +559,26 @@ export default function CashflowAnalysis() {
                 <p className="text-sm text-muted-foreground">
                   As equipment pays off, payments decrease while recovery stays constant
                 </p>
+                
+                {/* Dynamic insight badge when negative */}
+                {cashflowInsight?.isCurrentlyNegative && (
+                  <div className="mt-3 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium text-destructive">
+                          Financing payments currently exceed recovery
+                        </p>
+                        <p className="text-muted-foreground mt-1">
+                          {cashflowInsight.turnsPositiveYear 
+                            ? `Projected to turn positive in ${cashflowInsight.turnsPositiveYear} (${cashflowInsight.yearsUntilPositive} year${cashflowInsight.yearsUntilPositive !== 1 ? 's' : ''} from now) as equipment pays off.`
+                            : 'Consider reviewing financing terms or equipment utilization to improve cashflow.'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
@@ -558,7 +602,7 @@ export default function CashflowAnalysis() {
                         className="text-xs"
                         tick={{ fill: 'hsl(var(--muted-foreground))' }}
                       />
-                      <Tooltip 
+                      <RechartsTooltip 
                         formatter={(value: number, name: string) => {
                           const labels: Record<string, string> = {
                             annualRecovery: 'Annual Recovery',
@@ -652,8 +696,28 @@ export default function CashflowAnalysis() {
                     <span className="text-muted-foreground">Annual Payments (financing)</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-3 bg-green-600/30 rounded-sm"></div>
-                    <span className="text-muted-foreground">Net Cashflow (the gap)</span>
+                    <div className="w-4 h-3 flex overflow-hidden rounded-sm">
+                      <div className="w-2 h-full bg-green-600/30"></div>
+                      <div className="w-2 h-full bg-red-500/30"></div>
+                    </div>
+                    <span className="text-muted-foreground">Net Cashflow</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-sm">
+                            <strong>Green</strong> = Recovery exceeds payments (positive cashflow)<br/>
+                            <strong>Red</strong> = Payments exceed recovery (negative cashflow)
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Negative cashflow means more cash is leaving for financing than being recovered through job pricing. 
+                            This is common with new equipment and improves as loans/leases pay off.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-amber-500 border-2 border-background"></div>
