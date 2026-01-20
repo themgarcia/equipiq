@@ -16,7 +16,8 @@ import {
   industryOptions, 
   fieldEmployeesOptions, 
   annualRevenueOptions, 
-  regionOptions 
+  regionOptions,
+  referralSourceOptions,
 } from '@/data/signupOptions';
 
 const forgotPasswordSchema = z.object({
@@ -52,6 +53,7 @@ export default function Auth() {
   const [yearsInBusiness, setYearsInBusiness] = useState('');
   const [region, setRegion] = useState('');
   const [companyWebsite, setCompanyWebsite] = useState('');
+  const [referralSource, setReferralSource] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -102,6 +104,7 @@ export default function Auth() {
     setYearsInBusiness('');
     setRegion('');
     setCompanyWebsite('');
+    setReferralSource('');
     setErrors({});
     setResetEmailSent(false);
     setRateLimitInfo(null);
@@ -287,6 +290,7 @@ export default function Auth() {
           yearsInBusiness: yearsNum,
           region: region || undefined,
           companyWebsite: companyWebsite || undefined,
+          referralSource: referralSource || undefined,
         };
 
         const { error } = await signUp(email, password, fullName, companyData);
@@ -617,6 +621,31 @@ export default function Auth() {
                       {errors.companyWebsite && (
                         <p className="text-sm text-destructive">{errors.companyWebsite}</p>
                       )}
+                    </div>
+                  </div>
+
+                  {/* How did you hear about us - Chip Selector */}
+                  <div className="pt-4 border-t space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium">How did you hear about us?</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">(optional)</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {referralSourceOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setReferralSource(referralSource === option.value ? '' : option.value)}
+                          disabled={isSubmitting}
+                          className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                            referralSource === option.value
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-background hover:bg-muted border-border text-foreground'
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 

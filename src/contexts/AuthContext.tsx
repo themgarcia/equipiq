@@ -11,6 +11,7 @@ export interface CompanyProfileData {
   yearsInBusiness?: number;
   region?: string;
   companyWebsite?: string;
+  referralSource?: string;
 }
 
 export interface RateLimitResult {
@@ -120,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           years_in_business: companyData.yearsInBusiness || null,
           region: companyData.region || null,
           company_website: companyData.companyWebsite || null,
+          referral_source: companyData.referralSource || null,
         },
       },
     });
