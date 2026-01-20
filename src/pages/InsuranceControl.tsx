@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck, Upload } from 'lucide-react';
+import { ShieldCheck, Upload, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ExtractedPolicyData } from '@/types/insurance';
 import { InsurancePolicyImport } from '@/components/insurance/InsurancePolicyImport';
 import { InsurancePolicyImportReview } from '@/components/insurance/InsurancePolicyImportReview';
 import { Layout } from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { InsuranceContentSkeleton } from '@/components/PageSkeletons';
 import { useInsurance } from '@/hooks/useInsurance';
 import { useAuth } from '@/contexts/AuthContext';
@@ -92,10 +93,19 @@ export default function InsuranceControl() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <div className="accent-line mb-4" />
-            <h1 className="text-3xl font-bold">Insurance</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage insured equipment and communicate changes to your broker
-            </p>
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              Insurance
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-5 w-5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Manage insured equipment and communicate changes to your broker</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </h1>
           </div>
           <Button variant="outline" onClick={() => setImportModalOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
