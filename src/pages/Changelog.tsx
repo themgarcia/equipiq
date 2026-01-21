@@ -37,7 +37,7 @@ const typeConfig = {
   improved: {
     label: "Improved",
     icon: Sparkles,
-    className: "bg-accent/10 text-accent-foreground border-accent/20",
+    className: "bg-improved/10 text-improved border-improved/20",
   },
   security: {
     label: "Security",
