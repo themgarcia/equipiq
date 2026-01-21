@@ -580,7 +580,7 @@ export default function Landing() {
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
-                        Recovery methodology: Depreciation + overhead + margin
+                        Recovery methodology: Depreciation + gross profit + net profit
                       </p>
                     </div>
                     
