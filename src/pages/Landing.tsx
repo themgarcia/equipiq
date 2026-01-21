@@ -245,7 +245,7 @@ export default function Landing() {
             Know What Your Equipment
             <span className="block text-primary">Really Costs.</span>
           </h1>
-          <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
+          <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-3xl mx-auto">
             Most contractors track equipment in spreadsheets—but can't answer basic questions: 
             What's my monthly debt load? When should I replace the backhoe? Am I over-insured or under?
           </p>
@@ -277,7 +277,7 @@ export default function Landing() {
         <div className="mx-auto max-w-4xl text-center">
           <div className="flex items-center justify-center gap-2 mb-8">
             <HelpCircle className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Sound familiar?</span>
+            <span className="text-sm font-medium text-muted-foreground">Sound Familiar?</span>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {painPoints.map((question) => (
@@ -560,7 +560,7 @@ export default function Landing() {
                   <div className="space-y-4">
                     {/* Full Recovery Target */}
                     <div className="p-4 bg-background rounded-lg border border-border">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Full Recovery Target</p>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Full Recovery Target</p>
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Depreciation (COGS)</span>
@@ -586,7 +586,7 @@ export default function Landing() {
                     
                     {/* The Gap Breakdown */}
                     <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
-                      <p className="text-xs text-destructive uppercase tracking-wide mb-2">Unrecovered Costs + Margin</p>
+                      <p className="text-xs font-medium text-destructive mb-2">Unrecovered Costs + Margin</p>
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Depreciation Not Billed</span>
@@ -675,7 +675,7 @@ export default function Landing() {
 
       {/* Beta CTA Section */}
       <section className="container py-24 bg-muted/30">
-        <div className="mx-auto max-w-2xl">
+        <div className="mx-auto max-w-3xl">
           <Card className="border-primary bg-card shadow-lg">
             <CardHeader className="text-center pb-4">
               <CardTitle className="text-2xl">Full Access. No Cost. No Credit Card.</CardTitle>
