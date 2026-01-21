@@ -46,6 +46,8 @@
     --warning-foreground: 215 25% 15%;
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
+    --improved: 280 65% 55%;
+    --improved-foreground: 0 0% 100%;
 
     /* Equipment status colors */
     --status-active: 142 71% 45%;
@@ -120,6 +122,10 @@
     --chart-3: 199 89% 55%;
     --chart-4: 280 65% 65%;
     --chart-5: 0 72% 55%;
+
+    /* Improved color - dark mode */
+    --improved: 280 65% 65%;
+    --improved-foreground: 0 0% 100%;
 
     /* Field type colors - dark mode */
     --field-editable: 215 30% 13%;
