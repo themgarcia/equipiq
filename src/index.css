@@ -1,3 +1,49 @@
+/*
+ * =============================================================================
+ * EQUIPIQ RESPONSIVE DESIGN PATTERNS
+ * =============================================================================
+ * 
+ * This application follows mobile-first responsive design principles.
+ * Use the standard Tailwind breakpoints: sm (640px), md (768px), lg (1024px)
+ * 
+ * -----------------------------------------------------------------------------
+ * STANDARD PATTERNS - Use these consistently across all components
+ * -----------------------------------------------------------------------------
+ * 
+ * PAGE TITLES
+ *   text-2xl sm:text-3xl font-bold
+ *   Scales from 24px (mobile) to 30px (tablet+)
+ * 
+ * METRIC CARD GRIDS
+ *   grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
+ *   Stacks on mobile, 2x2 on tablet, 4-across on desktop
+ * 
+ * FORM FIELD GRIDS
+ *   grid-cols-1 sm:grid-cols-2 gap-4
+ *   Stacks on mobile, side-by-side on tablet+
+ * 
+ * BUTTON TEXT TRUNCATION
+ *   <span className="hidden sm:inline">Full Label</span>
+ *   Hides verbose text on mobile, shows on tablet+
+ * 
+ * DATA TABLES
+ *   Use useDeviceType() hook from @/hooks/use-mobile
+ *   Render MobileCardView on phones, Table on tablet+
+ *   Pattern: {isPhone ? <MobileCardView /> : <DesktopTable />}
+ * 
+ * SECTION HEADERS
+ *   text-sm font-medium (Title Case, no uppercase/tracking-wider)
+ * 
+ * -----------------------------------------------------------------------------
+ * BREAKPOINT REFERENCE
+ * -----------------------------------------------------------------------------
+ *   sm: 640px  - Tablets and small laptops
+ *   md: 768px  - Standard tablets in landscape
+ *   lg: 1024px - Desktops and large tablets
+ * 
+ * =============================================================================
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
