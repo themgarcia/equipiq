@@ -15,6 +15,7 @@ import {
   Upload,
   Brain,
   HelpCircle,
+  Info,
   BarChart3,
   Calculator
 } from 'lucide-react';
@@ -25,6 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Slider } from '@/components/ui/slider';
 import { formatCurrency } from '@/lib/calculations';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const painPoints = [
   "What's my total monthly equipment debt?",
@@ -401,7 +403,19 @@ export default function Landing() {
                     {/* Fleet Value Slider */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <label className="text-muted-foreground">Fleet Value</label>
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-muted-foreground">Fleet Value</label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[220px]">
+                                <p className="text-xs">Total current value of all equipment you own or lease.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                         <span className="font-mono font-medium text-foreground">{formatCurrency(fleetValue)}</span>
                       </div>
                       <Slider 
@@ -420,7 +434,19 @@ export default function Landing() {
                     {/* Useful Life Slider */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <label className="text-muted-foreground">Average Useful Life</label>
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-muted-foreground">Average Useful Life</label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[220px]">
+                                <p className="text-xs">How many years you expect equipment to last before replacement. This determines your annual depreciation.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                         <span className="font-mono font-medium text-foreground">{usefulLife} years</span>
                       </div>
                       <Slider 
@@ -439,7 +465,19 @@ export default function Landing() {
                     {/* Current Recovery Slider */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <label className="text-muted-foreground">Current Equipment Cost Recovery</label>
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-muted-foreground">Current Recovery</label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[220px]">
+                                <p className="text-xs">What percentage of your equipment costs are you currently billing customers? Most contractors recover 40-60%.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                         <span className="font-mono font-medium text-foreground">{currentRecovery}%</span>
                       </div>
                       <Slider 
@@ -458,7 +496,19 @@ export default function Landing() {
                     {/* Ghost Equipment Slider */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <label className="text-muted-foreground">Ghost Equipment on Insurance</label>
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-muted-foreground">Ghost Equipment</label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[220px]">
+                                <p className="text-xs">Equipment you've sold or retired but is still on your insurance policy. Common oversight that wastes overhead dollars.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                         <span className="font-mono font-medium text-foreground">{ghostEquipment}%</span>
                       </div>
                       <Slider 
@@ -477,7 +527,19 @@ export default function Landing() {
                     {/* Jobs Per Year Slider */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <label className="text-muted-foreground">Jobs Per Year</label>
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-muted-foreground">Jobs Per Year</label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[220px]">
+                                <p className="text-xs">How many jobs you complete annually. Used to calculate per-job loss.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                         <span className="font-mono font-medium text-foreground">{jobsPerYear}</span>
                       </div>
                       <Slider 
