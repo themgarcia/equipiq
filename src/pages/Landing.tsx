@@ -130,14 +130,34 @@ const features = [
 export default function Landing() {
   const { user } = useAuth();
   
-  // Revenue calculator state
+  // Cascade Revenue Loss Calculator state
   const [fleetValue, setFleetValue] = useState(250000);
+  const [usefulLife, setUsefulLife] = useState(8);
+  const [currentRecovery, setCurrentRecovery] = useState(50); // percentage
+  const [ghostEquipment, setGhostEquipment] = useState(5);    // percentage  
   const [jobsPerYear, setJobsPerYear] = useState(50);
-  
-  // Conservative 3% unbilled rate assumption
-  const UNBILLED_RATE = 0.03;
-  const annualLoss = fleetValue * UNBILLED_RATE;
-  const perJobLoss = annualLoss / jobsPerYear;
+
+  // Constants
+  const OVERHEAD_RATE = 0.25;    // 25% overhead recovery on depreciation
+  const PROFIT_RATE = 0.10;      // 10% target profit margin
+  const INSURANCE_RATE = 0.015;  // 1.5% average insurance cost
+
+  // Full recovery calculations
+  const annualDepreciation = fleetValue / usefulLife;
+  const overheadRecovery = annualDepreciation * OVERHEAD_RATE;
+  const profitMargin = (annualDepreciation + overheadRecovery) * PROFIT_RATE;
+  const fullRecovery = annualDepreciation + overheadRecovery + profitMargin;
+
+  // Gap calculations
+  const recoveryGap = 1 - (currentRecovery / 100);
+  const unbilledDepreciation = annualDepreciation * recoveryGap;
+  const lostOverhead = overheadRecovery * recoveryGap;
+  const lostProfit = profitMargin * recoveryGap;
+  const insuranceWaste = fleetValue * (ghostEquipment / 100) * INSURANCE_RATE;
+
+  // Totals
+  const totalAnnualLoss = unbilledDepreciation + lostOverhead + lostProfit + insuranceWaste;
+  const perJobLoss = totalAnnualLoss / jobsPerYear;
 
   return (
     <div className="min-h-screen bg-background">
@@ -369,61 +389,172 @@ export default function Landing() {
                 </p>
               </div>
               
-              {/* Revenue Loss Calculator */}
-              <div className="bg-muted/50 rounded-lg p-6 mb-8 max-w-xl mx-auto">
+              {/* Cascade Revenue Loss Calculator */}
+              <div className="bg-muted/50 rounded-lg p-6 mb-8 max-w-3xl mx-auto">
                 <h3 className="text-lg font-semibold text-center mb-6">
                   How Much Are You Leaving on the Table?
                 </h3>
                 
-                {/* Fleet Value Slider */}
-                <div className="space-y-2 mb-6">
-                  <div className="flex justify-between text-sm">
-                    <label className="text-muted-foreground">Fleet Value</label>
-                    <span className="font-mono font-medium text-foreground">{formatCurrency(fleetValue)}</span>
+                <div className="grid md:grid-cols-2 gap-8">
+                  {/* Left Column - Inputs */}
+                  <div className="space-y-5">
+                    {/* Fleet Value Slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <label className="text-muted-foreground">Fleet Value</label>
+                        <span className="font-mono font-medium text-foreground">{formatCurrency(fleetValue)}</span>
+                      </div>
+                      <Slider 
+                        value={[fleetValue]} 
+                        onValueChange={([v]) => setFleetValue(v)}
+                        min={50000} 
+                        max={2000000} 
+                        step={25000}
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>$50K</span>
+                        <span>$2M</span>
+                      </div>
+                    </div>
+                    
+                    {/* Useful Life Slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <label className="text-muted-foreground">Average Useful Life</label>
+                        <span className="font-mono font-medium text-foreground">{usefulLife} years</span>
+                      </div>
+                      <Slider 
+                        value={[usefulLife]} 
+                        onValueChange={([v]) => setUsefulLife(v)}
+                        min={5} 
+                        max={15} 
+                        step={1}
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>5 yrs</span>
+                        <span>15 yrs</span>
+                      </div>
+                    </div>
+                    
+                    {/* Current Recovery Slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <label className="text-muted-foreground">Current Equipment Cost Recovery</label>
+                        <span className="font-mono font-medium text-foreground">{currentRecovery}%</span>
+                      </div>
+                      <Slider 
+                        value={[currentRecovery]} 
+                        onValueChange={([v]) => setCurrentRecovery(v)}
+                        min={0} 
+                        max={100} 
+                        step={5}
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>0% (none)</span>
+                        <span>100% (full)</span>
+                      </div>
+                    </div>
+                    
+                    {/* Ghost Equipment Slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <label className="text-muted-foreground">Ghost Equipment on Insurance</label>
+                        <span className="font-mono font-medium text-foreground">{ghostEquipment}%</span>
+                      </div>
+                      <Slider 
+                        value={[ghostEquipment]} 
+                        onValueChange={([v]) => setGhostEquipment(v)}
+                        min={0} 
+                        max={15} 
+                        step={1}
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>0%</span>
+                        <span>15%</span>
+                      </div>
+                    </div>
+                    
+                    {/* Jobs Per Year Slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <label className="text-muted-foreground">Jobs Per Year</label>
+                        <span className="font-mono font-medium text-foreground">{jobsPerYear}</span>
+                      </div>
+                      <Slider 
+                        value={[jobsPerYear]} 
+                        onValueChange={([v]) => setJobsPerYear(v)}
+                        min={10} 
+                        max={200} 
+                        step={5}
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>10</span>
+                        <span>200</span>
+                      </div>
+                    </div>
                   </div>
-                  <Slider 
-                    value={[fleetValue]} 
-                    onValueChange={([v]) => setFleetValue(v)}
-                    min={50000} 
-                    max={2000000} 
-                    step={25000}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>$50K</span>
-                    <span>$2M</span>
+                  
+                  {/* Right Column - Results */}
+                  <div className="space-y-4">
+                    {/* Full Recovery Target */}
+                    <div className="p-4 bg-background rounded-lg border border-border">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Full Recovery Target</p>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Depreciation (COGS)</span>
+                          <span className="font-mono text-foreground">{formatCurrency(annualDepreciation)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Overhead (25%)</span>
+                          <span className="font-mono text-foreground">{formatCurrency(overheadRecovery)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Profit (10%)</span>
+                          <span className="font-mono text-foreground">{formatCurrency(profitMargin)}</span>
+                        </div>
+                        <div className="flex justify-between pt-2 border-t border-border font-medium">
+                          <span className="text-foreground">Target/Year</span>
+                          <span className="font-mono text-primary">{formatCurrency(fullRecovery)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* The Gap Breakdown */}
+                    <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                      <p className="text-xs text-destructive uppercase tracking-wide mb-2">The Gap</p>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Unbilled Depreciation</span>
+                          <span className="font-mono text-destructive">{formatCurrency(unbilledDepreciation)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Lost Overhead</span>
+                          <span className="font-mono text-destructive">{formatCurrency(lostOverhead)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Lost Profit</span>
+                          <span className="font-mono text-destructive">{formatCurrency(lostProfit)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Insurance Waste</span>
+                          <span className="font-mono text-destructive">{formatCurrency(insuranceWaste)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Total Loss */}
+                    <div className="text-center p-4 bg-destructive/15 rounded-lg border border-destructive/30">
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Total Annual Loss
+                      </p>
+                      <p className="text-3xl font-bold text-destructive font-mono">
+                        {formatCurrency(totalAnnualLoss)}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        <span className="font-medium text-foreground">{formatCurrency(perJobLoss)}</span> per job
+                      </p>
+                    </div>
                   </div>
-                </div>
-                
-                {/* Jobs Per Year Slider */}
-                <div className="space-y-2 mb-8">
-                  <div className="flex justify-between text-sm">
-                    <label className="text-muted-foreground">Jobs Per Year</label>
-                    <span className="font-mono font-medium text-foreground">{jobsPerYear}</span>
-                  </div>
-                  <Slider 
-                    value={[jobsPerYear]} 
-                    onValueChange={([v]) => setJobsPerYear(v)}
-                    min={10} 
-                    max={200} 
-                    step={5}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>10</span>
-                    <span>200</span>
-                  </div>
-                </div>
-                
-                {/* Result Display */}
-                <div className="text-center p-6 bg-destructive/10 rounded-lg border border-destructive/20">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Potential annual revenue loss
-                  </p>
-                  <p className="text-3xl font-bold text-destructive font-mono">
-                    {formatCurrency(annualLoss)}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    That's <span className="font-medium text-foreground">{formatCurrency(perJobLoss)}</span> per job
-                  </p>
                 </div>
               </div>
               
