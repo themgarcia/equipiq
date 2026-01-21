@@ -14,15 +14,15 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 import { 
   Scale, 
   TrendingUp, 
   TrendingDown, 
   DollarSign, 
   Calendar,
-  Info,
-  Lock
+  Lock,
+  Info
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from 'recharts';
 import { BuyVsRentInput, EquipmentCategory } from '@/types/equipment';
@@ -202,19 +202,10 @@ export default function BuyVsRentAnalysis() {
         {/* Header */}
         <div className="mb-8">
           <div className="accent-line mb-4" />
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            Buy vs. Rent Analysis
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-5 w-5 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p>Enter details about equipment you're considering to see whether buying or renting makes more financial sense</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </h1>
+          <h1 className="text-3xl font-bold">Buy vs. Rent Analysis</h1>
+          <p className="text-muted-foreground mt-1">
+            Enter details about equipment you're considering to see whether buying or renting makes more financial sense
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
