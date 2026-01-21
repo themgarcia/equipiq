@@ -17,7 +17,9 @@ import {
   HelpCircle,
   BarChart3,
   Calculator,
-  AlertTriangle
+  AlertTriangle,
+  Users,
+  Quote
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -235,6 +237,30 @@ export default function Landing() {
                 <span>{benefit}</span>
               </div>
             ))}
+          </div>
+
+          {/* Social Proof */}
+          <div className="mt-16 pt-8 border-t border-border">
+            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-6">
+              <Users className="h-4 w-4" />
+              <span className="text-sm font-medium">Trusted by contractors managing $1M+ in equipment</span>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 max-w-2xl mx-auto">
+              <div className="bg-muted/50 rounded-lg p-4 text-left">
+                <Quote className="h-4 w-4 text-primary mb-2" />
+                <p className="text-sm text-foreground italic mb-2">
+                  "Finally know what my fleet actually costs me each month. Game changer for budgeting."
+                </p>
+                <p className="text-xs text-muted-foreground">— General Contractor, TX</p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4 text-left">
+                <Quote className="h-4 w-4 text-primary mb-2" />
+                <p className="text-sm text-foreground italic mb-2">
+                  "Uploaded my insurance policy and it matched everything to my equipment. Took 30 seconds."
+                </p>
+                <p className="text-xs text-muted-foreground">— Excavation Contractor, OH</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
