@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { BuyVsRentSkeleton } from '@/components/PageSkeletons';
+import { FinancialValue } from '@/components/ui/financial-value';
 
 // Derive categories from categoryDefaults
 const categories: EquipmentCategory[] = categoryDefaults.map(c => c.category);
@@ -652,11 +653,8 @@ export default function BuyVsRentAnalysis() {
                             <TableCell className="text-right font-mono-nums">
                               {formatCurrency(row.rentCumulative)}
                             </TableCell>
-                            <TableCell className={cn(
-                              'text-right font-mono-nums font-medium',
-                              row.savings > 0 ? 'text-success' : 'text-destructive'
-                            )}>
-                              {row.savings > 0 ? '+' : ''}{formatCurrency(row.savings)}
+                            <TableCell className="text-right">
+                              <FinancialValue value={row.savings} weight="medium" />
                             </TableCell>
                           </TableRow>
                         ))}

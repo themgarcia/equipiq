@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { FinancialValue } from '@/components/ui/financial-value';
 
 interface MetricCardProps {
   title: string;
@@ -47,12 +48,12 @@ export function MetricCard({
       </div>
       {trend && (
         <div className="mt-3 flex items-center gap-1 text-xs">
-          <span className={cn(
-            'font-medium',
-            trend.value >= 0 ? 'text-success' : 'text-destructive'
-          )}>
-            {trend.value >= 0 ? '+' : ''}{trend.value}%
-          </span>
+          <FinancialValue 
+            value={trend.value} 
+            format="percent" 
+            weight="medium" 
+            size="sm"
+          />
           <span className="text-muted-foreground">{trend.label}</span>
         </div>
       )}

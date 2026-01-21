@@ -54,6 +54,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { CashflowSkeleton } from '@/components/PageSkeletons';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { FinancialValue } from '@/components/ui/financial-value';
 
 type StatusFilter = 'all' | 'surplus' | 'neutral' | 'shortfall';
 type FinancingFilter = 'all' | 'owned' | 'financed' | 'leased';
@@ -562,12 +563,11 @@ export default function CashflowAnalysis() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className={`text-2xl font-bold ${
-                portfolioSummary.netAnnualCashflow >= 0 ? 'text-success' : 'text-destructive'
-              }`}>
-                {portfolioSummary.netAnnualCashflow >= 0 ? '+' : ''}
-                {formatCurrency(portfolioSummary.netAnnualCashflow)}
-              </p>
+              <FinancialValue 
+                value={portfolioSummary.netAnnualCashflow} 
+                size="2xl" 
+                weight="bold" 
+              />
               <p className="text-xs text-muted-foreground mt-1">
                 {getStatusBadge(portfolioSummary.overallStatus)}
               </p>
