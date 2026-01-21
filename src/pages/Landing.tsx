@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Package,
@@ -22,6 +23,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Slider } from '@/components/ui/slider';
+import { formatCurrency } from '@/lib/calculations';
 
 const painPoints = [
   "What's my total monthly equipment debt?",
@@ -126,6 +129,15 @@ const features = [
 
 export default function Landing() {
   const { user } = useAuth();
+  
+  // Revenue calculator state
+  const [fleetValue, setFleetValue] = useState(250000);
+  const [jobsPerYear, setJobsPerYear] = useState(50);
+  
+  // Conservative 3% unbilled rate assumption
+  const UNBILLED_RATE = 0.03;
+  const annualLoss = fleetValue * UNBILLED_RATE;
+  const perJobLoss = annualLoss / jobsPerYear;
 
   return (
     <div className="min-h-screen bg-background">
@@ -355,6 +367,64 @@ export default function Landing() {
                 <p className="text-muted-foreground max-w-2xl mx-auto">
                   Most contractors don't charge for equipment—or they guess. That's money left on the table every single job.
                 </p>
+              </div>
+              
+              {/* Revenue Loss Calculator */}
+              <div className="bg-muted/50 rounded-lg p-6 mb-8 max-w-xl mx-auto">
+                <h3 className="text-lg font-semibold text-center mb-6">
+                  How Much Are You Leaving on the Table?
+                </h3>
+                
+                {/* Fleet Value Slider */}
+                <div className="space-y-2 mb-6">
+                  <div className="flex justify-between text-sm">
+                    <label className="text-muted-foreground">Fleet Value</label>
+                    <span className="font-mono font-medium text-foreground">{formatCurrency(fleetValue)}</span>
+                  </div>
+                  <Slider 
+                    value={[fleetValue]} 
+                    onValueChange={([v]) => setFleetValue(v)}
+                    min={50000} 
+                    max={2000000} 
+                    step={25000}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>$50K</span>
+                    <span>$2M</span>
+                  </div>
+                </div>
+                
+                {/* Jobs Per Year Slider */}
+                <div className="space-y-2 mb-8">
+                  <div className="flex justify-between text-sm">
+                    <label className="text-muted-foreground">Jobs Per Year</label>
+                    <span className="font-mono font-medium text-foreground">{jobsPerYear}</span>
+                  </div>
+                  <Slider 
+                    value={[jobsPerYear]} 
+                    onValueChange={([v]) => setJobsPerYear(v)}
+                    min={10} 
+                    max={200} 
+                    step={5}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>10</span>
+                    <span>200</span>
+                  </div>
+                </div>
+                
+                {/* Result Display */}
+                <div className="text-center p-6 bg-destructive/10 rounded-lg border border-destructive/20">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Potential annual revenue loss
+                  </p>
+                  <p className="text-3xl font-bold text-destructive font-mono">
+                    {formatCurrency(annualLoss)}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    That's <span className="font-medium text-foreground">{formatCurrency(perJobLoss)}</span> per job
+                  </p>
+                </div>
               </div>
               
               <div className="grid gap-6 md:grid-cols-3 mb-8">
