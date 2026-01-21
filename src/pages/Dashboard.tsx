@@ -116,7 +116,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="mb-8">
           <div className="accent-line mb-4" />
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
             Overview of your equipment fleet and allocations
           </p>

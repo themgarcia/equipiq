@@ -203,7 +203,7 @@ export default function BuyVsRentAnalysis() {
         {/* Header */}
         <div className="mb-8">
           <div className="accent-line mb-4" />
-          <h1 className="text-3xl font-bold">Buy vs. Rent Analysis</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Buy vs. Rent Analysis</h1>
           <p className="text-muted-foreground mt-1">
             Enter details about equipment you're considering to see whether buying or renting makes more financial sense
           </p>

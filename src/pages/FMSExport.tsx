@@ -226,7 +226,7 @@ export default function FMSExport() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <div className="accent-line mb-4" />
-            <h1 className="text-3xl font-bold">FMS Export</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">FMS Export</h1>
             <p className="text-muted-foreground mt-1">
               Copy-ready data for Field Management Software
             </p>

@@ -410,7 +410,7 @@ export default function Definitions() {
         {/* Header */}
         <div className="mb-8">
           <div className="accent-line mb-4" />
-          <h1 className="text-3xl font-bold">Definitions & Reference</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Definitions & Reference</h1>
           <p className="text-muted-foreground mt-1">
             Understand the concepts and logic behind equipment tracking
           </p>
