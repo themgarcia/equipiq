@@ -2047,7 +2047,7 @@ export default function AdminDashboard() {
 
             {/* Top Sources Cards */}
             {referralSourceStats.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {referralSourceStats.slice(0, 4).map((stat, index) => (
                   <Card key={stat.name}>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
