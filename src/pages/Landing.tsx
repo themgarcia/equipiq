@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { 
-  Package, 
+  Package,
   FileSpreadsheet, 
   Scale, 
   Wallet, 
@@ -13,11 +13,9 @@ import {
   ShieldCheck,
   Upload,
   Brain,
-  FileCheck,
   HelpCircle,
   BarChart3,
-  Calculator,
-  AlertTriangle
+  Calculator
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -237,13 +235,6 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Trust Indicator */}
-          <div className="mt-16 pt-8 border-t border-border">
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Package className="h-4 w-4" />
-              <span className="text-sm font-medium">Built for contractors managing heavy equipment fleets</span>
-            </div>
-          </div>
         </div>
       </section>
 
