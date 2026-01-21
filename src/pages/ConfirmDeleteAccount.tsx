@@ -68,7 +68,7 @@ export default function ConfirmDeleteAccount() {
         {status === 'success' && (
           <>
             <CardHeader className="text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
+              <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-4" />
               <CardTitle>Account Deleted</CardTitle>
               <CardDescription>
                 Your account and all associated data have been permanently deleted.
@@ -88,7 +88,7 @@ export default function ConfirmDeleteAccount() {
         {status === 'expired' && (
           <>
             <CardHeader className="text-center">
-              <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+              <AlertTriangle className="h-12 w-12 text-warning mx-auto mb-4" />
               <CardTitle>Link Expired</CardTitle>
               <CardDescription>
                 This deletion confirmation link has expired.

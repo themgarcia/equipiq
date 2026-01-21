@@ -34,9 +34,9 @@ export default function Billing() {
 
           {/* Impersonation Mode Banner */}
           {isImpersonating && (
-            <Card className="border-orange-500/50 bg-orange-500/10">
+            <Card className="border-warning/50 bg-warning/10">
               <CardContent className="py-3">
-                <p className="text-sm text-orange-600 dark:text-orange-400 flex items-center gap-2">
+                <p className="text-sm text-warning flex items-center gap-2">
                   <ShieldAlert className="h-4 w-4" />
                   Impersonation Mode: Viewing billing data only. Changes are disabled.
                 </p>
@@ -46,9 +46,9 @@ export default function Billing() {
 
           {/* Demo Mode Banner */}
           {isDemo && !isImpersonating && (
-            <Card className="border-amber-500/50 bg-amber-500/10">
+            <Card className="border-warning/50 bg-warning/10">
               <CardContent className="py-3">
-                <p className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                <p className="text-sm text-warning flex items-center gap-2">
                   <Crown className="h-4 w-4" />
                   Demo Mode: Simulating full access. Changes won't be saved.
                 </p>

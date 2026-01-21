@@ -654,7 +654,7 @@ export default function BuyVsRentAnalysis() {
                             </TableCell>
                             <TableCell className={cn(
                               'text-right font-mono-nums font-medium',
-                              row.savings > 0 ? 'text-green-600' : 'text-red-600'
+                              row.savings > 0 ? 'text-success' : 'text-destructive'
                             )}>
                               {row.savings > 0 ? '+' : ''}{formatCurrency(row.savings)}
                             </TableCell>

@@ -418,13 +418,13 @@ export default function EquipmentList() {
                                       <div className="flex items-center gap-1.5">
                                         <StatusBadge status={equipment.status} />
                                         {equipment.allocationType === 'owner_perk' && (
-                                          <Badge variant="outline" className="text-amber-600 border-amber-300 text-[10px] px-1.5 py-0">
+                                          <Badge variant="outline" className="text-warning border-warning/50 text-[10px] px-1.5 py-0">
                                             <User className="h-3 w-3 mr-0.5" />
                                             Perk
                                           </Badge>
                                         )}
                                         {equipment.allocationType === 'overhead_only' && (
-                                          <Badge variant="outline" className="text-blue-600 border-blue-300 text-[10px] px-1.5 py-0">
+                                          <Badge variant="outline" className="text-info border-info/50 text-[10px] px-1.5 py-0">
                                             <Building2 className="h-3 w-3 mr-0.5" />
                                             OH
                                           </Badge>
@@ -592,13 +592,13 @@ export default function EquipmentList() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <StatusBadge status={selectedEquipmentForSheet.status} />
                           {selectedEquipmentForSheet.allocationType === 'owner_perk' && (
-                            <Badge variant="outline" className="text-amber-600 border-amber-300">
+                            <Badge variant="outline" className="text-warning border-warning/50">
                               <User className="h-3 w-3 mr-1" />
                               Owner Perk
                             </Badge>
                           )}
                           {selectedEquipmentForSheet.allocationType === 'overhead_only' && (
-                            <Badge variant="outline" className="text-blue-600 border-blue-300">
+                            <Badge variant="outline" className="text-info border-info/50">
                               <Building2 className="h-3 w-3 mr-1" />
                               Overhead Only
                             </Badge>

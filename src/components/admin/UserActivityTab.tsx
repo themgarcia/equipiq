@@ -43,12 +43,12 @@ const actionTypeLabels: Record<string, string> = {
 };
 
 const actionTypeIcons: Record<string, React.ReactNode> = {
-  'equipment_import_success': <Upload className="h-4 w-4 text-green-600" />,
-  'insurance_import_success': <Shield className="h-4 w-4 text-blue-600" />,
+  'equipment_import_success': <Upload className="h-4 w-4 text-success" />,
+  'insurance_import_success': <Shield className="h-4 w-4 text-info" />,
   'equipment_import_failed': <Upload className="h-4 w-4 text-destructive" />,
   'insurance_import_failed': <Shield className="h-4 w-4 text-destructive" />,
   'equipment_create': <Package className="h-4 w-4 text-primary" />,
-  'equipment_update': <Package className="h-4 w-4 text-yellow-600" />,
+  'equipment_update': <Package className="h-4 w-4 text-warning" />,
   'equipment_delete': <Package className="h-4 w-4 text-destructive" />,
 };
 

@@ -63,22 +63,22 @@ type SortDirection = 'asc' | 'desc';
 function getStatusIcon(status: 'surplus' | 'neutral' | 'shortfall') {
   switch (status) {
     case 'surplus':
-      return <CheckCircle className="h-4 w-4 text-green-600" />;
+      return <CheckCircle className="h-4 w-4 text-success" />;
     case 'neutral':
-      return <MinusCircle className="h-4 w-4 text-yellow-600" />;
+      return <MinusCircle className="h-4 w-4 text-warning" />;
     case 'shortfall':
-      return <AlertCircle className="h-4 w-4 text-red-600" />;
+      return <AlertCircle className="h-4 w-4 text-destructive" />;
   }
 }
 
 function getStatusBadge(status: 'surplus' | 'neutral' | 'shortfall') {
   switch (status) {
     case 'surplus':
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Surplus</Badge>;
+      return <Badge className="bg-success/10 text-success hover:bg-success/10">Surplus</Badge>;
     case 'neutral':
-      return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Neutral</Badge>;
+      return <Badge className="bg-warning/10 text-warning hover:bg-warning/10">Neutral</Badge>;
     case 'shortfall':
-      return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Shortfall</Badge>;
+      return <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/10">Shortfall</Badge>;
   }
 }
 
@@ -133,9 +133,9 @@ function PaybackDialog({ equipment, calculated, open, onOpenChange }: PaybackDia
               </p>
             </div>
             {paybackMonth !== null ? (
-              <CheckCircle className="h-8 w-8 text-green-600" />
+              <CheckCircle className="h-8 w-8 text-success" />
             ) : (
-              <AlertCircle className="h-8 w-8 text-yellow-600" />
+              <AlertCircle className="h-8 w-8 text-warning" />
             )}
           </div>
           
@@ -379,7 +379,7 @@ export default function CashflowAnalysis() {
   // Helper to format payoff date display
   const getPayoffDateDisplay = (cashflow: EquipmentCashflow, financingType: string) => {
     if (financingType === 'owned') {
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Paid in Full</Badge>;
+      return <Badge className="bg-success/10 text-success hover:bg-success/10">Paid in Full</Badge>;
     }
     if (!cashflow.payoffDate) {
       return <span className="text-muted-foreground">—</span>;
@@ -387,15 +387,15 @@ export default function CashflowAnalysis() {
     const payoffDate = new Date(cashflow.payoffDate);
     const now = new Date();
     if (isBefore(payoffDate, now)) {
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Complete</Badge>;
+      return <Badge className="bg-success/10 text-success hover:bg-success/10">Complete</Badge>;
     }
     // Color code based on time remaining
     const monthsLeft = cashflow.remainingPayments;
     let badgeClass = "bg-muted text-muted-foreground";
     if (monthsLeft <= 12) {
-      badgeClass = "bg-green-100 text-green-800";
+      badgeClass = "bg-success/10 text-success";
     } else if (monthsLeft <= 24) {
-      badgeClass = "bg-yellow-100 text-yellow-800";
+      badgeClass = "bg-warning/10 text-warning";
     }
     return (
       <Badge className={`${badgeClass} hover:${badgeClass}`}>
@@ -528,7 +528,7 @@ export default function CashflowAnalysis() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-success">
                 {formatCurrency(portfolioSummary.totalAnnualRecovery)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -545,7 +545,7 @@ export default function CashflowAnalysis() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-2xl font-bold text-destructive">
                 {formatCurrency(portfolioSummary.totalAnnualPayments)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -563,7 +563,7 @@ export default function CashflowAnalysis() {
             </CardHeader>
             <CardContent>
               <p className={`text-2xl font-bold ${
-                portfolioSummary.netAnnualCashflow >= 0 ? 'text-green-600' : 'text-red-600'
+                portfolioSummary.netAnnualCashflow >= 0 ? 'text-success' : 'text-destructive'
               }`}>
                 {portfolioSummary.netAnnualCashflow >= 0 ? '+' : ''}
                 {formatCurrency(portfolioSummary.netAnnualCashflow)}
@@ -796,17 +796,17 @@ export default function CashflowAnalysis() {
                 {/* Legend */}
                 <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-0.5 bg-green-600"></div>
+                    <div className="w-4 h-0.5 bg-success"></div>
                     <span className="text-muted-foreground">Annual Recovery (from job pricing)</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-0.5 bg-red-500"></div>
+                    <div className="w-4 h-0.5 bg-destructive"></div>
                     <span className="text-muted-foreground">Annual Payments (financing)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-3 flex overflow-hidden rounded-sm">
-                      <div className="w-2 h-full bg-green-600/30"></div>
-                      <div className="w-2 h-full bg-red-500/30"></div>
+                      <div className="w-2 h-full bg-success/30"></div>
+                      <div className="w-2 h-full bg-destructive/30"></div>
                     </div>
                     <span className="text-muted-foreground">Net Cashflow</span>
                     <TooltipProvider>
@@ -828,7 +828,7 @@ export default function CashflowAnalysis() {
                     </TooltipProvider>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-amber-500 border-2 border-background"></div>
+                    <div className="w-3 h-3 rounded-full bg-warning border-2 border-background"></div>
                     <span className="text-muted-foreground">Payoff event</span>
                   </div>
                 </div>
@@ -923,14 +923,14 @@ export default function CashflowAnalysis() {
                       <TableCell>
                         {getPayoffDateDisplay(cashflow, eq.financingType)}
                       </TableCell>
-                      <TableCell className="text-right text-green-600">
+                      <TableCell className="text-right text-success">
                         {formatCurrency(cashflow.annualEconomicRecovery)}
                       </TableCell>
-                      <TableCell className="text-right text-red-600">
+                      <TableCell className="text-right text-destructive">
                         {formatCurrency(cashflow.annualCashOutflow)}
                       </TableCell>
                       <TableCell className={`text-right font-medium ${
-                        cashflow.annualSurplusShortfall >= 0 ? 'text-green-600' : 'text-red-600'
+                        cashflow.annualSurplusShortfall >= 0 ? 'text-success' : 'text-destructive'
                       }`}>
                         {cashflow.annualSurplusShortfall >= 0 ? '+' : ''}
                         {formatCurrency(cashflow.annualSurplusShortfall)}
