@@ -28,7 +28,7 @@ export default function Billing() {
         <div className="space-y-8">
           <div>
             <div className="accent-line mb-4" />
-            <h1 className="text-3xl font-bold">Billing & Subscription</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Billing & Subscription</h1>
             <p className="text-muted-foreground mt-1">View your access and usage</p>
           </div>
 

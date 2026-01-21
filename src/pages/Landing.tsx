@@ -307,7 +307,7 @@ export default function Landing() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {equipmentDataPoints.map((point) => (
                     <div key={point.text} className="flex items-center gap-3">
                       <point.icon className="h-5 w-5 text-primary flex-shrink-0" />
@@ -332,7 +332,7 @@ export default function Landing() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {insuranceDataPoints.map((point) => (
                     <div key={point.text} className="flex items-center gap-3">
                       <point.icon className="h-5 w-5 text-primary flex-shrink-0" />

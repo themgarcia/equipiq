@@ -237,7 +237,7 @@ export default function Feedback() {
         <div className="max-w-4xl mx-auto space-y-8">
           <div>
             <div className="accent-line mb-4" />
-            <h1 className="text-3xl font-bold flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
               <MessageSquare className="h-8 w-8 text-primary" />
               Feedback
             </h1>
