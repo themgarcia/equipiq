@@ -22,7 +22,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { AlertTriangle, RefreshCw, Search, CheckCircle, Clock, Loader2, CalendarIcon, Download, X, Copy, Check } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Search, CheckCircle, Clock, Loader2, CalendarIcon, Download, X, Copy, Check, ChevronRight } from 'lucide-react';
+import { useDeviceType } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -57,6 +58,8 @@ const sourceLabels: Record<string, string> = {
 };
 
 export function ErrorLogTab() {
+  const deviceType = useDeviceType();
+  const isPhone = deviceType === 'phone';
   const [errors, setErrors] = useState<ErrorLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -397,7 +400,51 @@ export function ErrorLogTab() {
               <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50 text-success" />
               <p>No errors found matching your filters.</p>
             </div>
+          ) : isPhone ? (
+            /* Mobile Card View */
+            <div className="space-y-3">
+              {filteredErrors.map((error) => (
+                <div
+                  key={error.id}
+                  onClick={() => openErrorDetails(error)}
+                  className="p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{error.error_message}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {format(new Date(error.created_at), 'MMM d, h:mm a')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {error.resolved ? (
+                        <CheckCircle className="h-4 w-4 text-success" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-warning" />
+                      )}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className={`text-xs ${severityColors[error.severity] || ''}`}>
+                      {error.severity}
+                    </Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {sourceLabels[error.error_source] || error.error_source}
+                    </Badge>
+                  </div>
+                  <div className="mt-2">
+                    <UserDisplayCell
+                      userId={error.user_id}
+                      displayName={getDisplayName(error.user_id)}
+                      onUserClick={handleUserClick}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
+            /* Desktop Table View */
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -509,7 +556,7 @@ export function ErrorLogTab() {
                 </div>
 
                 {/* Basic Info */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">Source:</span>
                     <p className="font-medium">{sourceLabels[selectedError.error_source] || selectedError.error_source}</p>

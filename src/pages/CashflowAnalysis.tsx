@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Layout } from '@/components/Layout';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { useDeviceType } from '@/hooks/use-mobile';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -224,6 +225,8 @@ function PaybackDialog({ equipment, calculated, open, onOpenChange }: PaybackDia
 export default function CashflowAnalysis() {
   const { equipment, calculatedEquipment, loading } = useEquipment();
   const { canUseCashflow, effectivePlan, subscription } = useSubscription();
+  const deviceType = useDeviceType();
+  const isPhone = deviceType === 'phone';
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [financingFilter, setFinancingFilter] = useState<FinancingFilter>('all');
   const [selectedEquipment, setSelectedEquipment] = useState<{
@@ -889,30 +892,80 @@ export default function CashflowAnalysis() {
         
         {/* Equipment Table */}
         <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableHeader field="name">Equipment</SortableHeader>
-                  <SortableHeader field="category">Category</SortableHeader>
-                  <SortableHeader field="financingType">Financing</SortableHeader>
-                  <SortableHeader field="payoffDate">Payoff Date</SortableHeader>
-                  <SortableHeader field="annualRecovery" className="text-right">Annual Recovery</SortableHeader>
-                  <SortableHeader field="annualPayments" className="text-right">Annual Payments</SortableHeader>
-                  <SortableHeader field="surplusShortfall" className="text-right">Surplus/Shortfall</SortableHeader>
-                  <SortableHeader field="status">Status</SortableHeader>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedEquipment.length === 0 ? (
+          <CardContent className={isPhone ? "p-3" : "p-0"}>
+            {sortedEquipment.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No active equipment matches your filters
+              </div>
+            ) : isPhone ? (
+              /* Mobile Card View */
+              <div className="space-y-3">
+                {sortedEquipment.map(({ equipment: eq, calculated, cashflow }) => (
+                  <div
+                    key={eq.id}
+                    onClick={() => setSelectedEquipment({ equipment: eq, calculated })}
+                    className="p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{eq.name}</p>
+                        <p className="text-sm text-muted-foreground truncate">{eq.category}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {getStatusIcon(cashflow.cashflowStatus)}
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="capitalize text-xs">
+                        {eq.financingType}
+                      </Badge>
+                      {getPayoffDateDisplay(cashflow, eq.financingType)}
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Recovery</p>
+                        <p className="font-medium text-success font-mono-nums">
+                          {formatCurrency(cashflow.annualEconomicRecovery)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Payments</p>
+                        <p className="font-medium text-destructive font-mono-nums">
+                          {formatCurrency(cashflow.annualCashOutflow)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Net</p>
+                        <p className={`font-medium font-mono-nums ${
+                          cashflow.annualSurplusShortfall >= 0 ? 'text-success' : 'text-destructive'
+                        }`}>
+                          {cashflow.annualSurplusShortfall >= 0 ? '+' : ''}
+                          {formatCurrency(cashflow.annualSurplusShortfall)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Desktop Table View */
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                      No active equipment matches your filters
-                    </TableCell>
+                    <SortableHeader field="name">Equipment</SortableHeader>
+                    <SortableHeader field="category">Category</SortableHeader>
+                    <SortableHeader field="financingType">Financing</SortableHeader>
+                    <SortableHeader field="payoffDate">Payoff Date</SortableHeader>
+                    <SortableHeader field="annualRecovery" className="text-right">Annual Recovery</SortableHeader>
+                    <SortableHeader field="annualPayments" className="text-right">Annual Payments</SortableHeader>
+                    <SortableHeader field="surplusShortfall" className="text-right">Surplus/Shortfall</SortableHeader>
+                    <SortableHeader field="status">Status</SortableHeader>
+                    <TableHead></TableHead>
                   </TableRow>
-                ) : (
-                  sortedEquipment.map(({ equipment: eq, calculated, cashflow }) => (
+                </TableHeader>
+                <TableBody>
+                  {sortedEquipment.map(({ equipment: eq, calculated, cashflow }) => (
                     <TableRow key={eq.id}>
                       <TableCell className="font-medium">{eq.name}</TableCell>
                       <TableCell className="text-muted-foreground">{eq.category}</TableCell>
@@ -949,10 +1002,10 @@ export default function CashflowAnalysis() {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
         
