@@ -122,7 +122,7 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+          className="relative h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent/50"
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
