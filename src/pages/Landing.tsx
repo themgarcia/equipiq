@@ -17,9 +17,7 @@ import {
   HelpCircle,
   BarChart3,
   Calculator,
-  AlertTriangle,
-  Users,
-  Quote
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,6 +72,11 @@ const whatYoullKnow = [
     icon: TrendingUp,
   },
   {
+    question: 'What should I charge for this equipment on the job?',
+    source: 'FMS Export',
+    icon: FileSpreadsheet,
+  },
+  {
     question: 'Should I buy or rent the next piece?',
     source: 'Buy vs Rent tool',
     icon: Calculator,
@@ -87,11 +90,6 @@ const whatYoullKnow = [
     question: "What's coming off lease in the next 6 months?",
     source: 'Upcoming payoffs',
     icon: Clock,
-  },
-  {
-    question: 'Am I over-insured or under?',
-    source: 'Insurance gaps report',
-    icon: AlertTriangle,
   },
 ];
 
@@ -124,7 +122,7 @@ const features = [
   {
     icon: FileSpreadsheet,
     title: 'FMS Export',
-    description: 'Export equipment data directly to your Field Management Software.',
+    description: 'Copy equipment costs into your estimating software—stop giving away equipment for free.',
   },
 ];
 
@@ -239,27 +237,11 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Social Proof */}
+          {/* Trust Indicator */}
           <div className="mt-16 pt-8 border-t border-border">
-            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-6">
-              <Users className="h-4 w-4" />
-              <span className="text-sm font-medium">Trusted by contractors managing $1M+ in equipment</span>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2 max-w-2xl mx-auto">
-              <div className="bg-muted/50 rounded-lg p-4 text-left">
-                <Quote className="h-4 w-4 text-primary mb-2" />
-                <p className="text-sm text-foreground italic mb-2">
-                  "Finally know what my fleet actually costs me each month. Game changer for budgeting."
-                </p>
-                <p className="text-xs text-muted-foreground">— General Contractor, TX</p>
-              </div>
-              <div className="bg-muted/50 rounded-lg p-4 text-left">
-                <Quote className="h-4 w-4 text-primary mb-2" />
-                <p className="text-sm text-foreground italic mb-2">
-                  "Uploaded my insurance policy and it matched everything to my equipment. Took 30 seconds."
-                </p>
-                <p className="text-xs text-muted-foreground">— Excavation Contractor, OH</p>
-              </div>
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Package className="h-4 w-4" />
+              <span className="text-sm font-medium">Built for contractors managing heavy equipment fleets</span>
             </div>
           </div>
         </div>
