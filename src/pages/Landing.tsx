@@ -473,7 +473,7 @@ export default function Landing() {
                                 <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent side="top" className="max-w-[220px]">
-                                <p className="text-xs">What percentage of your equipment costs are you currently billing customers? Most contractors recover 40-60%.</p>
+                                <p className="text-xs">What percentage of your equipment ownership costs (depreciation, overhead, margin) are you currently billing to jobs?</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -579,26 +579,29 @@ export default function Landing() {
                           <span className="font-mono text-primary">{formatCurrency(fullRecovery)}</span>
                         </div>
                       </div>
+                      <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
+                        Recovery methodology: Depreciation + overhead + margin
+                      </p>
                     </div>
                     
                     {/* The Gap Breakdown */}
                     <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
-                      <p className="text-xs text-destructive uppercase tracking-wide mb-2">The Gap</p>
+                      <p className="text-xs text-destructive uppercase tracking-wide mb-2">Unrecovered Costs + Margin</p>
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Unbilled Depreciation</span>
+                          <span className="text-muted-foreground">Depreciation Not Billed</span>
                           <span className="font-mono text-destructive">{formatCurrency(unbilledDepreciation)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Lost Overhead</span>
+                          <span className="text-muted-foreground">Overhead Not Recovered</span>
                           <span className="font-mono text-destructive">{formatCurrency(lostOverhead)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Lost Profit</span>
+                          <span className="text-muted-foreground">Margin Not Captured</span>
                           <span className="font-mono text-destructive">{formatCurrency(lostProfit)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Insurance Waste</span>
+                          <span className="text-muted-foreground">Insurance Overpayment</span>
                           <span className="font-mono text-destructive">{formatCurrency(insuranceWaste)}</span>
                         </div>
                       </div>
@@ -613,7 +616,10 @@ export default function Landing() {
                         {formatCurrency(totalAnnualLoss)}
                       </p>
                       <p className="text-sm text-muted-foreground mt-2">
-                        <span className="font-medium text-foreground">{formatCurrency(perJobLoss)}</span> per job
+                        <span className="font-medium text-foreground">{formatCurrency(perJobLoss)}</span> per job (est.)
+                      </p>
+                      <p className="text-xs text-muted-foreground/70 mt-3">
+                        Estimates based on your inputs. Actual recovery depends on your costing methods and billing practices.
                       </p>
                     </div>
                   </div>
