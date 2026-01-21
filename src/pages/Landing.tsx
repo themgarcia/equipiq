@@ -25,16 +25,16 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const painPoints = [
   "What's my total monthly equipment debt?",
+  "Am I actually charging enough for equipment on this job?",
   "When should I trade in the excavator?",
   "Are my insurance declarations current?",
-  "Should I lease or buy the next skid steer?",
 ];
 
 const benefits = [
   'Know your true cost of ownership',
-  'See your monthly debt at a glance',
+  'Charge customers accurately for equipment',
   'Track depreciation automatically',
-  'Insurance and equipment in one place',
+  'See your monthly debt at a glance',
 ];
 
 const howItWorksSteps = [
@@ -54,11 +54,16 @@ const howItWorksSteps = [
     icon: BarChart3,
     step: '3',
     title: 'Get Answers',
-    description: 'Total debt, depreciation, replacement timing, insurance gaps—all in one place.',
+    description: 'Total debt, replacement timing—plus exact costs to paste into your estimating software.',
   },
 ];
 
 const whatYoullKnow = [
+  {
+    question: 'How much should I bill for equipment on this job?',
+    source: 'FMS Export',
+    icon: FileSpreadsheet,
+  },
   {
     question: "What's my total monthly payment across all equipment?",
     source: 'Cashflow Analysis',
@@ -68,11 +73,6 @@ const whatYoullKnow = [
     question: 'Which machines are depreciating faster than expected?',
     source: 'Dashboard metrics',
     icon: TrendingUp,
-  },
-  {
-    question: 'What should I charge for this equipment on the job?',
-    source: 'FMS Export',
-    icon: FileSpreadsheet,
   },
   {
     question: 'Should I buy or rent the next piece?',
@@ -216,7 +216,7 @@ export default function Landing() {
             What's my monthly debt load? When should I replace the backhoe? Am I over-insured or under?
           </p>
           <p className="mt-4 text-lg text-foreground font-medium">
-            equipIQ gives you real answers. Just drop in your documents.
+            equipIQ gives you real answers—and the numbers to charge your customers. Just drop in your documents.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" asChild className="text-lg px-8">
@@ -340,15 +340,75 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Stop Giving Away Equipment Section */}
+      <section className="container py-24">
+        <div className="mx-auto max-w-4xl">
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+            <CardContent className="pt-8 pb-8">
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <FileSpreadsheet className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold text-foreground sm:text-3xl mb-4">
+                  Stop Giving Away Equipment for Free
+                </h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Most contractors don't charge for equipment—or they guess. That's money left on the table every single job.
+                </p>
+              </div>
+              
+              <div className="grid gap-6 md:grid-cols-3 mb-8">
+                <div className="text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mx-auto mb-3">
+                    <Calculator className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-1">Calculate</h3>
+                  <p className="text-sm text-muted-foreground">
+                    equipIQ calculates COGS and overhead allocation per piece of equipment
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mx-auto mb-3">
+                    <FileSpreadsheet className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-1">Export</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Copy-paste directly into your estimating or fleet management software
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mx-auto mb-3">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-1">Recover</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Bill accurately on every job. Stop leaving money on the table.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <Button size="lg" asChild>
+                  <Link to="/auth">
+                    Start Charging What You're Owed
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* Features Section */}
-      <section id="features" className="container py-24">
+      <section id="features" className="container py-24 bg-muted/30">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              Built for Contractors
+              Everything You Need to Manage Equipment
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Not a generic asset tracker. equipIQ understands construction equipment, financing, and the decisions you actually make.
+              Built for construction. Not a generic asset tracker.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -401,6 +461,10 @@ export default function Landing() {
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
                   <span>Buy vs Rent and Cashflow analysis included</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <FileSpreadsheet className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>FMS-ready costs to charge customers accurately</span>
                 </li>
               </ul>
               
