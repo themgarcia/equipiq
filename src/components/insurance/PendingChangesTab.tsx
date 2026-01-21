@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Send, Check, CheckCheck } from 'lucide-react';
+import { Copy, Send, Check, CheckCheck, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -28,6 +28,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -37,6 +45,7 @@ import { useToast } from '@/hooks/use-toast';
 import { InsuranceChangeLog, InsuranceSettings } from '@/types/insurance';
 import { generateChangeSummaryTemplate } from '@/lib/insuranceTemplates';
 import { format } from 'date-fns';
+import { useDeviceType } from '@/hooks/use-mobile';
 
 interface PendingChangesTabProps {
   changes: InsuranceChangeLog[];
@@ -56,8 +65,13 @@ export function PendingChangesTab({
   onMarkAllAsSent,
 }: PendingChangesTabProps) {
   const { toast } = useToast();
+  const deviceType = useDeviceType();
+  const isPhone = deviceType === 'phone';
+  
   const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
   const [markAsSentDialogOpen, setMarkAsSentDialogOpen] = useState(false);
+  const [selectedChange, setSelectedChange] = useState<InsuranceChangeLog | null>(null);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
 
   const displayChanges = activeTab === 'pending' ? changes : allChanges;
 
@@ -84,6 +98,11 @@ export function PendingChangesTab({
   const handleMarkAsSent = async () => {
     await onMarkAllAsSent();
     setMarkAsSentDialogOpen(false);
+  };
+
+  const handleOpenDetail = (change: InsuranceChangeLog) => {
+    setSelectedChange(change);
+    setDetailSheetOpen(true);
   };
 
   const getChangeTypeBadge = (type: string) => {
@@ -124,21 +143,120 @@ export function PendingChangesTab({
     return reasonMap[reason] || reason;
   };
 
+  const formatChangeValue = (change: InsuranceChangeLog) => {
+    if (change.changeType === 'removed') {
+      return `$${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()}`;
+    }
+    if (change.changeType === 'added') {
+      return `$${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}`;
+    }
+    return `$${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()} → $${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}`;
+  };
+
+  // Mobile card view
+  const MobileCardView = () => (
+    <div className="space-y-3">
+      {displayChanges.map((change) => (
+        <div
+          key={change.id}
+          onClick={() => handleOpenDetail(change)}
+          className="p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted"
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="font-medium truncate">{change.equipmentName}</p>
+              <p className="text-xs text-muted-foreground">
+                {format(new Date(change.effectiveDate), 'MMM d, yyyy')}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {getStatusBadge(change.status)}
+              <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            {getChangeTypeBadge(change.changeType)}
+            <span className="text-sm font-medium font-mono-nums">
+              {formatChangeValue(change)}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  // Desktop table view
+  const DesktopTableView = () => (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Equipment</TableHead>
+            <TableHead>Change</TableHead>
+            <TableHead className="text-right">Value</TableHead>
+            <TableHead>Reason</TableHead>
+            <TableHead>Status</TableHead>
+            {activeTab === 'pending' && <TableHead className="text-right">Actions</TableHead>}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {displayChanges.map((change) => (
+            <TableRow key={change.id}>
+              <TableCell className="text-muted-foreground">
+                {format(new Date(change.effectiveDate), 'MMM d, yyyy')}
+              </TableCell>
+              <TableCell className="font-medium">{change.equipmentName}</TableCell>
+              <TableCell>{getChangeTypeBadge(change.changeType)}</TableCell>
+              <TableCell className="text-right font-medium font-mono-nums">
+                {formatChangeValue(change)}
+              </TableCell>
+              <TableCell className="text-muted-foreground">{formatReason(change.reason)}</TableCell>
+              <TableCell>{getStatusBadge(change.status)}</TableCell>
+              {activeTab === 'pending' && (
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        Update
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onUpdateStatus(change.id, 'sent')}>
+                        <Check className="h-4 w-4 mr-2" />
+                        Mark as Sent
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onUpdateStatus(change.id, 'confirmed')}>
+                        <CheckCheck className="h-4 w-4 mr-2" />
+                        Mark as Confirmed
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   return (
     <>
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col gap-4">
             <div>
               <CardTitle>Insurance Changes</CardTitle>
               <CardDescription>
                 {changes.length} pending changes require broker communication
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={handleCopySummary} disabled={changes.length === 0}>
                 <Copy className="h-4 w-4 mr-2" />
-                Copy Summary
+                <span className="hidden sm:inline">Copy Summary</span>
+                <span className="sm:hidden">Copy</span>
               </Button>
               <TooltipProvider>
                 <Tooltip>
@@ -150,7 +268,8 @@ export function PendingChangesTab({
                         className="opacity-50 cursor-not-allowed"
                       >
                         <Send className="h-4 w-4 mr-2" />
-                        Send to Broker
+                        <span className="hidden sm:inline">Send to Broker</span>
+                        <span className="sm:hidden">Send</span>
                       </Button>
                     </span>
                   </TooltipTrigger>
@@ -162,7 +281,8 @@ export function PendingChangesTab({
               {changes.length > 0 && (
                 <Button variant="outline" onClick={onMarkAllAsSent}>
                   <Check className="h-4 w-4 mr-2" />
-                  Mark All Sent
+                  <span className="hidden sm:inline">Mark All Sent</span>
+                  <span className="sm:hidden">Mark Sent</span>
                 </Button>
               )}
             </div>
@@ -198,79 +318,86 @@ export function PendingChangesTab({
                 <p>No change history yet.</p>
               )}
             </div>
+          ) : isPhone ? (
+            <MobileCardView />
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Equipment</TableHead>
-                    <TableHead>Change</TableHead>
-                    <TableHead className="text-right">Value</TableHead>
-                    <TableHead>Reason</TableHead>
-                    <TableHead>Status</TableHead>
-                    {activeTab === 'pending' && <TableHead className="text-right">Actions</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayChanges.map((change) => (
-                    <TableRow key={change.id}>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(change.effectiveDate), 'MMM d, yyyy')}
-                      </TableCell>
-                      <TableCell className="font-medium">{change.equipmentName}</TableCell>
-                      <TableCell>{getChangeTypeBadge(change.changeType)}</TableCell>
-                      <TableCell className="text-right font-medium">
-                        {change.changeType === 'removed' 
-                          ? `$${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()}`
-                          : change.changeType === 'added'
-                          ? `$${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}`
-                          : `$${Math.ceil(change.previousDeclaredValue || 0).toLocaleString()} → $${Math.ceil(change.newDeclaredValue || 0).toLocaleString()}`
-                        }
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{formatReason(change.reason)}</TableCell>
-                      <TableCell>{getStatusBadge(change.status)}</TableCell>
-                      {activeTab === 'pending' && (
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                Update
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => onUpdateStatus(change.id, 'sent')}>
-                                <Check className="h-4 w-4 mr-2" />
-                                Mark as Sent
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onUpdateStatus(change.id, 'confirmed')}>
-                                <CheckCheck className="h-4 w-4 mr-2" />
-                                Mark as Confirmed
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <DesktopTableView />
           )}
         </CardContent>
       </Card>
 
+      {/* Mobile detail sheet */}
+      <Sheet open={detailSheetOpen} onOpenChange={setDetailSheetOpen}>
+        <SheetContent side="bottom" className="h-auto max-h-[85vh]">
+          <SheetHeader>
+            <SheetTitle>{selectedChange?.equipmentName}</SheetTitle>
+            <SheetDescription>
+              Change details
+            </SheetDescription>
+          </SheetHeader>
+          {selectedChange && (
+            <div className="py-4 space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Date</span>
+                <span className="font-medium">{format(new Date(selectedChange.effectiveDate), 'MMM d, yyyy')}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Change Type</span>
+                {getChangeTypeBadge(selectedChange.changeType)}
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Value</span>
+                <span className="font-medium font-mono-nums">{formatChangeValue(selectedChange)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Reason</span>
+                <span className="font-medium">{formatReason(selectedChange.reason)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Status</span>
+                {getStatusBadge(selectedChange.status)}
+              </div>
+            </div>
+          )}
+          {activeTab === 'pending' && selectedChange && (
+            <SheetFooter className="flex-row gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  onUpdateStatus(selectedChange.id, 'sent');
+                  setDetailSheetOpen(false);
+                }}
+                className="flex-1"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Mark Sent
+              </Button>
+              <Button 
+                onClick={() => {
+                  onUpdateStatus(selectedChange.id, 'confirmed');
+                  setDetailSheetOpen(false);
+                }}
+                className="flex-1"
+              >
+                <CheckCheck className="h-4 w-4 mr-2" />
+                Confirm
+              </Button>
+            </SheetFooter>
+          )}
+        </SheetContent>
+      </Sheet>
+
       <AlertDialog open={markAsSentDialogOpen} onOpenChange={setMarkAsSentDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-md mx-4">
           <AlertDialogHeader>
             <AlertDialogTitle>Mark Changes as Sent?</AlertDialogTitle>
             <AlertDialogDescription>
               You've copied the change summary to your clipboard. Would you like to mark these changes as sent to your broker?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>No, Just Copied</AlertDialogCancel>
-            <AlertDialogAction onClick={handleMarkAsSent}>Yes, Mark as Sent</AlertDialogAction>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel className="w-full sm:w-auto">No, Just Copied</AlertDialogCancel>
+            <AlertDialogAction onClick={handleMarkAsSent} className="w-full sm:w-auto">Yes, Mark as Sent</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

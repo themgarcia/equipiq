@@ -209,7 +209,7 @@ export default function BuyVsRentAnalysis() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Input Form */}
           <div className="space-y-6">
             {/* Equipment Details */}
@@ -221,7 +221,7 @@ export default function BuyVsRentAnalysis() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <Label htmlFor="category">Category</Label>
                     <Select 
@@ -303,7 +303,7 @@ export default function BuyVsRentAnalysis() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="rentalDaily">Daily Rate *</Label>
                     <div className="relative">
@@ -371,7 +371,7 @@ export default function BuyVsRentAnalysis() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="maintenance">Maintenance/Repairs</Label>
                     <div className="relative">
@@ -433,7 +433,7 @@ export default function BuyVsRentAnalysis() {
                     </div>
                     
                     {/* All break-even scenarios - Clickable */}
-                    <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {/* Daily Rate */}
                       <div 
                         onClick={() => result.breakEvenAnalysis.daily !== null && setSelectedRateType('daily')}
@@ -508,7 +508,7 @@ export default function BuyVsRentAnalysis() {
                     </div>
                     
                     {/* Your usage comparison */}
-                    <div className="flex items-center justify-between border-t pt-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t pt-4 gap-3 sm:gap-0 mt-4">
                       <div>
                         <p className="text-sm">Selected Break-Even:</p>
                         <p className="text-xl font-bold font-mono-nums">
@@ -537,7 +537,7 @@ export default function BuyVsRentAnalysis() {
                 </Card>
 
                 {/* Key Metrics */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Card>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 text-muted-foreground text-sm">
@@ -588,7 +588,7 @@ export default function BuyVsRentAnalysis() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-64">
+                    <div className="h-48 sm:h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={selectedYearComparison}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -634,32 +634,34 @@ export default function BuyVsRentAnalysis() {
                     <CardTitle className="text-lg">Year-by-Year Breakdown</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Year</TableHead>
-                          <TableHead className="text-right">Own (Cumulative)</TableHead>
-                          <TableHead className="text-right">Rent (Cumulative)</TableHead>
-                          <TableHead className="text-right">Savings by Buying</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedYearComparison.map((row) => (
-                          <TableRow key={row.year}>
-                            <TableCell className="font-medium">Year {row.year}</TableCell>
-                            <TableCell className="text-right font-mono-nums">
-                              {formatCurrency(row.ownCumulative)}
-                            </TableCell>
-                            <TableCell className="text-right font-mono-nums">
-                              {formatCurrency(row.rentCumulative)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <FinancialValue value={row.savings} weight="medium" semantic={true} />
-                            </TableCell>
+                    <div className="overflow-x-auto -mx-6 px-6">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Year</TableHead>
+                            <TableHead className="text-right">Own (Cumulative)</TableHead>
+                            <TableHead className="text-right">Rent (Cumulative)</TableHead>
+                            <TableHead className="text-right">Savings by Buying</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedYearComparison.map((row) => (
+                            <TableRow key={row.year}>
+                              <TableCell className="font-medium">Year {row.year}</TableCell>
+                              <TableCell className="text-right font-mono-nums">
+                                {formatCurrency(row.ownCumulative)}
+                              </TableCell>
+                              <TableCell className="text-right font-mono-nums">
+                                {formatCurrency(row.rentCumulative)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <FinancialValue value={row.savings} weight="medium" semantic={true} />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </CardContent>
                 </Card>
               </>
