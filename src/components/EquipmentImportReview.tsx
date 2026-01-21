@@ -1131,7 +1131,7 @@ export function EquipmentImportReview({
       } else if (eq.duplicateReason === 'date') {
         const dateInfo = eq.matchedPurchaseDate ? ` (purchased ${eq.matchedPurchaseDate})` : '';
         return (
-          <div className="flex items-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-md border border-amber-200 dark:border-amber-800">
+          <div className="flex items-center gap-2 text-warning bg-warning/10 px-3 py-2 rounded-md border border-warning/30">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span className="text-sm">
               Possible match: same make/model, date within 30 days of <strong>{eq.matchedEquipmentName}</strong>{dateInfo}
@@ -1140,7 +1140,7 @@ export function EquipmentImportReview({
         );
       }
       return (
-        <div className="flex items-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-md border border-amber-200 dark:border-amber-800">
+        <div className="flex items-center gap-2 text-warning bg-warning/10 px-3 py-2 rounded-md border border-warning/30">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span className="text-sm">
             Possible match: {reasonText} <strong>{eq.matchedEquipmentName}</strong>
@@ -1466,11 +1466,11 @@ export function EquipmentImportReview({
   const getConfidenceBadge = (confidence: 'high' | 'medium' | 'low') => {
     switch (confidence) {
       case 'high':
-        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20"><Check className="h-3 w-3 mr-1" />High</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success border-success/20"><Check className="h-3 w-3 mr-1" />High</Badge>;
       case 'medium':
-        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20"><AlertTriangle className="h-3 w-3 mr-1" />Medium</Badge>;
+        return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20"><AlertTriangle className="h-3 w-3 mr-1" />Medium</Badge>;
       case 'low':
-        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20"><AlertTriangle className="h-3 w-3 mr-1" />Low</Badge>;
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20"><AlertTriangle className="h-3 w-3 mr-1" />Low</Badge>;
     }
   };
 
@@ -1518,8 +1518,8 @@ export function EquipmentImportReview({
         <div className="space-y-4">
           {/* Conflict Resolution Banner */}
           {conflicts && conflicts.length > 0 && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-amber-600 mb-2">
+            <div className="bg-warning/10 border border-warning/20 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-warning mb-2">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="font-medium">AI detected conflicting values</span>
               </div>
@@ -1586,8 +1586,8 @@ export function EquipmentImportReview({
 
           {/* Batch Duplicate Detection Banner */}
           {batchDuplicateGroups.length > 0 && (
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-blue-600 mb-2">
+            <div className="bg-info/10 border border-info/20 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-info mb-2">
                 <Link className="h-4 w-4" />
                 <span className="font-medium">Potential duplicates detected in this import</span>
               </div>
@@ -1601,7 +1601,7 @@ export function EquipmentImportReview({
                 {batchDuplicateGroups.map((group, idx) => (
                   <div key={idx} className="text-xs text-muted-foreground bg-muted/30 rounded p-2">
                     <span className="font-medium">{extractedEquipment[group.primaryIndex]?.make} {extractedEquipment[group.primaryIndex]?.model}</span>
-                    <span className="text-blue-600 ml-2">({group.duplicateIndices.length + 1} items - {group.reason})</span>
+                    <span className="text-info ml-2">({group.duplicateIndices.length + 1} items - {group.reason})</span>
                   </div>
                 ))}
               </div>
@@ -1618,9 +1618,9 @@ export function EquipmentImportReview({
 
           {/* Duplicate Summary */}
           {duplicateCounts.total > 0 && (
-            <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-              <span className="text-sm text-yellow-600">
+            <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+              <AlertTriangle className="h-4 w-4 text-warning" />
+              <span className="text-sm text-warning">
                 {duplicateCounts.exact > 0 && `${duplicateCounts.exact} exact match${duplicateCounts.exact !== 1 ? 'es' : ''}`}
                 {duplicateCounts.exact > 0 && duplicateCounts.potential > 0 && ', '}
                 {duplicateCounts.potential > 0 && `${duplicateCounts.potential} potential match${duplicateCounts.potential !== 1 ? 'es' : ''}`}
@@ -1697,9 +1697,9 @@ export function EquipmentImportReview({
                       : eq.duplicateStatus === 'exact' 
                       ? 'border-destructive/50 bg-destructive/5' 
                       : eq.duplicateStatus === 'potential'
-                      ? 'border-yellow-500/50 bg-yellow-500/5'
+                      ? 'border-warning/50 bg-warning/5'
                       : eq.confidence === 'low' 
-                      ? 'border-yellow-500/50 bg-yellow-500/5' 
+                      ? 'border-warning/50 bg-warning/5' 
                       : ''
                   }`}
                 >
@@ -1757,7 +1757,7 @@ export function EquipmentImportReview({
 
                   {/* AI Suggested Attachment Indicator */}
                   {eq.suggestedType === 'attachment' && eq.importMode !== 'attachment' && (
-                    <div className="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-500/10 px-2 py-1 rounded ml-7">
+                    <div className="flex items-center gap-1.5 text-xs text-info bg-info/10 px-2 py-1 rounded ml-7">
                       <Link className="h-3 w-3" />
                       <span>AI suggests this may be an attachment</span>
                     </div>
@@ -1876,7 +1876,7 @@ export function EquipmentImportReview({
                           {/* Attachment Duplicate Warning - inside expanded area */}
                           {eq.attachmentDuplicateStatus === 'match' && (
                             <div className="space-y-2 bg-muted/30 rounded-md p-3">
-                              <div className="flex items-center gap-2 text-amber-600">
+                              <div className="flex items-center gap-2 text-warning">
                                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                                 <span className="text-sm">
                                   Matches existing attachment: <strong>{eq.matchedAttachmentName}</strong>
@@ -1981,11 +1981,11 @@ export function EquipmentImportReview({
                       <div className="space-y-1 bg-muted/30 rounded p-2">
                         {eq.updatableFields.map((field) => (
                           <div key={field.field} className="flex items-center gap-2 text-xs">
-                            <span className="text-green-600">●</span>
+                            <span className="text-success">●</span>
                             <span className="font-medium w-28">{field.label}:</span>
                             <span className="text-muted-foreground">{formatValue(field.existingValue, field.field)}</span>
                             <span className="text-muted-foreground">→</span>
-                            <span className="text-green-600 font-medium">{formatValue(field.importedValue, field.field)}</span>
+                            <span className="text-success font-medium">{formatValue(field.importedValue, field.field)}</span>
                             {getSourceBadge(eq, field.field)}
                           </div>
                         ))}
@@ -2055,7 +2055,7 @@ export function EquipmentImportReview({
                             <label className="text-xs text-muted-foreground flex items-center gap-1">
                               Year
                               {eq.yearDefaultedFromPurchase && (
-                                <span className="inline-flex items-center gap-0.5 text-amber-600" title="Year defaulted from purchase date — please verify">
+                                <span className="inline-flex items-center gap-0.5 text-warning" title="Year defaulted from purchase date — please verify">
                                   <AlertTriangle className="h-3 w-3" />
                                   <span className="text-[10px] font-medium">Review</span>
                                 </span>
@@ -2073,7 +2073,7 @@ export function EquipmentImportReview({
                                     : item
                                 ));
                               }}
-                              className={`h-8 text-sm ${eq.yearDefaultedFromPurchase ? 'border-amber-500/50' : ''}`}
+                              className={`h-8 text-sm ${eq.yearDefaultedFromPurchase ? 'border-warning/50' : ''}`}
                               placeholder="Year"
                             />
                           </div>
@@ -2294,19 +2294,19 @@ export function EquipmentImportReview({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               {newCount > 0 && (
                 <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-green-600" />
+                  <Package className="h-4 w-4 text-success" />
                   <span>{newCount} new equipment</span>
                 </div>
               )}
               {updateCount > 0 && (
                 <div className="flex items-center gap-2">
-                  <RefreshCw className="h-4 w-4 text-blue-600" />
+                  <RefreshCw className="h-4 w-4 text-info" />
                   <span>{updateCount} to update</span>
                 </div>
               )}
               {attachmentCount > 0 && (
                 <div className="flex items-center gap-2">
-                  <Link className="h-4 w-4 text-purple-600" />
+                  <Link className="h-4 w-4 text-accent-foreground" />
                   <span>{attachmentCount} attachment{attachmentCount !== 1 ? 's' : ''}</span>
                 </div>
               )}
