@@ -99,8 +99,9 @@ export default function InsuranceControl() {
             </p>
           </div>
           <Button variant="outline" onClick={() => setImportModalOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Import from Policy
+            <Upload className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Import from Policy</span>
+            <span className="sm:hidden">Import</span>
           </Button>
         </div>
 
