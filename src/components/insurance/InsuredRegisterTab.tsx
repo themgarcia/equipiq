@@ -191,12 +191,12 @@ export function InsuredRegisterTab({
 
   // Mobile card view
   const MobileCardView = () => (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {equipment.map((item) => (
         <div
           key={item.id}
           onClick={() => handleRowClick(item)}
-          className="p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted"
+          className="p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted"
         >
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
@@ -205,7 +205,7 @@ export function InsuredRegisterTab({
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2" />
           </div>
-          <div className="mt-3 flex items-center justify-between text-sm">
+          <div className="mt-2 flex items-center justify-between text-sm">
             <div>
               <span className="text-muted-foreground">Declared: </span>
               <span className="font-medium font-mono-nums">
@@ -215,7 +215,7 @@ export function InsuredRegisterTab({
             {formatFinancing(item.financingType)}
           </div>
           {item.insuranceNotes && (
-            <p className="mt-2 text-xs text-muted-foreground line-clamp-1">
+            <p className="mt-1.5 text-xs text-muted-foreground line-clamp-1">
               {item.insuranceNotes}
             </p>
           )}
@@ -223,7 +223,7 @@ export function InsuredRegisterTab({
       ))}
       
       {/* Summary footer */}
-      <div className="pt-4 border-t mt-4">
+      <div className="pt-3 border-t mt-3">
         <div className="flex justify-between items-center text-sm">
           <span className="text-muted-foreground">Total Purchase Price:</span>
           <span className="font-medium font-mono-nums">${Math.ceil(totalPurchasePrice).toLocaleString()}</span>
