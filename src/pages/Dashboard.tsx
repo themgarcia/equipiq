@@ -2,6 +2,7 @@ import { useEquipment } from '@/contexts/EquipmentContext';
 import { MetricCard } from '@/components/MetricCard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
+import { FinancialValue } from '@/components/ui/financial-value';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -125,25 +126,25 @@ export default function Dashboard() {
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           <MetricCard
             title="Total Cost Basis"
-            value={formatCurrency(totalCostBasis)}
+            value={<FinancialValue value={totalCostBasis} format="compact" showSign={false} size="2xl" weight="bold" />}
             subtitle={`${activeEquipment.length} active items`}
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           />
           <MetricCard
             title="Allocated to COGS"
-            value={formatCurrency(totalCOGS)}
+            value={<FinancialValue value={totalCOGS} format="compact" showSign={false} size="2xl" weight="bold" />}
             subtitle="Job-related equipment costs"
             icon={<TrendingUp className="h-5 w-5 text-muted-foreground" />}
           />
           <MetricCard
             title="Allocated to Overhead"
-            value={formatCurrency(totalOverhead)}
+            value={<FinancialValue value={totalOverhead} format="compact" showSign={false} size="2xl" weight="bold" />}
             subtitle="Non-job equipment costs"
             icon={<Package className="h-5 w-5 text-muted-foreground" />}
           />
           <MetricCard
             title="Replacement Value"
-            value={formatCurrency(totalReplacementValue)}
+            value={<FinancialValue value={totalReplacementValue} format="compact" showSign={false} size="2xl" weight="bold" />}
             subtitle="Inflation-adjusted estimate"
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           />
@@ -180,11 +181,11 @@ export default function Dashboard() {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalMonthlyPayments * 12)}</p>
+                <FinancialValue value={totalMonthlyPayments * 12} format="compact" showSign={false} size="2xl" weight="bold" />
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Outstanding Debt</p>
-                <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalOutstandingDebt)}</p>
+                <FinancialValue value={totalOutstandingDebt} format="compact" showSign={false} size="2xl" weight="bold" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-1">
@@ -357,8 +358,8 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <span className="font-medium">{replacementIn1Year.length} items</span>
-                    <span className="text-sm text-muted-foreground ml-2 font-mono-nums">
-                      {formatCurrency(replacementCost1Year)}
+                    <span className="text-sm text-muted-foreground ml-2">
+                      <FinancialValue value={replacementCost1Year} format="compact" showSign={false} />
                     </span>
                   </div>
                 </div>
@@ -369,8 +370,8 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <span className="font-medium">{replacementIn2Years.length} items</span>
-                    <span className="text-sm text-muted-foreground ml-2 font-mono-nums">
-                      {formatCurrency(replacementCost2Years)}
+                    <span className="text-sm text-muted-foreground ml-2">
+                      <FinancialValue value={replacementCost2Years} format="compact" showSign={false} />
                     </span>
                   </div>
                 </div>
@@ -381,8 +382,8 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <span className="font-medium">{replacementIn3Years.length} items</span>
-                    <span className="text-sm text-muted-foreground ml-2 font-mono-nums">
-                      {formatCurrency(replacementCost3Years)}
+                    <span className="text-sm text-muted-foreground ml-2">
+                      <FinancialValue value={replacementCost3Years} format="compact" showSign={false} />
                     </span>
                   </div>
                 </div>
@@ -391,9 +392,13 @@ export default function Dashboard() {
               <div className="pt-4 border-t">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">3-Year Total CapEx</span>
-                  <span className="text-lg font-bold font-mono-nums">
-                    {formatCurrency(replacementCost1Year + replacementCost2Years + replacementCost3Years)}
-                  </span>
+                  <FinancialValue 
+                    value={replacementCost1Year + replacementCost2Years + replacementCost3Years} 
+                    format="compact" 
+                    showSign={false} 
+                    size="lg" 
+                    weight="bold" 
+                  />
                 </div>
               </div>
             </CardContent>

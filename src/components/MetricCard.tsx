@@ -4,7 +4,7 @@ import { FinancialValue } from '@/components/ui/financial-value';
 
 interface MetricCardProps {
   title: string;
-  value: string | number;
+  value: ReactNode;
   subtitle?: string;
   icon?: ReactNode;
   trend?: {
