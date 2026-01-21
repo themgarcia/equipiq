@@ -14,7 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Activity, RefreshCw, Search, FileText, Shield, Upload, Package, CalendarIcon, Download, X } from 'lucide-react';
+import { Activity, RefreshCw, Search, FileText, Shield, Upload, Package, CalendarIcon, Download, X, ChevronRight } from 'lucide-react';
+import { useDeviceType } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { useUserProfiles } from '@/hooks/useUserProfiles';
@@ -53,6 +54,8 @@ const actionTypeIcons: Record<string, React.ReactNode> = {
 };
 
 export function UserActivityTab() {
+  const deviceType = useDeviceType();
+  const isPhone = deviceType === 'phone';
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -289,7 +292,42 @@ export function UserActivityTab() {
               <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No activity records found.</p>
             </div>
+          ) : isPhone ? (
+            /* Mobile Card View */
+            <div className="space-y-3">
+              {filteredActivities.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="p-3 border rounded-lg bg-card"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {actionTypeIcons[activity.action_type] || <FileText className="h-4 w-4" />}
+                      <span className="text-sm font-medium">
+                        {actionTypeLabels[activity.action_type] || activity.action_type}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground whitespace-nowrap">
+                      {format(new Date(activity.created_at), 'MMM d, h:mm a')}
+                    </p>
+                  </div>
+                  <div className="mt-2">
+                    <UserDisplayCell
+                      userId={activity.user_id}
+                      displayName={getDisplayName(activity.user_id)}
+                      onUserClick={handleUserClick}
+                    />
+                  </div>
+                  {formatActionDetails(activity.action_details) !== '—' && (
+                    <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                      {formatActionDetails(activity.action_details)}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           ) : (
+            /* Desktop Table View */
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
