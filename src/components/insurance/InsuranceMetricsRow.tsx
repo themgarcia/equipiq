@@ -41,8 +41,8 @@ export function InsuranceMetricsRow({ metrics }: InsuranceMetricsRowProps) {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/10">
-              <DollarSign className="h-5 w-5 text-green-600" />
+            <div className="p-2 rounded-lg bg-success/10">
+              <DollarSign className="h-5 w-5 text-success" />
             </div>
             <div>
               <p className="text-2xl font-bold">${Math.ceil(metrics.totalDeclaredValue).toLocaleString()}</p>
@@ -55,8 +55,8 @@ export function InsuranceMetricsRow({ metrics }: InsuranceMetricsRowProps) {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${metrics.pendingChangesCount > 0 ? 'bg-amber-500/10' : 'bg-muted'}`}>
-              <AlertTriangle className={`h-5 w-5 ${metrics.pendingChangesCount > 0 ? 'text-amber-600' : 'text-muted-foreground'}`} />
+            <div className={`p-2 rounded-lg ${metrics.pendingChangesCount > 0 ? 'bg-warning/10' : 'bg-muted'}`}>
+              <AlertTriangle className={`h-5 w-5 ${metrics.pendingChangesCount > 0 ? 'text-warning' : 'text-muted-foreground'}`} />
             </div>
             <div>
               <p className="text-2xl font-bold">{metrics.pendingChangesCount}</p>
@@ -71,15 +71,15 @@ export function InsuranceMetricsRow({ metrics }: InsuranceMetricsRowProps) {
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${
               renewalDisplay.variant === 'destructive' ? 'bg-destructive/10' :
-              renewalDisplay.variant === 'warning' ? 'bg-amber-500/10' :
+              renewalDisplay.variant === 'warning' ? 'bg-warning/10' :
               renewalDisplay.variant === 'muted' ? 'bg-muted' :
-              'bg-blue-500/10'
+              'bg-info/10'
             }`}>
               <Clock className={`h-5 w-5 ${
                 renewalDisplay.variant === 'destructive' ? 'text-destructive' :
-                renewalDisplay.variant === 'warning' ? 'text-amber-600' :
+                renewalDisplay.variant === 'warning' ? 'text-warning' :
                 renewalDisplay.variant === 'muted' ? 'text-muted-foreground' :
-                'text-blue-600'
+                'text-info'
               }`} />
             </div>
             <div>

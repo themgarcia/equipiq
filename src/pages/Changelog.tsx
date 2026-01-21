@@ -145,27 +145,27 @@ const typeConfig = {
   added: {
     label: "Added",
     icon: Plus,
-    className: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
+    className: "bg-success/10 text-success border-success/20",
   },
   changed: {
     label: "Changed",
     icon: RefreshCw,
-    className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    className: "bg-info/10 text-info border-info/20",
   },
   improved: {
     label: "Improved",
     icon: Sparkles,
-    className: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    className: "bg-accent/10 text-accent-foreground border-accent/20",
   },
   security: {
     label: "Security",
     icon: Shield,
-    className: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
+    className: "bg-warning/10 text-warning border-warning/20",
   },
   fixed: {
     label: "Fixed",
     icon: Bug,
-    className: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+    className: "bg-destructive/10 text-destructive border-destructive/20",
   },
 };
 
