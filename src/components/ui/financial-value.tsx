@@ -6,6 +6,8 @@ interface FinancialValueProps {
   showSign?: boolean;
   format?: 'currency' | 'percent' | 'number' | 'compact' | 'abbreviated';
   neutralAt?: number;
+  /** When true, applies green for positive and red for negative values. Default false (informational). */
+  semantic?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   weight?: 'normal' | 'medium' | 'semibold' | 'bold';
   precision?: number;
@@ -51,6 +53,7 @@ export function FinancialValue({
   showSign = true,
   format = 'currency',
   neutralAt,
+  semantic = false,
   size = 'md',
   weight = 'normal',
   precision = 1,
@@ -59,11 +62,14 @@ export function FinancialValue({
   const isNeutral = value === 0 || value === neutralAt;
   const isPositive = value > 0;
   
-  const colorClass = isNeutral 
-    ? '' 
-    : isPositive 
-      ? 'text-success' 
-      : 'text-destructive';
+  // Only apply semantic colors (green/red) when explicitly requested
+  const colorClass = semantic
+    ? isNeutral 
+      ? '' 
+      : isPositive 
+        ? 'text-success' 
+        : 'text-destructive'
+    : '';
 
   const formatValue = () => {
     const signPrefix = showSign && isPositive ? '+' : '';

@@ -654,7 +654,7 @@ export default function BuyVsRentAnalysis() {
                               {formatCurrency(row.rentCumulative)}
                             </TableCell>
                             <TableCell className="text-right">
-                              <FinancialValue value={row.savings} weight="medium" />
+                              <FinancialValue value={row.savings} weight="medium" semantic={true} />
                             </TableCell>
                           </TableRow>
                         ))}

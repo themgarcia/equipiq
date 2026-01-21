@@ -566,7 +566,8 @@ export default function CashflowAnalysis() {
               <FinancialValue 
                 value={portfolioSummary.netAnnualCashflow} 
                 size="2xl" 
-                weight="bold" 
+                weight="bold"
+                semantic={true}
               />
               <p className="text-xs text-muted-foreground mt-1">
                 {getStatusBadge(portfolioSummary.overallStatus)}
