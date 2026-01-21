@@ -1128,15 +1128,15 @@ export default function AdminDashboard() {
                           </TableCell>
                           <TableCell>
                             {user.isPaidSubscription ? (
-                              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/30">
+                              <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">
                                 Paid
                               </Badge>
                             ) : user.subscriptionPlan === 'beta' ? (
-                              <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
+                              <Badge variant="outline" className="text-xs bg-info/10 text-info border-info/30">
                                 Beta
                               </Badge>
                             ) : user.subscriptionPlan !== 'free' ? (
-                              <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/30">
+                              <Badge variant="outline" className="text-xs bg-accent/10 text-accent-foreground border-accent/30">
                                 Admin
                               </Badge>
                             ) : (
@@ -1145,7 +1145,7 @@ export default function AdminDashboard() {
                           </TableCell>
                           <TableCell className="text-center">
                             {user.isAdmin ? (
-                              <ShieldCheck className="h-4 w-4 text-red-600 mx-auto" />
+                              <ShieldCheck className="h-4 w-4 text-destructive mx-auto" />
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}

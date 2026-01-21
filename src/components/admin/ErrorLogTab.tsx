@@ -394,7 +394,7 @@ export function ErrorLogTab() {
             </div>
           ) : filteredErrors.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50 text-green-500" />
+              <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50 text-success" />
               <p>No errors found matching your filters.</p>
             </div>
           ) : (
@@ -444,9 +444,9 @@ export function ErrorLogTab() {
                       </TableCell>
                       <TableCell>
                         {error.resolved ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-success" />
                         ) : (
-                          <Clock className="h-4 w-4 text-yellow-600" />
+                          <Clock className="h-4 w-4 text-warning" />
                         )}
                       </TableCell>
                     </TableRow>
@@ -499,7 +499,7 @@ export function ErrorLogTab() {
                         onClick={handleCopyUserId}
                       >
                         {copiedUserId ? (
-                          <Check className="h-3 w-3 text-green-600" />
+                          <Check className="h-3 w-3 text-success" />
                         ) : (
                           <Copy className="h-3 w-3" />
                         )}
