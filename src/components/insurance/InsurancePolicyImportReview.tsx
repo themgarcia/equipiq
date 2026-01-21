@@ -351,13 +351,13 @@ export function InsurancePolicyImportReview({
   const getMatchBadge = (matchType: 'serial' | 'make_model_year' | 'fuzzy' | 'manual') => {
     switch (matchType) {
       case 'serial':
-        return <Badge variant="default" className="bg-green-500">Serial Match</Badge>;
+        return <Badge variant="default" className="bg-success">Serial Match</Badge>;
       case 'make_model_year':
         return <Badge variant="secondary">Make/Model Match</Badge>;
       case 'fuzzy':
         return <Badge variant="outline">Fuzzy Match</Badge>;
       case 'manual':
-        return <Badge variant="default" className="bg-blue-500">Manual Match</Badge>;
+        return <Badge variant="default" className="bg-info">Manual Match</Badge>;
     }
   };
 
@@ -472,7 +472,7 @@ export function InsurancePolicyImportReview({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-medium flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <CheckCircle2 className="h-4 w-4 text-success" />
                     Matched Equipment ({selectedCount} selected)
                   </h3>
                 </div>
@@ -481,7 +481,7 @@ export function InsurancePolicyImportReview({
                     <div 
                       key={index}
                       className={`flex items-start gap-3 p-3 rounded-lg border ${
-                        item.selected ? 'bg-green-500/5 border-green-500/20' : 'bg-muted/30'
+                        item.selected ? 'bg-success/5 border-success/20' : 'bg-muted/30'
                       }`}
                     >
                       <Checkbox
@@ -496,7 +496,7 @@ export function InsurancePolicyImportReview({
                           </span>
                           {getMatchBadge(item.matchType)}
                           {hasYearMismatch(item) && (
-                            <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/30">
+                            <Badge variant="outline" className="text-warning border-warning/50 bg-warning/10">
                               ⚠️ Policy says {item.extracted.year}
                             </Badge>
                           )}
@@ -589,13 +589,13 @@ export function InsurancePolicyImportReview({
             {unmatchedEquipment.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  <AlertTriangle className="h-4 w-4 text-warning" />
                   <h3 className="text-sm font-medium">
                     Unmatched Items ({unmatchedEquipment.length})
                   </h3>
                 </div>
-                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <p className="text-xs text-amber-700 dark:text-amber-400 mb-3">
+                <div className="p-3 rounded-lg bg-warning/10 border border-warning/20">
+                  <p className="text-xs text-warning mb-3">
                     These items from your policy don't match any equipment in your records. 
                     You can manually assign them to equipment below.
                   </p>
