@@ -63,6 +63,10 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        improved: {
+          DEFAULT: "hsl(var(--improved))",
+          foreground: "hsl(var(--improved-foreground))",
+        },
         status: {
           active: "hsl(var(--status-active))",
           sold: "hsl(var(--status-sold))",
