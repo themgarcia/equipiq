@@ -53,6 +53,7 @@ export function MetricCard({
             format="percent" 
             weight="medium" 
             size="sm"
+            semantic={true}
           />
           <span className="text-muted-foreground">{trend.label}</span>
         </div>
