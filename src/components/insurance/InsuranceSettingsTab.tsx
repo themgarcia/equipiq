@@ -172,8 +172,8 @@ export function InsuranceSettingsTab({
             </div>
 
             {settings?.renewalConfirmedAt && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+              <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                <div className="flex items-center gap-2 text-sm text-success">
                   <CheckCircle2 className="h-4 w-4" />
                   <span>
                     Last confirmed: {format(parseISO(settings.renewalConfirmedAt), 'MMM d, yyyy')}
@@ -183,8 +183,8 @@ export function InsuranceSettingsTab({
             )}
 
             {showCloseLoopPrompt && (
-              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">
+              <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+                <p className="text-sm text-warning-foreground mb-3">
                   Your policy renewed on {format(parseISO(settings!.policyRenewalDate!), 'MMM d, yyyy')}. 
                   Please confirm your broker completed all changes.
                 </p>

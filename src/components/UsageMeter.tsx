@@ -28,7 +28,7 @@ export function UsageMeter({
         <span className="text-muted-foreground">{label}</span>
         <span className={cn(
           'font-medium',
-          isAtLimit ? 'text-destructive' : isNearLimit ? 'text-yellow-600 dark:text-yellow-500' : 'text-foreground'
+          isAtLimit ? 'text-destructive' : isNearLimit ? 'text-warning' : 'text-foreground'
         )}>
           {formatValue(current)}
           {!isUnlimited && (
@@ -49,7 +49,7 @@ export function UsageMeter({
               isAtLimit
                 ? 'bg-destructive'
                 : isNearLimit
-                ? 'bg-yellow-500'
+                ? 'bg-warning'
                 : 'bg-primary'
             )}
             style={{ width: `${percentage}%` }}

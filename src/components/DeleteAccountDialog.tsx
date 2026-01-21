@@ -154,7 +154,7 @@ export function DeleteAccountDialog() {
         ) : (
           <>
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-green-600">
+              <AlertDialogTitle className="flex items-center gap-2 text-success">
                 <CheckCircle2 className="h-5 w-5" />
                 Confirmation Email Sent
               </AlertDialogTitle>

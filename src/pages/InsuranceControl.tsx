@@ -128,7 +128,7 @@ export default function InsuranceControl() {
                   <TabsTrigger value="changes" className="relative">
                     Pending Changes
                     {pendingChanges.length > 0 && (
-                      <span className="ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium bg-amber-500 text-white rounded-full">
+                      <span className="ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium bg-warning text-warning-foreground rounded-full">
                         {pendingChanges.length}
                       </span>
                     )}
