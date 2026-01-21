@@ -29,7 +29,7 @@ export function DemoModeBanner() {
   };
 
   return (
-    <div className="sticky top-0 z-40 bg-amber-500/90 dark:bg-amber-600/90 backdrop-blur-sm text-amber-950 dark:text-amber-50">
+    <div className="sticky top-0 z-40 bg-warning/90 backdrop-blur-sm text-warning-foreground">
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Eye className="h-4 w-4" />
@@ -39,7 +39,7 @@ export function DemoModeBanner() {
           variant="ghost"
           size="sm"
           onClick={handleExit}
-          className="h-7 px-2 text-amber-950 dark:text-amber-50 hover:bg-amber-600/30 dark:hover:bg-amber-500/30"
+          className="h-7 px-2 text-warning-foreground hover:bg-warning-foreground/10"
         >
           <X className="h-4 w-4 mr-1" />
           Exit Demo
