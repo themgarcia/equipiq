@@ -2,144 +2,26 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { History, Plus, RefreshCw, Sparkles, Shield, Bug } from "lucide-react";
+import changelogSource from "@/data/changelog.json";
+
+interface ChangelogChange {
+  type: "added" | "changed" | "improved" | "security" | "fixed";
+  items: string[];
+}
 
 interface ChangelogEntry {
   version: string;
-  changes: {
-    type: "added" | "changed" | "improved" | "security" | "fixed";
-    items: string[];
-  }[];
+  changes: ChangelogChange[];
 }
 
-const changelogData: ChangelogEntry[] = [
-  {
-    version: "1.3.2",
-    changes: [
-      {
-        type: "improved",
-        items: [
-          "Unified typography across all pages for a cleaner, more consistent look",
-          "Updated section headers in equipment forms and detail views to match dashboard styling",
-        ],
-      },
-    ],
-  },
-  {
-    version: "1.3.1",
-    changes: [
-      {
-        type: "added",
-        items: ["In-app Change Log page accessible from sidebar under Reference section"],
-      },
-      {
-        type: "changed",
-        items: [
-          "Cashflow projection chart now dynamically adjusts based on your equipment payoff dates",
-          "Added 'Today' marker on cashflow chart for clearer timeline orientation",
-        ],
-      },
-      {
-        type: "improved",
-        items: ["More relevant cashflow visualizations that only show years that matter for your portfolio"],
-      },
-    ],
-  },
-  {
-    version: "1.3.0",
-    changes: [
-      {
-        type: "added",
-        items: [
-          "Version display in sidebar footer",
-          "Change log documentation",
-        ],
-      },
-      {
-        type: "security",
-        items: [
-          "Enhanced account security protections",
-        ],
-      },
-    ],
-  },
-  {
-    version: "1.2.0",
-    changes: [
-      {
-        type: "added",
-        items: [
-          "Insurance Control module with broker email integration",
-          "Policy import with smart document parsing",
-          "Insured register with comprehensive change tracking",
-          "Insurance metrics dashboard and renewal notifications",
-          "Broker update email functionality with customizable templates",
-          "Close the loop workflow for confirming insurance changes",
-        ],
-      },
-      {
-        type: "changed",
-        items: [
-          "Enhanced equipment form with insurance-specific fields",
-          "Improved attachment management with insurance value tracking",
-        ],
-      },
-    ],
-  },
-  {
-    version: "1.1.0",
-    changes: [
-      {
-        type: "added",
-        items: [
-          "Demo mode for exploring features before signing up",
-          "Welcome email sent automatically on signup",
-          "Password reset confirmation emails",
-          "Document attachments with smart parsing",
-          "Equipment document storage with file management",
-          "Notification system with unread tracking",
-        ],
-      },
-      {
-        type: "changed",
-        items: [
-          "Improved mobile navigation",
-          "Enhanced sidebar with collapsible state persistence",
-        ],
-      },
-    ],
-  },
-  {
-    version: "1.0.0",
-    changes: [
-      {
-        type: "added",
-        items: [
-          "Complete equipment tracking and management",
-          "Equipment attachments and parent-child relationships",
-          "Category lifespan management with customizable defaults",
-          "Buy vs Rent analysis tool with detailed calculations",
-          "Cashflow analysis with interactive visualizations",
-          "FMS (Fleet Management System) export functionality",
-          "User authentication (signup, login, password reset)",
-          "Profile management with company information",
-          "Subscription management",
-          "Dark/light theme support with system preference detection",
-          "Mobile-responsive layout with adaptive navigation",
-          "Dashboard with key metrics and equipment overview",
-          "Definitions page for terminology reference",
-        ],
-      },
-      {
-        type: "security",
-        items: [
-          "Enterprise-grade data security for all user data",
-          "Secure account verification",
-          "Protected access to your data",
-        ],
-      },
-    ],
-  },
-];
+// Transform JSON source to display format (uses userFacing items only)
+const changelogData: ChangelogEntry[] = changelogSource.entries.map((entry) => ({
+  version: entry.version,
+  changes: entry.changes.map((change) => ({
+    type: change.type as ChangelogChange["type"],
+    items: change.userFacing,
+  })),
+}));
 
 const typeConfig = {
   added: {
