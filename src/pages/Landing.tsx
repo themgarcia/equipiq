@@ -626,36 +626,6 @@ export default function Landing() {
                 </div>
               </div>
               
-              <div className="grid gap-6 md:grid-cols-3 mb-8">
-                <div className="text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mx-auto mb-3">
-                    <Calculator className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-1">Calculate</h3>
-                  <p className="text-sm text-muted-foreground">
-                    equipIQ calculates COGS and overhead allocation per piece of equipment
-                  </p>
-                </div>
-                <div className="text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mx-auto mb-3">
-                    <FileSpreadsheet className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-1">Export</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Copy-paste directly into your estimating or fleet management software
-                  </p>
-                </div>
-                <div className="text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mx-auto mb-3">
-                    <TrendingUp className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-1">Recover</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Bill accurately on every job. Stop leaving money on the table.
-                  </p>
-                </div>
-              </div>
-              
               <div className="text-center">
                 <Button size="lg" asChild>
                   <Link to="/auth">
