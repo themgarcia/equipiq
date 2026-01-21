@@ -89,7 +89,7 @@ export function PendingChangesTab({
   const getChangeTypeBadge = (type: string) => {
     switch (type) {
       case 'added':
-        return <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">Added</Badge>;
+        return <Badge className="bg-success/10 text-success hover:bg-success/20">Added</Badge>;
       case 'removed':
         return <Badge variant="destructive">Removed</Badge>;
       case 'value_changed':
@@ -102,11 +102,11 @@ export function PendingChangesTab({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="text-amber-600 border-amber-300">Pending</Badge>;
+        return <Badge variant="outline" className="text-warning border-warning/50">Pending</Badge>;
       case 'sent':
         return <Badge variant="secondary">Sent</Badge>;
       case 'confirmed':
-        return <Badge className="bg-green-500/10 text-green-600">Confirmed</Badge>;
+        return <Badge className="bg-success/10 text-success">Confirmed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }

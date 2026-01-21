@@ -30,7 +30,7 @@ export function MobileTabSelect({ value, onValueChange, tabs, className }: Mobil
             <span className="flex items-center gap-2">
               {selectedTab.label}
               {selectedTab.badge !== undefined && selectedTab.badge > 0 && (
-                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium bg-amber-500 text-white rounded-full">
+                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium bg-warning text-warning-foreground rounded-full">
                   {selectedTab.badge}
                 </span>
               )}
@@ -44,7 +44,7 @@ export function MobileTabSelect({ value, onValueChange, tabs, className }: Mobil
             <span className="flex items-center gap-2">
               {tab.label}
               {tab.badge !== undefined && tab.badge > 0 && (
-                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium bg-amber-500 text-white rounded-full">
+                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium bg-warning text-warning-foreground rounded-full">
                   {tab.badge}
                 </span>
               )}

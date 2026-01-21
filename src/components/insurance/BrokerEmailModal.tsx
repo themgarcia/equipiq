@@ -127,9 +127,9 @@ export function BrokerEmailModal({
           </DialogDescription>
         </DialogHeader>
 
-        <Alert className="border-amber-500/50 bg-amber-500/10">
-          <AlertTriangle className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-700 dark:text-amber-400">
+        <Alert className="border-warning/50 bg-warning/10">
+          <AlertTriangle className="h-4 w-4 text-warning" />
+          <AlertDescription className="text-warning-foreground">
             <strong>Recommended:</strong> Use "Copy to Clipboard" and send from your own email for better deliverability. 
             Direct email sending may land in spam folders.
           </AlertDescription>
