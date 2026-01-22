@@ -226,18 +226,20 @@ export default function Dashboard() {
         </Card>
 
         {/* Upcoming Payoffs */}
-        {upcomingPayoffs.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Upcoming Payoffs
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Upcoming Payoffs
+              {upcomingPayoffs.length > 0 && (
                 <span className="text-sm font-normal text-muted-foreground">
                   ({upcomingPayoffs.length} in next 12 months)
                 </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {upcomingPayoffs.length > 0 ? (
               <div className="space-y-2">
                 {upcomingPayoffs.map(item => (
                   <Link 
@@ -265,9 +267,17 @@ export default function Dashboard() {
                   </Link>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <CheckCircle2 className="h-12 w-12 mx-auto mb-4 opacity-50 text-success" />
+                <p className="font-medium text-foreground">All Clear</p>
+                <p className="text-sm mt-1">
+                  No financing payoffs in the next 12 months.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
       </div>
     </Layout>
