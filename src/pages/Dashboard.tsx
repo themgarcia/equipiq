@@ -1,30 +1,27 @@
 import { useEquipment } from '@/contexts/EquipmentContext';
 import { MetricCard } from '@/components/MetricCard';
-import { StatusBadge } from '@/components/StatusBadge';
-import { formatCurrency, formatPercent } from '@/lib/calculations';
+import { formatCurrency } from '@/lib/calculations';
 import { FinancialValue } from '@/components/ui/financial-value';
 import { Layout } from '@/components/Layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
-  Package, 
   DollarSign, 
-  TrendingUp, 
   AlertTriangle,
-  ArrowRight,
   CreditCard,
   Calendar,
   Wrench,
-  Info
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { ChartContainer } from '@/components/ui/chart';
 import { DashboardSkeleton } from '@/components/PageSkeletons';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useState } from 'react';
 
 export default function Dashboard() {
   const { calculatedEquipment, loading } = useEquipment();
+  const [payoffsOpen, setPayoffsOpen] = useState(false);
   
   if (loading) {
     return (
@@ -38,21 +35,10 @@ export default function Dashboard() {
   
   // Main metrics
   const totalCostBasis = activeEquipment.reduce((sum, e) => sum + e.totalCostBasis, 0);
-  const totalCOGS = activeEquipment.reduce((sum, e) => sum + e.cogsAllocatedCost, 0);
-  const totalOverhead = activeEquipment.reduce((sum, e) => sum + e.overheadAllocatedCost, 0);
-  const totalReplacementValue = activeEquipment.reduce((sum, e) => sum + e.replacementCostUsed, 0);
   
   const agingEquipment = activeEquipment.filter(e => e.estimatedYearsLeft <= 1);
-  
-  const recentEquipment = [...calculatedEquipment]
-    .sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime())
-    .slice(0, 5);
 
   // Financing calculations
-  const financedItems = activeEquipment.filter(e => e.financingType === 'financed');
-  const leasedItems = activeEquipment.filter(e => e.financingType === 'leased');
-  const ownedItems = activeEquipment.filter(e => e.financingType === 'owned');
-  
   const totalMonthlyPayments = activeEquipment.reduce((sum, e) => sum + e.monthlyPayment, 0);
   const totalOutstandingDebt = activeEquipment.reduce((sum, e) => {
     if (e.financingType === 'owned' || !e.financingStartDate) return sum;
@@ -77,29 +63,6 @@ export default function Dashboard() {
     .filter(e => e.monthsUntilPayoff > 0 && e.monthsUntilPayoff <= 12)
     .sort((a, b) => a.monthsUntilPayoff - b.monthsUntilPayoff);
 
-  // Category breakdown
-  const categoryData = activeEquipment.reduce((acc, e) => {
-    const existing = acc.find(c => c.name === e.category);
-    if (existing) {
-      existing.value += e.totalCostBasis;
-      existing.count += 1;
-    } else {
-      acc.push({ name: e.category, value: e.totalCostBasis, count: 1 });
-    }
-    return acc;
-  }, [] as { name: string; value: number; count: number }[])
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6);
-
-  const COLORS = [
-    'hsl(var(--primary))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
-    'hsl(var(--muted-foreground))'
-  ];
-
   // Replacement timeline
   const replacementIn1Year = activeEquipment.filter(e => e.estimatedYearsLeft <= 1);
   const replacementIn2Years = activeEquipment.filter(e => e.estimatedYearsLeft > 1 && e.estimatedYearsLeft <= 2);
@@ -118,375 +81,189 @@ export default function Dashboard() {
           <div className="accent-line mb-4" />
           <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Overview of your equipment fleet and allocations
+            Fleet overview at a glance
           </p>
         </div>
 
-        {/* Metrics Grid */}
+        {/* Simplified Metrics Grid - 4 Key Cards */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           <MetricCard
-            title="Total Cost Basis"
+            title="Fleet Investment"
             value={<FinancialValue value={totalCostBasis} format="compact" showSign={false} size="2xl" weight="bold" />}
             subtitle={`${activeEquipment.length} active items`}
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           />
           <MetricCard
-            title="Allocated to COGS"
-            value={<FinancialValue value={totalCOGS} format="compact" showSign={false} size="2xl" weight="bold" />}
-            subtitle="Job-related equipment costs"
-            icon={<TrendingUp className="h-5 w-5 text-muted-foreground" />}
+            title="Monthly Payments"
+            value={<FinancialValue value={totalMonthlyPayments} format="compact" showSign={false} size="2xl" weight="bold" />}
+            subtitle="Financing obligations"
+            icon={<CreditCard className="h-5 w-5 text-muted-foreground" />}
           />
           <MetricCard
-            title="Allocated to Overhead"
-            value={<FinancialValue value={totalOverhead} format="compact" showSign={false} size="2xl" weight="bold" />}
-            subtitle="Non-job equipment costs"
-            icon={<Package className="h-5 w-5 text-muted-foreground" />}
-          />
-          <MetricCard
-            title="Replacement Value"
-            value={<FinancialValue value={totalReplacementValue} format="compact" showSign={false} size="2xl" weight="bold" />}
-            subtitle="Inflation-adjusted estimate"
+            title="Outstanding Debt"
+            value={<FinancialValue value={totalOutstandingDebt} format="compact" showSign={false} size="2xl" weight="bold" />}
+            subtitle="Remaining liability"
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           />
+          <Link to="/equipment?filter=aging" className="block">
+            <MetricCard
+              title="Aging Alert"
+              value={<span className="text-2xl font-bold">{agingEquipment.length}</span>}
+              subtitle={agingEquipment.length === 0 ? "All equipment healthy" : "Items need attention"}
+              icon={<AlertTriangle className={`h-5 w-5 ${agingEquipment.length > 0 ? 'text-warning' : 'text-muted-foreground'}`} />}
+              className={agingEquipment.length > 0 ? 'border-warning/30 bg-warning/5' : ''}
+            />
+          </Link>
         </div>
 
-        {/* Financing Summary */}
+        {/* Replacement Forecast - Merged Card */}
         <Card className="mb-8">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Financing Summary
+              <Wrench className="h-5 w-5" />
+              Replacement Forecast
             </CardTitle>
-            <CardDescription>
-              {financedItems.length} financed, {leasedItems.length} leased, {ownedItems.length} owned outright
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Monthly Payments</p>
-                <p className="text-2xl font-bold font-mono-nums">{formatCurrency(totalMonthlyPayments)}</p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-1">
-                  <p className="text-sm text-muted-foreground">Annual Payments</p>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">Total cash paid per year toward this equipment's financing, including principal and interest.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+            {/* Timeline Summary */}
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-destructive" />
+                  <span className="text-sm font-medium">Within 1 Year</span>
                 </div>
-                <FinancialValue value={totalMonthlyPayments * 12} format="compact" showSign={false} size="2xl" weight="bold" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Outstanding Debt</p>
-                <FinancialValue value={totalOutstandingDebt} format="compact" showSign={false} size="2xl" weight="bold" />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-1">
-                  <p className="text-sm text-muted-foreground">Equity Ratio</p>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">Percentage of your fleet's value you own outright. 100% = no debt. Higher is better for financial stability.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-2xl font-bold">{replacementIn1Year.length}</span>
+                  <FinancialValue value={replacementCost1Year} format="compact" showSign={false} className="text-muted-foreground" />
                 </div>
-                <p className="text-2xl font-bold font-mono-nums">
-                  {totalCostBasis > 0 ? formatPercent(((totalCostBasis - totalOutstandingDebt) / totalCostBasis) * 100) : '100%'}
-                </p>
+              </div>
+              <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-warning" />
+                  <span className="text-sm font-medium">1-2 Years</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-2xl font-bold">{replacementIn2Years.length}</span>
+                  <FinancialValue value={replacementCost2Years} format="compact" showSign={false} className="text-muted-foreground" />
+                </div>
+              </div>
+              <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-success" />
+                  <span className="text-sm font-medium">2-3 Years</span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-2xl font-bold">{replacementIn3Years.length}</span>
+                  <FinancialValue value={replacementCost3Years} format="compact" showSign={false} className="text-muted-foreground" />
+                </div>
               </div>
             </div>
 
-            {/* Upcoming Payoffs */}
-            {upcomingPayoffs.length > 0 ? (
+            {/* 3-Year Total */}
+            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+              <span className="font-medium">3-Year Total CapEx</span>
+              <FinancialValue 
+                value={replacementCost1Year + replacementCost2Years + replacementCost3Years} 
+                format="compact" 
+                showSign={false} 
+                size="xl" 
+                weight="bold" 
+              />
+            </div>
+
+            {/* Items Needing Attention (merged from Aging Equipment) */}
+            {agingEquipment.length > 0 && (
               <div className="pt-4 border-t">
                 <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="text-sm font-medium">Upcoming Payoffs (next 12 months)</h3>
+                  <AlertTriangle className="h-4 w-4 text-warning" />
+                  <h3 className="text-sm font-medium">Items Needing Attention</h3>
                 </div>
                 <div className="space-y-2">
-                  {upcomingPayoffs.slice(0, 5).map(item => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  {agingEquipment.slice(0, 4).map(equipment => (
+                    <div 
+                      key={equipment.id}
+                      className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg"
+                    >
                       <div>
-                        <p className="font-medium text-sm">{item.name}</p>
+                        <p className="font-medium text-sm">{equipment.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {item.make} {item.model} • {formatCurrency(item.monthlyPayment)}/mo
+                          {equipment.category} • {equipment.estimatedYearsLeft === 0 
+                            ? 'Past useful life' 
+                            : `${equipment.estimatedYearsLeft.toFixed(1)} years left`}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium text-sm">
-                          {item.payoffDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.monthsUntilPayoff} months left
-                        </p>
+                        <FinancialValue value={equipment.replacementCostUsed} format="currency" showSign={false} size="sm" weight="medium" />
+                        <p className="text-xs text-muted-foreground">to replace</p>
                       </div>
                     </div>
                   ))}
+                  {agingEquipment.length > 4 && (
+                    <Link to="/equipment?filter=aging">
+                      <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
+                        View all {agingEquipment.length} items
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-                {upcomingPayoffs.length > 5 && (
-                  <p className="text-sm text-muted-foreground text-center mt-3">
-                    +{upcomingPayoffs.length - 5} more items
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="pt-4 border-t">
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="text-sm font-medium">Upcoming Payoffs (next 12 months)</h3>
-                </div>
-                <p className="text-sm text-muted-foreground">No upcoming payoffs in the next 12 months</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Category & Replacement Row */}
-        <div className="grid gap-6 sm:gap-8 grid-cols-1 lg:grid-cols-2 mb-8">
-          {/* Category Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                Cost Basis by Category
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Distribution of cost basis across equipment types</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center md:items-start">
-              {categoryData.length > 0 ? (
-                <ChartContainer config={{}} className="h-[200px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={70}
-                        paddingAngle={2}
-                        dataKey="value"
-                        nameKey="name"
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip 
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-popover border rounded-lg p-2 shadow-md">
-                                <p className="font-medium text-sm">{data.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {formatCurrency(data.value)} ({data.count} items)
-                                </p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              ) : (
-                <div className="h-[200px] flex items-center justify-center text-muted-foreground w-full">
-                  No equipment data available
-                </div>
-              )}
-              <div className="mt-4 space-y-2 w-full">
-                {categoryData.map((cat, index) => (
-                  <div key={cat.name} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                      />
-                      <span className="truncate max-w-[140px]">{cat.name}</span>
+        {/* Upcoming Payoffs - Collapsible */}
+        {(upcomingPayoffs.length > 0 || totalOutstandingDebt > 0) && (
+          <Collapsible open={payoffsOpen} onOpenChange={setPayoffsOpen}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Upcoming Payoffs
+                      <span className="text-sm font-normal text-muted-foreground">
+                        ({upcomingPayoffs.length} in next 12 months)
+                      </span>
+                    </CardTitle>
+                    {payoffsOpen ? (
+                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  {upcomingPayoffs.length > 0 ? (
+                    <div className="space-y-2">
+                      {upcomingPayoffs.map(item => (
+                        <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-sm">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.make} {item.model} • {formatCurrency(item.monthlyPayment)}/mo
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-sm">
+                              {item.payoffDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.monthsUntilPayoff} months left
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <span className="text-muted-foreground font-mono-nums">{formatCurrency(cat.value)}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Replacement Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Wrench className="h-5 w-5" />
-                Replacement Planning
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Upcoming equipment replacement needs based on useful life</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-destructive" />
-                    <span className="text-sm">Within 1 year</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-medium">{replacementIn1Year.length} items</span>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      <FinancialValue value={replacementCost1Year} format="compact" showSign={false} />
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                    <span className="text-sm">1-2 years</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-medium">{replacementIn2Years.length} items</span>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      <FinancialValue value={replacementCost2Years} format="compact" showSign={false} />
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-sm">2-3 years</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-medium">{replacementIn3Years.length} items</span>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      <FinancialValue value={replacementCost3Years} format="compact" showSign={false} />
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">3-Year Total CapEx</span>
-                  <FinancialValue 
-                    value={replacementCost1Year + replacementCost2Years + replacementCost3Years} 
-                    format="compact" 
-                    showSign={false} 
-                    size="lg" 
-                    weight="bold" 
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-
-        {/* Two Column Layout - Aging & Recent */}
-        <div className="grid gap-6 sm:gap-8 grid-cols-1 lg:grid-cols-2">
-          {/* Aging Equipment */}
-          <div className="bg-card border rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-warning" />
-                <h2 className="text-lg font-semibold">Aging Equipment</h2>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {agingEquipment.length} items need attention
-              </span>
-            </div>
-            
-            {agingEquipment.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4">
-                No equipment reaching end of useful life soon. Great job!
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {agingEquipment.slice(0, 4).map(equipment => (
-                  <div 
-                    key={equipment.id}
-                    className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium text-sm">{equipment.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {equipment.category} • {equipment.estimatedYearsLeft === 0 
-                          ? 'Past useful life' 
-                          : `${equipment.estimatedYearsLeft.toFixed(1)} years left`}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-mono-nums">
-                        {formatCurrency(equipment.expectedResaleUsed)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">expected resale</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Recent Equipment */}
-          <div className="bg-card border rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Recent Equipment</h2>
-              <Link to="/equipment">
-                <Button variant="ghost" size="sm" className="text-muted-foreground">
-                  View all <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            
-            <div className="space-y-3">
-              {recentEquipment.map(equipment => (
-                <div 
-                  key={equipment.id}
-                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p className="font-medium text-sm">{equipment.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {equipment.make} {equipment.model} • {equipment.year}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <StatusBadge status={equipment.status} />
-                    <p className="text-sm font-mono-nums">
-                      {formatCurrency(equipment.totalCostBasis)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground py-2">No equipment paying off in the next 12 months</p>
+                  )}
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        )}
 
       </div>
     </Layout>
