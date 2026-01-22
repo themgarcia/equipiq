@@ -19,6 +19,20 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Animated checkmark component with scale-in and bounce effect
+function AnimatedCheck({ className }: { className?: string }) {
+  return (
+    <div className="relative">
+      <Check 
+        className={cn(
+          "h-4 w-4 animate-[checkmark-pop_0.4s_ease-out_forwards]",
+          className
+        )} 
+      />
+    </div>
+  );
+}
+
 interface OnboardingStep {
   key: 'step_dashboard_viewed' | 'step_equipment_imported' | 'step_insurance_uploaded' | 'step_cashflow_viewed' | 'step_buy_vs_rent_used' | 'step_fms_exported' | 'step_methodology_reviewed';
   label: string;
@@ -144,20 +158,20 @@ export function OnboardingChecklist() {
                 )}
               >
                 <div className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0',
+                  'flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 transition-all duration-300',
                   isComplete 
-                    ? 'bg-success text-success-foreground' 
-                    : 'bg-muted'
+                    ? 'bg-success text-success-foreground scale-100' 
+                    : 'bg-muted scale-100'
                 )}>
                   {isComplete ? (
-                    <Check className="h-4 w-4" />
+                    <AnimatedCheck />
                   ) : (
-                    <StepIcon className="h-4 w-4 text-muted-foreground" />
+                    <StepIcon className="h-4 w-4 text-muted-foreground transition-opacity duration-200" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className={cn(
-                    'text-sm font-medium',
+                    'text-sm font-medium transition-all duration-300',
                     isComplete && 'text-muted-foreground line-through'
                   )}>
                     {step.label}
