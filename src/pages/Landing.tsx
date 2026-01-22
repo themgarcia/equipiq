@@ -41,8 +41,8 @@ const painPoints = [
   },
   {
     icon: Clock,
-    title: "Surprise Replacements",
-    description: "That excavator you thought had 3 more years? The dealer says it's worth half what you expected.",
+    title: "Replacement Blindspots",
+    description: "You don't know which machines need replacing until something breaks or the dealer lowballs your trade-in.",
   },
   {
     icon: ShieldCheck,
@@ -258,8 +258,8 @@ export default function Landing() {
       <section className="container py-24 md:py-32">
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-            You're losing money on equipment.
-            <span className="block text-primary">You just need the right rates.</span>
+            Your equipment's losing money.
+            <span className="block text-primary">You just need the right numbers.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-3xl mx-auto">
             EquipIQ calculates the true cost of your fleet and gives you the exact rates to plug into your FMS for 100% equipment recovery.
@@ -574,7 +574,7 @@ export default function Landing() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="container py-24">
+      <section id="how-it-works" className="container py-24 bg-muted/30">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
@@ -617,7 +617,7 @@ export default function Landing() {
       </section>
 
       {/* What You'll Know Section */}
-      <section id="what-youll-know" className="container py-24 bg-muted/30">
+      <section id="what-youll-know" className="container py-24">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
@@ -653,7 +653,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="container py-24 bg-muted/30">
+      <section id="features" className="container py-24">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
@@ -687,7 +687,7 @@ export default function Landing() {
       </section>
 
       {/* Beta CTA Section */}
-      <section className="container py-24 bg-muted/30">
+      <section className="container py-24">
         <div className="mx-auto max-w-3xl">
           <Card className="border-primary bg-card shadow-lg">
             <CardHeader className="text-center pb-4">
@@ -736,7 +736,7 @@ export default function Landing() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="container py-24">
+      <section className="container py-24 bg-muted/30">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl mb-4">
             Stop Guessing. Start Knowing.
