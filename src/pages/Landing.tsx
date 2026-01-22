@@ -62,20 +62,20 @@ const howItWorksSteps = [
   {
     icon: Upload,
     step: '1',
-    title: 'Drop Your Documents',
-    description: 'Invoices, leases, insurance policies—any format. PDF or photo.',
+    title: 'Upload Your Paperwork',
+    description: 'Snap a photo of that invoice on your dash, or drop in the PDF from the dealer. Leases, purchases, insurance docs—we take it all.',
   },
   {
     icon: Brain,
     step: '2',
-    title: 'AI Extracts the Data',
-    description: 'Make, model, pricing, financing terms, serial numbers. Done in seconds.',
+    title: 'AI Does the Data Entry',
+    description: 'Make, model, year, price, terms, serial numbers—extracted in seconds. No more hunting through file cabinets or email chains.',
   },
   {
     icon: BarChart3,
     step: '3',
-    title: 'Get Answers',
-    description: 'Total debt, replacement timing—plus exact costs to paste into your estimating software.',
+    title: 'Get Your Numbers',
+    description: 'See your total monthly nut, know which machines are due for replacement, and get the exact hourly/daily rates to plug into your bids.',
   },
 ];
 
@@ -585,22 +585,29 @@ export default function Landing() {
             </p>
           </div>
           
-          <div className="grid gap-8 md:grid-cols-3">
-            {howItWorksSteps.map((step) => (
+          <div className="grid gap-8 md:grid-cols-3 relative">
+            {howItWorksSteps.map((step, index) => (
               <div key={step.step} className="relative text-center">
+                {/* Connector line - visible on md+ screens, not after last item */}
+                {index < howItWorksSteps.length - 1 && (
+                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-[2px]">
+                    <div className="w-full h-full bg-gradient-to-r from-primary/40 via-primary/20 to-transparent" />
+                    <ArrowRight className="absolute -right-1 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/40" />
+                  </div>
+                )}
                 <div className="flex flex-col items-center">
                   <div className="relative mb-6">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 border-2 border-primary/20">
                       <step.icon className="h-10 w-10 text-primary" />
                     </div>
-                    <span className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                    <span className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md">
                       {step.step}
                     </span>
                   </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                  <h3 className="text-xl font-semibold text-foreground mb-3">
                     {step.title}
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground leading-relaxed">
                     {step.description}
                   </p>
                 </div>
