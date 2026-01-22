@@ -14,6 +14,7 @@ import { AdminRoute } from "@/components/AdminRoute";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
+import GetStarted from "./pages/GetStarted";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import EquipmentList from "./pages/EquipmentList";
@@ -60,6 +61,11 @@ const App = () => (
                   <Route path="/dashboard" element={
                     <ProtectedRoute>
                       <Dashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/get-started" element={
+                    <ProtectedRoute>
+                      <GetStarted />
                     </ProtectedRoute>
                   } />
                   <Route path="/equipment" element={

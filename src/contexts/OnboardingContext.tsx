@@ -59,6 +59,59 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState<OnboardingProgress | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Auto-complete steps based on existing data
+  const autoCompleteSteps = useCallback(async (currentProgress: OnboardingProgress): Promise<OnboardingProgress> => {
+    if (!user) return currentProgress;
+    
+    const updates: Partial<OnboardingProgress> = {};
+    
+    // Check for existing equipment
+    if (!currentProgress.step_equipment_imported) {
+      const { count } = await supabase
+        .from('equipment')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      
+      if (count && count > 0) {
+        updates.step_equipment_imported = true;
+      }
+    }
+    
+    // Check for insurance (insured equipment OR settings configured)
+    if (!currentProgress.step_insurance_uploaded) {
+      const { count: insuredCount } = await supabase
+        .from('equipment')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_insured', true);
+      
+      const { data: settings } = await supabase
+        .from('insurance_settings')
+        .select('broker_email, policy_number')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      const hasInsurance = (insuredCount && insuredCount > 0) || 
+                           (settings?.broker_email || settings?.policy_number);
+      
+      if (hasInsurance) {
+        updates.step_insurance_uploaded = true;
+      }
+    }
+    
+    // Apply updates if any
+    if (Object.keys(updates).length > 0) {
+      await supabase
+        .from('onboarding_progress')
+        .update(updates)
+        .eq('user_id', user.id);
+      
+      return { ...currentProgress, ...updates };
+    }
+    
+    return currentProgress;
+  }, [user]);
+
   const fetchProgress = useCallback(async () => {
     if (!user) {
       setProgress(null);
@@ -77,7 +130,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         console.error('Error fetching onboarding progress:', error);
         setProgress(null);
       } else if (data) {
-        setProgress({
+        let currentProgress: OnboardingProgress = {
           step_dashboard_viewed: data.step_dashboard_viewed,
           step_equipment_imported: data.step_equipment_imported,
           step_insurance_uploaded: data.step_insurance_uploaded,
@@ -87,7 +140,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           step_methodology_reviewed: data.step_methodology_reviewed,
           completed_at: data.completed_at,
           dismissed_at: data.dismissed_at,
-        });
+        };
+        
+        // Auto-complete steps based on existing data
+        currentProgress = await autoCompleteSteps(currentProgress);
+        setProgress(currentProgress);
       } else {
         // No row exists, create one
         const { data: newData, error: insertError } = await supabase
@@ -100,7 +157,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           console.error('Error creating onboarding progress:', insertError);
           setProgress(defaultProgress);
         } else if (newData) {
-          setProgress({
+          let currentProgress: OnboardingProgress = {
             step_dashboard_viewed: newData.step_dashboard_viewed,
             step_equipment_imported: newData.step_equipment_imported,
             step_insurance_uploaded: newData.step_insurance_uploaded,
@@ -110,7 +167,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             step_methodology_reviewed: newData.step_methodology_reviewed,
             completed_at: newData.completed_at,
             dismissed_at: newData.dismissed_at,
-          });
+          };
+          
+          // Auto-complete steps based on existing data
+          currentProgress = await autoCompleteSteps(currentProgress);
+          setProgress(currentProgress);
         }
       }
     } catch (err) {
@@ -119,7 +180,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, autoCompleteSteps]);
 
   useEffect(() => {
     fetchProgress();

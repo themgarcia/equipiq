@@ -32,20 +32,10 @@ export function OnboardingSidebarLink({ isCollapsed = false }: OnboardingSidebar
       await restartOnboarding();
     }
     
-    if (location.pathname === '/dashboard') {
-      // Use setTimeout to allow DOM to update after restartOnboarding
-      setTimeout(() => {
-        const element = document.getElementById('get-started');
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    } else {
-      navigate('/dashboard#get-started');
-    }
+    navigate('/get-started');
   };
 
-  const isActive = location.pathname === '/dashboard' && location.hash === '#get-started';
+  const isActive = location.pathname === '/get-started';
 
   return (
     <SidebarMenuItem className={cn(isCollapsed && "w-full flex justify-center")}>
@@ -112,19 +102,10 @@ export function OnboardingMobileLink({ className }: OnboardingMobileLinkProps) {
       await restartOnboarding();
     }
     
-    if (location.pathname === '/dashboard') {
-      setTimeout(() => {
-        const element = document.getElementById('get-started');
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    } else {
-      navigate('/dashboard#get-started');
-    }
+    navigate('/get-started');
   };
 
-  const isActive = location.pathname === '/dashboard' && location.hash === '#get-started';
+  const isActive = location.pathname === '/get-started';
 
   return (
     <button
