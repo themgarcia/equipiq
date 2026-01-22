@@ -638,6 +638,54 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          dismissed_at: string | null
+          id: string
+          step_buy_vs_rent_used: boolean
+          step_cashflow_viewed: boolean
+          step_dashboard_viewed: boolean
+          step_equipment_imported: boolean
+          step_fms_exported: boolean
+          step_insurance_uploaded: boolean
+          step_methodology_reviewed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          step_buy_vs_rent_used?: boolean
+          step_cashflow_viewed?: boolean
+          step_dashboard_viewed?: boolean
+          step_equipment_imported?: boolean
+          step_fms_exported?: boolean
+          step_insurance_uploaded?: boolean
+          step_methodology_reviewed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          step_buy_vs_rent_used?: boolean
+          step_cashflow_viewed?: boolean
+          step_dashboard_viewed?: boolean
+          step_equipment_imported?: boolean
+          step_fms_exported?: boolean
+          step_insurance_uploaded?: boolean
+          step_methodology_reviewed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           annual_revenue: string | null

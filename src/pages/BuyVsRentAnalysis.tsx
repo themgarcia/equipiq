@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -30,6 +30,7 @@ import { categoryDefaults, getCategoryDefaults } from '@/data/categoryDefaults';
 import { calculateBuyVsRent, formatCurrency, formatDays, calculateRentalCostByType } from '@/lib/buyVsRentCalculations';
 import { cn } from '@/lib/utils';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { BuyVsRentSkeleton } from '@/components/PageSkeletons';
 import { FinancialValue } from '@/components/ui/financial-value';
@@ -53,8 +54,10 @@ const defaultInput: BuyVsRentInput = {
 
 export default function BuyVsRentAnalysis() {
   const { canUseBuyVsRent, effectivePlan, subscription } = useSubscription();
+  const { markStepComplete } = useOnboarding();
   const [input, setInput] = useState<BuyVsRentInput>(defaultInput);
   const [selectedRateType, setSelectedRateType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const hasInteracted = useRef(false);
 
   // Round any existing decimal values on mount
   useEffect(() => {
@@ -93,6 +96,10 @@ export default function BuyVsRentAnalysis() {
   }, [input.rentalRateDaily, input.rentalRateWeekly, input.rentalRateMonthly]);
 
   const handleCategoryChange = (category: EquipmentCategory) => {
+    if (!hasInteracted.current) {
+      hasInteracted.current = true;
+      markStepComplete('step_buy_vs_rent_used');
+    }
     const defaults = getCategoryDefaults(category);
     const resaleValue = Math.round(input.purchasePrice * (defaults.defaultResalePercent / 100));
     const maintenance = Math.round(input.purchasePrice * (defaults.maintenancePercent / 100));

@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { Layout } from '@/components/Layout';
@@ -146,8 +147,18 @@ export default function EquipmentList() {
     setIsReviewOpen(true);
   };
 
-  const handleImportComplete = () => {
+  const { markStepComplete } = useOnboarding();
+
+  const handleImportComplete = useCallback(() => {
     setExtractedEquipment([]);
+    // Mark onboarding step when equipment is added
+    markStepComplete('step_equipment_imported');
+  }, [markStepComplete]);
+
+  const handleFormSubmitWithOnboarding = (data: Omit<Equipment, 'id'>) => {
+    handleFormSubmit(data);
+    // Mark onboarding step when equipment is added manually
+    markStepComplete('step_equipment_imported');
   };
 
   const handleOpenDocuments = (equipment: Equipment) => {

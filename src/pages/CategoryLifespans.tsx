@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,7 @@ import { useDeviceType } from '@/hooks/use-mobile';
 
 export default function CategoryLifespans() {
   const { categoryDefaults, updateCategoryDefaults } = useEquipment();
+  const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isPhone = deviceType === 'phone';
   
@@ -34,6 +36,11 @@ export default function CategoryLifespans() {
   const [editValues, setEditValues] = useState<Partial<CategoryDefaults>>({});
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryDefaults | null>(null);
+
+  // Mark onboarding step on mount
+  useEffect(() => {
+    markStepComplete('step_methodology_reviewed');
+  }, [markStepComplete]);
 
   const startEdit = (category: CategoryDefaults) => {
     if (isPhone) {
