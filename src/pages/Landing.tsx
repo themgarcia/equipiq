@@ -357,7 +357,7 @@ export default function Landing() {
               How Much Are You Giving Away?
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Most guys either skip charging for equipment or pull a number out of thin air. Either way, that's cash walking off the jobsite.
+              Most contractors either skip charging for equipment or pull a number out of thin air. Either way, that's cash walking off the jobsite.
             </p>
           </div>
           
@@ -858,7 +858,7 @@ export default function Landing() {
               Built for the Trades, Not the Boardroom
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              This isn't some generic asset tracker. It's built for guys who run equipment.
+              This isn't some generic asset tracker. It's built for people who run equipment.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
