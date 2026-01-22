@@ -17,7 +17,13 @@ import {
   HelpCircle,
   Info,
   BarChart3,
-  Calculator
+  Calculator,
+  Trees,
+  Shovel,
+  Construction,
+  Drill,
+  Hammer,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -112,6 +118,39 @@ const whatYoullKnow = [
   },
 ];
 
+const whoItsFor = [
+  {
+    icon: Trees,
+    title: 'Landscaping & Design',
+    examples: 'Skid steers, mini-excavators, trucks, and specialized attachments.',
+    isFounderIndustry: true,
+  },
+  {
+    icon: Shovel,
+    title: 'Civil & Excavation',
+    examples: 'Dozers, loaders, and articulated trucks.',
+    isFounderIndustry: false,
+  },
+  {
+    icon: Construction,
+    title: 'Paving & Asphalt',
+    examples: 'Pavers, rollers, and milling equipment.',
+    isFounderIndustry: false,
+  },
+  {
+    icon: Drill,
+    title: 'Utility & Underground',
+    examples: 'Vacuum trucks, drills, and trenchers.',
+    isFounderIndustry: false,
+  },
+  {
+    icon: Hammer,
+    title: 'Demolition & Forestry',
+    examples: 'High-reaches, mulchers, and chippers.',
+    isFounderIndustry: false,
+  },
+];
+
 const features = [
   {
     icon: Package,
@@ -189,6 +228,9 @@ export default function Landing() {
           
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center gap-4">
+            <a href="#who-its-for" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Who It's For
+            </a>
             <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               How It Works
             </a>
@@ -224,6 +266,9 @@ export default function Landing() {
             </SheetTrigger>
             <SheetContent side="right" className="w-64">
               <div className="flex flex-col gap-4 pt-8">
+                <a href="#who-its-for" className="text-lg font-medium hover:text-primary transition-colors">
+                  Who It's For
+                </a>
                 <a href="#how-it-works" className="text-lg font-medium hover:text-primary transition-colors">
                   How It Works
                 </a>
@@ -573,6 +618,98 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Who It's For Section */}
+      <section id="who-its-for" className="container py-24 bg-muted/30">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
+              Built for Contractors Who Run Equipment
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+              If you've got iron on the jobsite, this is for you.
+            </p>
+          </div>
+          
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {whoItsFor.map((trade) => (
+              <div 
+                key={trade.title} 
+                className={`relative flex items-start gap-4 p-4 rounded-lg border bg-background ${
+                  trade.isFounderIndustry 
+                    ? 'border-amber-500/50 ring-1 ring-amber-500/20' 
+                    : 'border-border'
+                }`}
+              >
+                {/* Founder's Industry Badge */}
+                {trade.isFounderIndustry && (
+                  <span className="absolute -top-2.5 right-4 px-2 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full border border-amber-500/30">
+                    Founder's Industry
+                  </span>
+                )}
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0 ${
+                  trade.isFounderIndustry 
+                    ? 'bg-amber-500/10' 
+                    : 'bg-primary/10'
+                }`}>
+                  <trade.icon className={`h-5 w-5 ${
+                    trade.isFounderIndustry 
+                      ? 'text-amber-600 dark:text-amber-400' 
+                      : 'text-primary'
+                  }`} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">
+                    {trade.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {trade.examples}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <p className="mt-10 text-center text-muted-foreground">
+            Don't see your trade? If you own or lease equipment, equipIQ works for you.
+          </p>
+        </div>
+      </section>
+
+      {/* Founder's Story Section */}
+      <section className="container py-24">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-3xl font-bold text-foreground sm:text-4xl text-center mb-12">
+            Built by a Contractor, for Contractors
+          </h2>
+          
+          <div className="grid gap-12 md:grid-cols-[280px_1fr] items-center">
+            {/* Headshot Placeholder */}
+            <div className="flex justify-center">
+              <div className="w-56 h-56 md:w-64 md:h-64 rounded-2xl bg-muted border-2 border-border flex flex-col items-center justify-center text-muted-foreground">
+                <User className="h-16 w-16 mb-2 opacity-40" />
+                <span className="text-sm">Founder Photo</span>
+              </div>
+            </div>
+            
+            {/* Story Copy */}
+            <div className="space-y-4">
+              <p className="text-lg leading-relaxed text-muted-foreground">
+                I spent 12 years running a landscaping business. We were doing the work, but I couldn't understand why our profit didn't match our effort.
+              </p>
+              <p className="text-lg leading-relaxed text-muted-foreground">
+                I realized we were guessing our equipment rates and leaving thousands of dollars on the job site every month.
+              </p>
+              <p className="text-lg leading-relaxed text-muted-foreground">
+                I built equipIQ to solve that problem for my own fleet—to provide the financial intelligence I wish I had from day one.
+              </p>
+              <p className="text-lg leading-relaxed text-foreground font-medium">
+                Now, we're helping contractors across the trades stop the guessing game and start recovering every dollar of overhead.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works Section */}
       <section id="how-it-works" className="container py-24 bg-muted/30">
         <div className="mx-auto max-w-6xl">
@@ -769,6 +906,7 @@ export default function Landing() {
               <span className="font-semibold text-foreground">equipIQ</span>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+              <a href="#who-its-for" className="hover:text-foreground transition-colors">Who It's For</a>
               <a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a>
               <a href="#what-youll-know" className="hover:text-foreground transition-colors">What You'll Know</a>
               <a href="#features" className="hover:text-foreground transition-colors">Features</a>
