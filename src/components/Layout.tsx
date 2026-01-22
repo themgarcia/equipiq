@@ -172,7 +172,7 @@ function AppSidebar() {
         {groups.map((group, groupIndex) => (
           <SidebarGroup key={group.label || `group-${groupIndex}`} className={cn("py-1", isCollapsed && "px-0")}>
             {!isCollapsed && group.label && (
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 font-medium px-3 mb-1">
+              <SidebarGroupLabel className="text-[10px] text-sidebar-foreground/40 font-medium px-3 mb-1">
                 {group.label}
               </SidebarGroupLabel>
             )}
@@ -375,7 +375,7 @@ function PhoneHeader() {
               {groups.map((group, groupIndex) => (
                 <div key={group.label || `group-${groupIndex}`} className={cn(groupIndex > 0 && "mt-4")}>
                   {group.label && (
-                    <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 font-medium px-3 mb-2">
+                    <p className="text-[10px] text-sidebar-foreground/40 font-medium px-3 mb-2">
                       {group.label}
                     </p>
                   )}
