@@ -26,6 +26,7 @@ import {
   User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import founderHeadshot from '@/assets/founder-headshot.png';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { useAuth } from '@/contexts/AuthContext';
@@ -690,12 +691,13 @@ export default function Landing() {
           </h2>
           
           <div className="grid gap-12 md:grid-cols-[280px_1fr] items-center">
-            {/* Headshot Placeholder */}
+            {/* Founder Headshot */}
             <div className="flex justify-center">
-              <div className="w-56 h-56 md:w-64 md:h-64 rounded-2xl bg-muted border-2 border-border flex flex-col items-center justify-center text-muted-foreground">
-                <User className="h-16 w-16 mb-2 opacity-40" />
-                <span className="text-sm">Founder Photo</span>
-              </div>
+              <img 
+                src={founderHeadshot} 
+                alt="Michael, Founder of equipIQ" 
+                className="w-56 h-56 md:w-64 md:h-64 rounded-2xl object-cover border-2 border-border shadow-lg"
+              />
             </div>
             
             {/* Story Copy */}
