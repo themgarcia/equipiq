@@ -68,6 +68,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 import { useDeviceType } from '@/hooks/use-mobile';
 
 interface LayoutProps {
@@ -240,6 +241,35 @@ function AppSidebar() {
 
       <SidebarFooter className={cn("border-t border-sidebar-border", isCollapsed ? "p-0 py-3" : "p-3")}>
         <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center px-0")}>
+          {/* Send Feedback Button - at top for all users */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SidebarMenuButton
+                onClick={() => setFeedbackOpen(true)}
+                className={cn(
+                  'transition-all',
+                  isCollapsed && 'w-8 justify-center',
+                  'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                )}
+              >
+                <MessageSquarePlus className="h-5 w-5 flex-shrink-0 text-sidebar-foreground/50" />
+                {isCollapsed ? (
+                  <span className="sr-only">Send Feedback</span>
+                ) : (
+                  <span>Send Feedback</span>
+                )}
+              </SidebarMenuButton>
+            </TooltipTrigger>
+            {isCollapsed && (
+              <TooltipContent side="right">
+                Send Feedback
+              </TooltipContent>
+            )}
+          </Tooltip>
+
+          {/* Separator between feedback and admin/user section */}
+          <Separator className="my-1 bg-sidebar-border/50" />
+
           {/* Admin Link - only when admin mode is active */}
           {adminModeActive && (
             <Tooltip>
@@ -277,32 +307,6 @@ function AppSidebar() {
           
           {/* Demo Mode Controls - only show when sidebar is expanded and admin mode is active */}
           {!isCollapsed && adminModeActive && <DemoModeControls />}
-
-          {/* Send Feedback Button */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SidebarMenuButton
-                onClick={() => setFeedbackOpen(true)}
-                className={cn(
-                  'transition-all',
-                  isCollapsed && 'w-8 justify-center',
-                  'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                )}
-              >
-                <MessageSquarePlus className="h-5 w-5 flex-shrink-0 text-sidebar-foreground/50" />
-                {isCollapsed ? (
-                  <span className="sr-only">Send Feedback</span>
-                ) : (
-                  <span>Send Feedback</span>
-                )}
-              </SidebarMenuButton>
-            </TooltipTrigger>
-            {isCollapsed && (
-              <TooltipContent side="right">
-                Send Feedback
-              </TooltipContent>
-            )}
-          </Tooltip>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
