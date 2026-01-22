@@ -52,10 +52,10 @@ const painPoints = [
 ];
 
 const benefits = [
-  'Know your true cost of ownership',
-  'Charge customers accurately for equipment',
-  'Track depreciation automatically',
-  'See your monthly debt at a glance',
+  'Know exactly what your iron costs you',
+  'Bill customers for every hour of equipment use',
+  'Stop doing depreciation math by hand',
+  'See your total monthly nut at a glance',
 ];
 
 const howItWorksSteps = [
@@ -81,32 +81,32 @@ const howItWorksSteps = [
 
 const whatYoullKnow = [
   {
-    question: 'How much should I bill for equipment on this job?',
+    question: 'What should I charge for equipment on this bid?',
     source: 'FMS Export',
     icon: FileSpreadsheet,
   },
   {
-    question: "What's my total monthly payment across all equipment?",
+    question: "What's my total monthly nut across all my iron?",
     source: 'Cashflow Analysis',
     icon: Wallet,
   },
   {
-    question: 'Which machines are depreciating faster than expected?',
+    question: 'Which machines are eating me alive on depreciation?',
     source: 'Dashboard metrics',
     icon: TrendingUp,
   },
   {
-    question: 'Should I buy or rent the next piece?',
+    question: 'Should I buy or rent the next machine?',
     source: 'Buy vs Rent tool',
     icon: Calculator,
   },
   {
-    question: 'Is my scheduled equipment value accurate?',
+    question: 'Am I over-insured or under-insured on my equipment?',
     source: 'Insurance Control',
     icon: ShieldCheck,
   },
   {
-    question: "What's coming off lease in the next 6 months?",
+    question: "What's coming off lease before the end of the year?",
     source: 'Upcoming payoffs',
     icon: Clock,
   },
@@ -116,32 +116,32 @@ const features = [
   {
     icon: Package,
     title: 'Equipment Tracking',
-    description: 'Track your entire fleet with cost basis, financing terms, and real-time depreciation.',
+    description: "See your whole fleet in one place—what you paid, what you owe, and what it's worth today.",
   },
   {
     icon: ShieldCheck,
     title: 'Insurance Control',
-    description: 'Manage insured equipment, track scheduled values, email broker updates with one click.',
+    description: 'Keep your scheduled values current and email your broker when things change. One click.',
   },
   {
     icon: Scale,
     title: 'Buy vs Rent Analysis',
-    description: 'Make data-driven decisions on equipment acquisition with detailed cost comparisons.',
+    description: 'Run the numbers before you pull the trigger on a new piece. No more gut decisions.',
   },
   {
     icon: Wallet,
     title: 'Cashflow Analysis',
-    description: 'Understand your monthly payments, payment schedules, and upcoming buyouts.',
+    description: "Know your total monthly payments, when things pay off, and what's coming due.",
   },
   {
     icon: Clock,
     title: 'Replacement Planning',
-    description: 'Know when equipment needs replacing and budget accordingly.',
+    description: 'Know which machines are due for trade-in before the dealer does.',
   },
   {
     icon: FileSpreadsheet,
     title: 'FMS Export',
-    description: 'Copy equipment costs into your estimating software—stop giving away equipment for free.',
+    description: 'Get the exact hourly and daily rates to plug into your bids. Stop working for free.',
   },
 ];
 
@@ -262,7 +262,7 @@ export default function Landing() {
             <span className="block text-primary">You just need the right numbers.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-3xl mx-auto">
-            EquipIQ calculates the true cost of your fleet and gives you the exact rates to plug into your FMS for 100% equipment recovery.
+            EquipIQ crunches the numbers on your fleet and gives you the exact rates to plug into your estimating software—so you stop giving equipment away for free.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button 
@@ -291,10 +291,10 @@ export default function Landing() {
         <div className="mx-auto max-w-4xl">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-foreground sm:text-3xl mb-4">
-              How Much Are You Leaving on the Table?
+              How Much Are You Giving Away?
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Most contractors don't charge for equipment—or they guess. That's money left on the table every single job.
+              Most guys either skip charging for equipment or pull a number out of thin air. Either way, that's cash walking off the jobsite.
             </p>
           </div>
           
@@ -628,10 +628,10 @@ export default function Landing() {
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              What You'll Know
+              The Answers You've Been Digging For
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Real questions. Real answers. No more guessing.
+              Real questions every contractor asks. Real answers in seconds.
             </p>
           </div>
 
@@ -664,10 +664,10 @@ export default function Landing() {
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              Everything You Need to Manage Equipment
+              Built for the Trades, Not the Boardroom
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Built for construction. Not a generic asset tracker.
+              This isn't some generic asset tracker. It's built for guys who run equipment.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -707,23 +707,23 @@ export default function Landing() {
               <ul className="space-y-3">
                 <li className="flex items-center gap-3">
                   <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span><strong>Zero manual entry</strong> – just upload your documents</span>
+                  <span><strong>No data entry</strong> – just drop in your paperwork</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <BarChart3 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Full cost visibility across your entire fleet</span>
+                  <span>See what your whole fleet is actually costing you</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Insurance tracking with broker email integration</span>
+                  <span>Keep your broker in the loop without the phone tag</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Buy vs Rent and Cashflow analysis included</span>
+                  <span>Run the numbers on buying vs renting before you decide</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <FileSpreadsheet className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>FMS-ready costs to charge customers accurately</span>
+                  <span>Get the exact rates to plug into your estimates</span>
                 </li>
               </ul>
               
@@ -746,10 +746,10 @@ export default function Landing() {
       <section className="container py-24 bg-muted/30">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl mb-4">
-            Stop Guessing. Start Knowing.
+            Know Your Numbers. Bill Accordingly.
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Know your true equipment costs. AI handles the busywork.
+            Let the software do the math so you can get back to the jobsite.
           </p>
           <Button size="lg" asChild className="text-lg px-8">
             <Link to="/auth">
