@@ -389,6 +389,7 @@ function PhoneHeader() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { isAdmin, adminModeActive, toggleAdminMode } = useAdminMode();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
   // Use standard navigation groups (Admin moved to footer)
@@ -462,6 +463,18 @@ function PhoneHeader() {
 
             {/* User Menu & Footer */}
             <div className="border-t border-sidebar-border p-4 space-y-4">
+              {/* Send Feedback Button - at top for all users */}
+              <button
+                onClick={() => setFeedbackOpen(true)}
+                className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all w-full text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+              >
+                <MessageSquarePlus className="h-5 w-5 flex-shrink-0 text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70" />
+                <span className="flex-1 text-left">Send Feedback</span>
+              </button>
+
+              {/* Separator between feedback and admin/user section */}
+              <Separator className="bg-sidebar-border/50" />
+
               {/* Admin Link - only when admin mode is active */}
               {adminModeActive && (
                 <Link
@@ -547,6 +560,7 @@ function PhoneHeader() {
           </div>
         </SheetContent>
       </Sheet>
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       </div>
     </header>
   );
