@@ -177,7 +177,7 @@ export default function Dashboard() {
                   {agingEquipment.slice(0, 4).map(equipment => (
                     <Link 
                       key={equipment.id}
-                      to={`/equipment/${equipment.id}`}
+                      to={`/equipment?selected=${equipment.id}`}
                       className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg hover:bg-warning/10 transition-colors"
                     >
                       <div>
@@ -224,7 +224,7 @@ export default function Dashboard() {
                 {upcomingPayoffs.map(item => (
                   <Link 
                     key={item.id} 
-                    to={`/equipment/${item.id}`}
+                    to={`/equipment?selected=${item.id}`}
                     className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
                   >
                     <div>

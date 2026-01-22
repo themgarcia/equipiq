@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -104,6 +105,21 @@ export default function EquipmentList() {
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [selectedEquipmentForSheet, setSelectedEquipmentForSheet] = useState<EquipmentCalculated | null>(null);
   const [sheetView, setSheetView] = useState<SheetView>('details');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle deep-link to specific equipment via ?selected=<id>
+  useEffect(() => {
+    const selectedId = searchParams.get('selected');
+    if (selectedId && calculatedEquipment.length > 0) {
+      const equipment = calculatedEquipment.find(e => e.id === selectedId);
+      if (equipment) {
+        setSelectedEquipmentForSheet(equipment);
+        // Clear the param after opening
+        searchParams.delete('selected');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, calculatedEquipment, setSearchParams]);
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
