@@ -20,18 +20,26 @@ interface OnboardingSidebarLinkProps {
 export function OnboardingSidebarLink({ isCollapsed = false }: OnboardingSidebarLinkProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { completedCount, totalSteps, isOnboardingComplete, loading } = useOnboarding();
+  const { completedCount, totalSteps, isOnboardingComplete, isOnboardingDismissed, restartOnboarding, loading } = useOnboarding();
 
   if (loading) return null;
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
+    
+    // If dismissed, restart onboarding first
+    if (isOnboardingDismissed) {
+      await restartOnboarding();
+    }
+    
     if (location.pathname === '/dashboard') {
-      // Scroll to checklist
-      const element = document.getElementById('get-started');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
+      // Use setTimeout to allow DOM to update after restartOnboarding
+      setTimeout(() => {
+        const element = document.getElementById('get-started');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     } else {
       navigate('/dashboard#get-started');
     }
@@ -92,17 +100,25 @@ interface OnboardingMobileLinkProps {
 export function OnboardingMobileLink({ className }: OnboardingMobileLinkProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { completedCount, totalSteps, isOnboardingComplete, loading } = useOnboarding();
+  const { completedCount, totalSteps, isOnboardingComplete, isOnboardingDismissed, restartOnboarding, loading } = useOnboarding();
 
   if (loading) return null;
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
+    
+    // If dismissed, restart onboarding first
+    if (isOnboardingDismissed) {
+      await restartOnboarding();
+    }
+    
     if (location.pathname === '/dashboard') {
-      const element = document.getElementById('get-started');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
+      setTimeout(() => {
+        const element = document.getElementById('get-started');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     } else {
       navigate('/dashboard#get-started');
     }
