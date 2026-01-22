@@ -9,7 +9,8 @@ import {
   AlertTriangle,
   CreditCard,
   Calendar,
-  Wrench
+  Wrench,
+  ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -178,7 +179,7 @@ export default function Dashboard() {
                     <Link 
                       key={equipment.id}
                       to={`/equipment?selected=${equipment.id}`}
-                      className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg hover:bg-warning/10 transition-colors"
+                      className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg hover:bg-warning/10 transition-colors group"
                     >
                       <div>
                         <p className="font-medium text-sm">{equipment.name}</p>
@@ -188,9 +189,12 @@ export default function Dashboard() {
                             : `${equipment.estimatedYearsLeft.toFixed(1)} years left`}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <FinancialValue value={equipment.replacementCostUsed} format="currency" showSign={false} size="sm" weight="medium" />
-                        <p className="text-xs text-muted-foreground">to replace</p>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <FinancialValue value={equipment.replacementCostUsed} format="currency" showSign={false} size="sm" weight="medium" />
+                          <p className="text-xs text-muted-foreground">to replace</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                       </div>
                     </Link>
                   ))}
@@ -225,7 +229,7 @@ export default function Dashboard() {
                   <Link 
                     key={item.id} 
                     to={`/equipment?selected=${item.id}`}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors group"
                   >
                     <div>
                       <p className="font-medium text-sm">{item.name}</p>
@@ -233,13 +237,16 @@ export default function Dashboard() {
                         {item.make} {item.model} • {formatCurrency(item.monthlyPayment)}/mo
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium text-sm">
-                        {item.payoffDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.monthsUntilPayoff} months left
-                      </p>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <p className="font-medium text-sm">
+                          {item.payoffDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.monthsUntilPayoff} months left
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </div>
                   </Link>
                 ))}
