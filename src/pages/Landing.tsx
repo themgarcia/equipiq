@@ -29,10 +29,26 @@ import { formatCurrency } from '@/lib/calculations';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const painPoints = [
-  "What's my total monthly equipment debt?",
-  "Am I actually charging enough for equipment on this job?",
-  "When should I trade in the excavator?",
-  "Are my insurance declarations current?",
+  {
+    icon: FileSpreadsheet,
+    title: "The Spreadsheet Spiral",
+    description: "You spend hours updating equipment costs, and they're still wrong by the time the job starts.",
+  },
+  {
+    icon: Wallet,
+    title: "Leaving Money on the Table",
+    description: "You're billing for labor and materials, but equipment? That's coming out of your profit.",
+  },
+  {
+    icon: Clock,
+    title: "Surprise Replacements",
+    description: "That excavator you thought had 3 more years? The dealer says it's worth half what you expected.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Insurance Guesswork",
+    description: "You're either over-insured and overpaying, or under-insured and exposed.",
+  },
 ];
 
 const benefits = [
@@ -246,7 +262,7 @@ export default function Landing() {
             <span className="block text-primary">You just need the right rates.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-3xl mx-auto">
-            Stop guessing. EquipIQ calculates the true cost of your fleet and gives you the exact rates to plug into your FMS for 100% equipment recovery.
+            EquipIQ calculates the true cost of your fleet and gives you the exact rates to plug into your FMS for 100% equipment recovery.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button 
@@ -524,24 +540,35 @@ export default function Landing() {
       </section>
 
       {/* Pain Points Section */}
-      <section className="container py-16 bg-muted/30">
+      <section className="container py-16">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="flex items-center justify-center gap-2 mb-8">
-            <HelpCircle className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">Sound Familiar?</span>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {painPoints.map((question) => (
-              <div 
-                key={question} 
-                className="bg-background border border-border rounded-lg px-6 py-4 text-left"
-              >
-                <p className="text-foreground font-medium italic">"{question}"</p>
-              </div>
+          <h2 className="text-3xl font-bold text-foreground sm:text-4xl mb-4">
+            You Know the Feeling
+          </h2>
+          <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
+            Every contractor hits these walls. The difference is whether you keep hitting them.
+          </p>
+          
+          <div className="grid gap-6 sm:grid-cols-2">
+            {painPoints.map((point) => (
+              <Card key={point.title} className="text-left border-destructive/20 bg-destructive/5">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                      <point.icon className="h-5 w-5 text-destructive" />
+                    </div>
+                    <CardTitle className="text-lg">{point.title}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{point.description}</p>
+                </CardContent>
+              </Card>
             ))}
           </div>
-          <p className="mt-8 text-muted-foreground">
-            If your answer is "let me check the spreadsheet"—you're not alone.
+          
+          <p className="mt-10 text-lg font-medium text-foreground">
+            These aren't questions. They're profit leaks.
           </p>
         </div>
       </section>
