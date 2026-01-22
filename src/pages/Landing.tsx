@@ -623,6 +623,15 @@ export default function Landing() {
           <p className="mt-10 text-lg font-medium text-foreground">
             These aren't questions. They're profit leaks.
           </p>
+          
+          <div className="mt-8">
+            <Button size="lg" asChild>
+              <Link to="/auth">
+                Plug the Leaks
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -714,6 +723,15 @@ export default function Landing() {
               <p className="text-lg leading-relaxed text-foreground font-medium">
                 Now, we're helping contractors across the trades stop the guessing game and start recovering every dollar of overhead.
               </p>
+              
+              <div className="mt-6">
+                <Button size="lg" asChild>
+                  <Link to="/auth">
+                    See What You're Missing
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -761,10 +779,18 @@ export default function Landing() {
             ))}
           </div>
           
-          <div className="mt-12 text-center">
+          <div className="mt-12 text-center space-y-6">
             <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-6 py-3 inline-block">
               <span className="font-medium text-foreground">Works with:</span> Invoices, lease agreements, purchase orders, insurance declarations
             </p>
+            <div>
+              <Button size="lg" asChild>
+                <Link to="/auth">
+                  Upload Your First Document
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -801,6 +827,15 @@ export default function Landing() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+          
+          <div className="mt-12 text-center">
+            <Button size="lg" asChild>
+              <Link to="/auth">
+                Get These Answers Now
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
