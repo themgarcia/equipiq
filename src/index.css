@@ -216,7 +216,7 @@
 
   /* Table enhancements */
   .table-header-cell {
-    @apply font-semibold text-muted-foreground uppercase text-xs tracking-wider;
+    @apply font-semibold text-muted-foreground text-xs;
   }
 
   /* Card hover effect */

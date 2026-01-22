@@ -1400,7 +1400,7 @@ export default function AdminDashboard() {
                             {/* Conversation thread */}
                             {(item.replies?.length ?? 0) > 0 && (
                               <div className="space-y-3">
-                                <span className="text-xs font-medium text-muted-foreground uppercase">Conversation</span>
+                                <span className="text-xs font-medium text-muted-foreground">Conversation</span>
                                 {item.replies?.map((reply) => (
                                   <div
                                     key={reply.id}
