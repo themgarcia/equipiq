@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { MetricCard } from '@/components/MetricCard';
@@ -7,7 +6,6 @@ import { formatCurrency } from '@/lib/calculations';
 import { FinancialValue } from '@/components/ui/financial-value';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { OnboardingChecklist, OnboardingCompleteBanner } from '@/components/OnboardingChecklist';
 import { 
   DollarSign, 
   AlertTriangle,
@@ -22,28 +20,13 @@ import { Button } from '@/components/ui/button';
 import { DashboardSkeleton } from '@/components/PageSkeletons';
 
 export default function Dashboard() {
-  const location = useLocation();
   const { calculatedEquipment, loading } = useEquipment();
-  const { markStepComplete, showOnboarding, isOnboardingComplete, isOnboardingDismissed, restartOnboarding, progress } = useOnboarding();
+  const { markStepComplete } = useOnboarding();
   
   // Mark dashboard as viewed on mount
   useEffect(() => {
     markStepComplete('step_dashboard_viewed');
   }, [markStepComplete]);
-  
-  // Handle #get-started hash navigation - restart onboarding if dismissed
-  useEffect(() => {
-    if (location.hash === '#get-started' && isOnboardingDismissed) {
-      restartOnboarding().then(() => {
-        setTimeout(() => {
-          const element = document.getElementById('get-started');
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-          }
-        }, 100);
-      });
-    }
-  }, [location.hash, isOnboardingDismissed, restartOnboarding]);
   
   if (loading) {
     return (
@@ -107,20 +90,6 @@ export default function Dashboard() {
             Fleet overview at a glance
           </p>
         </div>
-
-        {/* Onboarding Checklist - Show above metrics */}
-        {showOnboarding && (
-          <div className="mb-8">
-            <OnboardingChecklist />
-          </div>
-        )}
-        
-        {/* Completion Banner - Show when just completed */}
-        {isOnboardingComplete && !progress?.dismissed_at && (
-          <div className="mb-8">
-            <OnboardingCompleteBanner />
-          </div>
-        )}
 
         {/* Simplified Metrics Grid - 4 Key Cards */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
