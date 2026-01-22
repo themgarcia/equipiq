@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import confetti from 'canvas-confetti';
 
 export type OnboardingStep = 
   | 'step_dashboard_viewed'
@@ -164,6 +165,31 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
     if (allComplete) {
       updates.completed_at = new Date().toISOString();
+      
+      // Fire celebratory confetti! 🎉
+      setTimeout(() => {
+        // Left burst
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { x: 0.1, y: 0.6 },
+          colors: ['#10b981', '#22c55e', '#4ade80', '#86efac', '#fbbf24', '#f59e0b'],
+        });
+        // Right burst
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { x: 0.9, y: 0.6 },
+          colors: ['#10b981', '#22c55e', '#4ade80', '#86efac', '#fbbf24', '#f59e0b'],
+        });
+        // Center shower
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { x: 0.5, y: 0.3 },
+          colors: ['#10b981', '#22c55e', '#4ade80', '#86efac', '#fbbf24', '#f59e0b'],
+        });
+      }, 100);
     }
 
     try {
