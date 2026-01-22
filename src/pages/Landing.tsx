@@ -149,6 +149,13 @@ const whoItsFor = [
     examples: 'High-reaches, mulchers, and chippers.',
     isFounderIndustry: false,
   },
+  {
+    icon: Package,
+    title: "Don't See Your Trade?",
+    examples: 'If you own or lease equipment, equipIQ works for you.',
+    isFounderIndustry: false,
+    isOpenInvite: true,
+  },
 ];
 
 const features = [
@@ -637,6 +644,8 @@ export default function Landing() {
                 className={`relative flex items-start gap-4 p-4 rounded-lg border bg-background ${
                   trade.isFounderIndustry 
                     ? 'border-amber-500/50 ring-1 ring-amber-500/20' 
+                    : trade.isOpenInvite
+                    ? 'border-dashed border-primary/40'
                     : 'border-border'
                 }`}
               >
@@ -649,6 +658,8 @@ export default function Landing() {
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0 ${
                   trade.isFounderIndustry 
                     ? 'bg-amber-500/10' 
+                    : trade.isOpenInvite
+                    ? 'bg-primary/5'
                     : 'bg-primary/10'
                 }`}>
                   <trade.icon className={`h-5 w-5 ${
@@ -668,10 +679,6 @@ export default function Landing() {
               </div>
             ))}
           </div>
-          
-          <p className="mt-10 text-center text-muted-foreground">
-            Don't see your trade? If you own or lease equipment, equipIQ works for you.
-          </p>
         </div>
       </section>
 
