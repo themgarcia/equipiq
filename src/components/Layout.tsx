@@ -17,9 +17,11 @@ import {
   Shield,
   ShieldCheck,
   CreditCard,
-  History
+  History,
+  Rocket
 } from 'lucide-react';
 import { FeedbackButton } from '@/components/FeedbackDialog';
+import { OnboardingSidebarLink, OnboardingMobileLink } from '@/components/OnboardingSidebarLink';
 import { NotificationBell } from '@/components/NotificationBell';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { cn } from '@/lib/utils';
@@ -169,6 +171,17 @@ function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className={cn("py-2", isCollapsed ? "px-0" : "px-2")}>
+        {/* Get Started Link at the top */}
+        <SidebarGroup className={cn("py-1", isCollapsed && "px-0")}>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <OnboardingSidebarLink isCollapsed={isCollapsed} />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarSeparator className="my-2" />
+        
         {groups.map((group, groupIndex) => (
           <SidebarGroup key={group.label || `group-${groupIndex}`} className={cn("py-1", isCollapsed && "px-0")}>
             {!isCollapsed && group.label && (
@@ -370,8 +383,15 @@ function PhoneHeader() {
               <h1 className="text-sm font-semibold text-sidebar-foreground">equipIQ</h1>
             </div>
 
-            {/* Navigation - Grouped */}
+            {/* Navigation - Get Started + Grouped */}
             <nav className="flex-1 overflow-y-auto px-3 py-4">
+              {/* Get Started Link */}
+              <div className="mb-4">
+                <OnboardingMobileLink />
+              </div>
+              
+              <div className="border-t border-sidebar-border my-4" />
+              
               {groups.map((group, groupIndex) => (
                 <div key={group.label || `group-${groupIndex}`} className={cn(groupIndex > 0 && "mt-4")}>
                   {group.label && (

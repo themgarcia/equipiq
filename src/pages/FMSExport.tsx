@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { Layout } from '@/components/Layout';
 import { toFMSExport, formatCurrency } from '@/lib/calculations';
@@ -121,6 +122,7 @@ const columns: ColumnConfig[] = [
 
 export default function FMSExport() {
   const { calculatedEquipment } = useEquipment();
+  const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'phone' || deviceType === 'tablet';
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -128,8 +130,12 @@ export default function FMSExport() {
   const [sortColumn, setSortColumn] = useState<ColumnKey>('equipmentName');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedEquipmentForSheet, setSelectedEquipmentForSheet] = useState<{ id: string; data: FMSExportData } | null>(null);
-
   const [activeTab, setActiveTab] = useState('lmn');
+
+  // Mark onboarding step on mount
+  useEffect(() => {
+    markStepComplete('step_fms_exported');
+  }, [markStepComplete]);
 
   const activeEquipment = calculatedEquipment.filter(e => e.status === 'Active');
   

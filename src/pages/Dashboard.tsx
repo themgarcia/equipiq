@@ -1,9 +1,12 @@
+import { useEffect } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { MetricCard } from '@/components/MetricCard';
 import { formatCurrency } from '@/lib/calculations';
 import { FinancialValue } from '@/components/ui/financial-value';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { OnboardingChecklist, OnboardingCompleteBanner } from '@/components/OnboardingChecklist';
 import { 
   DollarSign, 
   AlertTriangle,
@@ -19,6 +22,12 @@ import { DashboardSkeleton } from '@/components/PageSkeletons';
 
 export default function Dashboard() {
   const { calculatedEquipment, loading } = useEquipment();
+  const { markStepComplete, showOnboarding, isOnboardingComplete, progress } = useOnboarding();
+  
+  // Mark dashboard as viewed on mount
+  useEffect(() => {
+    markStepComplete('step_dashboard_viewed');
+  }, [markStepComplete]);
   
   if (loading) {
     return (
@@ -82,6 +91,20 @@ export default function Dashboard() {
             Fleet overview at a glance
           </p>
         </div>
+
+        {/* Onboarding Checklist - Show above metrics */}
+        {showOnboarding && (
+          <div className="mb-8">
+            <OnboardingChecklist />
+          </div>
+        )}
+        
+        {/* Completion Banner - Show when just completed */}
+        {isOnboardingComplete && !progress?.dismissed_at && (
+          <div className="mb-8">
+            <OnboardingCompleteBanner />
+          </div>
+        )}
 
         {/* Simplified Metrics Grid - 4 Key Cards */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">

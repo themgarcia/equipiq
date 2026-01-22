@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminModeProvider } from "@/contexts/AdminModeContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { EquipmentProvider } from "@/contexts/EquipmentContext";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -42,9 +43,10 @@ const App = () => (
           <AdminModeProvider>
             <ImpersonationProvider>
               <EquipmentProvider>
-                <Toaster />
-                <Sonner />
-              <BrowserRouter>
+                <OnboardingProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
               <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />
@@ -123,9 +125,10 @@ const App = () => (
                     </AdminRoute>
                   } />
                   
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+                </OnboardingProvider>
               </EquipmentProvider>
             </ImpersonationProvider>
           </AdminModeProvider>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ExtractedPolicyData } from '@/types/insurance';
@@ -11,6 +11,7 @@ import { InsuranceContentSkeleton } from '@/components/PageSkeletons';
 import { useInsurance } from '@/hooks/useInsurance';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { InsuranceMetricsRow } from '@/components/insurance/InsuranceMetricsRow';
@@ -43,6 +44,8 @@ export default function InsuranceControl() {
     updateInsuredEquipment,
     removeFromInsurance,
   } = useInsurance();
+  
+  const { markStepComplete } = useOnboarding();
 
   const [activeTab, setActiveTab] = useState('register');
   const [userProfile, setUserProfile] = useState<{

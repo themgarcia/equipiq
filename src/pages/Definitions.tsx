@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Layout } from '@/components/Layout';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { 
   Accordion, 
   AccordionContent, 
@@ -404,6 +406,13 @@ This means you own 70% of your fleet's value outright.
 ];
 
 export default function Definitions() {
+  const { markStepComplete } = useOnboarding();
+
+  // Mark onboarding step on mount
+  useEffect(() => {
+    markStepComplete('step_methodology_reviewed');
+  }, [markStepComplete]);
+
   return (
     <Layout>
       <div className="p-4 sm:p-6 lg:p-8 animate-fade-in max-w-4xl">

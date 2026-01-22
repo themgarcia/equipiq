@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -225,6 +226,7 @@ function PaybackDialog({ equipment, calculated, open, onOpenChange }: PaybackDia
 export default function CashflowAnalysis() {
   const { equipment, calculatedEquipment, loading } = useEquipment();
   const { canUseCashflow, effectivePlan, subscription } = useSubscription();
+  const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isPhone = deviceType === 'phone';
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -235,6 +237,11 @@ export default function CashflowAnalysis() {
   } | null>(null);
   const [sortField, setSortField] = useState<SortField>('payoffDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  
+  // Mark onboarding step on mount
+  useEffect(() => {
+    markStepComplete('step_cashflow_viewed');
+  }, [markStepComplete]);
   
   // Calculate cashflow for all equipment - MUST be before any conditional returns
   const equipmentWithCashflow = useMemo(() => {
