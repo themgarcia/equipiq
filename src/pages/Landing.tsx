@@ -229,10 +229,13 @@ export default function Landing() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <EquipIQIcon size="lg" />
-            <span className="text-xl font-bold text-foreground">equipIQ</span>
-          </div>
+          <button 
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center gap-3 group cursor-pointer"
+          >
+            <EquipIQIcon size="lg" className="transition-transform group-hover:scale-105" />
+            <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">equipIQ</span>
+          </button>
           
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center gap-4">
@@ -273,7 +276,14 @@ export default function Landing() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-64">
-              <div className="flex flex-col gap-4 pt-8">
+              <button 
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="flex items-center gap-2 mt-4 group"
+              >
+                <EquipIQIcon size="sm" className="transition-transform group-hover:scale-105" />
+                <span className="font-bold group-hover:text-primary transition-colors">equipIQ</span>
+              </button>
+              <div className="flex flex-col gap-4 pt-4">
                 <a href="#who-its-for" className="text-lg font-medium hover:text-primary transition-colors">
                   Who It's For
                 </a>
