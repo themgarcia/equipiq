@@ -9,19 +9,14 @@ import {
   AlertTriangle,
   CreditCard,
   Calendar,
-  Wrench,
-  ChevronDown,
-  ChevronUp
+  Wrench
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DashboardSkeleton } from '@/components/PageSkeletons';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useState } from 'react';
 
 export default function Dashboard() {
   const { calculatedEquipment, loading } = useEquipment();
-  const [payoffsOpen, setPayoffsOpen] = useState(false);
   
   if (loading) {
     return (
@@ -180,9 +175,10 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-2">
                   {agingEquipment.slice(0, 4).map(equipment => (
-                    <div 
+                    <Link 
                       key={equipment.id}
-                      className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg"
+                      to={`/equipment/${equipment.id}`}
+                      className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg hover:bg-warning/10 transition-colors"
                     >
                       <div>
                         <p className="font-medium text-sm">{equipment.name}</p>
@@ -196,7 +192,7 @@ export default function Dashboard() {
                         <FinancialValue value={equipment.replacementCostUsed} format="currency" showSign={false} size="sm" weight="medium" />
                         <p className="text-xs text-muted-foreground">to replace</p>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                   {agingEquipment.length > 4 && (
                     <Link to="/equipment?filter=aging">
@@ -211,58 +207,45 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Upcoming Payoffs - Collapsible */}
-        {(upcomingPayoffs.length > 0 || totalOutstandingDebt > 0) && (
-          <Collapsible open={payoffsOpen} onOpenChange={setPayoffsOpen}>
-            <Card>
-              <CollapsibleTrigger asChild>
-                <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      Upcoming Payoffs
-                      <span className="text-sm font-normal text-muted-foreground">
-                        ({upcomingPayoffs.length} in next 12 months)
-                      </span>
-                    </CardTitle>
-                    {payoffsOpen ? (
-                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="pt-0">
-                  {upcomingPayoffs.length > 0 ? (
-                    <div className="space-y-2">
-                      {upcomingPayoffs.map(item => (
-                        <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                          <div>
-                            <p className="font-medium text-sm">{item.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {item.make} {item.model} • {formatCurrency(item.monthlyPayment)}/mo
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium text-sm">
-                              {item.payoffDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {item.monthsUntilPayoff} months left
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+        {/* Upcoming Payoffs */}
+        {upcomingPayoffs.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Upcoming Payoffs
+                <span className="text-sm font-normal text-muted-foreground">
+                  ({upcomingPayoffs.length} in next 12 months)
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-2">
+                {upcomingPayoffs.map(item => (
+                  <Link 
+                    key={item.id} 
+                    to={`/equipment/${item.id}`}
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <div>
+                      <p className="font-medium text-sm">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.make} {item.model} • {formatCurrency(item.monthlyPayment)}/mo
+                      </p>
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground py-2">No equipment paying off in the next 12 months</p>
-                  )}
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
+                    <div className="text-right">
+                      <p className="font-medium text-sm">
+                        {item.payoffDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.monthsUntilPayoff} months left
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
       </div>
