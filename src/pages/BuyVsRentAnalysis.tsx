@@ -59,6 +59,14 @@ export default function BuyVsRentAnalysis() {
   const [selectedRateType, setSelectedRateType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const hasInteracted = useRef(false);
 
+  // Mark onboarding step complete on any meaningful interaction
+  const handleInteraction = () => {
+    if (!hasInteracted.current) {
+      hasInteracted.current = true;
+      markStepComplete('step_buy_vs_rent_used');
+    }
+  };
+
   // Round any existing decimal values on mount
   useEffect(() => {
     const roundedResale = Math.round(input.resaleValue);
@@ -96,10 +104,7 @@ export default function BuyVsRentAnalysis() {
   }, [input.rentalRateDaily, input.rentalRateWeekly, input.rentalRateMonthly]);
 
   const handleCategoryChange = (category: EquipmentCategory) => {
-    if (!hasInteracted.current) {
-      hasInteracted.current = true;
-      markStepComplete('step_buy_vs_rent_used');
-    }
+    handleInteraction();
     const defaults = getCategoryDefaults(category);
     const resaleValue = Math.round(input.purchasePrice * (defaults.defaultResalePercent / 100));
     const maintenance = Math.round(input.purchasePrice * (defaults.maintenancePercent / 100));
@@ -116,6 +121,7 @@ export default function BuyVsRentAnalysis() {
   };
 
   const handlePurchasePriceChange = (purchasePrice: number) => {
+    handleInteraction();
     const defaults = getCategoryDefaults(input.category);
     const resaleValue = Math.round(purchasePrice * (defaults.defaultResalePercent / 100));
     const maintenance = Math.round(purchasePrice * (defaults.maintenancePercent / 100));
@@ -131,6 +137,7 @@ export default function BuyVsRentAnalysis() {
   };
 
   const updateField = <K extends keyof BuyVsRentInput>(field: K, value: BuyVsRentInput[K]) => {
+    handleInteraction();
     setInput(prev => ({ ...prev, [field]: value }));
   };
 
