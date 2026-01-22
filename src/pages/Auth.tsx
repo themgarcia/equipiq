@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth, CompanyProfileData, RateLimitResult } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -344,8 +344,10 @@ export default function Auth() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <EquipIQIcon className="h-14 w-14 mb-4" />
-          <h1 className="text-2xl font-bold">equipIQ</h1>
+          <Link to="/" className="flex flex-col items-center group">
+            <EquipIQIcon className="h-14 w-14 mb-4 transition-transform group-hover:scale-105" />
+            <h1 className="text-2xl font-bold group-hover:text-primary transition-colors">equipIQ</h1>
+          </Link>
           <p className="text-muted-foreground">Equipment intelligence for contractors</p>
           <span className="mt-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
             Open Beta – All features included
