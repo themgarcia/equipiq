@@ -242,8 +242,8 @@ export default function Landing() {
       <section className="container py-24 md:py-32">
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-            You're losing money on your equipment.
-            <span className="block text-primary">You just don't have the right rates yet.</span>
+            You're losing money on equipment.
+            <span className="block text-primary">You just need the right rates.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-3xl mx-auto">
             Stop guessing. EquipIQ calculates the true cost of your fleet and gives you the exact rates to plug into your FMS for 100% equipment recovery.
