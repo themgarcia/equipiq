@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/calculations';
 import { FinancialValue } from '@/components/ui/financial-value';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { WelcomeModal } from '@/components/WelcomeModal';
 import { 
   DollarSign, 
   AlertTriangle,
@@ -81,6 +82,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
+      <WelcomeModal />
       <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
         {/* Header */}
         <div className="mb-8">
