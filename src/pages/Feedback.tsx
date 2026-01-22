@@ -413,7 +413,7 @@ export default function Feedback() {
                             {/* Screenshot preview */}
                             {item.screenshot_url && (
                               <div className="space-y-2">
-                                <span className="text-xs font-medium text-muted-foreground uppercase flex items-center gap-1">
+                                <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                                   <Image className="h-3 w-3" />
                                   Screenshot
                                 </span>
@@ -440,14 +440,14 @@ export default function Feedback() {
 
                             {/* Full description */}
                             <div className="space-y-2">
-                              <span className="text-xs font-medium text-muted-foreground uppercase">Your original message</span>
+                              <span className="text-xs font-medium text-muted-foreground">Your Original Message</span>
                               <p className="text-sm bg-background border rounded-lg p-3">{item.description}</p>
                             </div>
 
                             {/* Conversation thread */}
                             {(item.replies?.length ?? 0) > 0 && (
                               <div className="space-y-3">
-                                <span className="text-xs font-medium text-muted-foreground uppercase">Conversation</span>
+                                <span className="text-xs font-medium text-muted-foreground">Conversation</span>
                                 {item.replies?.map((reply) => (
                                   <div
                                     key={reply.id}
@@ -473,7 +473,7 @@ export default function Feedback() {
 
                             {/* Reply input */}
                             <div className="space-y-2">
-                              <span className="text-xs font-medium text-muted-foreground uppercase">Add a follow-up</span>
+                              <span className="text-xs font-medium text-muted-foreground">Add a Follow-Up</span>
                               <div className="flex gap-2">
                                 <Input
                                   placeholder="Add more information or ask a question..."
