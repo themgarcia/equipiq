@@ -10,7 +10,8 @@ import {
   CreditCard,
   Calendar,
   Wrench,
-  ChevronRight
+  ChevronRight,
+  CheckCircle2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -68,6 +69,7 @@ export default function Dashboard() {
   const replacementCost2Years = replacementIn2Years.reduce((sum, e) => sum + e.replacementCostUsed, 0);
   const replacementCost3Years = replacementIn3Years.reduce((sum, e) => sum + e.replacementCostUsed, 0);
 
+  const hasReplacementNeeds = replacementIn1Year.length + replacementIn2Years.length + replacementIn3Years.length > 0;
 
   return (
     <Layout>
@@ -121,91 +123,103 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Timeline Summary */}
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-destructive" />
-                  <span className="text-sm font-medium">Within 1 Year</span>
+            {hasReplacementNeeds ? (
+              <>
+                {/* Timeline Summary */}
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+                  <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-destructive" />
+                      <span className="text-sm font-medium">Within 1 Year</span>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-2xl font-bold">{replacementIn1Year.length}</span>
+                      <FinancialValue value={replacementCost1Year} format="compact" showSign={false} className="text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-warning" />
+                      <span className="text-sm font-medium">1-2 Years</span>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-2xl font-bold">{replacementIn2Years.length}</span>
+                      <FinancialValue value={replacementCost2Years} format="compact" showSign={false} className="text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-success" />
+                      <span className="text-sm font-medium">2-3 Years</span>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-2xl font-bold">{replacementIn3Years.length}</span>
+                      <FinancialValue value={replacementCost3Years} format="compact" showSign={false} className="text-muted-foreground" />
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold">{replacementIn1Year.length}</span>
-                  <FinancialValue value={replacementCost1Year} format="compact" showSign={false} className="text-muted-foreground" />
-                </div>
-              </div>
-              <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-warning" />
-                  <span className="text-sm font-medium">1-2 Years</span>
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold">{replacementIn2Years.length}</span>
-                  <FinancialValue value={replacementCost2Years} format="compact" showSign={false} className="text-muted-foreground" />
-                </div>
-              </div>
-              <div className="p-4 rounded-lg bg-success/10 border border-success/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-success" />
-                  <span className="text-sm font-medium">2-3 Years</span>
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold">{replacementIn3Years.length}</span>
-                  <FinancialValue value={replacementCost3Years} format="compact" showSign={false} className="text-muted-foreground" />
-                </div>
-              </div>
-            </div>
 
-            {/* 3-Year Total */}
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
-              <span className="font-medium">3-Year Total CapEx</span>
-              <FinancialValue 
-                value={replacementCost1Year + replacementCost2Years + replacementCost3Years} 
-                format="compact" 
-                showSign={false} 
-                size="xl" 
-                weight="bold" 
-              />
-            </div>
+                {/* 3-Year Total */}
+                <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+                  <span className="font-medium">3-Year Total CapEx</span>
+                  <FinancialValue 
+                    value={replacementCost1Year + replacementCost2Years + replacementCost3Years} 
+                    format="compact" 
+                    showSign={false} 
+                    size="xl" 
+                    weight="bold" 
+                  />
+                </div>
 
-            {/* Items Needing Attention (merged from Aging Equipment) */}
-            {agingEquipment.length > 0 && (
-              <div className="pt-4 border-t">
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  <h3 className="text-sm font-medium">Items Needing Attention</h3>
-                </div>
-                <div className="space-y-2">
-                  {agingEquipment.slice(0, 4).map(equipment => (
-                    <Link 
-                      key={equipment.id}
-                      to={`/equipment?selected=${equipment.id}`}
-                      className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg hover:bg-warning/10 transition-colors group"
-                    >
-                      <div>
-                        <p className="font-medium text-sm">{equipment.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {equipment.category} • {equipment.estimatedYearsLeft === 0 
-                            ? 'Past useful life' 
-                            : `${equipment.estimatedYearsLeft.toFixed(1)} years left`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
-                          <FinancialValue value={equipment.replacementCostUsed} format="currency" showSign={false} size="sm" weight="medium" />
-                          <p className="text-xs text-muted-foreground">to replace</p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                      </div>
-                    </Link>
-                  ))}
-                  {agingEquipment.length > 4 && (
-                    <Link to="/equipment?filter=aging">
-                      <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
-                        View all {agingEquipment.length} items
-                      </Button>
-                    </Link>
-                  )}
-                </div>
+                {/* Items Needing Attention (merged from Aging Equipment) */}
+                {agingEquipment.length > 0 && (
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center gap-2 mb-3">
+                      <AlertTriangle className="h-4 w-4 text-warning" />
+                      <h3 className="text-sm font-medium">Items Needing Attention</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {agingEquipment.slice(0, 4).map(equipment => (
+                        <Link 
+                          key={equipment.id}
+                          to={`/equipment?selected=${equipment.id}`}
+                          className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-lg hover:bg-warning/10 transition-colors group"
+                        >
+                          <div>
+                            <p className="font-medium text-sm">{equipment.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {equipment.category} • {equipment.estimatedYearsLeft === 0 
+                                ? 'Past useful life' 
+                                : `${equipment.estimatedYearsLeft.toFixed(1)} years left`}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right">
+                              <FinancialValue value={equipment.replacementCostUsed} format="currency" showSign={false} size="sm" weight="medium" />
+                              <p className="text-xs text-muted-foreground">to replace</p>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                          </div>
+                        </Link>
+                      ))}
+                      {agingEquipment.length > 4 && (
+                        <Link to="/equipment?filter=aging">
+                          <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
+                            View all {agingEquipment.length} items
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <CheckCircle2 className="h-12 w-12 mx-auto mb-4 opacity-50 text-success" />
+                <p className="font-medium text-foreground">Fleet Looking Good</p>
+                <p className="text-sm mt-1">
+                  No equipment needs replacement in the next 3 years.
+                </p>
               </div>
             )}
           </CardContent>
