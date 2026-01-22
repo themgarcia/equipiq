@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { APP_VERSION, APP_STAGE } from '@/lib/version';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -18,9 +18,10 @@ import {
   ShieldCheck,
   CreditCard,
   History,
-  Rocket
+  Rocket,
+  MessageSquarePlus
 } from 'lucide-react';
-import { FeedbackButton } from '@/components/FeedbackDialog';
+import { FeedbackButton, FeedbackDialog } from '@/components/FeedbackDialog';
 import { OnboardingSidebarLink, OnboardingMobileLink } from '@/components/OnboardingSidebarLink';
 import { NotificationBell } from '@/components/NotificationBell';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
@@ -147,6 +148,7 @@ function AppSidebar() {
   const { isAdmin, adminModeActive, toggleAdminMode } = useAdminMode();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
@@ -185,7 +187,7 @@ function AppSidebar() {
         {groups.map((group, groupIndex) => (
           <SidebarGroup key={group.label || `group-${groupIndex}`} className={cn("py-1", isCollapsed && "px-0")}>
             {!isCollapsed && group.label && (
-              <SidebarGroupLabel className="text-[10px] text-sidebar-foreground/40 font-medium px-3 mb-1">
+              <SidebarGroupLabel className="text-xs text-sidebar-foreground/40 font-medium px-3 mb-1">
                 {group.label}
               </SidebarGroupLabel>
             )}
@@ -275,6 +277,32 @@ function AppSidebar() {
           
           {/* Demo Mode Controls - only show when sidebar is expanded and admin mode is active */}
           {!isCollapsed && adminModeActive && <DemoModeControls />}
+
+          {/* Send Feedback Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SidebarMenuButton
+                onClick={() => setFeedbackOpen(true)}
+                className={cn(
+                  'transition-all',
+                  isCollapsed && 'w-8 justify-center',
+                  'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                )}
+              >
+                <MessageSquarePlus className="h-5 w-5 flex-shrink-0 text-sidebar-foreground/50" />
+                {isCollapsed ? (
+                  <span className="sr-only">Send Feedback</span>
+                ) : (
+                  <span>Send Feedback</span>
+                )}
+              </SidebarMenuButton>
+            </TooltipTrigger>
+            {isCollapsed && (
+              <TooltipContent side="right">
+                Send Feedback
+              </TooltipContent>
+            )}
+          </Tooltip>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -341,12 +369,14 @@ function AppSidebar() {
 
           {/* Version display - only when expanded */}
           {!isCollapsed && (
-            <p className="text-[10px] text-sidebar-foreground/40 text-center mt-2">
+            <p className="text-xs text-sidebar-foreground/40 text-center mt-2">
               v{APP_VERSION} {APP_STAGE}
             </p>
           )}
         </div>
       </SidebarFooter>
+
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </Sidebar>
   );
 }
@@ -395,7 +425,7 @@ function PhoneHeader() {
               {groups.map((group, groupIndex) => (
                 <div key={group.label || `group-${groupIndex}`} className={cn(groupIndex > 0 && "mt-4")}>
                   {group.label && (
-                    <p className="text-[10px] text-sidebar-foreground/40 font-medium px-3 mb-2">
+                    <p className="text-xs text-sidebar-foreground/40 font-medium px-3 mb-2">
                       {group.label}
                     </p>
                   )}
@@ -506,7 +536,7 @@ function PhoneHeader() {
               </DropdownMenu>
 
               {/* Version display */}
-              <p className="text-[10px] text-sidebar-foreground/40 text-center mt-2">
+              <p className="text-xs text-sidebar-foreground/40 text-center mt-2">
                 v{APP_VERSION} {APP_STAGE}
               </p>
             </div>
@@ -558,7 +588,6 @@ export function Layout({ children }: LayoutProps) {
             {children}
           </main>
         </div>
-        <FeedbackButton />
       </div>
     </SidebarProvider>
   );
