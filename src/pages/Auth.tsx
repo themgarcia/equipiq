@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Mail, Lock, User, Building2, Users, DollarSign, MapPin, Globe, Calendar, AlertTriangle, Clock, ChevronLeft, ChevronRight, Check, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -100,6 +101,7 @@ export default function Auth() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   
   // Multi-step state
   const [currentStep, setCurrentStep] = useState(1);
@@ -411,6 +413,15 @@ export default function Auth() {
         // Clear rate limit info on success
         setRateLimitInfo(null);
 
+        // Store remember me preference
+        if (rememberMe) {
+          localStorage.setItem('equipiq-remember-me', 'true');
+        } else {
+          localStorage.removeItem('equipiq-remember-me');
+          // Set a session-only flag that will be checked on page load
+          sessionStorage.setItem('equipiq-session-only', 'true');
+        }
+
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
@@ -696,7 +707,20 @@ export default function Auth() {
                   {errors.password && (
                     <p className="text-sm text-destructive">{errors.password}</p>
                   )}
-                  <div className="text-right">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="remember-me" 
+                        checked={rememberMe}
+                        onCheckedChange={(checked) => setRememberMe(checked === true)}
+                      />
+                      <label 
+                        htmlFor="remember-me" 
+                        className="text-sm text-muted-foreground cursor-pointer select-none"
+                      >
+                        Remember me
+                      </label>
+                    </div>
                     <button
                       type="button"
                       onClick={() => {

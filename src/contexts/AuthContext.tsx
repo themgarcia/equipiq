@@ -44,21 +44,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Check if this is a session-only login that should be cleared
+    const isSessionOnly = sessionStorage.getItem('equipiq-session-only');
+    const wasRemembered = localStorage.getItem('equipiq-remember-me');
+    
+    // If session-only flag exists but no sessionStorage marker for active session,
+    // the browser was closed and reopened - sign out
+    if (!wasRemembered && !isSessionOnly) {
+      // Check if there's a stale session that shouldn't persist
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session && !localStorage.getItem('equipiq-remember-me')) {
+          // User didn't check "remember me" and this is a new browser session
+          // Only sign out if there's no session-only marker (meaning browser was closed)
+          if (!sessionStorage.getItem('equipiq-session-only')) {
+            supabase.auth.signOut();
+          }
+        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
+    } else {
+      // Normal flow
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
+    }
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Clear session-only flag on sign out
+        if (event === 'SIGNED_OUT') {
+          sessionStorage.removeItem('equipiq-session-only');
+          localStorage.removeItem('equipiq-remember-me');
+        }
       }
     );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
