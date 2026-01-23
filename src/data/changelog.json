@@ -1,6 +1,68 @@
 {
   "entries": [
     {
+      "version": "1.3.4",
+      "date": "2026-01-23",
+      "changes": [
+        {
+          "type": "added",
+          "userFacing": [
+            "Get Started onboarding guide with 7-step checklist to help you master fleet management",
+            "Welcome modal for new users directing them to the Get Started guide",
+            "Progress indicator in sidebar showing onboarding completion (e.g., 3/7)",
+            "Confetti celebration when you complete all onboarding steps",
+            "Password strength indicator shows how secure your password is as you type",
+            "Show/hide password toggle on login and signup forms",
+            "'Remember me' option to stay signed in on trusted devices"
+          ],
+          "technical": [
+            "Get Started page (/get-started) with 7-step onboarding checklist",
+            "WelcomeModal component shown to new users on Dashboard",
+            "OnboardingSidebarLink with progress badge (completedCount/totalSteps)",
+            "OnboardingContext with auto-completion for equipment/insurance steps",
+            "Confetti animation via canvas-confetti when all steps completed",
+            "onboarding_progress database table for persistence",
+            "Password strength indicator with progress bar (weak/medium/strong)",
+            "Show/hide password toggle using Eye/EyeOff icons",
+            "'Remember me' checkbox with 30-day session persistence via localStorage/sessionStorage"
+          ]
+        },
+        {
+          "type": "changed",
+          "userFacing": [
+            "Simplified dashboard focused on 4 key metrics for clearer fleet overview",
+            "New Replacement Forecast card with 3-year CapEx outlook and color-coded urgency",
+            "Upcoming Payoffs card showing financing maturity dates",
+            "FMS Export now supports multiple platforms with tabbed navigation"
+          ],
+          "technical": [
+            "Dashboard reduced to 4 MetricCards (Fleet Investment, Monthly Payments, Outstanding Debt, Aging Alert)",
+            "Replacement Forecast card with timeline summary (1yr/2yr/3yr) and Items Needing Attention list",
+            "Upcoming Payoffs card with payoff dates and months remaining",
+            "FMS Export page with multi-platform tabs (LMN active, SynkedUp/DynaManage/Aspire as Coming Soon)",
+            "ComingSoonTab component for future FMS integrations with external links"
+          ]
+        },
+        {
+          "type": "improved",
+          "userFacing": [
+            "FMS Export with per-cell copy buttons for easier data transfer",
+            "Mobile-friendly FMS Export with dropdown tabs on small screens",
+            "Real-time email validation feedback on login form",
+            "Helpful redirect when signing up with an existing email"
+          ],
+          "technical": [
+            "FMS Export per-cell copy buttons with feedback animation",
+            "MobileTabSelect for responsive FMS platform navigation",
+            "Sortable columns with visual indicators (ArrowUp/ArrowDown/ArrowUpDown)",
+            "Mobile card view with Sheet for equipment details",
+            "Email format validation checkmark on login form",
+            "Email existence check during signup Step 1 with 'Sign in here' shortcut link"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.3.3",
       "date": "2026-01-21",
       "changes": [
