@@ -350,9 +350,9 @@ export default function Landing() {
       </section>
 
       {/* Calculator Section */}
-      <section id="calculator" className="container py-16 bg-muted/30">
+      <section id="calculator" className="container py-20 bg-muted/30">
         <div className="mx-auto max-w-4xl">
-          <div className="text-center mb-8">
+          <div className="text-center mb-12">
             <h2 className="text-2xl font-bold text-foreground sm:text-3xl mb-4">
               How Much Are You Giving Away?
             </h2>
@@ -603,7 +603,7 @@ export default function Landing() {
       </section>
 
       {/* Pain Points Section */}
-      <section className="container py-16">
+      <section className="container py-20">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl mb-4">
             You Know the Feeling
@@ -646,9 +646,9 @@ export default function Landing() {
       </section>
 
       {/* Who It's For Section */}
-      <section id="who-its-for" className="container py-24 bg-muted/30">
+      <section id="who-its-for" className="container py-20 bg-muted/30">
         <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
               Built for Contractors Who Run Equipment
             </h2>
@@ -657,7 +657,7 @@ export default function Landing() {
             </p>
           </div>
           
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {whoItsFor.map((trade) => (
               <div 
                 key={trade.title} 
@@ -703,7 +703,7 @@ export default function Landing() {
       </section>
 
       {/* Founder's Story Section */}
-      <section className="container py-24">
+      <section className="container py-20">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl text-center mb-12">
             Built by a Contractor, for Contractors
@@ -748,9 +748,9 @@ export default function Landing() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="container py-24 bg-muted/30">
+      <section id="how-it-works" className="container py-20 bg-muted/30">
         <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
               How equipIQ Works
             </h2>
@@ -759,7 +759,7 @@ export default function Landing() {
             </p>
           </div>
           
-          <div className="grid gap-8 md:grid-cols-3 relative">
+          <div className="grid gap-6 md:grid-cols-3 relative">
             {howItWorksSteps.map((step, index) => (
               <div key={step.step} className="relative text-center">
                 {/* Connector line - visible on md+ screens, not after last item */}
@@ -806,9 +806,9 @@ export default function Landing() {
       </section>
 
       {/* What You'll Know Section */}
-      <section id="what-youll-know" className="container py-24">
+      <section id="what-youll-know" className="container py-20">
         <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
               The Answers You've Been Digging For
             </h2>
@@ -817,7 +817,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {whatYoullKnow.map((item) => (
               <Card key={item.question} className="border-border bg-card">
                 <CardContent className="pt-6">
@@ -851,9 +851,9 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="container py-24">
+      <section id="features" className="container py-20 bg-muted/30">
         <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
               Built for the Trades, Not the Boardroom
             </h2>
@@ -885,7 +885,7 @@ export default function Landing() {
       </section>
 
       {/* Beta CTA Section */}
-      <section className="container py-24">
+      <section className="container py-20">
         <div className="mx-auto max-w-3xl">
           <Card className="border-primary bg-card shadow-lg">
             <CardHeader className="text-center pb-4">
@@ -934,7 +934,7 @@ export default function Landing() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="container py-24 bg-muted/30">
+      <section className="container py-20 bg-muted/30">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl mb-4">
             Know Your Numbers. Bill Accordingly.
