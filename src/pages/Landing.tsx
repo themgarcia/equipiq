@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Package,
@@ -8,6 +8,7 @@ import {
   Clock, 
   TrendingUp,
   ArrowRight,
+  ArrowUp,
   CheckCircle2,
   Menu,
   Sparkles,
@@ -226,6 +227,19 @@ export default function Landing() {
 
   // Mobile menu state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Back to top button visibility
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show button after scrolling past ~500px (roughly past the hero)
+      setShowBackToTop(window.scrollY > 500);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -990,6 +1004,17 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+      
+      {/* Floating Back to Top Button */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className={`fixed bottom-6 right-6 z-50 p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all duration-300 ${
+          showBackToTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+        }`}
+        aria-label="Back to top"
+      >
+        <ArrowUp className="h-5 w-5" />
+      </button>
     </div>
   );
 }
