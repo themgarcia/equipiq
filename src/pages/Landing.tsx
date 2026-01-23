@@ -224,6 +224,23 @@ export default function Landing() {
   const totalAnnualLoss = unbilledDepreciation + lostOverhead + lostProfit + insuranceWaste;
   const perJobLoss = totalAnnualLoss / jobsPerYear;
 
+  // Mobile menu state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const headerOffset = 80;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -239,18 +256,18 @@ export default function Landing() {
           
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center gap-4">
-            <a href="#who-its-for" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Who It's For
-            </a>
-            <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              How It Works
-            </a>
-            <a href="#what-youll-know" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              What You'll Know
-            </a>
-            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Features
-            </a>
+              <button onClick={() => scrollToSection('who-its-for')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Who It's For
+              </button>
+              <button onClick={() => scrollToSection('how-it-works')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                How It Works
+              </button>
+              <button onClick={() => scrollToSection('what-youll-know')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                What You'll Know
+              </button>
+              <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Features
+              </button>
             {user ? (
               <Button asChild>
                 <Link to="/dashboard">Go to Dashboard</Link>
@@ -284,18 +301,18 @@ export default function Landing() {
                 <span className="font-bold group-hover:text-primary transition-colors">equipIQ</span>
               </button>
               <div className="flex flex-col gap-4 pt-4">
-                <a href="#who-its-for" className="text-lg font-medium hover:text-primary transition-colors">
-                  Who It's For
-                </a>
-                <a href="#how-it-works" className="text-lg font-medium hover:text-primary transition-colors">
-                  How It Works
-                </a>
-                <a href="#what-youll-know" className="text-lg font-medium hover:text-primary transition-colors">
-                  What You'll Know
-                </a>
-                <a href="#features" className="text-lg font-medium hover:text-primary transition-colors">
-                  Features
-                </a>
+                  <button onClick={() => { scrollToSection('who-its-for'); setMobileMenuOpen(false); }} className="text-lg font-medium hover:text-primary transition-colors text-left">
+                    Who It's For
+                  </button>
+                  <button onClick={() => { scrollToSection('how-it-works'); setMobileMenuOpen(false); }} className="text-lg font-medium hover:text-primary transition-colors text-left">
+                    How It Works
+                  </button>
+                  <button onClick={() => { scrollToSection('what-youll-know'); setMobileMenuOpen(false); }} className="text-lg font-medium hover:text-primary transition-colors text-left">
+                    What You'll Know
+                  </button>
+                  <button onClick={() => { scrollToSection('features'); setMobileMenuOpen(false); }} className="text-lg font-medium hover:text-primary transition-colors text-left">
+                    Features
+                  </button>
                 <hr className="border-border" />
                 {user ? (
                   <Button asChild>
