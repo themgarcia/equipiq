@@ -1,15 +1,11 @@
 export const industryOptions = [
-  { value: 'general_contractor', label: 'General Contractor' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'plumbing', label: 'Plumbing' },
-  { value: 'hvac', label: 'HVAC' },
-  { value: 'excavation', label: 'Excavation/Earthwork' },
-  { value: 'landscaping', label: 'Landscaping' },
+  { value: 'landscaping', label: 'Landscaping & Design' },
+  { value: 'excavation', label: 'Civil & Excavation' },
+  { value: 'paving', label: 'Paving & Asphalt' },
+  { value: 'utility', label: 'Utility & Underground' },
+  { value: 'demolition', label: 'Demolition & Forestry' },
   { value: 'concrete', label: 'Concrete' },
-  { value: 'roofing', label: 'Roofing' },
-  { value: 'demolition', label: 'Demolition' },
-  { value: 'utility', label: 'Utility' },
-  { value: 'paving', label: 'Paving' },
+  { value: 'general_contractor', label: 'General Contractor' },
   { value: 'other', label: 'Other' },
 ] as const;
 
