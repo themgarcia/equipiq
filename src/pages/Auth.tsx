@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth, CompanyProfileData, RateLimitResult } from '@/contexts/AuthContext';
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Mail, Lock, User, Building2, Users, DollarSign, MapPin, Globe, Calendar, AlertTriangle, Clock } from 'lucide-react';
+import { Mail, Lock, User, Building2, Users, DollarSign, MapPin, Globe, Calendar, AlertTriangle, Clock, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EquipIQIcon } from '@/components/EquipIQIcon';
 import { 
@@ -29,6 +29,21 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
+// Step-specific validation schemas for signup
+const step1Schema = z.object({
+  fullName: z.string().min(1, 'Full name is required').max(100, 'Name too long'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+const step2Schema = z.object({
+  companyName: z.string().min(1, 'Company name is required').max(200, 'Company name too long'),
+  industry: z.string().min(1, 'Industry is required'),
+  fieldEmployees: z.string().min(1, 'Number of field employees is required'),
+});
+
+// Step 3 is all optional - no strict validation needed
+
 const signupSchema = loginSchema.extend({
   fullName: z.string().min(1, 'Full name is required').max(100, 'Name too long'),
   companyName: z.string().min(1, 'Company name is required').max(200, 'Company name too long'),
@@ -39,6 +54,32 @@ const signupSchema = loginSchema.extend({
   region: z.string().optional(),
   companyWebsite: z.string().url('Invalid website URL').optional().or(z.literal('')),
 });
+
+// Progress Indicator Component
+function ProgressIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
+  return (
+    <div className="flex items-center justify-center gap-1 mb-6">
+      {Array.from({ length: totalSteps }).map((_, i) => (
+        <div key={i} className="flex items-center">
+          <div 
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+              i + 1 < currentStep 
+                ? 'bg-primary text-primary-foreground' 
+                : i + 1 === currentStep 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-muted text-muted-foreground'
+            }`}
+          >
+            {i + 1 < currentStep ? <Check className="h-4 w-4" /> : i + 1}
+          </div>
+          {i < totalSteps - 1 && (
+            <div className={`w-8 sm:w-12 h-1 mx-1 transition-colors ${i + 1 < currentStep ? 'bg-primary' : 'bg-muted'}`} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -57,6 +98,10 @@ export default function Auth() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  
+  // Multi-step state
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 3;
   
   // Rate limiting state
   const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitResult | null>(null);
@@ -109,6 +154,7 @@ export default function Auth() {
     setResetEmailSent(false);
     setRateLimitInfo(null);
     setRetryCountdown(0);
+    setCurrentStep(1);
   };
 
   const formatCountdown = (seconds: number): string => {
@@ -118,6 +164,45 @@ export default function Auth() {
       return `${mins}m ${secs}s`;
     }
     return `${secs}s`;
+  };
+
+  const validateStep = (step: number): boolean => {
+    setErrors({});
+    
+    if (step === 1) {
+      const result = step1Schema.safeParse({ fullName, email, password });
+      if (!result.success) {
+        const fieldErrors: Record<string, string> = {};
+        result.error.issues.forEach(issue => {
+          fieldErrors[issue.path[0] as string] = issue.message;
+        });
+        setErrors(fieldErrors);
+        return false;
+      }
+    } else if (step === 2) {
+      const result = step2Schema.safeParse({ companyName, industry, fieldEmployees });
+      if (!result.success) {
+        const fieldErrors: Record<string, string> = {};
+        result.error.issues.forEach(issue => {
+          fieldErrors[issue.path[0] as string] = issue.message;
+        });
+        setErrors(fieldErrors);
+        return false;
+      }
+    }
+    // Step 3 has no required fields
+    return true;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    }
+  };
+
+  const handlePrevStep = () => {
+    setErrors({});
+    setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -331,6 +416,18 @@ export default function Auth() {
     }
   };
 
+  const getStepTitle = () => {
+    if (currentStep === 1) return 'Account Basics';
+    if (currentStep === 2) return 'Company Essentials';
+    return 'Additional Details';
+  };
+
+  const getStepDescription = () => {
+    if (currentStep === 1) return 'Let\'s start with your account info';
+    if (currentStep === 2) return 'Tell us about your company';
+    return 'Optional info to personalize your experience';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -361,7 +458,7 @@ export default function Auth() {
                 ? 'Reset Password' 
                 : isLogin 
                   ? 'Welcome back' 
-                  : 'Join the Open Beta'}
+                  : getStepTitle()}
             </CardTitle>
             <CardDescription>
               {isForgotPassword
@@ -370,7 +467,7 @@ export default function Auth() {
                   : 'Enter your email to receive a reset link'
                 : isLogin 
                   ? 'Enter your credentials to access your equipment' 
-                  : 'Create your account and get full access'}
+                  : getStepDescription()}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -435,97 +532,220 @@ export default function Auth() {
                   </div>
                 </form>
               )
-            ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Rate Limit Warning/Error */}
-              {rateLimitInfo && !rateLimitInfo.allowed && (
-                <Alert variant="destructive">
-                  <Clock className="h-4 w-4" />
-                  <AlertDescription className="flex items-center justify-between">
-                    <span>{rateLimitInfo.message || 'Too many attempts. Please try again later.'}</span>
-                    {retryCountdown > 0 && (
-                      <span className="font-mono text-sm ml-2">
-                        {formatCountdown(retryCountdown)}
-                      </span>
-                    )}
-                  </AlertDescription>
-                </Alert>
-              )}
-              {rateLimitInfo && rateLimitInfo.allowed && rateLimitInfo.warning && (
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    {rateLimitInfo.warning}
-                  </AlertDescription>
-                </Alert>
-              )}
-              {!isLogin && (
-                <>
-                  {/* Personal Info Section */}
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name *</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="fullName"
-                          type="text"
-                          placeholder="John Doe"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          className="pl-10"
-                          disabled={isSubmitting}
-                        />
-                      </div>
-                      {errors.fullName && (
-                        <p className="text-sm text-destructive">{errors.fullName}</p>
+            ) : isLogin ? (
+              // Login Form
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Rate Limit Warning/Error */}
+                {rateLimitInfo && !rateLimitInfo.allowed && (
+                  <Alert variant="destructive">
+                    <Clock className="h-4 w-4" />
+                    <AlertDescription className="flex items-center justify-between">
+                      <span>{rateLimitInfo.message || 'Too many attempts. Please try again later.'}</span>
+                      {retryCountdown > 0 && (
+                        <span className="font-mono text-sm ml-2">
+                          {formatCountdown(retryCountdown)}
+                        </span>
                       )}
-                    </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {rateLimitInfo && rateLimitInfo.allowed && rateLimitInfo.warning && (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      {rateLimitInfo.warning}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      disabled={isSubmitting}
+                    />
                   </div>
+                  {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email}</p>
+                  )}
+                </div>
 
-                  {/* Company Info Section */}
-                  <div className="pt-4 border-t space-y-4">
-                    <p className="text-sm font-medium text-muted-foreground">Company Information</p>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="companyName">Company Name *</Label>
-                      <div className="relative">
-                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="companyName"
-                          type="text"
-                          placeholder="ABC Construction"
-                          value={companyName}
-                          onChange={(e) => setCompanyName(e.target.value)}
-                          className="pl-10"
-                          disabled={isSubmitting}
-                        />
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  {errors.password && (
+                    <p className="text-sm text-destructive">{errors.password}</p>
+                  )}
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsForgotPassword(true);
+                        setErrors({});
+                      }}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? 'Signing in...' : 'Sign In'}
+                </Button>
+              </form>
+            ) : (
+              // Multi-Step Signup Form
+              <div className="space-y-4">
+                {/* Progress Indicator */}
+                <ProgressIndicator currentStep={currentStep} totalSteps={totalSteps} />
+                
+                {/* Rate Limit Warning/Error */}
+                {rateLimitInfo && !rateLimitInfo.allowed && (
+                  <Alert variant="destructive">
+                    <Clock className="h-4 w-4" />
+                    <AlertDescription className="flex items-center justify-between">
+                      <span>{rateLimitInfo.message || 'Too many attempts. Please try again later.'}</span>
+                      {retryCountdown > 0 && (
+                        <span className="font-mono text-sm ml-2">
+                          {formatCountdown(retryCountdown)}
+                        </span>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {rateLimitInfo && rateLimitInfo.allowed && rateLimitInfo.warning && (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      {rateLimitInfo.warning}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <form onSubmit={handleSubmit}>
+                  {/* Step 1: Account Basics */}
+                  {currentStep === 1 && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fullName">Full Name *</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="fullName"
+                            type="text"
+                            placeholder="John Doe"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="pl-10"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        {errors.fullName && (
+                          <p className="text-sm text-destructive">{errors.fullName}</p>
+                        )}
                       </div>
-                      {errors.companyName && (
-                        <p className="text-sm text-destructive">{errors.companyName}</p>
-                      )}
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="industry">Industry *</Label>
-                      <Select value={industry} onValueChange={setIndustry} disabled={isSubmitting}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your industry" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {industryOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.industry && (
-                        <p className="text-sm text-destructive">{errors.industry}</p>
-                      )}
-                    </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email *</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="pl-10"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        {errors.email && (
+                          <p className="text-sm text-destructive">{errors.email}</p>
+                        )}
+                      </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="password">Password *</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="password"
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="pl-10"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        {errors.password && (
+                          <p className="text-sm text-destructive">{errors.password}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 2: Company Essentials */}
+                  {currentStep === 2 && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="companyName">Company Name *</Label>
+                        <div className="relative">
+                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="companyName"
+                            type="text"
+                            placeholder="ABC Construction"
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            className="pl-10"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        {errors.companyName && (
+                          <p className="text-sm text-destructive">{errors.companyName}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="industry">Industry *</Label>
+                        <Select value={industry} onValueChange={setIndustry} disabled={isSubmitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your industry" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {industryOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.industry && (
+                          <p className="text-sm text-destructive">{errors.industry}</p>
+                        )}
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="fieldEmployees">Field Employees *</Label>
                         <Select value={fieldEmployees} onValueChange={setFieldEmployees} disabled={isSubmitting}>
@@ -544,178 +764,162 @@ export default function Auth() {
                           <p className="text-sm text-destructive">{errors.fieldEmployees}</p>
                         )}
                       </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="annualRevenue">Annual Revenue</Label>
-                        <Select value={annualRevenue} onValueChange={setAnnualRevenue} disabled={isSubmitting}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select range" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {annualRevenueOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
                     </div>
+                  )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="region">Region</Label>
-                        <Select value={region} onValueChange={setRegion} disabled={isSubmitting}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select region" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {regionOptions.map((group) => (
-                              <SelectGroup key={group.group}>
-                                <SelectLabel>{group.group}</SelectLabel>
-                                {group.options.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="yearsInBusiness">Years in Business</Label>
-                        <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="yearsInBusiness"
-                            type="number"
-                            placeholder="10"
-                            min="0"
-                            max="200"
-                            value={yearsInBusiness}
-                            onChange={(e) => setYearsInBusiness(e.target.value)}
-                            className="pl-10"
-                            disabled={isSubmitting}
-                          />
+                  {/* Step 3: Additional Details (Optional) */}
+                  {currentStep === 3 && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground text-center mb-2">
+                        All fields on this page are optional
+                      </p>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="annualRevenue">Annual Revenue</Label>
+                          <Select value={annualRevenue} onValueChange={setAnnualRevenue} disabled={isSubmitting}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select range" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {annualRevenueOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
-                        {errors.yearsInBusiness && (
-                          <p className="text-sm text-destructive">{errors.yearsInBusiness}</p>
-                        )}
+
+                        <div className="space-y-2">
+                          <Label htmlFor="region">Region</Label>
+                          <Select value={region} onValueChange={setRegion} disabled={isSubmitting}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select region" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {regionOptions.map((group) => (
+                                <SelectGroup key={group.group}>
+                                  <SelectLabel>{group.group}</SelectLabel>
+                                  {group.options.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="yearsInBusiness">Years in Business</Label>
+                          <div className="relative">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="yearsInBusiness"
+                              type="number"
+                              placeholder="10"
+                              min="0"
+                              max="200"
+                              value={yearsInBusiness}
+                              onChange={(e) => setYearsInBusiness(e.target.value)}
+                              className="pl-10"
+                              disabled={isSubmitting}
+                            />
+                          </div>
+                          {errors.yearsInBusiness && (
+                            <p className="text-sm text-destructive">{errors.yearsInBusiness}</p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="companyWebsite">Company Website</Label>
+                          <div className="relative">
+                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="companyWebsite"
+                              type="url"
+                              placeholder="https://..."
+                              value={companyWebsite}
+                              onChange={(e) => setCompanyWebsite(e.target.value)}
+                              className="pl-10"
+                              disabled={isSubmitting}
+                            />
+                          </div>
+                          {errors.companyWebsite && (
+                            <p className="text-sm text-destructive">{errors.companyWebsite}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* How did you hear about us - Chip Selector */}
+                      <div className="space-y-3 pt-2">
+                        <div>
+                          <Label className="text-sm font-medium">How did you hear about us?</Label>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {referralSourceOptions.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setReferralSource(referralSource === option.value ? '' : option.value)}
+                              disabled={isSubmitting}
+                              className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                                referralSource === option.value
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-background hover:bg-muted border-border text-foreground'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
+                  )}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="companyWebsite">Company Website</Label>
-                      <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="companyWebsite"
-                          type="url"
-                          placeholder="https://yourcompany.com"
-                          value={companyWebsite}
-                          onChange={(e) => setCompanyWebsite(e.target.value)}
-                          className="pl-10"
+                  {/* Navigation Buttons */}
+                  <div className="flex gap-3 mt-6">
+                    {currentStep > 1 && (
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={handlePrevStep}
+                        disabled={isSubmitting}
+                        className="flex items-center gap-1"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Back
+                      </Button>
+                    )}
+                    
+                    {currentStep < totalSteps ? (
+                      <Button 
+                        type="button" 
+                        className="flex-1 flex items-center justify-center gap-1"
+                        onClick={handleNextStep}
+                        disabled={isSubmitting}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <div className="flex gap-3 flex-1">
+                        <Button 
+                          type="submit" 
+                          className="flex-1" 
                           disabled={isSubmitting}
-                        />
-                      </div>
-                      {errors.companyWebsite && (
-                        <p className="text-sm text-destructive">{errors.companyWebsite}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* How did you hear about us - Chip Selector */}
-                  <div className="pt-4 border-t space-y-3">
-                    <div>
-                      <Label className="text-sm font-medium">How did you hear about us?</Label>
-                      <p className="text-xs text-muted-foreground mt-0.5">(optional)</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {referralSourceOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setReferralSource(referralSource === option.value ? '' : option.value)}
-                          disabled={isSubmitting}
-                          className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                            referralSource === option.value
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'bg-background hover:bg-muted border-border text-foreground'
-                          } disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
+                          {isSubmitting ? 'Creating account...' : 'Create Account'}
+                        </Button>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Account Info Section */}
-                  <div className="pt-4 border-t space-y-4">
-                    <p className="text-sm font-medium text-muted-foreground">Account Details</p>
-                  </div>
-                </>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email {!isLogin && '*'}</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email}</p>
-                )}
+                </form>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password {!isLogin && '*'}</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive">{errors.password}</p>
-                )}
-                {isLogin && (
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsForgotPassword(true);
-                        setErrors({});
-                      }}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting 
-                  ? (isLogin ? 'Signing in...' : 'Creating account...') 
-                  : (isLogin ? 'Sign In' : 'Create Account')}
-              </Button>
-            </form>
             )}
 
             {!isForgotPassword && (
