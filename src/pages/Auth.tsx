@@ -101,6 +101,7 @@ export default function Auth() {
   
   // Multi-step state
   const [currentStep, setCurrentStep] = useState(1);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
   const totalSteps = 3;
   
   // Rate limiting state
@@ -194,14 +195,36 @@ export default function Auth() {
     return true;
   };
 
+  // Field-level validation for inline checkmarks
+  const isFieldValid = (field: string): boolean => {
+    switch (field) {
+      case 'fullName':
+        return fullName.trim().length >= 1 && fullName.length <= 100;
+      case 'email':
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      case 'password':
+        return password.length >= 6;
+      case 'companyName':
+        return companyName.trim().length >= 1 && companyName.length <= 200;
+      case 'industry':
+        return industry.length > 0;
+      case 'fieldEmployees':
+        return fieldEmployees.length > 0;
+      default:
+        return false;
+    }
+  };
+
   const handleNextStep = () => {
     if (validateStep(currentStep)) {
+      setSlideDirection('left');
       setCurrentStep(prev => Math.min(prev + 1, totalSteps));
     }
   };
 
   const handlePrevStep = () => {
     setErrors({});
+    setSlideDirection('right');
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
@@ -644,7 +667,10 @@ export default function Auth() {
                 <form onSubmit={handleSubmit}>
                   {/* Step 1: Account Basics */}
                   {currentStep === 1 && (
-                    <div className="space-y-4">
+                    <div 
+                      key="step-1"
+                      className={`space-y-4 ${slideDirection === 'left' ? 'animate-slide-in-from-right' : 'animate-slide-in-from-left'}`}
+                    >
                       <div className="space-y-2">
                         <Label htmlFor="fullName">Full Name *</Label>
                         <div className="relative">
@@ -655,9 +681,12 @@ export default function Auth() {
                             placeholder="John Doe"
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 pr-10"
                             disabled={isSubmitting}
                           />
+                          {isFieldValid('fullName') && (
+                            <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-success animate-checkmark-pop" />
+                          )}
                         </div>
                         {errors.fullName && (
                           <p className="text-sm text-destructive">{errors.fullName}</p>
@@ -674,9 +703,12 @@ export default function Auth() {
                             placeholder="you@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 pr-10"
                             disabled={isSubmitting}
                           />
+                          {isFieldValid('email') && (
+                            <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-success animate-checkmark-pop" />
+                          )}
                         </div>
                         {errors.email && (
                           <p className="text-sm text-destructive">{errors.email}</p>
@@ -693,9 +725,12 @@ export default function Auth() {
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 pr-10"
                             disabled={isSubmitting}
                           />
+                          {isFieldValid('password') && (
+                            <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-success animate-checkmark-pop" />
+                          )}
                         </div>
                         {errors.password && (
                           <p className="text-sm text-destructive">{errors.password}</p>
@@ -707,7 +742,10 @@ export default function Auth() {
 
                   {/* Step 2: Company Essentials */}
                   {currentStep === 2 && (
-                    <div className="space-y-4">
+                    <div 
+                      key="step-2"
+                      className={`space-y-4 ${slideDirection === 'left' ? 'animate-slide-in-from-right' : 'animate-slide-in-from-left'}`}
+                    >
                       <div className="space-y-2">
                         <Label htmlFor="companyName">Company Name *</Label>
                         <div className="relative">
@@ -718,9 +756,12 @@ export default function Auth() {
                             placeholder="ABC Construction"
                             value={companyName}
                             onChange={(e) => setCompanyName(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 pr-10"
                             disabled={isSubmitting}
                           />
+                          {isFieldValid('companyName') && (
+                            <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-success animate-checkmark-pop" />
+                          )}
                         </div>
                         {errors.companyName && (
                           <p className="text-sm text-destructive">{errors.companyName}</p>
@@ -729,18 +770,23 @@ export default function Auth() {
 
                       <div className="space-y-2">
                         <Label htmlFor="industry">Industry *</Label>
-                        <Select value={industry} onValueChange={setIndustry} disabled={isSubmitting}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your industry" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {industryOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-2">
+                          <Select value={industry} onValueChange={setIndustry} disabled={isSubmitting}>
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Select your industry" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {industryOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {isFieldValid('industry') && (
+                            <Check className="h-4 w-4 text-success animate-checkmark-pop shrink-0" />
+                          )}
+                        </div>
                         {errors.industry && (
                           <p className="text-sm text-destructive">{errors.industry}</p>
                         )}
@@ -748,18 +794,23 @@ export default function Auth() {
 
                       <div className="space-y-2">
                         <Label htmlFor="fieldEmployees">Field Employees *</Label>
-                        <Select value={fieldEmployees} onValueChange={setFieldEmployees} disabled={isSubmitting}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select range" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {fieldEmployeesOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-2">
+                          <Select value={fieldEmployees} onValueChange={setFieldEmployees} disabled={isSubmitting}>
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Select range" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {fieldEmployeesOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {isFieldValid('fieldEmployees') && (
+                            <Check className="h-4 w-4 text-success animate-checkmark-pop shrink-0" />
+                          )}
+                        </div>
                         {errors.fieldEmployees && (
                           <p className="text-sm text-destructive">{errors.fieldEmployees}</p>
                         )}
@@ -769,90 +820,89 @@ export default function Auth() {
 
                   {/* Step 3: Additional Details (Optional) */}
                   {currentStep === 3 && (
-                    <div className="space-y-4">
+                    <div 
+                      key="step-3"
+                      className={`space-y-4 ${slideDirection === 'left' ? 'animate-slide-in-from-right' : 'animate-slide-in-from-left'}`}
+                    >
                       <p className="text-sm text-muted-foreground text-center mb-2">
                         All fields on this page are optional
                       </p>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="annualRevenue">Annual Revenue</Label>
-                          <Select value={annualRevenue} onValueChange={setAnnualRevenue} disabled={isSubmitting}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select range" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {annualRevenueOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="region">Region</Label>
-                          <Select value={region} onValueChange={setRegion} disabled={isSubmitting}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select region" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {regionOptions.map((group) => (
-                                <SelectGroup key={group.group}>
-                                  <SelectLabel>{group.group}</SelectLabel>
-                                  {group.options.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="annualRevenue">Annual Revenue</Label>
+                        <Select value={annualRevenue} onValueChange={setAnnualRevenue} disabled={isSubmitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select range" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {annualRevenueOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="yearsInBusiness">Years in Business</Label>
-                          <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              id="yearsInBusiness"
-                              type="number"
-                              placeholder="10"
-                              min="0"
-                              max="200"
-                              value={yearsInBusiness}
-                              onChange={(e) => setYearsInBusiness(e.target.value)}
-                              className="pl-10"
-                              disabled={isSubmitting}
-                            />
-                          </div>
-                          {errors.yearsInBusiness && (
-                            <p className="text-sm text-destructive">{errors.yearsInBusiness}</p>
-                          )}
-                        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="region">Region</Label>
+                        <Select value={region} onValueChange={setRegion} disabled={isSubmitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select region" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {regionOptions.map((group) => (
+                              <SelectGroup key={group.group}>
+                                <SelectLabel>{group.group}</SelectLabel>
+                                {group.options.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="companyWebsite">Company Website</Label>
-                          <div className="relative">
-                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              id="companyWebsite"
-                              type="url"
-                              placeholder="https://..."
-                              value={companyWebsite}
-                              onChange={(e) => setCompanyWebsite(e.target.value)}
-                              className="pl-10"
-                              disabled={isSubmitting}
-                            />
-                          </div>
-                          {errors.companyWebsite && (
-                            <p className="text-sm text-destructive">{errors.companyWebsite}</p>
-                          )}
+                      <div className="space-y-2">
+                        <Label htmlFor="yearsInBusiness">Years in Business</Label>
+                        <div className="relative">
+                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="yearsInBusiness"
+                            type="number"
+                            placeholder="10"
+                            min="0"
+                            max="200"
+                            value={yearsInBusiness}
+                            onChange={(e) => setYearsInBusiness(e.target.value)}
+                            className="pl-10"
+                            disabled={isSubmitting}
+                          />
                         </div>
+                        {errors.yearsInBusiness && (
+                          <p className="text-sm text-destructive">{errors.yearsInBusiness}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="companyWebsite">Company Website</Label>
+                        <div className="relative">
+                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="companyWebsite"
+                            type="url"
+                            placeholder="https://yourcompany.com"
+                            value={companyWebsite}
+                            onChange={(e) => setCompanyWebsite(e.target.value)}
+                            className="pl-10"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        {errors.companyWebsite && (
+                          <p className="text-sm text-destructive">{errors.companyWebsite}</p>
+                        )}
                       </div>
 
                       {/* How did you hear about us - Chip Selector */}
