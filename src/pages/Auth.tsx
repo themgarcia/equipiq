@@ -99,6 +99,7 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   
   // Multi-step state
   const [currentStep, setCurrentStep] = useState(1);
@@ -241,8 +242,45 @@ export default function Auth() {
 
   const passwordStrength = getPasswordStrength(password);
 
-  const handleNextStep = () => {
+  const checkEmailExists = async (emailToCheck: string): Promise<boolean> => {
+    try {
+      // Attempt to sign in with a dummy password
+      // "Invalid login credentials" means email exists but password wrong
+      const { error } = await supabase.auth.signInWithPassword({
+        email: emailToCheck,
+        password: 'dummy_check_password_12345_!@#$%',
+      });
+      
+      if (error) {
+        // "Invalid login credentials" means email exists but password wrong
+        if (error.message.includes('Invalid login credentials')) {
+          return true;
+        }
+        // Other errors likely mean email doesn't exist or other issue
+        return false;
+      }
+      
+      // If no error (unlikely with dummy password), email exists and somehow matched
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleNextStep = async () => {
     if (validateStep(currentStep)) {
+      // On Step 1, check if email already exists
+      if (currentStep === 1) {
+        setCheckingEmail(true);
+        const exists = await checkEmailExists(email);
+        setCheckingEmail(false);
+        
+        if (exists) {
+          setErrors({ email: 'This email is already registered.' });
+          return;
+        }
+      }
+      
       setSlideDirection('left');
       setCurrentStep(prev => Math.min(prev + 1, totalSteps));
     }
@@ -617,9 +655,12 @@ export default function Auth() {
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       disabled={isSubmitting}
                     />
+                    {isFieldValid('email') && (
+                      <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-success animate-checkmark-pop" />
+                    )}
                   </div>
                   {errors.email && (
                     <p className="text-sm text-destructive">{errors.email}</p>
@@ -749,7 +790,21 @@ export default function Auth() {
                           )}
                         </div>
                         {errors.email && (
-                          <p className="text-sm text-destructive">{errors.email}</p>
+                          <p className="text-sm text-destructive">
+                            {errors.email}{' '}
+                            {errors.email.includes('already registered') && (
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  setIsLogin(true);
+                                  setErrors({});
+                                }}
+                                className="underline hover:text-foreground transition-colors"
+                              >
+                                Sign in here
+                              </button>
+                            )}
+                          </p>
                         )}
                       </div>
 
@@ -1038,10 +1093,10 @@ export default function Auth() {
                         type="button" 
                         className="flex-1 flex items-center justify-center gap-1"
                         onClick={handleNextStep}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || checkingEmail}
                       >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
+                        {checkingEmail ? 'Checking...' : 'Next'}
+                        {!checkingEmail && <ChevronRight className="h-4 w-4" />}
                       </Button>
                     ) : (
                       <div className="flex gap-3 flex-1">
