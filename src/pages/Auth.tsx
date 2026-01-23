@@ -215,6 +215,31 @@ export default function Auth() {
     }
   };
 
+  // Password strength calculation
+  const getPasswordStrength = (pwd: string): { level: 'weak' | 'medium' | 'strong'; score: number } => {
+    if (!pwd) return { level: 'weak', score: 0 };
+    
+    let score = 0;
+    
+    // Length checks
+    if (pwd.length >= 6) score += 1;
+    if (pwd.length >= 8) score += 1;
+    if (pwd.length >= 12) score += 1;
+    
+    // Character variety checks
+    if (/[a-z]/.test(pwd)) score += 1;
+    if (/[A-Z]/.test(pwd)) score += 1;
+    if (/[0-9]/.test(pwd)) score += 1;
+    if (/[^a-zA-Z0-9]/.test(pwd)) score += 1;
+    
+    // Determine level based on score (max 7)
+    if (score <= 2) return { level: 'weak', score: Math.min(score / 7 * 100, 33) };
+    if (score <= 4) return { level: 'medium', score: Math.min(score / 7 * 100, 66) };
+    return { level: 'strong', score: Math.min(score / 7 * 100, 100) };
+  };
+
+  const passwordStrength = getPasswordStrength(password);
+
   const handleNextStep = () => {
     if (validateStep(currentStep)) {
       setSlideDirection('left');
@@ -735,7 +760,42 @@ export default function Auth() {
                         {errors.password && (
                           <p className="text-sm text-destructive">{errors.password}</p>
                         )}
-                        <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
+                        {/* Password Strength Indicator */}
+                        {password.length > 0 && (
+                          <div className="space-y-1.5">
+                            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full transition-all duration-300 rounded-full ${
+                                  passwordStrength.level === 'weak' 
+                                    ? 'bg-destructive' 
+                                    : passwordStrength.level === 'medium' 
+                                      ? 'bg-warning' 
+                                      : 'bg-success'
+                                }`}
+                                style={{ width: `${passwordStrength.score}%` }}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <p className={`text-xs font-medium ${
+                                passwordStrength.level === 'weak' 
+                                  ? 'text-destructive' 
+                                  : passwordStrength.level === 'medium' 
+                                    ? 'text-warning' 
+                                    : 'text-success'
+                              }`}>
+                                {passwordStrength.level === 'weak' && 'Weak'}
+                                {passwordStrength.level === 'medium' && 'Medium'}
+                                {passwordStrength.level === 'strong' && 'Strong'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {password.length < 6 ? `${6 - password.length} more chars needed` : 'Min. 6 characters ✓'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {password.length === 0 && (
+                          <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
+                        )}
                       </div>
                     </div>
                   )}
