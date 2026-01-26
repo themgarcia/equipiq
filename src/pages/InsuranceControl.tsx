@@ -106,7 +106,7 @@ export default function InsuranceControl() {
             <Upload className="h-4 w-4" />
             <span className="hidden sm:inline">Import from Policy</span>
             <span className="sm:hidden">Import</span>
-            <AIIndicator size="sm" className="hidden sm:inline-flex" />
+            <AIIndicator size="sm" />
           </Button>
         </div>
 
