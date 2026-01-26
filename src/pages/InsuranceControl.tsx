@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ShieldCheck, Upload } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ExtractedPolicyData } from '@/types/insurance';
 import { InsurancePolicyImport } from '@/components/insurance/InsurancePolicyImport';
@@ -20,6 +20,7 @@ import { PendingChangesTab } from '@/components/insurance/PendingChangesTab';
 import { UnreviewedAssetsTab } from '@/components/insurance/UnreviewedAssetsTab';
 import { InsuranceSettingsTab } from '@/components/insurance/InsuranceSettingsTab';
 import { MobileTabSelect } from '@/components/MobileTabSelect';
+import { AIIndicator } from '@/components/ui/ai-indicator';
 
 export default function InsuranceControl() {
   const { user } = useAuth();
@@ -101,10 +102,11 @@ export default function InsuranceControl() {
               Manage insured equipment and communicate changes to your broker
             </p>
           </div>
-          <Button variant="outline" onClick={() => setImportModalOpen(true)}>
-            <Upload className="h-4 w-4 sm:mr-2" />
+          <Button variant="outline" onClick={() => setImportModalOpen(true)} className="gap-2">
+            <Upload className="h-4 w-4" />
             <span className="hidden sm:inline">Import from Policy</span>
             <span className="sm:hidden">Import</span>
+            <AIIndicator showBadge={false} className="hidden sm:inline-flex" />
           </Button>
         </div>
 
