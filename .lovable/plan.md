@@ -1,138 +1,210 @@
 
-# AI Indicator Placement Audit - Complete Findings
 
-## Summary
+# Equipment Entry Source Tracking + Unified "Add to Equipment" Flow
 
-This audit identifies all AI-powered features in the application and verifies whether they have the `AIIndicator` component appropriately placed.
+## Overview
 
----
-
-## Current AIIndicator Placements (Existing - 5 total)
-
-| Location | File | Component/Button | Status |
-|----------|------|------------------|--------|
-| Equipment Import Modal | `EquipmentImportModal.tsx` | "Import from Documents" option | Has AIIndicator |
-| Spreadsheet Import | `SpreadsheetImport.tsx` | "AI Mode" tab trigger | Has AIIndicator |
-| Spreadsheet Import AI | `SpreadsheetImportAI.tsx` | Info banner explaining AI analysis | Has AIIndicator |
-| Insurance Control | `InsuranceControl.tsx` | "Import from Policy" button | Has AIIndicator |
-| AI Indicator Component | `ui/ai-indicator.tsx` | Component definition | N/A |
+This plan implements two features:
+1. **Entry Source Tracking** - Track whether each piece of equipment was added via Manual Entry, AI Document Import, or Spreadsheet Import
+2. **Unified "Add to Equipment" Button** - Consolidate the Import and Add Equipment buttons into a single entry point
 
 ---
 
-## AI-Powered Features Needing Review
+## Part 1: Entry Source Tracking
 
-### 1. Voice Dictation Button (MISSING AI Indicator)
-**File:** `src/components/ui/voice-dictation-button.tsx`  
-**Used in:** `FeedbackDialog.tsx`  
-**AI Technology:** ElevenLabs Scribe (real-time AI transcription)
+### Database Change
 
-**Current State:** No AI indicator - just a microphone icon with tooltip saying "Voice input"
+Add a new column to the `equipment` table:
 
-**Recommendation:** Add AIIndicator to tooltip or button label to indicate this is AI-powered transcription, not basic browser speech recognition.
+```sql
+ALTER TABLE public.equipment 
+ADD COLUMN entry_source TEXT NOT NULL DEFAULT 'manual';
 
----
-
-### 2. Equipment Import Dialog Header (OPTIONAL)
-**File:** `src/components/EquipmentImport.tsx`  
-**Current State:** Dialog description mentions "AI will extract equipment details" but no visual AI badge in the header
-
-**Recommendation:** Consider adding AIIndicator next to the dialog title "Import Equipment from Documents" for immediate visibility, though the parent modal already has the indicator.
-
----
-
-### 3. Insurance Policy Import Dialog Header (MISSING AI Indicator)
-**File:** `src/components/insurance/InsurancePolicyImport.tsx`  
-**Current State:** Dialog description mentions "AI will extract broker contact, policy details" but no visual AI badge in the header
-
-**Recommendation:** Add AIIndicator next to the dialog title "Import from Policy Document" for consistency with the Equipment import modal pattern.
-
----
-
-## Features That Do NOT Need AI Indicator
-
-| Feature | Reason |
-|---------|--------|
-| `parse-equipment-docs` edge function | Backend only - UI entry points already have indicators |
-| `parse-equipment-spreadsheet` edge function | Backend only - UI already has indicator in AI Mode tab |
-| `parse-insurance-docs` edge function | Backend only - button has indicator (after this audit fix) |
-| `elevenlabs-scribe-token` edge function | Backend only - but VoiceDictationButton needs indicator |
-
----
-
-## Implementation Plan
-
-### Priority 1: Voice Dictation Button Enhancement
-**File:** `src/components/ui/voice-dictation-button.tsx`
-
-Add AIIndicator to the tooltip content to indicate this is AI-powered:
-
-```tsx
-<TooltipContent side="left" className="flex items-center gap-1.5">
-  <AIIndicator size="sm" />
-  {isListening ? "Stop dictation" : "Voice dictation"}
-</TooltipContent>
+COMMENT ON COLUMN public.equipment.entry_source IS 
+  'How the equipment was added: manual, ai_document, or spreadsheet';
 ```
 
-This subtly indicates the feature is AI-powered without cluttering the button itself.
+Valid values:
+- `'manual'` - User filled out the form by hand
+- `'ai_document'` - Imported via AI document parsing (invoices, PDFs, photos)
+- `'spreadsheet'` - Imported via spreadsheet (CSV/Excel)
 
----
+### Code Changes
 
-### Priority 2: Insurance Policy Import Dialog
-**File:** `src/components/insurance/InsurancePolicyImport.tsx`
+**1. Update Equipment Context** (`src/contexts/EquipmentContext.tsx`)
 
-Add AIIndicator to the dialog title for consistency:
+Modify `addEquipment` to accept an optional `entrySource` parameter:
 
-```tsx
-<DialogTitle className="flex items-center gap-2">
-  Import from Policy Document
-  <AIIndicator size="sm" />
-</DialogTitle>
+```typescript
+addEquipment: (equipment: Omit<Equipment, 'id'>, entrySource?: 'manual' | 'ai_document' | 'spreadsheet') => Promise<string | undefined>;
 ```
 
----
+When inserting, include the source:
+```typescript
+entry_source: entrySource || 'manual'
+```
 
-### Priority 3 (Optional): Equipment Import Dialog
-**File:** `src/components/EquipmentImport.tsx`
+**2. Update Equipment Type** (`src/types/equipment.ts`)
 
-This is optional since the parent `EquipmentImportModal` already shows the AI indicator on the "Import from Documents" option. However, for users who navigate directly to this dialog, adding consistency could help:
+Add the field to the Equipment interface:
+```typescript
+entrySource?: 'manual' | 'ai_document' | 'spreadsheet';
+```
 
-```tsx
-<DialogTitle className="flex items-center gap-2">
-  Import Equipment from Documents
-  <AIIndicator size="sm" />
-</DialogTitle>
+**3. Update Import Review** (`src/components/EquipmentImportReview.tsx`)
+
+Pass the source when adding equipment. The source is determined by how the user got to the review screen:
+- From `EquipmentImport` (documents) -> `'ai_document'`
+- From `SpreadsheetImportAI` (AI mode) -> `'ai_document'`  
+- From `SpreadsheetImportStructured` (table mode) -> `'spreadsheet'`
+
+**4. Update Spreadsheet Import Components**
+
+Pass a prop to indicate the import type (AI vs structured) so the review component knows which source to use.
+
+### Admin Dashboard View
+
+Add a simple "Import Sources" section to the Admin Dashboard showing:
+
+**Per-User Breakdown Table:**
+| User | Manual | AI Document | Spreadsheet | Total |
+|------|--------|-------------|-------------|-------|
+| john@example.com | 5 (33%) | 8 (53%) | 2 (13%) | 15 |
+| jane@example.com | 12 (60%) | 6 (30%) | 2 (10%) | 20 |
+
+**Aggregate Stats (cards):**
+- Total Equipment: X
+- Manual Entry: Y (Z%)
+- AI Document Import: Y (Z%)
+- Spreadsheet Import: Y (Z%)
+
+This uses a simple query:
+```sql
+SELECT 
+  entry_source,
+  COUNT(*) as count
+FROM equipment
+GROUP BY entry_source
 ```
 
 ---
+
+## Part 2: Unified "Add to Equipment" Button
+
+### Current State
+The Equipment page has two separate buttons:
+- **Import** - Opens modal with 2 options (Documents, Spreadsheet)
+- **Add Equipment** - Opens form directly
+
+### New Flow
+Single **"+ Add to Equipment"** button that opens a modal with three options:
+
+```text
+┌─────────────────────────────────────────────────┐
+│  Add to Equipment                               │
+│  Choose how you'd like to add equipment.        │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  ┌──────────────────────────────────────────┐   │
+│  │ 📝 Manual Data Entry                     │   │
+│  │ Enter equipment details by hand          >   │
+│  └──────────────────────────────────────────┘   │
+│                                                 │
+│  ┌──────────────────────────────────────────┐   │
+│  │ 📄 Import from Documents       [AI]      │   │
+│  │ Upload invoices, spec sheets, PDFs       >   │
+│  └──────────────────────────────────────────┘   │
+│                                                 │
+│  ┌──────────────────────────────────────────┐   │
+│  │ 📊 Import from Spreadsheet               │   │
+│  │ Upload CSV or Excel files                >   │
+│  └──────────────────────────────────────────┘   │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
+
+### Components
+
+**New File**: `src/components/AddEquipmentModal.tsx`
+- Shows three options as cards/buttons
+- Manual: Opens `EquipmentForm` inline or in nested dialog
+- Documents: Opens `EquipmentImport` with back navigation
+- Spreadsheet: Opens `SpreadsheetImport` with back navigation
+
+**Update**: `src/pages/EquipmentList.tsx`
+- Replace two buttons with single "Add to Equipment" button
+- Use new `AddEquipmentModal`
+- Handle form open state internally
+
+**Update**: `src/components/EquipmentImportModal.tsx`
+- This component becomes optional/deprecated since `AddEquipmentModal` replaces it
+
+---
+
+## Implementation Sequence
+
+### Phase 1: Database
+1. Add `entry_source` column to equipment table via migration
+
+### Phase 2: Entry Source Tracking
+2. Update `Equipment` type to include `entrySource`
+3. Update `EquipmentContext` - `addEquipment` accepts optional source parameter
+4. Update `EquipmentImportReview` to pass source when adding equipment
+5. Update `SpreadsheetImport` and child components to pass import type
+
+### Phase 3: Admin View
+6. Create simple "Entry Sources" section in Admin Dashboard (or a new tab)
+
+### Phase 4: Unified Button
+7. Create `AddEquipmentModal` component
+8. Update `EquipmentList.tsx` to use unified button
+
+---
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/components/AddEquipmentModal.tsx` | Unified entry point for adding equipment |
+| `src/components/admin/EntrySourcesTab.tsx` | Admin view showing import source breakdown |
 
 ## Files to Modify
 
-| File | Change | Priority |
-|------|--------|----------|
-| `src/components/ui/voice-dictation-button.tsx` | Add AIIndicator to tooltip | High |
-| `src/components/insurance/InsurancePolicyImport.tsx` | Add AIIndicator to dialog title | High |
-| `src/components/EquipmentImport.tsx` | Add AIIndicator to dialog title (optional) | Low |
+| File | Changes |
+|------|---------|
+| `src/types/equipment.ts` | Add `entrySource` field to Equipment interface |
+| `src/contexts/EquipmentContext.tsx` | Accept `entrySource` in `addEquipment`, save to DB |
+| `src/components/EquipmentImportReview.tsx` | Pass source when calling `addEquipment` |
+| `src/components/SpreadsheetImport.tsx` | Track and pass import type (AI vs structured) |
+| `src/pages/EquipmentList.tsx` | Replace two buttons with unified "Add to Equipment" |
+| `src/pages/AdminDashboard.tsx` | Add Entry Sources tab/section |
 
 ---
 
-## Visual Consistency Guidelines
+## Migration Script
 
-After this audit, all AI-powered entry points will follow this pattern:
+```sql
+-- Add entry_source column to track how equipment was added
+ALTER TABLE public.equipment 
+ADD COLUMN entry_source TEXT NOT NULL DEFAULT 'manual';
 
-1. **Buttons that trigger AI features**: AIIndicator badge inline with button text
-2. **Tab triggers for AI modes**: AIIndicator badge before tab label
-3. **Dialog headers for AI workflows**: AIIndicator badge after dialog title
-4. **AI-powered input tools (voice)**: AIIndicator in tooltip
-5. **Info banners explaining AI**: AIIndicator at start of banner content
+-- Add comment for documentation
+COMMENT ON COLUMN public.equipment.entry_source IS 
+  'How the equipment was added: manual, ai_document, or spreadsheet';
+
+-- Create index for efficient grouping queries
+CREATE INDEX idx_equipment_entry_source ON public.equipment(entry_source);
+```
 
 ---
 
-## Summary of Changes
+## Summary
 
-| Component | Current | After Fix |
-|-----------|---------|-----------|
-| Voice Dictation tooltip | "Voice input" | "[AI badge] Voice dictation" |
-| Insurance Import dialog title | "Import from Policy Document" | "Import from Policy Document [AI badge]" |
-| Equipment Import dialog title | "Import Equipment from Documents" | "Import Equipment from Documents [AI badge]" (optional) |
+| Feature | What It Does |
+|---------|--------------|
+| Entry Source Tracking | Each equipment record stores how it was added (manual/ai_document/spreadsheet) |
+| Admin Dashboard | Shows breakdown by source per user and aggregate across all users |
+| Unified Button | Single "Add to Equipment" button with three clear options |
 
-Total new AIIndicator additions: 2-3 locations
+This gives you the data to understand how different users are adding equipment without the overhead of a complex AI analytics system.
+
