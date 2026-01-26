@@ -9,7 +9,7 @@ import { Layout } from '@/components/Layout';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EquipmentForm } from '@/components/EquipmentForm';
 import { EquipmentFormContent } from '@/components/EquipmentFormContent';
-import { EquipmentImportModal } from '@/components/EquipmentImportModal';
+import { AddEquipmentModal } from '@/components/AddEquipmentModal';
 import { EquipmentImportReview } from '@/components/EquipmentImportReview';
 import { EquipmentDocuments } from '@/components/EquipmentDocuments';
 import { EquipmentDocumentsContent } from '@/components/EquipmentDocumentsContent';
@@ -49,7 +49,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronRight, Upload, FileText, Package, CornerDownRight, User, Building2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronRight, FileText, Package, CornerDownRight, User, Building2 } from 'lucide-react';
 import { Equipment, EquipmentStatus, EquipmentCalculated } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
 import { Badge } from '@/components/ui/badge';
@@ -93,9 +93,10 @@ export default function EquipmentList() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => 
     new Set(categoryDefaults.map(c => c.category))
   );
-  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [extractedEquipment, setExtractedEquipment] = useState<ExtractedEquipment[]>([]);
+  const [importEntrySource, setImportEntrySource] = useState<'ai_document' | 'spreadsheet'>('ai_document');
   const [documentsOpen, setDocumentsOpen] = useState(false);
   const [documentsEquipmentId, setDocumentsEquipmentId] = useState<string>('');
   const [documentsEquipmentName, setDocumentsEquipmentName] = useState<string>('');
@@ -142,8 +143,19 @@ export default function EquipmentList() {
     });
   };
 
-  const handleEquipmentExtracted = (equipment: ExtractedEquipment[]) => {
+  const handleEquipmentExtracted = (
+    equipment: ExtractedEquipment[],
+    _documentSummaries?: any,
+    _conflicts?: any,
+    _processingNotes?: string,
+    _sourceFiles?: File[],
+    importType?: 'ai' | 'structured'
+  ) => {
     setExtractedEquipment(equipment);
+    // Set entry source based on import type
+    // 'ai' mode from spreadsheet still uses AI, so it should be 'ai_document'
+    // Only 'structured' mode is 'spreadsheet'
+    setImportEntrySource(importType === 'structured' ? 'spreadsheet' : 'ai_document');
     setIsReviewOpen(true);
   };
 
@@ -155,10 +167,12 @@ export default function EquipmentList() {
     markStepComplete('step_equipment_imported');
   }, [markStepComplete]);
 
-  const handleFormSubmitWithOnboarding = (data: Omit<Equipment, 'id'>) => {
-    handleFormSubmit(data);
+  const handleFormSubmitWithOnboarding = async (data: Omit<Equipment, 'id'>) => {
+    // For manual data entry, pass 'manual' entry source
+    await addEquipment(data, 'manual');
     // Mark onboarding step when equipment is added manually
     markStepComplete('step_equipment_imported');
+    setIsAddModalOpen(false);
   };
 
   const handleOpenDocuments = (equipment: Equipment) => {
@@ -266,18 +280,9 @@ export default function EquipmentList() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsImportOpen(true)} 
-              className="gap-2"
-            >
-              <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Import</span>
-              <span className="sm:hidden">Import</span>
-            </Button>
-            <Button onClick={handleAddNew} className="gap-2">
+            <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Equipment</span>
+              <span className="hidden sm:inline">Add to Equipment</span>
               <span className="sm:hidden">Add</span>
             </Button>
           </div>
@@ -519,11 +524,12 @@ export default function EquipmentList() {
           equipment={editingEquipment}
           onSubmit={handleFormSubmit}
         />
-        {/* Import Dialog */}
-        <EquipmentImportModal
-          open={isImportOpen}
-          onOpenChange={setIsImportOpen}
+        {/* Add Equipment Modal */}
+        <AddEquipmentModal
+          open={isAddModalOpen}
+          onOpenChange={setIsAddModalOpen}
           onEquipmentExtracted={handleEquipmentExtracted}
+          onManualSubmit={handleFormSubmitWithOnboarding}
         />
 
         {/* Import Review Dialog */}
@@ -532,6 +538,7 @@ export default function EquipmentList() {
           onOpenChange={setIsReviewOpen}
           extractedEquipment={extractedEquipment}
           onComplete={handleImportComplete}
+          entrySource={importEntrySource}
         />
 
         {/* Documents Sheet */}

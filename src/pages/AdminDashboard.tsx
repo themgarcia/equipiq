@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Users, Package, DollarSign, TrendingUp, Wallet, Building2, MapPin, MessageSquare, Bug, Lightbulb, HelpCircle, MessageCircle, Trash2, Mail, Send, Megaphone, Reply, Loader2, History, ChevronRight, Check, ShieldCheck, Activity, AlertTriangle, CalendarIcon, Download, X, Search, RefreshCw, UserCheck } from 'lucide-react';
 import { UserActivityTab } from '@/components/admin/UserActivityTab';
 import { ErrorLogTab } from '@/components/admin/ErrorLogTab';
+import { EntrySourcesTab } from '@/components/admin/EntrySourcesTab';
 
 import { UserDisplayCell } from '@/components/admin/UserDisplayCell';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -1033,6 +1034,7 @@ export default function AdminDashboard() {
                 { value: 'activity', label: 'Admin Activity' },
                 { value: 'user-activity', label: 'User Activity' },
                 { value: 'errors', label: 'Errors' },
+                { value: 'entry-sources', label: 'Entry Sources' },
                 { value: 'market', label: 'Market Insights' },
                 { value: 'categories', label: 'Equipment Data' },
                 { value: 'financing', label: 'Financing' },
@@ -1047,6 +1049,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="activity">Admin Activity</TabsTrigger>
               <TabsTrigger value="user-activity">User Activity</TabsTrigger>
               <TabsTrigger value="errors">Errors</TabsTrigger>
+              <TabsTrigger value="entry-sources">Entry Sources</TabsTrigger>
               <TabsTrigger value="market">Market Insights</TabsTrigger>
               <TabsTrigger value="categories">Equipment Data</TabsTrigger>
               <TabsTrigger value="financing">Financing</TabsTrigger>
@@ -2128,6 +2131,11 @@ export default function AdminDashboard() {
           {/* Error Log Tab */}
           <TabsContent value="errors">
             <ErrorLogTab />
+          </TabsContent>
+
+          {/* Entry Sources Tab */}
+          <TabsContent value="entry-sources">
+            <EntrySourcesTab />
           </TabsContent>
         </Tabs>
       </div>
