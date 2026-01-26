@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table } from 'lucide-react';
+import { Table, ChevronLeft } from 'lucide-react';
 import { AIIndicator } from '@/components/ui/ai-indicator';
 import { SpreadsheetImportStructured } from '@/components/SpreadsheetImportStructured';
 import { SpreadsheetImportAI } from '@/components/SpreadsheetImportAI';
@@ -17,14 +17,24 @@ interface SpreadsheetImportProps {
     processingNotes?: string,
     sourceFiles?: File[]
   ) => void;
+  onBack?: () => void;
 }
 
-export function SpreadsheetImport({ open, onOpenChange, onEquipmentExtracted }: SpreadsheetImportProps) {
+export function SpreadsheetImport({ open, onOpenChange, onEquipmentExtracted, onBack }: SpreadsheetImportProps) {
   const [activeMode, setActiveMode] = useState<'structured' | 'ai'>('structured');
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2 -mt-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back to import options
+          </button>
+        )}
         <DialogHeader>
           <DialogTitle>Import from Spreadsheet</DialogTitle>
           <DialogDescription>
@@ -39,7 +49,7 @@ export function SpreadsheetImport({ open, onOpenChange, onEquipmentExtracted }: 
               Structured (Table)
             </TabsTrigger>
             <TabsTrigger value="ai" className="gap-2">
-              <AIIndicator showBadge={false} />
+              <AIIndicator size="sm" />
               AI (Messy Spreadsheet)
             </TabsTrigger>
           </TabsList>

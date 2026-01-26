@@ -32,6 +32,16 @@ export function EquipmentImportModal({ open, onOpenChange, onEquipmentExtracted 
     setSpreadsheetImportOpen(true);
   };
 
+  const handleBackFromDocuments = () => {
+    setDocumentImportOpen(false);
+    onOpenChange(true);
+  };
+
+  const handleBackFromSpreadsheet = () => {
+    setSpreadsheetImportOpen(false);
+    onOpenChange(true);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -89,6 +99,7 @@ export function EquipmentImportModal({ open, onOpenChange, onEquipmentExtracted 
         open={documentImportOpen} 
         onOpenChange={setDocumentImportOpen}
         onEquipmentExtracted={onEquipmentExtracted}
+        onBack={handleBackFromDocuments}
       />
 
       {/* New Spreadsheet Import */}
@@ -96,6 +107,7 @@ export function EquipmentImportModal({ open, onOpenChange, onEquipmentExtracted 
         open={spreadsheetImportOpen}
         onOpenChange={setSpreadsheetImportOpen}
         onEquipmentExtracted={onEquipmentExtracted}
+        onBack={handleBackFromSpreadsheet}
       />
     </>
   );

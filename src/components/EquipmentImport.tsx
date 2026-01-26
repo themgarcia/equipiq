@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, X, FileText, Loader2, AlertCircle, Info } from "lucide-react";
+import { Upload, X, FileText, Loader2, AlertCircle, Info, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -54,6 +54,7 @@ interface EquipmentImportProps {
     processingNotes?: string,
     sourceFiles?: File[]
   ) => void;
+  onBack?: () => void;
 }
 
 interface UploadedFile {
@@ -72,7 +73,7 @@ const ACCEPTED_TYPES = [
   'image/heic',
 ];
 
-export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: EquipmentImportProps) {
+export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted, onBack }: EquipmentImportProps) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>("");
@@ -297,6 +298,15 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted }: Eq
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg overflow-x-hidden">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2 -mt-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back to import options
+          </button>
+        )}
         <DialogHeader>
           <DialogTitle>Import Equipment from Documents</DialogTitle>
           <DialogDescription>
