@@ -3,6 +3,9 @@ project_id = "xmiozlzflqpcgmghckem"
 [functions.parse-equipment-docs]
 verify_jwt = false
 
+[functions.parse-equipment-spreadsheet]
+verify_jwt = false
+
 [functions.create-checkout]
 verify_jwt = false
 

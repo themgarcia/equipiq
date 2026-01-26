@@ -9,7 +9,7 @@ import { Layout } from '@/components/Layout';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EquipmentForm } from '@/components/EquipmentForm';
 import { EquipmentFormContent } from '@/components/EquipmentFormContent';
-import { EquipmentImport } from '@/components/EquipmentImport';
+import { EquipmentImportModal } from '@/components/EquipmentImportModal';
 import { EquipmentImportReview } from '@/components/EquipmentImportReview';
 import { EquipmentDocuments } from '@/components/EquipmentDocuments';
 import { EquipmentDocumentsContent } from '@/components/EquipmentDocumentsContent';
@@ -268,17 +268,11 @@ export default function EquipmentList() {
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              onClick={() => {
-                if (canUseAIParsing) {
-                  setIsImportOpen(true);
-                } else {
-                  setShowUpgradePrompt(true);
-                }
-              }} 
+              onClick={() => setIsImportOpen(true)} 
               className="gap-2"
             >
               <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Import from Documents</span>
+              <span className="hidden sm:inline">Import</span>
               <span className="sm:hidden">Import</span>
             </Button>
             <Button onClick={handleAddNew} className="gap-2">
@@ -525,9 +519,8 @@ export default function EquipmentList() {
           equipment={editingEquipment}
           onSubmit={handleFormSubmit}
         />
-
         {/* Import Dialog */}
-        <EquipmentImport
+        <EquipmentImportModal
           open={isImportOpen}
           onOpenChange={setIsImportOpen}
           onEquipmentExtracted={handleEquipmentExtracted}
