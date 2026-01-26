@@ -1,229 +1,179 @@
 
-# Import Modal Navigation + Unified AI Icon Design
 
-## Overview
+# AI Icon Redesign - Size, Content, and Color Options
 
-This plan addresses two UX improvements:
-1. Add breadcrumb/back navigation to return to import method selection
-2. Redesign the AI indicator to be a single unified icon with "AI" text inside the star shape
+## The Problem
 
----
+The current AI indicator is a 20x20px 4-point star with "AI" text (fontSize: 6) inside. At this size:
+- The star shape is barely recognizable
+- The "AI" text is illegible (6px font is microscopic)
+- The purple-to-blue gradient reduces contrast on the already-tiny icon
 
-## 1. Breadcrumb/Back Navigation
+## Design Constraints
 
-### Problem
-When a user clicks "Import from Documents" or "Import from Spreadsheet" from the selection modal, they can only click "Cancel" to exit - which closes everything. They then have to click the Import button again to select a different option.
+The AI icon appears in these contexts:
+1. **Inline with text** - next to "Import from Documents" in the modal
+2. **Inside tab triggers** - next to "AI (Messy Spreadsheet)"
+3. **Inside buttons** - next to "Import from Policy"
 
-### Solution
-Add a "Back" button/link at the top of both import dialogs that returns to the method selection modal.
-
-### Implementation
-
-**Changes to `EquipmentImportModal.tsx`:**
-- Add a new prop `onBack` callback to pass to child modals
-- When child modal's back button is clicked, close child and reopen selection modal
-
-**Changes to `EquipmentImport.tsx`:**
-- Add optional `onBack` prop
-- Add a breadcrumb-style back link at the top of the dialog header
-- Visual: "← Import Equipment" or a ChevronLeft + "Back to options" link
-
-**Changes to `SpreadsheetImport.tsx`:**
-- Add optional `onBack` prop
-- Add same breadcrumb-style back link at the top
-
-### Visual Design
-
-```
-┌────────────────────────────────────────────────────┐
-│  ← Back to import options                          │
-├────────────────────────────────────────────────────┤
-│  Import Equipment from Documents                   │
-│  Upload purchase orders, invoices...               │
-│                                                    │
-│  [Upload zone]                                     │
-│                                                    │
-│                          [Cancel]  [Process]       │
-└────────────────────────────────────────────────────┘
-```
-
-The "Back" link appears above the dialog title, making it clear this is navigation, not an action button.
+Typical icons in these contexts are 16-20px (h-4/h-5), but they're simple line icons. An icon containing legible text needs to be larger.
 
 ---
 
-## 2. Unified AI Icon Design
+## Option A: Larger Star with "AI" Text (Recommended)
 
-### Problem
-Current design uses two separate elements:
-- A sparkle icon (Sparkles from lucide-react)
-- A separate "AI" text badge next to it
+**Concept:** Keep the unified star+text approach but increase sizes significantly.
 
-User wants: A single unified icon that's a star/sparkle shape large enough to have "AI" text inside it.
+| Size | Dimensions | Font Size | Use Case |
+|------|------------|-----------|----------|
+| sm | 28x28px | 9px | Inline with text, buttons |
+| md | 36x36px | 11px | Tab triggers, featured areas |
+| lg | 48x48px | 14px | Hero sections, landing pages |
 
-### Solution
-Redesign `AIIndicator` to render a custom SVG that combines the star shape with "AI" text centered inside, creating one cohesive icon.
+**Color Options:**
+- **A1: Solid Purple** - `#9333ea` (purple-600) - High contrast, professional
+- **A2: Solid Blue** - `#2563eb` (blue-600) - Techy feel, accessible
+- **A3: Gradient** - Purple to blue (current) - Vibrant but less contrast
 
-### Design Options
+**Pros:** 
+- Single cohesive icon
+- Clear AI branding
+- Scalable
 
-**Option A: Star with centered text (recommended)**
-A 4-point star shape with "AI" text rendered inside the center. The star is the container, text is centered within.
-
-```
-     ★
-    /|\
-   / | \
-  /  AI  \
-  \     /
-   \   /
-    \ /
-     ★
-```
-
-**Option B: Sparkle badge**
-A rounded rectangle with a small sparkle accent in the corner and "AI" text.
-
-### Recommended Approach: Custom SVG Component
-
-Create a custom SVG that:
-- Draws a 4-point star/sparkle shape as the background
-- Places "AI" text centered inside
-- Scales proportionally based on size prop
-- Uses the existing purple gradient/color scheme
-
-### Updated Component
-
-```tsx
-// src/components/ui/ai-indicator.tsx
-
-interface AIIndicatorProps {
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
-}
-
-export function AIIndicator({ 
-  size = 'sm',
-  className 
-}: AIIndicatorProps) {
-  // Size mappings
-  const dimensions = {
-    sm: { width: 24, height: 24, fontSize: 6 },
-    md: { width: 32, height: 32, fontSize: 8 },
-    lg: { width: 40, height: 40, fontSize: 10 },
-  };
-  
-  const { width, height, fontSize } = dimensions[size];
-  
-  return (
-    <svg 
-      viewBox="0 0 24 24" 
-      width={width} 
-      height={height}
-      className={cn("inline-block", className)}
-    >
-      {/* 4-point star path with gradient fill */}
-      <defs>
-        <linearGradient id="ai-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#a855f7" /> {/* purple-500 */}
-          <stop offset="100%" stopColor="#3b82f6" /> {/* blue-500 */}
-        </linearGradient>
-      </defs>
-      <path 
-        d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-        fill="url(#ai-gradient)"
-      />
-      {/* AI text centered */}
-      <text 
-        x="12" 
-        y="12" 
-        textAnchor="middle" 
-        dominantBaseline="central"
-        fill="white"
-        fontSize={fontSize}
-        fontWeight="700"
-        fontFamily="system-ui, sans-serif"
-      >
-        AI
-      </text>
-    </svg>
-  );
-}
-```
-
-### Updated Props
-- Remove `showBadge` prop (no longer needed - text is always inside)
-- Keep `size` prop with updated values: 'sm' | 'md' | 'lg'
-- Keep `className` prop
-
-### Update All Usages
-
-**Files to update:**
-- `EquipmentImportModal.tsx` - Update AIIndicator usage
-- `SpreadsheetImport.tsx` - Update AIIndicator usage (tab trigger)
-- `SpreadsheetImportAI.tsx` - Update AIIndicator usage (info banner)
-- `InsuranceControl.tsx` - Update AIIndicator usage (button)
-
-Remove `showBadge` prop from all usages since it's no longer applicable.
+**Cons:**
+- Takes more horizontal space than typical icons
+- May feel oversized next to 16px icons
 
 ---
 
-## 3. File Changes Summary
+## Option B: Pill/Badge Design (Alternative)
+
+**Concept:** Drop the star, use a rounded-rectangle badge with "AI" text.
+
+```
+┌───────┐
+│  AI   │
+└───────┘
+```
+
+**Sizing:**
+- Height: 20px (matches button line-height)
+- Width: auto (padding around text)
+- Font: 11px bold
+
+**Color Options:**
+- **B1: Gradient background** with white text
+- **B2: Outline style** - purple border + purple text on transparent
+- **B3: Filled style** - solid purple background + white text
+
+**Pros:**
+- Compact horizontal footprint
+- Text is always legible
+- Common pattern (GitHub, VS Code use similar badges)
+
+**Cons:**
+- Loses the "star/sparkle" AI visual metaphor
+- More generic looking
+
+---
+
+## Option C: Star Icon + Separate Badge (Hybrid)
+
+**Concept:** Return to two elements but make both visible.
+
+```
+✦ [AI]
+```
+
+**Components:**
+1. **Star icon**: 16px, solid purple, no text inside
+2. **Badge**: 18px tall pill with "AI" text
+
+**Color:** Both use purple-600 for consistency
+
+**Pros:**
+- Star provides visual interest
+- Text is in its own space (always legible)
+- Flexible - can show star-only or full version
+
+**Cons:**
+- Takes more space than single icon
+- Two elements to maintain
+
+---
+
+## Option D: Larger Star, No Text (Simplest)
+
+**Concept:** Make the star bigger and gradient more vibrant - drop the "AI" text entirely.
+
+**Sizing:** 24-28px star icon only
+
+**Signal AI through:**
+- Context (labels say "AI")
+- Consistent purple/blue gradient branding
+- Star/sparkle shape universally associated with AI
+
+**Pros:**
+- Simplest solution
+- Star at 24px is clearly visible
+- No legibility concerns
+
+**Cons:**
+- Loses explicit "AI" label
+- Relies on users understanding sparkle = AI
+
+---
+
+## Recommendation
+
+**Option A (Larger Star with Text) with adjustments:**
+
+1. **Increase base sizes:**
+   - `sm`: 28x28px, fontSize 9
+   - `md`: 36x36px, fontSize 11
+   - `lg`: 48x48px, fontSize 14
+
+2. **Use solid purple color** (`#9333ea`) instead of gradient for better contrast
+
+3. **Make the star shape "fatter"** - adjust the path to have a larger center area for the text:
+   ```
+   Current: M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z
+   Proposed: M12 1L15 8L23 12L15 16L12 23L9 16L1 12L9 8L12 1Z
+   ```
+   This makes inner points closer to center, creating more space for text.
+
+4. **Update usages:**
+   - Import modal inline: `size="sm"` (28px)
+   - Tab triggers: `size="md"` (36px) 
+   - Buttons: `size="sm"` (28px)
+
+---
+
+## Implementation Summary
 
 | File | Change |
 |------|--------|
-| `src/components/ui/ai-indicator.tsx` | Rewrite as unified star+text SVG |
-| `src/components/EquipmentImportModal.tsx` | Add back navigation logic |
-| `src/components/EquipmentImport.tsx` | Add `onBack` prop + back link UI |
-| `src/components/SpreadsheetImport.tsx` | Add `onBack` prop + back link UI, update AIIndicator |
-| `src/components/SpreadsheetImportAI.tsx` | Update AIIndicator usage |
-| `src/pages/InsuranceControl.tsx` | Update AIIndicator usage |
+| `src/components/ui/ai-indicator.tsx` | Update dimensions, adjust star path, switch to solid color |
+| `src/components/EquipmentImportModal.tsx` | Keep `size="sm"` (now 28px) |
+| `src/components/SpreadsheetImport.tsx` | Change to `size="md"` for tab trigger |
+| `src/components/SpreadsheetImportAI.tsx` | Keep `size="md"` |
+| `src/pages/InsuranceControl.tsx` | Keep `size="sm"` |
 
 ---
 
-## 4. Technical Details
-
-### Back Navigation Flow
+## Visual Comparison (Conceptual)
 
 ```
-User clicks "Import" button
-    ↓
-EquipmentImportModal opens (method selection)
-    ↓
-User clicks "Import from Documents"
-    ↓
-EquipmentImportModal closes, EquipmentImport opens
-    ↓
-User clicks "← Back" link
-    ↓
-EquipmentImport closes, EquipmentImportModal reopens
+Current (20x20, fontSize 6):      Proposed (28x28, fontSize 9):
+    
+       ╱╲                              ╱╲
+      ╱  ╲                            ╱  ╲
+    ─╱ AI ╲─                        ─╱    ╲─
+      ╲  ╱                          ─  AI  ─
+       ╲╱                            ─╲    ╱─
+                                      ╲  ╱
+                                       ╲╱
 ```
 
-### State Management in EquipmentImportModal
+The larger size and adjusted path create a more legible and recognizable icon.
 
-```tsx
-const handleBackFromDocuments = () => {
-  setDocumentImportOpen(false);
-  onOpenChange(true); // Reopen selection modal
-};
-
-const handleBackFromSpreadsheet = () => {
-  setSpreadsheetImportOpen(false);
-  onOpenChange(true); // Reopen selection modal
-};
-```
-
-### AIIndicator SVG Path Explanation
-
-The path `M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z` creates a 4-point star:
-- Center at (12, 12) in a 24x24 viewBox
-- Points extend to edges (top: 2, right: 22, bottom: 22, left: 2)
-- Inner points create the star indentations
-
----
-
-## 5. Implementation Order
-
-1. **Update AIIndicator component** - New unified SVG design
-2. **Update all AIIndicator usages** - Remove deprecated `showBadge` prop
-3. **Add back navigation to EquipmentImportModal** - State + callbacks
-4. **Add back link to EquipmentImport** - UI + prop
-5. **Add back link to SpreadsheetImport** - UI + prop
