@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import * as XLSX from 'xlsx';
-import { Upload, FileSpreadsheet, X, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
+import { Upload, FileSpreadsheet, X, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -419,7 +419,7 @@ export function SpreadsheetImportAI({ onEquipmentExtracted, onClose }: Spreadshe
               Back
             </Button>
             <Button onClick={handleProcess} className="gap-2">
-              <Sparkles className="h-4 w-4" />
+              <AIIndicator size="sm" />
               Analyze with AI
             </Button>
           </div>
