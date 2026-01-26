@@ -418,8 +418,7 @@ export function SpreadsheetImportAI({ onEquipmentExtracted, onClose }: Spreadshe
             <Button variant="outline" onClick={() => setStep(sheets.length > 1 ? 'sheet' : 'upload')}>
               Back
             </Button>
-            <Button onClick={handleProcess} className="gap-2">
-              <AIIndicator size="sm" />
+            <Button onClick={handleProcess}>
               Analyze with AI
             </Button>
           </div>

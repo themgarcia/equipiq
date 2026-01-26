@@ -1,49 +1,58 @@
+import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AIIndicatorProps {
   size?: 'sm' | 'md' | 'lg';
+  variant?: 'badge' | 'icon-only';
   className?: string;
 }
 
 export function AIIndicator({ 
   size = 'sm',
+  variant = 'badge',
   className 
 }: AIIndicatorProps) {
-  // Increased size mappings for legible star+text icon
-  const dimensions = {
-    sm: { width: 28, height: 28, fontSize: 9 },
-    md: { width: 36, height: 36, fontSize: 11 },
-    lg: { width: 48, height: 48, fontSize: 14 },
+  // Badge variant - pill with sparkle + AI text
+  if (variant === 'badge') {
+    const sizeClasses = {
+      sm: 'h-5 text-[10px] px-1.5 gap-0.5',
+      md: 'h-6 text-xs px-2 gap-1',
+      lg: 'h-7 text-sm px-2.5 gap-1',
+    };
+    
+    const iconSizes = {
+      sm: 'h-3 w-3',
+      md: 'h-3.5 w-3.5',
+      lg: 'h-4 w-4',
+    };
+    
+    return (
+      <span 
+        className={cn(
+          "inline-flex items-center rounded-full font-semibold",
+          "bg-primary text-primary-foreground",
+          sizeClasses[size],
+          className
+        )}
+        aria-label="AI powered"
+      >
+        <Sparkles className={cn(iconSizes[size], "shrink-0")} />
+        <span>AI</span>
+      </span>
+    );
+  }
+  
+  // Icon-only variant - just the sparkle
+  const iconSizes = {
+    sm: 'h-4 w-4',
+    md: 'h-5 w-5',
+    lg: 'h-6 w-6',
   };
   
-  const { width, height, fontSize } = dimensions[size];
-  
   return (
-    <svg 
-      viewBox="0 0 24 24" 
-      width={width} 
-      height={height}
-      className={cn("inline-block shrink-0", className)}
+    <Sparkles 
+      className={cn(iconSizes[size], "text-primary", className)} 
       aria-label="AI powered"
-    >
-      {/* Fatter 4-point star with solid purple fill for better contrast */}
-      <path 
-        d="M12 1L15 8L23 12L15 16L12 23L9 16L1 12L9 8L12 1Z"
-        fill="#9333ea"
-      />
-      {/* AI text centered */}
-      <text 
-        x="12" 
-        y="12.5" 
-        textAnchor="middle" 
-        dominantBaseline="central"
-        fill="white"
-        fontSize={fontSize}
-        fontWeight="700"
-        fontFamily="system-ui, -apple-system, sans-serif"
-      >
-        AI
-      </text>
-    </svg>
+    />
   );
 }

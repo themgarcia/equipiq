@@ -48,9 +48,9 @@ export function SpreadsheetImport({ open, onOpenChange, onEquipmentExtracted, on
               <Table className="h-4 w-4" />
               Structured (Table)
             </TabsTrigger>
-            <TabsTrigger value="ai" className="gap-2">
-              <AIIndicator size="md" />
-              AI (Messy Spreadsheet)
+            <TabsTrigger value="ai" className="gap-1.5">
+              <AIIndicator size="sm" />
+              AI Mode
             </TabsTrigger>
           </TabsList>
           
