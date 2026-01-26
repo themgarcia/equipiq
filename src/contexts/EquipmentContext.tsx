@@ -14,7 +14,7 @@ interface EquipmentContextType {
   loading: boolean;
   attachmentsByEquipmentId: Record<string, EquipmentAttachment[]>;
   isDemoData: boolean;
-  addEquipment: (equipment: Omit<Equipment, 'id'>) => Promise<string | undefined>;
+  addEquipment: (equipment: Omit<Equipment, 'id'>, entrySource?: 'manual' | 'ai_document' | 'spreadsheet') => Promise<string | undefined>;
   updateEquipment: (id: string, updates: Partial<Equipment>) => Promise<void>;
   deleteEquipment: (id: string) => Promise<void>;
   updateCategoryDefaults: (category: string, updates: Partial<CategoryDefaults>) => void;
@@ -82,7 +82,7 @@ function dbToEquipment(record: any): Equipment {
 }
 
 // Helper to convert Equipment to DB record
-function equipmentToDb(equipment: Omit<Equipment, 'id'>, userId: string) {
+function equipmentToDb(equipment: Omit<Equipment, 'id'>, userId: string, entrySource?: 'manual' | 'ai_document' | 'spreadsheet') {
   return {
     user_id: userId,
     name: equipment.name,
@@ -117,6 +117,8 @@ function equipmentToDb(equipment: Omit<Equipment, 'id'>, userId: string) {
     purchase_condition: equipment.purchaseCondition || 'new',
     // Allocation type
     allocation_type: equipment.allocationType || 'operational',
+    // Entry source tracking
+    entry_source: entrySource || 'manual',
   };
 }
 
@@ -244,7 +246,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const addEquipment = useCallback(async (newEquipment: Omit<Equipment, 'id'>): Promise<string | undefined> => {
+  const addEquipment = useCallback(async (newEquipment: Omit<Equipment, 'id'>, entrySource?: 'manual' | 'ai_document' | 'spreadsheet'): Promise<string | undefined> => {
     if (!user) return undefined;
 
     // Block operations when viewing demo data
@@ -266,7 +268,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
 
       const { data, error } = await supabase
         .from('equipment')
-        .insert(equipmentToDb(equipmentWithName, user.id))
+        .insert(equipmentToDb(equipmentWithName, user.id, entrySource))
         .select()
         .single();
 

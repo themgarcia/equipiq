@@ -33,6 +33,9 @@ export interface CategoryDefaults {
   notes: string;
 }
 
+// Entry source for tracking how equipment was added
+export type EntrySource = 'manual' | 'ai_document' | 'spreadsheet';
+
 export interface Equipment {
   id: string;
   
@@ -88,6 +91,9 @@ export interface Equipment {
   insuranceDeclaredValue?: number;
   insuranceNotes?: string;
   insuranceReviewedAt?: string;
+
+  // Entry source tracking
+  entrySource?: EntrySource;
 }
 
 // Calculated fields (derived from Equipment)

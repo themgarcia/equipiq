@@ -152,6 +152,7 @@ export type Database = {
           cogs_percent: number
           created_at: string
           deposit_amount: number
+          entry_source: string
           expected_resale_override: number | null
           financed_amount: number
           financing_start_date: string | null
@@ -191,6 +192,7 @@ export type Database = {
           cogs_percent?: number
           created_at?: string
           deposit_amount?: number
+          entry_source?: string
           expected_resale_override?: number | null
           financed_amount?: number
           financing_start_date?: string | null
@@ -230,6 +232,7 @@ export type Database = {
           cogs_percent?: number
           created_at?: string
           deposit_amount?: number
+          entry_source?: string
           expected_resale_override?: number | null
           financed_amount?: number
           financing_start_date?: string | null

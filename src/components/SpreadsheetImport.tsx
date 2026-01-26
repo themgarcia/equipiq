@@ -15,13 +15,36 @@ interface SpreadsheetImportProps {
     documentSummaries?: DocumentSummary[],
     conflicts?: FieldConflict[],
     processingNotes?: string,
-    sourceFiles?: File[]
+    sourceFiles?: File[],
+    /** Import type for entry source tracking */
+    importType?: 'ai' | 'structured'
   ) => void;
   onBack?: () => void;
 }
 
 export function SpreadsheetImport({ open, onOpenChange, onEquipmentExtracted, onBack }: SpreadsheetImportProps) {
   const [activeMode, setActiveMode] = useState<'structured' | 'ai'>('structured');
+  
+  // Wrapper to pass importType based on which mode was used
+  const handleStructuredExtract = (
+    equipment: ExtractedEquipmentBase[], 
+    documentSummaries?: DocumentSummary[],
+    conflicts?: FieldConflict[],
+    processingNotes?: string,
+    sourceFiles?: File[]
+  ) => {
+    onEquipmentExtracted(equipment, documentSummaries, conflicts, processingNotes, sourceFiles, 'structured');
+  };
+
+  const handleAIExtract = (
+    equipment: ExtractedEquipmentBase[], 
+    documentSummaries?: DocumentSummary[],
+    conflicts?: FieldConflict[],
+    processingNotes?: string,
+    sourceFiles?: File[]
+  ) => {
+    onEquipmentExtracted(equipment, documentSummaries, conflicts, processingNotes, sourceFiles, 'ai');
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -56,14 +79,14 @@ export function SpreadsheetImport({ open, onOpenChange, onEquipmentExtracted, on
           
           <TabsContent value="structured" className="flex-1 overflow-hidden mt-4">
             <SpreadsheetImportStructured 
-              onEquipmentExtracted={onEquipmentExtracted}
+              onEquipmentExtracted={handleStructuredExtract}
               onClose={() => onOpenChange(false)}
             />
           </TabsContent>
           
           <TabsContent value="ai" className="flex-1 overflow-hidden mt-4">
             <SpreadsheetImportAI
-              onEquipmentExtracted={onEquipmentExtracted}
+              onEquipmentExtracted={handleAIExtract}
               onClose={() => onOpenChange(false)}
             />
           </TabsContent>

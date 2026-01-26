@@ -105,6 +105,8 @@ interface EquipmentImportReviewProps {
   processingNotes?: string;
   sourceFiles?: File[];
   onComplete: () => void;
+  /** Entry source for tracking: 'ai_document' for document/AI imports, 'spreadsheet' for structured spreadsheet imports */
+  entrySource?: 'ai_document' | 'spreadsheet';
 }
 
 const CATEGORIES: EquipmentCategory[] = [
@@ -364,7 +366,8 @@ export function EquipmentImportReview({
   conflicts,
   processingNotes,
   sourceFiles,
-  onComplete
+  onComplete,
+  entrySource = 'ai_document',
 }: EquipmentImportReviewProps) {
   const { addEquipment, updateEquipment, equipment, uploadDocument, getDocuments, addAttachment, getAttachments, updateAttachment } = useEquipment();
   const [isImporting, setIsImporting] = useState(false);
@@ -1252,7 +1255,7 @@ export function EquipmentImportReview({
             buyoutAmount: eq.buyoutAmount || 0,
             purchaseCondition: (eq.purchaseCondition as 'new' | 'used') || 'new',
             allocationType: 'operational',
-          });
+          }, entrySource);  // Pass entrySource to track how equipment was added
           if (newId) {
             tempIdToRealId.set(eq.tempId, newId);
             results.succeeded.push(`${eq.make} ${eq.model}`);
