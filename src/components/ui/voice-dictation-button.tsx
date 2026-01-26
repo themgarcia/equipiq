@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AIIndicator } from "@/components/ui/ai-indicator";
 
 export interface VoiceDictationButtonProps {
   isListening: boolean;
@@ -44,8 +45,9 @@ export function VoiceDictationButton({
           )}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="left">
-        {isListening ? "Stop dictation" : "Voice input"}
+      <TooltipContent side="left" className="flex items-center gap-1.5">
+        <AIIndicator size="sm" />
+        {isListening ? "Stop dictation" : "Voice dictation"}
       </TooltipContent>
     </Tooltip>
   );

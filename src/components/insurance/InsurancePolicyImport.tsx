@@ -5,6 +5,7 @@ import { Upload, X, FileText, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { ExtractedPolicyData } from "@/types/insurance";
+import { AIIndicator } from "@/components/ui/ai-indicator";
 
 interface InsurancePolicyImportProps {
   open: boolean;
@@ -185,7 +186,10 @@ export function InsurancePolicyImport({ open, onOpenChange, onPolicyExtracted }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle>Import from Policy Document</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Import from Policy Document
+            <AIIndicator size="sm" />
+          </DialogTitle>
           <DialogDescription>
             Upload your insurance policy declaration page or equipment schedule. 
             AI will extract broker contact, policy details, and insured equipment.

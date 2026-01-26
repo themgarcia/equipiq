@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, X, FileText, Loader2, AlertCircle, Info, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { AIIndicator } from "@/components/ui/ai-indicator";
 
 interface ExtractedEquipment {
   make: string;
@@ -308,7 +309,10 @@ export function EquipmentImport({ open, onOpenChange, onEquipmentExtracted, onBa
           </button>
         )}
         <DialogHeader>
-          <DialogTitle>Import Equipment from Documents</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Import Equipment from Documents
+            <AIIndicator size="sm" />
+          </DialogTitle>
           <DialogDescription>
             Upload purchase orders, invoices, financing agreements, or lease documents. 
             AI will extract equipment details for your review.
