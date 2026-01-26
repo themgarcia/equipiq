@@ -9,17 +9,14 @@ export function AIIndicator({
   size = 'sm',
   className 
 }: AIIndicatorProps) {
-  // Size mappings for unified star+text icon
+  // Increased size mappings for legible star+text icon
   const dimensions = {
-    sm: { width: 20, height: 20, fontSize: 6 },
-    md: { width: 28, height: 28, fontSize: 8 },
-    lg: { width: 36, height: 36, fontSize: 10 },
+    sm: { width: 28, height: 28, fontSize: 9 },
+    md: { width: 36, height: 36, fontSize: 11 },
+    lg: { width: 48, height: 48, fontSize: 14 },
   };
   
   const { width, height, fontSize } = dimensions[size];
-  
-  // Use unique gradient ID to avoid conflicts when multiple instances render
-  const gradientId = `ai-gradient-${size}`;
   
   return (
     <svg 
@@ -29,16 +26,10 @@ export function AIIndicator({
       className={cn("inline-block shrink-0", className)}
       aria-label="AI powered"
     >
-      {/* 4-point star path with gradient fill */}
-      <defs>
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#a855f7" /> {/* purple-500 */}
-          <stop offset="100%" stopColor="#3b82f6" /> {/* blue-500 */}
-        </linearGradient>
-      </defs>
+      {/* Fatter 4-point star with solid purple fill for better contrast */}
       <path 
-        d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-        fill={`url(#${gradientId})`}
+        d="M12 1L15 8L23 12L15 16L12 23L9 16L1 12L9 8L12 1Z"
+        fill="#9333ea"
       />
       {/* AI text centered */}
       <text 
