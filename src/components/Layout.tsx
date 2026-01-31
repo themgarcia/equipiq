@@ -268,7 +268,7 @@ function AppSidebar() {
           </Tooltip>
 
           {/* Separator between feedback and admin/user section */}
-          <Separator className="my-1 bg-sidebar-border/50" />
+          <SidebarSeparator className="my-1" />
 
           {/* Admin Link - only when admin mode is active */}
           {adminModeActive && (
