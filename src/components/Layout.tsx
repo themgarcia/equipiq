@@ -473,7 +473,7 @@ function PhoneHeader() {
               </button>
 
               {/* Separator between feedback and admin/user section */}
-              <div className="border-t border-sidebar-border -mx-4" />
+              <div className="border-t border-sidebar-border mx-0" />
 
               {/* Admin Link - only when admin mode is active */}
               {adminModeActive && (
