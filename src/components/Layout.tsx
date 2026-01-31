@@ -268,7 +268,7 @@ function AppSidebar() {
           </Tooltip>
 
           {/* Separator between feedback and admin/user section */}
-          <SidebarSeparator className="my-1" />
+          <SidebarSeparator className="my-1 -mx-1" />
 
           {/* Admin Link - only when admin mode is active */}
           {adminModeActive && (
@@ -473,7 +473,7 @@ function PhoneHeader() {
               </button>
 
               {/* Separator between feedback and admin/user section */}
-              <Separator className="bg-sidebar-border/50" />
+              <div className="border-t border-sidebar-border -mx-4" />
 
               {/* Admin Link - only when admin mode is active */}
               {adminModeActive && (
