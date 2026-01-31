@@ -425,7 +425,7 @@ function PhoneHeader() {
                 <OnboardingMobileLink />
               </div>
               
-              <div className="border-t border-sidebar-border my-4" />
+              <div className="border-t border-sidebar-border my-1" />
               
               {groups.map((group, groupIndex) => (
                 <div key={group.label || `group-${groupIndex}`} className={cn(groupIndex > 0 && "mt-4")}>
