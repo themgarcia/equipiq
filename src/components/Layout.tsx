@@ -183,7 +183,7 @@ function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         
-        <SidebarSeparator className="my-2" />
+        <SidebarSeparator className="my-1" />
         
         {groups.map((group, groupIndex) => (
           <SidebarGroup key={group.label || `group-${groupIndex}`} className={cn("py-1", isCollapsed && "px-0")}>
