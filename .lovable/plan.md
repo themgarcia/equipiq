@@ -1,60 +1,154 @@
 
 
-# Layout.tsx Cleanup & Consistency Fixes
+# Admin Dashboard Improvements Plan
 
 ## Overview
 
-This plan addresses the issues identified in the audit, prioritized by impact and grouped for efficient implementation.
+This plan implements the three best-practice improvements identified in the audit, focusing on maintainability, UX consistency, and performance without adding unnecessary complexity.
+
+## Current State Analysis
+
+| Area | Current State | Issue |
+|------|---------------|-------|
+| File Size | `AdminDashboard.tsx` is 2,144 lines | Difficult to maintain, slow to navigate |
+| Users Tab | No search, filter, or pagination | Inconsistent with other tabs (Activity, Errors) |
+| Last Active | Not tracked | No visibility into user engagement |
 
 ## Changes
 
-### 1. Remove Unused Code
+### 1. Extract Tab Components
 
-**File:** `src/components/Layout.tsx`
+Split the monolithic `AdminDashboard.tsx` into focused component files following the existing pattern established by `UserActivityTab.tsx`, `ErrorLogTab.tsx`, and `EntrySourcesTab.tsx`.
 
-| Line | Issue | Fix |
-|------|-------|-----|
-| 31 | Unused `Separator` import | Remove from imports |
-| 104 | Unused `allNavItems` variable | Delete the line |
+**New Files:**
 
-### 2. Fix Spacing Inconsistencies
+| File | Lines Extracted | Content |
+|------|-----------------|---------|
+| `src/components/admin/UsersTab.tsx` | ~350 lines | Users table, search/filters, user details sheet |
+| `src/components/admin/FeedbackTab.tsx` | ~250 lines | Feedback list, reply system, status management |
+| `src/components/admin/AdminActivityTab.tsx` | ~180 lines | Admin action log with filters |
+| `src/components/admin/MarketInsightsTab.tsx` | ~200 lines | Industry, size, revenue, region charts |
+| `src/components/admin/EquipmentDataTab.tsx` | ~100 lines | Category and financing charts |
+| `src/components/admin/FinancingTab.tsx` | ~100 lines | Financing breakdown table |
+| `src/components/admin/MarketingTab.tsx` | ~150 lines | Referral sources, email tools |
 
-**File:** `src/components/Layout.tsx`
+**Result:** `AdminDashboard.tsx` reduces from ~2,144 lines to ~400 lines (overview cards, tabs container, shared state).
 
-| Location | Current | Target | Line |
-|----------|---------|--------|------|
-| Mobile group label | `mb-2` | `mb-1` | 434 |
-| Mobile footer | `space-y-4` | `space-y-3` | 462 |
+### 2. Add Search and Filters to Users Tab
 
-### 3. Add Missing Accessibility Attributes
+Match the UX patterns already established in `UserActivityTab.tsx` and `ErrorLogTab.tsx`:
 
-**File:** `src/components/Layout.tsx`
+**Features to Add:**
 
-| Element | Missing | Line |
-|---------|---------|------|
-| Mobile menu button | `aria-label="Open menu"` | 409 |
-| Mobile Send Feedback button | `aria-label="Send feedback"` | 467-473 |
+| Feature | Implementation |
+|---------|---------------|
+| Search | Text input filtering by name, company, email |
+| Plan Filter | Dropdown: All, Free, Beta, Professional, Business |
+| Industry Filter | Dropdown populated from unique industries |
+| Date Range | From/To calendar pickers for join date |
+| Admin Filter | Dropdown: All, Admin Only, Non-Admin |
+| Export CSV | Download button for filtered results |
+| Pagination | Page size selector (25/50/100) with navigation |
+| User Count | Display "Showing X of Y users" |
 
-### 4. Fix Desktop Admin Button Collapsed Width
+**Filter Bar Layout:**
+```text
++--------------------------------------------------+
+| [Search...         ] [Plan ▼] [Industry ▼]       |
+| [From] [To] [Clear dates] [Admin ▼]   [Export]   |
+| Showing 25 of 142 users        [< Prev] [Next >] |
++--------------------------------------------------+
+```
 
-**File:** `src/components/Layout.tsx`
+### 3. Add "Last Active" Column
 
-The Admin link in sidebar footer (lines 241-262) is missing the collapsed width handling that other sidebar items have.
+Derive last active timestamp from existing `user_activity_log` table without adding new database writes.
 
-Add: `isCollapsed && 'w-8 justify-center'` to className
+**Implementation:**
+
+- Query `user_activity_log` to get `MAX(created_at)` grouped by `user_id`
+- Join with user stats during data fetch
+- Display relative time (e.g., "2 hours ago", "Yesterday", "3 days ago")
+- Add "Last Active" column to Users table
+- Add sort option for last active (most recent first)
+
+**Query Pattern:**
+```sql
+SELECT user_id, MAX(created_at) as last_active
+FROM user_activity_log
+GROUP BY user_id
+```
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
-| `src/components/Layout.tsx` | 6 small edits |
+| File | Action | Description |
+|------|--------|-------------|
+| `src/pages/AdminDashboard.tsx` | Refactor | Keep overview + tabs shell, import new tab components |
+| `src/components/admin/UsersTab.tsx` | Create | Users management with search, filters, pagination, last active |
+| `src/components/admin/FeedbackTab.tsx` | Create | Feedback management extracted from dashboard |
+| `src/components/admin/AdminActivityTab.tsx` | Create | Admin action log extracted from dashboard |
+| `src/components/admin/MarketInsightsTab.tsx` | Create | Market charts extracted from dashboard |
+| `src/components/admin/EquipmentDataTab.tsx` | Create | Equipment category charts |
+| `src/components/admin/FinancingTab.tsx` | Create | Financing breakdown |
+| `src/components/admin/MarketingTab.tsx` | Create | Referral sources and email tools |
 
-## Out of Scope (Future Consideration)
+## Implementation Order
 
-The following items are noted but not included in this plan to keep the scope focused:
+1. **Phase 1:** Create `UsersTab.tsx` with search, filters, pagination, and last active
+2. **Phase 2:** Extract `FeedbackTab.tsx` and `AdminActivityTab.tsx`
+3. **Phase 3:** Extract `MarketInsightsTab.tsx`, `EquipmentDataTab.tsx`, `FinancingTab.tsx`, `MarketingTab.tsx`
+4. **Phase 4:** Update `AdminDashboard.tsx` to import and use new components
 
-- Extracting `PhoneHeader` to separate file (larger refactor)
-- Consolidating `useLocation` calls (requires context pattern)
-- Adding focus-trap indicator to Sheet (requires testing)
-- Removing duplicate `displayName`/`groups` assignments (minor, can be done later)
+## Technical Details
+
+### Shared State Management
+
+The following state will remain in `AdminDashboard.tsx` and be passed as props to child components:
+
+- `userStats` - Core user data needed by multiple tabs
+- `currentUserId` - For disabling self-modification actions
+- Action handlers: `deleteUser`, `updateUserPlan`, `toggleAdminRole`, `startImpersonation`
+
+### Last Active Query Optimization
+
+To avoid N+1 queries, fetch last active timestamps in a single batch:
+
+```typescript
+const { data: lastActiveData } = await supabase
+  .from('user_activity_log')
+  .select('user_id, created_at')
+  .order('created_at', { ascending: false });
+
+// Group by user_id, take first (most recent) entry
+const lastActiveMap = new Map<string, string>();
+lastActiveData?.forEach(entry => {
+  if (!lastActiveMap.has(entry.user_id)) {
+    lastActiveMap.set(entry.user_id, entry.created_at);
+  }
+});
+```
+
+### Pagination Implementation
+
+Client-side pagination using the existing fetched data:
+
+```typescript
+const [page, setPage] = useState(1);
+const [pageSize, setPageSize] = useState(25);
+
+const paginatedUsers = filteredUsers.slice(
+  (page - 1) * pageSize,
+  page * pageSize
+);
+
+const totalPages = Math.ceil(filteredUsers.length / pageSize);
+```
+
+## Summary
+
+| Improvement | Benefit |
+|-------------|---------|
+| Component extraction | Easier maintenance, faster navigation, better code organization |
+| Users tab filters | UX consistency with other tabs, better user discovery |
+| Last active tracking | Identify engaged vs inactive users without new DB writes |
 
