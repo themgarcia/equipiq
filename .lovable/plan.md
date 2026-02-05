@@ -1,42 +1,60 @@
 
 
-# Fix: Mobile Separator Under "Send Feedback" Should Be Inset
+# Layout.tsx Cleanup & Consistency Fixes
 
-## The Issue
+## Overview
 
-You correctly identified that the separator **under "Send Feedback"** has different widths:
+This plan addresses the issues identified in the audit, prioritized by impact and grouped for efficient implementation.
 
-| Device | Separator Style | Result |
-|--------|----------------|--------|
-| Desktop | `SidebarSeparator className="my-1 -mx-1"` | Inset (correct) |
-| Tablet | Same as desktop | Inset (correct) |
-| Mobile | `<div className="border-t border-sidebar-border -mx-4" />` | Full-width (incorrect) |
+## Changes
 
-The `-mx-4` on mobile extends the line to the edges, making it look like a structural boundary instead of an internal element separator.
+### 1. Remove Unused Code
 
-## The Fix
+**File:** `src/components/Layout.tsx`
 
-Change the mobile separator to match the inset style. Since the mobile footer has `p-4` (16px padding), we need to keep some of that padding to create the inset effect:
+| Line | Issue | Fix |
+|------|-------|-----|
+| 31 | Unused `Separator` import | Remove from imports |
+| 104 | Unused `allNavItems` variable | Delete the line |
 
-```tsx
-// Line 476 - Change from:
-<div className="border-t border-sidebar-border -mx-4" />
+### 2. Fix Spacing Inconsistencies
 
-// To:
-<div className="border-t border-sidebar-border mx-0" />
-```
+**File:** `src/components/Layout.tsx`
 
-This removes the negative margin, leaving the separator inset by the parent's `p-4` padding (matching the visual hierarchy of desktop/tablet).
+| Location | Current | Target | Line |
+|----------|---------|--------|------|
+| Mobile group label | `mb-2` | `mb-1` | 434 |
+| Mobile footer | `space-y-4` | `space-y-3` | 462 |
 
-## File to Modify
+### 3. Add Missing Accessibility Attributes
 
-| File | Line | Change |
-|------|------|--------|
-| `src/components/Layout.tsx` | 476 | Replace `-mx-4` with `mx-0` |
+**File:** `src/components/Layout.tsx`
 
-## Result
+| Element | Missing | Line |
+|---------|---------|------|
+| Mobile menu button | `aria-label="Open menu"` | 409 |
+| Mobile Send Feedback button | `aria-label="Send feedback"` | 467-473 |
 
-After this fix, all three device sizes will have consistent separator hierarchy:
-- **Full-width**: Header bottom border, footer top border (structural)
-- **Inset**: Separator under "Get Started", separator under "Send Feedback" (internal)
+### 4. Fix Desktop Admin Button Collapsed Width
+
+**File:** `src/components/Layout.tsx`
+
+The Admin link in sidebar footer (lines 241-262) is missing the collapsed width handling that other sidebar items have.
+
+Add: `isCollapsed && 'w-8 justify-center'` to className
+
+## Files Modified
+
+| File | Changes |
+|------|---------|
+| `src/components/Layout.tsx` | 6 small edits |
+
+## Out of Scope (Future Consideration)
+
+The following items are noted but not included in this plan to keep the scope focused:
+
+- Extracting `PhoneHeader` to separate file (larger refactor)
+- Consolidating `useLocation` calls (requires context pattern)
+- Adding focus-trap indicator to Sheet (requires testing)
+- Removing duplicate `displayName`/`groups` assignments (minor, can be done later)
 
