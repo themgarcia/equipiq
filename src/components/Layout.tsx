@@ -68,7 +68,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Separator } from '@/components/ui/separator';
+
 import { useDeviceType } from '@/hooks/use-mobile';
 
 interface LayoutProps {
@@ -117,8 +117,6 @@ function ContentHeader() {
   );
 }
 
-// Flat list for mobile menu
-const allNavItems = navigationGroups.flatMap(group => group.items);
 
 function SidebarToggleButton({ className }: { className?: string }) {
   const { state, toggleSidebar } = useSidebar();
@@ -279,6 +277,7 @@ function AppSidebar() {
                   isActive={location.pathname === '/admin'}
                   className={cn(
                     'transition-all',
+                    isCollapsed && 'w-8 justify-center',
                     location.pathname === '/admin'
                       ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
@@ -406,7 +405,7 @@ function PhoneHeader() {
         <NotificationBell />
         <Sheet>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-sidebar-foreground">
+          <Button variant="ghost" size="icon" className="text-sidebar-foreground" aria-label="Open menu">
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
@@ -430,7 +429,7 @@ function PhoneHeader() {
               {groups.map((group, groupIndex) => (
                 <div key={group.label || `group-${groupIndex}`} className={cn(groupIndex > 0 && "mt-4")}>
                   {group.label && (
-                    <p className="text-xs text-sidebar-foreground/40 font-medium px-3 mb-2">
+                    <p className="text-xs text-sidebar-foreground/40 font-medium px-3 mb-1">
                       {group.label}
                     </p>
                   )}
@@ -462,11 +461,12 @@ function PhoneHeader() {
             </nav>
 
             {/* User Menu & Footer */}
-            <div className="border-t border-sidebar-border p-4 space-y-4">
+            <div className="border-t border-sidebar-border p-4 space-y-3">
               {/* Send Feedback Button - at top for all users */}
               <button
                 onClick={() => setFeedbackOpen(true)}
                 className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all w-full text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                aria-label="Send feedback"
               >
                 <MessageSquarePlus className="h-5 w-5 flex-shrink-0 text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70" />
                 <span className="flex-1 text-left">Send Feedback</span>
