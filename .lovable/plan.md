@@ -1,50 +1,30 @@
 
 
-# Fix: Purchase Date Showing One Day Off (Timezone Bug)
+# Sticky Footer for Cancel / Save Buttons in Edit Mode
 
 ## Problem
-Dates like "2014-01-01" stored in the database are parsed by `new Date("2014-01-01")` as UTC midnight. In North American timezones, this converts to the previous evening (Dec 31, 2013), so the displayed date is one day behind.
-
-This affects every date displayed using `new Date(dateString)` throughout the app -- purchase dates, sale dates, financing start dates, and replacement cost as-of dates.
+When editing equipment, the Cancel and Save Changes buttons are at the very bottom of a long form. You have to scroll all the way down to find them, which is frustrating -- especially on shorter screens or when making a quick change to a field near the top.
 
 ## Solution
-Replace `new Date(dateString)` with a timezone-safe parser that treats date-only strings as local dates. The simplest approach: append `T00:00:00` to date-only strings so JavaScript parses them as local time instead of UTC.
-
-Create a small utility function and use it everywhere dates are displayed.
+Move the Cancel / Save buttons out of the scrollable form area and into a sticky footer that is always visible at the bottom of the sheet, regardless of scroll position.
 
 ## Technical Details
 
-### 1. Add utility function in `src/lib/utils.ts`
+### 1. `src/components/EquipmentFormContent.tsx`
+- Remove the button row (lines 676-683) from inside the `<form>` element
+- Instead, accept an optional `renderFooterPortal` prop or use a different approach: split the component so it exposes the submit trigger externally
+- Simpler approach: keep buttons in the form but accept a `stickyFooter` boolean prop. When true, render the buttons via a callback/render prop so the parent can place them outside the scroll area
+- **Simplest approach chosen**: Remove the buttons from EquipmentFormContent entirely when used inside the sheet. Add an `id` to the form so external buttons can submit it. Pass a new `footerRef` or simply use `form="equipmentEditForm"` on external buttons.
 
-```typescript
-/** Parse a date string as local time (avoids UTC timezone shift for date-only strings like "2014-01-01") */
-export function parseLocalDate(dateStr: string): Date {
-  // Date-only strings (YYYY-MM-DD) are parsed as UTC by JS.
-  // Adding T00:00:00 forces local-time interpretation.
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    return new Date(dateStr + 'T00:00:00');
-  }
-  return new Date(dateStr);
-}
-```
+Specifically:
+- Add `id="equipment-edit-form"` to the `<form>` tag when in edit mode
+- Accept an optional `hideFooter` prop; when true, don't render the button row
+- The parent sheet will render the sticky footer with buttons that reference the form via `form="equipment-edit-form"`
 
-### 2. Update `src/components/equipment/EquipmentDetailsSheet.tsx`
+### 2. `src/components/equipment/EquipmentDetailsSheet.tsx`
+- When `sheetView === 'edit'`, render a sticky footer div **outside** the `ScrollArea` but still inside `SheetContent`
+- The footer contains Cancel and Save Changes buttons
+- Cancel calls `setSheetView('details')`
+- Save uses `form="equipment-edit-form"` attribute to trigger the form submission
+- Footer styling: `shrink-0 border-t p-4 bg-background` to stay pinned at the bottom of the flex column
 
-Replace all `new Date(equipment.someDate)` calls with `parseLocalDate()`:
-- Purchase Date (line ~207)
-- Financing Start Date (line ~299)
-- Sale Date (line ~345)
-
-### 3. Update `src/lib/calculations.ts`
-
-Replace date parsing for:
-- `purchaseDate` (line ~50)
-- `replacementCostAsOfDate` (line ~63)
-
-### 4. Audit other files for the same pattern
-
-Check and fix any other files that parse date strings with `new Date()`:
-- `EquipmentFormContent.tsx`
-- `EquipmentTableRow.tsx`
-- `EquipmentMobileCard.tsx`
-- Any other components displaying equipment dates
