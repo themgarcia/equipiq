@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+
 import { Pencil, Trash2, FileText, Package, User, Building2 } from 'lucide-react';
 import {
   Sheet,
@@ -37,7 +37,7 @@ import { EquipmentDocumentsContent } from '@/components/EquipmentDocumentsConten
 import { EquipmentAttachmentsContent } from '@/components/EquipmentAttachmentsContent';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
 import { parseLocalDate } from '@/lib/utils';
-import { categoryDefaults } from '@/data/categoryDefaults';
+
 import { EquipmentCalculated, Equipment } from '@/types/equipment';
 
 type SheetView = 'details' | 'edit' | 'documents' | 'attachments';
@@ -184,6 +184,21 @@ function EquipmentDetailsView({
   onAttachments,
   onConfirmDelete,
 }: EquipmentDetailsViewProps) {
+  // Calculate financing status line
+  const getFinancingStatus = () => {
+    if (equipment.financingType === 'owned') return 'Owned';
+    if (equipment.monthlyPayment > 0 && equipment.termMonths > 0 && equipment.financingStartDate) {
+      const start = parseLocalDate(equipment.financingStartDate);
+      const monthsElapsed = Math.floor(
+        (Date.now() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+      );
+      const paymentsLeft = Math.max(0, equipment.termMonths - monthsElapsed);
+      if (paymentsLeft === 0) return 'Paid off';
+      return `${formatCurrency(equipment.monthlyPayment)}/mo — ${paymentsLeft} payments left`;
+    }
+    return equipment.financingType.charAt(0).toUpperCase() + equipment.financingType.slice(1);
+  };
+
   return (
     <div className="space-y-5">
       {/* Status & Allocation Badges */}
@@ -222,205 +237,24 @@ function EquipmentDetailsView({
         </div>
       </div>
 
-      <Separator />
-
-      {/* IDENTIFICATION */}
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-muted-foreground">Identification</h4>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Category</p>
-            <p className="text-sm font-medium">{equipment.category}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Condition</p>
-            <p className="text-sm font-medium">{equipment.purchaseCondition}</p>
-          </div>
-          {equipment.serialVin && (
-            <div className="col-span-2">
-              <p className="text-xs text-muted-foreground">Serial/VIN</p>
-              <p className="text-sm font-medium font-mono">{equipment.serialVin}</p>
-            </div>
-          )}
-          {equipment.assetId && (
-            <div>
-              <p className="text-xs text-muted-foreground">Asset ID</p>
-              <p className="text-sm font-medium">{equipment.assetId}</p>
-            </div>
-          )}
+      {/* FINANCIAL SNAPSHOT */}
+      <div className="space-y-1.5 max-w-sm">
+        <div className="flex justify-between">
+          <span className="text-sm text-muted-foreground">Total Cost Basis</span>
+          <span className="text-sm font-semibold font-mono-nums">{formatCurrency(equipment.totalCostBasis)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-sm text-muted-foreground">Allocation</span>
+          <span className="text-sm font-medium font-mono-nums">
+            {formatPercent(equipment.cogsPercent)} COGS / {formatPercent(equipment.overheadPercent)} OH
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-sm text-muted-foreground">Financing</span>
+          <span className="text-sm font-medium">{getFinancingStatus()}</span>
         </div>
       </div>
 
-      <Separator />
-
-      {/* PURCHASE & COST */}
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-muted-foreground">Purchase & Cost</h4>
-        <div className="space-y-1.5 max-w-sm">
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Purchase Date</span>
-            <span className="text-sm font-medium">{format(parseLocalDate(equipment.purchaseDate), 'MMM d, yyyy')}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Purchase Price</span>
-            <span className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.purchasePrice)}</span>
-          </div>
-          {equipment.salesTax > 0 && (
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">+ Sales Tax</span>
-              <span className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.salesTax)}</span>
-            </div>
-          )}
-          {equipment.freightSetup > 0 && (
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">+ Freight/Setup</span>
-              <span className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.freightSetup)}</span>
-            </div>
-          )}
-          {equipment.otherCapEx > 0 && (
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">+ Other CapEx</span>
-              <span className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.otherCapEx)}</span>
-            </div>
-          )}
-          {equipment.attachmentTotalValue > 0 && (
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">+ Attachments</span>
-              <span className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.attachmentTotalValue)}</span>
-            </div>
-          )}
-          <div className="flex justify-between pt-1 border-t">
-            <span className="text-sm font-medium">Total Cost Basis</span>
-            <span className="text-sm font-semibold font-mono-nums">{formatCurrency(equipment.totalCostBasis)}</span>
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* ALLOCATIONS */}
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-muted-foreground">Allocations</h4>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">COGS</p>
-            <p className="text-sm font-medium font-mono-nums">
-              {formatPercent(equipment.cogsPercent)} ({formatCurrency(equipment.cogsAllocatedCost)})
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Overhead</p>
-            <p className="text-sm font-medium font-mono-nums">
-              {formatPercent(equipment.overheadPercent)} ({formatCurrency(equipment.overheadAllocatedCost)})
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* LIFECYCLE */}
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-muted-foreground">Lifecycle</h4>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Useful Life</p>
-            <p className="text-sm font-medium font-mono-nums">
-              {equipment.usefulLifeOverride ?? 
-                (categoryDefaults.find(c => c.category === equipment.category)?.defaultUsefulLife ?? 10)} years
-              {equipment.usefulLifeOverride && (
-                <span className="text-xs text-muted-foreground ml-1">(custom)</span>
-              )}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Expected Resale</p>
-            <p className="text-sm font-medium font-mono-nums">
-              {formatCurrency(equipment.expectedResaleUsed)}
-              {equipment.expectedResaleOverride !== null && (
-                <span className="text-xs text-muted-foreground ml-1">(custom)</span>
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* FINANCING - Only show if not owned */}
-      {equipment.financingType !== 'owned' && (
-        <>
-          <Separator />
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">Financing</h4>
-             <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
-              <div>
-                <p className="text-xs text-muted-foreground">Type</p>
-                <p className="text-sm font-medium capitalize">{equipment.financingType}</p>
-              </div>
-              {equipment.depositAmount > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Deposit</p>
-                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.depositAmount)}</p>
-                </div>
-              )}
-              {equipment.financedAmount > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Financed Amount</p>
-                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.financedAmount)}</p>
-                </div>
-              )}
-              {equipment.monthlyPayment > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Monthly Payment</p>
-                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.monthlyPayment)}</p>
-                </div>
-              )}
-              {equipment.termMonths > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Term</p>
-                  <p className="text-sm font-medium font-mono-nums">{equipment.termMonths} months</p>
-                </div>
-              )}
-              {equipment.buyoutAmount > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Buyout</p>
-                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.buyoutAmount)}</p>
-                </div>
-              )}
-              {equipment.financingStartDate && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Start Date</p>
-                  <p className="text-sm font-medium">{format(parseLocalDate(equipment.financingStartDate), 'MMM d, yyyy')}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* SALE INFO - Only show if sold */}
-      {equipment.status === 'Sold' && (
-        <>
-          <Separator />
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">Sale Info</h4>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
-              {equipment.saleDate && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Sale Date</p>
-                  <p className="text-sm font-medium">{format(parseLocalDate(equipment.saleDate), 'MMM d, yyyy')}</p>
-                </div>
-              )}
-              {equipment.salePrice !== null && equipment.salePrice !== undefined && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Sale Price</p>
-                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.salePrice)}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-      
       <Separator />
 
       {/* ACTION BUTTONS */}
