@@ -72,8 +72,11 @@ export default function EquipmentList() {
   );
   const [expandedAttachments, setExpandedAttachments] = useState<Set<string>>(new Set());
   
-  // Equipment details sheet
-  const [selectedEquipment, setSelectedEquipment] = useState<EquipmentCalculated | null>(null);
+  // Equipment details sheet — store only ID, derive object from live data
+  const [selectedEquipmentId, setSelectedEquipmentId] = useState<string | null>(null);
+  const selectedEquipment = selectedEquipmentId
+    ? calculatedEquipment.find(e => e.id === selectedEquipmentId) ?? null
+    : null;
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Handle deep-link to specific equipment via ?selected=<id>
@@ -82,7 +85,7 @@ export default function EquipmentList() {
     if (selectedId && calculatedEquipment.length > 0) {
       const equipment = calculatedEquipment.find(e => e.id === selectedId);
       if (equipment) {
-        setSelectedEquipment(equipment);
+        setSelectedEquipmentId(selectedId);
         searchParams.delete('selected');
         setSearchParams(searchParams, { replace: true });
       }
@@ -237,7 +240,7 @@ export default function EquipmentList() {
                 attachmentsByEquipmentId={attachmentsByEquipmentId}
                 expandedAttachments={expandedAttachments}
                 onToggleAttachments={toggleAttachments}
-                onSelectEquipment={setSelectedEquipment}
+                onSelectEquipment={(eq) => setSelectedEquipmentId(eq.id)}
               />
             ))
           )}
@@ -302,7 +305,7 @@ export default function EquipmentList() {
 
         <EquipmentDetailsSheet
           equipment={selectedEquipment}
-          onClose={() => setSelectedEquipment(null)}
+          onClose={() => setSelectedEquipmentId(null)}
           onUpdate={updateEquipment}
           onDelete={handleDelete}
         />
