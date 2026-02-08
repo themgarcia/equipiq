@@ -1,29 +1,27 @@
 
 
-# Fix: Purchase & Cost Section Value Alignment
+# Fix: Equipment Detail Sheet Not Auto-Updating After Edits
 
 ## Problem
+When you edit equipment and save, the detail sheet still shows the old values. You have to close and reopen it to see the changes. This happens because the selected equipment is stored as a snapshot in local state -- when the data refreshes from the database, the detail sheet still displays the stale copy.
 
-In the Equipment Details Sheet, the "Purchase & Cost" section uses `flex justify-between`, which pushes monetary values and dates all the way to the right edge. On wider panels this creates an unnecessarily large gap between labels and values, making it harder to scan.
+## Solution
+Instead of storing the full equipment object in state, store only the selected equipment **ID**. Then derive the displayed equipment from the live `calculatedEquipment` list on every render. This way, when data refreshes after an update, the detail sheet automatically shows the latest values.
 
-## Fix
+## Technical Details
 
-**File:** `src/components/equipment/EquipmentDetailsSheet.tsx` (~15 lines changed)
+**File:** `src/pages/EquipmentList.tsx`
 
-Change each row in the Purchase & Cost section from `flex justify-between` to a two-column grid layout that keeps labels and values closer together while still right-aligning the numbers.
+1. Change `selectedEquipment` state from storing a full object to storing just an ID:
+   - `const [selectedEquipmentId, setSelectedEquipmentId] = useState<string | null>(null)`
 
-Specifically, wrap the section rows in a consistent pattern:
-- Labels get `text-left`
-- Values get `text-right`
-- Use `grid grid-cols-[1fr_auto]` or `flex` with `gap-4` and remove `justify-between`, instead using `ml-auto` on values so they stay near the label rather than flush-right against the sheet edge
+2. Derive the equipment object from the live data:
+   - `const selectedEquipment = selectedEquipmentId ? calculatedEquipment.find(e => e.id === selectedEquipmentId) ?? null : null`
 
-The simplest approach: add `max-w-sm` to the `space-y-1.5` container so the rows don't stretch across the full sheet width. This keeps all the existing flex-between logic intact but constrains the width so values stay visually close to their labels.
+3. Update all references:
+   - `onClose` sets `setSelectedEquipmentId(null)`
+   - `onSelectEquipment` passes `(eq) => setSelectedEquipmentId(eq.id)`
+   - Deep-link handler sets the ID instead of the object
+   - The `EquipmentDetailsSheet` still receives the full object (derived from live data)
 
-**Lines affected:** 205-241 (the `space-y-1.5` div and its children)
-
-**Change:** Add `max-w-sm` class to the container div on line 205:
-```
-<div className="space-y-1.5 max-w-sm">
-```
-
-This single class constrains the width of the entire Purchase & Cost block, bringing values closer to labels without changing any row-level layout. The same pattern can be applied to other sections if needed.
+No changes needed to `EquipmentDetailsSheet.tsx` itself -- only the parent page wiring changes.
