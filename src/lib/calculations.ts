@@ -1,5 +1,6 @@
 import { Equipment, EquipmentCalculated, FMSExportData, CategoryDefaults } from '@/types/equipment';
 import { getCategoryDefaults as getStaticCategoryDefaults } from '@/data/categoryDefaults';
+import { parseLocalDate } from '@/lib/utils';
 
 const ANNUAL_INFLATION_RATE = 0.03; // 3% annual inflation
 
@@ -52,7 +53,7 @@ export function calculateEquipment(
   const estimatedYearsLeft = Math.max(0, Math.round(yearsLeft * 10) / 10);
   
   // Keep purchase date/year for replacement cost calculations
-  const purchaseDate = new Date(equipment.purchaseDate);
+  const purchaseDate = parseLocalDate(equipment.purchaseDate);
   const purchaseYear = purchaseDate.getFullYear();
   
   // Replacement Cost - apply 3% annual inflation
@@ -64,7 +65,7 @@ export function calculateEquipment(
     // Manual entry: inflate from the as-of date (or current year if not set)
     // Manual replacement cost is for equipment only - add attachments separately
     const asOfYear = equipment.replacementCostAsOfDate 
-      ? new Date(equipment.replacementCostAsOfDate).getFullYear() 
+      ? parseLocalDate(equipment.replacementCostAsOfDate).getFullYear() 
       : currentYear;
     inflationYears = Math.max(0, currentYear - asOfYear);
     const inflatedEquipmentCost = calculateInflationAdjustedCost(equipment.replacementCostNew, asOfYear, currentYear);

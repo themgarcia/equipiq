@@ -23,6 +23,7 @@ import { EquipmentFormContent } from '@/components/EquipmentFormContent';
 import { EquipmentDocumentsContent } from '@/components/EquipmentDocumentsContent';
 import { EquipmentAttachmentsContent } from '@/components/EquipmentAttachmentsContent';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
+import { parseLocalDate } from '@/lib/utils';
 import { categoryDefaults } from '@/data/categoryDefaults';
 import { EquipmentCalculated, Equipment } from '@/types/equipment';
 
@@ -205,7 +206,7 @@ function EquipmentDetailsView({
         <div className="space-y-1.5 max-w-sm">
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Purchase Date</span>
-            <span className="text-sm font-medium">{format(new Date(equipment.purchaseDate), 'MMM d, yyyy')}</span>
+            <span className="text-sm font-medium">{format(parseLocalDate(equipment.purchaseDate), 'MMM d, yyyy')}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Purchase Price</span>
@@ -339,7 +340,7 @@ function EquipmentDetailsView({
             {equipment.financingStartDate && (
               <div>
                 <p className="text-xs text-muted-foreground">Start Date</p>
-                <p className="text-sm font-medium">{format(new Date(equipment.financingStartDate), 'MMM d, yyyy')}</p>
+                <p className="text-sm font-medium">{format(parseLocalDate(equipment.financingStartDate), 'MMM d, yyyy')}</p>
               </div>
             )}
           </div>
@@ -354,7 +355,7 @@ function EquipmentDetailsView({
             {equipment.saleDate && (
               <div>
                 <p className="text-xs text-muted-foreground">Sale Date</p>
-                <p className="text-sm font-medium">{format(new Date(equipment.saleDate), 'MMM d, yyyy')}</p>
+                <p className="text-sm font-medium">{format(parseLocalDate(equipment.saleDate), 'MMM d, yyyy')}</p>
               </div>
             )}
             {equipment.salePrice !== null && equipment.salePrice !== undefined && (

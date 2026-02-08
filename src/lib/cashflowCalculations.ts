@@ -16,6 +16,7 @@ import {
   CashflowStabilization
 } from '@/types/equipment';
 import { addMonths, format } from 'date-fns';
+import { parseLocalDate } from '@/lib/utils';
 
 /**
  * Calculate cashflow metrics for a single equipment item.
@@ -37,7 +38,7 @@ export function calculateEquipmentCashflow(
   // Payments completed = months since financing start
   let paymentsCompleted = 0;
   if (equipment.financingStartDate && equipment.termMonths > 0) {
-    const startDate = new Date(equipment.financingStartDate);
+    const startDate = parseLocalDate(equipment.financingStartDate);
     const now = new Date();
     const monthsDiff = (now.getFullYear() - startDate.getFullYear()) * 12 + 
                        (now.getMonth() - startDate.getMonth());
@@ -82,7 +83,7 @@ export function calculateEquipmentCashflow(
   if (equipment.financingType === 'owned') {
     payoffDate = null; // Already paid in full
   } else if (equipment.financingStartDate && equipment.termMonths > 0) {
-    const startDate = new Date(equipment.financingStartDate);
+    const startDate = parseLocalDate(equipment.financingStartDate);
     const endDate = addMonths(startDate, equipment.termMonths);
     payoffDate = format(endDate, 'yyyy-MM-dd');
   }

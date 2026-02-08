@@ -3,6 +3,7 @@ import { useEquipment } from '@/contexts/EquipmentContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { MetricCard } from '@/components/MetricCard';
 import { formatCurrency } from '@/lib/calculations';
+import { parseLocalDate } from '@/lib/utils';
 import { FinancialValue } from '@/components/ui/financial-value';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,7 +49,7 @@ export default function Dashboard() {
   const totalMonthlyPayments = activeEquipment.reduce((sum, e) => sum + e.monthlyPayment, 0);
   const totalOutstandingDebt = activeEquipment.reduce((sum, e) => {
     if (e.financingType === 'owned' || !e.financingStartDate) return sum;
-    const startDate = new Date(e.financingStartDate);
+    const startDate = parseLocalDate(e.financingStartDate);
     const now = new Date();
     const monthsElapsed = Math.max(0, (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth()));
     const remainingPayments = Math.max(0, e.termMonths - monthsElapsed);
@@ -59,7 +60,7 @@ export default function Dashboard() {
   const upcomingPayoffs = activeEquipment
     .filter(e => e.financingType !== 'owned' && e.financingStartDate && e.termMonths > 0)
     .map(e => {
-      const startDate = new Date(e.financingStartDate!);
+      const startDate = parseLocalDate(e.financingStartDate!);
       const payoffDate = new Date(startDate);
       payoffDate.setMonth(payoffDate.getMonth() + e.termMonths);
       const now = new Date();
