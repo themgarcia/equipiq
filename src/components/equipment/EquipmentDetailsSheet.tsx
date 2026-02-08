@@ -84,13 +84,11 @@ export function EquipmentDetailsSheet({
                 </SheetDescription>
               </div>
               <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0"
+                size="sm"
                 onClick={() => setSheetView('edit')}
               >
                 <Pencil className="h-4 w-4" />
-                <span className="sr-only">Edit Equipment</span>
+                Edit
               </Button>
             </div>
           ) : (
