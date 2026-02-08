@@ -264,7 +264,7 @@ function EquipmentDetailsView({
       {/* LIFECYCLE */}
       <div className="space-y-2">
         <h4 className="text-sm font-medium text-muted-foreground">Lifecycle</h4>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
           <div>
             <p className="text-xs text-muted-foreground">Useful Life</p>
             <p className="text-sm font-medium font-mono-nums">
@@ -301,7 +301,7 @@ function EquipmentDetailsView({
       {equipment.financingType !== 'owned' && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-muted-foreground">Financing</h4>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+           <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
             <div>
               <p className="text-xs text-muted-foreground">Type</p>
               <p className="text-sm font-medium capitalize">{equipment.financingType}</p>
