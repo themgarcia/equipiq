@@ -202,7 +202,7 @@ function EquipmentDetailsView({
       {/* PURCHASE & COST */}
       <div className="space-y-2">
         <h4 className="text-sm font-medium text-muted-foreground">Purchase & Cost</h4>
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 max-w-sm">
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Purchase Date</span>
             <span className="text-sm font-medium">{format(new Date(equipment.purchaseDate), 'MMM d, yyyy')}</span>
