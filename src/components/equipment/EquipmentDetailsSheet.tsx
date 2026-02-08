@@ -255,7 +255,7 @@ function EquipmentDetailsView({
           <div>
             <p className="text-xs text-muted-foreground">Overhead</p>
             <p className="text-sm font-medium font-mono-nums">
-              {formatPercent(1 - equipment.cogsPercent)} ({formatCurrency(equipment.overheadAllocatedCost)})
+              {formatPercent(equipment.overheadPercent)} ({formatCurrency(equipment.overheadAllocatedCost)})
             </p>
           </div>
         </div>
