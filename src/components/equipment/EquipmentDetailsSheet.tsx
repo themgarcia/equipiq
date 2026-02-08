@@ -113,6 +113,8 @@ export function EquipmentDetailsSheet({
                   setSheetView('details');
                 }}
                 onCancel={() => setSheetView('details')}
+                hideFooter
+                formId="equipment-edit-form"
               />
             )}
 
@@ -131,6 +133,17 @@ export function EquipmentDetailsSheet({
             )}
           </div>
         </ScrollArea>
+
+        {sheetView === 'edit' && (
+          <div className="shrink-0 border-t p-4 bg-background flex flex-col-reverse sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={() => setSheetView('details')} className="sm:flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" form="equipment-edit-form" className="sm:flex-1">
+              Save Changes
+            </Button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );

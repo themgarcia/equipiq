@@ -14,6 +14,8 @@ interface EquipmentFormContentProps {
   equipment?: Equipment;
   onSubmit: (data: Omit<Equipment, 'id'>) => void;
   onCancel: () => void;
+  hideFooter?: boolean;
+  formId?: string;
 }
 
 const categories: EquipmentCategory[] = categoryDefaults.map(c => c.category);
@@ -72,7 +74,7 @@ const numericFields = [
 
 type NumericField = typeof numericFields[number];
 
-export function EquipmentFormContent({ equipment, onSubmit, onCancel }: EquipmentFormContentProps) {
+export function EquipmentFormContent({ equipment, onSubmit, onCancel, hideFooter, formId }: EquipmentFormContentProps) {
   const [formData, setFormData] = useState<Omit<Equipment, 'id'>>(
     equipment ? { ...equipment } : { ...defaultFormData }
   );
@@ -172,7 +174,7 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6" id={formId}>
       {/* Identification */}
       <div className="space-y-4">
         <h3 className="text-sm font-medium text-muted-foreground">
@@ -673,14 +675,16 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel }: Equipmen
         </CollapsibleContent>
       </Collapsible>
 
-      <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4 border-t">
-        <Button type="button" variant="outline" onClick={onCancel} className="sm:flex-1">
-          Cancel
-        </Button>
-        <Button type="submit" className="sm:flex-1">
-          {equipment ? 'Save Changes' : 'Add Equipment'}
-        </Button>
-      </div>
+      {!hideFooter && (
+        <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4 border-t">
+          <Button type="button" variant="outline" onClick={onCancel} className="sm:flex-1">
+            Cancel
+          </Button>
+          <Button type="submit" className="sm:flex-1">
+            {equipment ? 'Save Changes' : 'Add Equipment'}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }
