@@ -175,7 +175,7 @@ function EquipmentDetailsView({
       {/* IDENTIFICATION */}
       <div className="space-y-2">
         <h4 className="text-sm font-medium text-muted-foreground">Identification</h4>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
           <div>
             <p className="text-xs text-muted-foreground">Category</p>
             <p className="text-sm font-medium">{equipment.category}</p>
@@ -245,7 +245,7 @@ function EquipmentDetailsView({
       {/* ALLOCATIONS */}
       <div className="space-y-2">
         <h4 className="text-sm font-medium text-muted-foreground">Allocations</h4>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
           <div>
             <p className="text-xs text-muted-foreground">COGS</p>
             <p className="text-sm font-medium font-mono-nums">
@@ -350,7 +350,7 @@ function EquipmentDetailsView({
       {equipment.status === 'Sold' && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-muted-foreground">Sale Info</h4>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
             {equipment.saleDate && (
               <div>
                 <p className="text-xs text-muted-foreground">Sale Date</p>
