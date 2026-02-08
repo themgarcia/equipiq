@@ -72,9 +72,12 @@ export function calculateEquipment(
     replacementCostUsed = inflatedEquipmentCost + attachmentTotal;
     replacementCostSource = 'manual';
   } else {
-    // Auto-calculated: inflate full cost basis (equipment + attachments) from purchase year
-    inflationYears = Math.max(0, currentYear - purchaseYear);
-    replacementCostUsed = calculateInflationAdjustedCost(totalCostBasis, purchaseYear, currentYear);
+    // Auto-calculated: inflate full cost basis (equipment + attachments)
+    // For used equipment, inflate from model year to better approximate new-replacement cost
+    // For new equipment, inflate from purchase year
+    const inflationBaseYear = equipment.purchaseCondition === 'used' ? modelYear : purchaseYear;
+    inflationYears = Math.max(0, currentYear - inflationBaseYear);
+    replacementCostUsed = calculateInflationAdjustedCost(totalCostBasis, inflationBaseYear, currentYear);
     replacementCostSource = 'inflationAdjusted';
   }
   

@@ -432,16 +432,28 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
             <h3 className="text-sm font-medium text-muted-foreground">
               Replacement & Resale
             </h3>
+          {formData.purchaseCondition === 'used' && !formData.replacementCostNew && (
+              <div className="rounded-md border border-warning/50 bg-warning/10 p-3 flex gap-2">
+                <Info className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-warning">You bought this used for ${formData.purchasePrice.toLocaleString()}.</p>
+                  <p className="text-muted-foreground mt-1">What would a new equivalent cost today? This ensures your rates build enough reserve to actually replace it.</p>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="replacementCostNew">Replacement Cost (Today)</Label>
+              <div className={formData.purchaseCondition === 'used' && !formData.replacementCostNew ? 'sm:col-span-2' : ''}>
+                <Label htmlFor="replacementCostNew">
+                  {formData.purchaseCondition === 'used' ? 'New Replacement Cost (Today) — Recommended' : 'Replacement Cost (Today)'}
+                </Label>
                 <Input
                   id="replacementCostNew"
                   type="number"
                   value={getNumericInputValue('replacementCostNew', formData.replacementCostNew)}
                   onChange={(e) => handleNumericInputChange('replacementCostNew', e.target.value)}
                   onBlur={() => handleNumericInputBlur('replacementCostNew')}
-                  placeholder="Auto-calculated with 3% inflation"
+                  placeholder={formData.purchaseCondition === 'used' ? 'What would a new equivalent cost today?' : 'Auto-calculated with 3% inflation'}
+                  className={formData.purchaseCondition === 'used' && !formData.replacementCostNew ? 'border-warning/50' : ''}
                 />
                 <p className="text-xs text-muted-foreground mt-1">Leave empty for inflation-adjusted estimate</p>
               </div>
