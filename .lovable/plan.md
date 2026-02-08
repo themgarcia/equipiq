@@ -1,273 +1,79 @@
 
-# Comprehensive Project Improvements Plan
 
-## Overview
+# P0 Step 1: Valuation Fix for Used Equipment
 
-This plan addresses five key improvement areas identified in the audit: error resilience, performance optimization, data management, test coverage, and code maintainability. Each improvement follows existing patterns and best practices appropriate for the project's scale.
+## Problem
 
-## Current State Analysis
-
-| Area | Current State | Issue |
-|------|---------------|-------|
-| Error Handling | No error boundaries | A single component crash can break the entire app |
-| Code Splitting | All routes eagerly loaded | Large initial bundle, slower first load |
-| Data Fetching | Manual `useState`/`useEffect` in `EquipmentContext.tsx` | No caching, duplicate requests, verbose error handling |
-| Test Coverage | Only mobile responsive tests | No auth, CRUD, or critical workflow coverage |
-| File Size | `Auth.tsx` (1,188 lines), `EquipmentList.tsx` (904 lines) | Difficult to maintain and navigate |
+When a contractor buys used equipment (e.g., a 2014 Cormidi for $10,000 in 2020), the system inflates from the **purchase year**, producing a replacement value of ~$11,941. The real new-replacement cost is $25-30K. This undervaluation cascades into equipment rates, causing contractors to under-charge and never build enough reserve to replace the machine.
 
 ## Changes
 
-### 1. Add Error Boundaries
+### 1. Fix inflation calculation for used equipment
 
-Create a reusable error boundary component and wrapper to catch React errors gracefully.
+**File:** `src/lib/calculations.ts` (~5 lines changed)
 
-**New Files:**
+In the auto-calculated path (when no manual replacement cost is entered), change the inflation base year from `purchaseYear` to `modelYear` when `purchaseCondition === 'used'`. This better approximates the original new price by inflating over a longer period.
 
-| File | Purpose |
-|------|---------|
-| `src/components/ErrorBoundary.tsx` | Class component that catches errors and displays fallback UI |
-| `src/components/ErrorFallback.tsx` | User-friendly error display with retry option |
+| | Before | After |
+|---|---|---|
+| Inflation base (used) | Purchase year (2020) | Model year (2014) |
+| Years of inflation (to 2026) | 6 | 12 |
+| Replacement value | $11,941 | $14,258 |
 
-**Implementation:**
+### 2. Add "used purchase" advisory in Add/Edit form
 
-```text
-ErrorBoundary catches errors in children
-    └── Displays ErrorFallback with:
-        ├── Friendly error message
-        ├── "Try Again" button (resets error state)
-        └── "Go Home" button (navigates to /)
-```
+**File:** `src/components/EquipmentForm.tsx` (~25 lines changed)
 
-**Integration Points:**
-- Wrap `<BrowserRouter>` in `App.tsx` with a global error boundary
-- Optionally wrap individual route components for granular recovery
+When `purchaseCondition === 'used'`:
+- Show a warning callout explaining why entering a new replacement cost matters
+- Change the field label to "New Replacement Cost (Today) -- Recommended"
+- Update placeholder text to "What would a new equivalent cost today?"
+- Make the field span full width with a subtle warning border when empty
 
-### 2. Implement Route-Based Code Splitting
+### 3. Same UX change in inline edit form
 
-Use `React.lazy` and `Suspense` to lazy-load page components, reducing initial bundle size.
+**File:** `src/components/EquipmentFormContent.tsx` (~25 lines changed)
 
-**Files Modified:**
-
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Convert static imports to dynamic imports with `React.lazy` |
-
-**Implementation:**
-
-```typescript
-// Before
-import Dashboard from "./pages/Dashboard";
-
-// After
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-```
-
-**Routes to Lazy Load:**
-- Dashboard, EquipmentList, CategoryLifespans, FMSExport
-- BuyVsRentAnalysis, CashflowAnalysis, Definitions, Changelog
-- Profile, Billing, Feedback, InsuranceControl
-- AdminDashboard, GetStarted
-
-**Keep Eager Loaded** (critical path):
-- Auth, ResetPassword (authentication flow)
-- Index (landing page)
-- NotFound (error handling)
-
-**Loading State:**
-Create a `PageLoader` component for consistent loading UX during chunk fetches.
-
-### 3. Migrate Equipment Data to React Query
-
-React Query is already installed but unused. Migrate `EquipmentContext.tsx` to use it for automatic caching, refetching, and error handling.
-
-**Files Modified:**
-
-| File | Change |
-|------|--------|
-| `src/contexts/EquipmentContext.tsx` | Replace manual fetch logic with `useQuery` and `useMutation` |
-
-**Benefits:**
-- Automatic background refetching
-- Request deduplication
-- Built-in loading/error states
-- Optimistic updates for mutations
-- Stale-while-revalidate pattern
-
-**Query Keys:**
-```typescript
-['equipment', userId]           // Equipment list
-['attachments', userId]         // All attachments
-['documents', equipmentId]      // Equipment documents
-```
-
-**Mutation Pattern:**
-```typescript
-useMutation({
-  mutationFn: addEquipmentToDb,
-  onSuccess: () => queryClient.invalidateQueries(['equipment'])
-})
-```
-
-### 4. Expand E2E Test Coverage
-
-Build on the existing `e2e/mobile-responsive-patterns.spec.ts` pattern to add critical workflow tests.
-
-**New Test Files:**
-
-| File | Coverage |
-|------|----------|
-| `e2e/auth.spec.ts` | Login, logout, signup validation, password reset flow |
-| `e2e/equipment-crud.spec.ts` | Add, edit, delete equipment, form validation |
-| `e2e/navigation.spec.ts` | Route protection, sidebar navigation, deep links |
-
-**Test Scenarios:**
-
-**Authentication:**
-- Login with valid credentials
-- Login with invalid credentials (error message displayed)
-- Redirect to original destination after login
-- Logout clears session
-- Protected routes redirect to /auth
-
-**Equipment CRUD:**
-- Add equipment via modal
-- Edit equipment details
-- Delete equipment with confirmation
-- Form validation (required fields)
-- Search and filter functionality
-
-**Navigation:**
-- Sidebar links navigate correctly
-- Mobile menu opens/closes
-- Deep link to specific equipment works
-
-### 5. Refactor Auth.tsx and EquipmentList.tsx
-
-Extract logical sections into focused components.
-
-**Auth.tsx Extraction:**
-
-| New Component | Lines Extracted | Content |
-|---------------|-----------------|---------|
-| `src/components/auth/LoginForm.tsx` | ~150 lines | Email/password fields, remember me, forgot password link |
-| `src/components/auth/SignupWizard.tsx` | ~450 lines | Multi-step form with steps 1-3 |
-| `src/components/auth/SignupStep1.tsx` | ~120 lines | Account basics (name, email, password) |
-| `src/components/auth/SignupStep2.tsx` | ~100 lines | Company essentials |
-| `src/components/auth/SignupStep3.tsx` | ~100 lines | Optional details |
-| `src/components/auth/ForgotPasswordForm.tsx` | ~80 lines | Reset password flow |
-| `src/components/auth/ProgressIndicator.tsx` | ~25 lines | Already exists inline, extract to file |
-
-**EquipmentList.tsx Extraction:**
-
-| New Component | Lines Extracted | Content |
-|---------------|-----------------|---------|
-| `src/components/equipment/EquipmentListHeader.tsx` | ~50 lines | Title, subtitle, add button |
-| `src/components/equipment/EquipmentFilters.tsx` | ~60 lines | Search input, status tabs |
-| `src/components/equipment/EquipmentCategoryGroup.tsx` | ~150 lines | Collapsible category with table/cards |
-| `src/components/equipment/EquipmentDetailsSheet.tsx` | ~300 lines | Right-side panel with details, edit, documents, attachments views |
-| `src/components/equipment/EquipmentTableRow.tsx` | ~80 lines | Single table row with attachment expansion |
-| `src/components/equipment/EquipmentMobileCard.tsx` | ~40 lines | Mobile card view for equipment item |
-
-## Files Modified Summary
-
-| File | Action | Description |
-|------|--------|-------------|
-| `src/components/ErrorBoundary.tsx` | Create | Error boundary class component |
-| `src/components/ErrorFallback.tsx` | Create | Friendly error fallback UI |
-| `src/components/PageLoader.tsx` | Create | Loading spinner for lazy-loaded routes |
-| `src/App.tsx` | Modify | Add error boundary wrapper, convert to lazy imports |
-| `src/contexts/EquipmentContext.tsx` | Modify | Migrate to React Query |
-| `src/pages/Auth.tsx` | Refactor | Extract components, reduce to ~200 lines |
-| `src/pages/EquipmentList.tsx` | Refactor | Extract components, reduce to ~300 lines |
-| `src/components/auth/*` | Create | Extracted auth form components |
-| `src/components/equipment/*` | Create | Extracted equipment list components |
-| `e2e/auth.spec.ts` | Create | Authentication E2E tests |
-| `e2e/equipment-crud.spec.ts` | Create | Equipment CRUD E2E tests |
-| `e2e/navigation.spec.ts` | Create | Navigation E2E tests |
-
-## Implementation Order
-
-1. **Phase 1: Error Boundaries** - Immediate stability improvement
-2. **Phase 2: Code Splitting** - Performance optimization
-3. **Phase 3: Auth.tsx Refactor** - Maintainability
-4. **Phase 4: EquipmentList.tsx Refactor** - Maintainability
-5. **Phase 5: React Query Migration** - Data management
-6. **Phase 6: E2E Tests** - Quality assurance
+Identical advisory callout and contextual label/placeholder changes for the details sheet edit view.
 
 ## Technical Details
 
-### Error Boundary Implementation
+**Calculation change (`calculations.ts`):**
 
-```typescript
-// ErrorBoundary.tsx
-class ErrorBoundary extends React.Component<Props, State> {
-  state = { hasError: false, error: null };
+```text
+Auto-calculated path (replacementCostNew is 0):
+  IF purchaseCondition === 'used'
+    inflationBaseYear = modelYear (equipment.year)
+  ELSE
+    inflationBaseYear = purchaseYear
   
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-  
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Error boundary caught:', error, info);
-    // Optionally log to error tracking service
-  }
-  
-  render() {
-    if (this.state.hasError) {
-      return <ErrorFallback error={this.state.error} onRetry={this.reset} />;
-    }
-    return this.props.children;
-  }
-}
+  inflationYears = currentYear - inflationBaseYear
+  replacementCostUsed = totalCostBasis * (1.03 ^ inflationYears)
 ```
 
-### React Query Migration Pattern
+**UX advisory (both form files):**
 
-```typescript
-// EquipmentContext.tsx with React Query
-function useEquipmentQuery(userId: string | undefined) {
-  return useQuery({
-    queryKey: ['equipment', userId],
-    queryFn: () => fetchEquipment(userId!),
-    enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-
-function useAddEquipmentMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: addEquipmentToDb,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['equipment'] });
-    },
-  });
-}
+```text
+Replacement & Resale section
+  IF purchaseCondition === 'used'
+    [Warning Box]
+    "You bought this used for $X. What would a new equivalent cost today?
+     This ensures your rates build enough reserve to actually replace it."
+    
+    Label: "New Replacement Cost (Today) -- Recommended"
+    Placeholder: "What would a new equivalent cost today?"
+    Border: warning/50 when empty
+  ELSE
+    (existing behavior unchanged)
 ```
 
-### Lazy Loading Pattern
+**No new dependencies. No database changes. No API costs.**
 
-```typescript
-// App.tsx
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const EquipmentList = lazy(() => import("./pages/EquipmentList"));
+The `Info` icon is already imported in both form files.
 
-// Wrap routes in Suspense
-<Suspense fallback={<PageLoader />}>
-  <Routes>
-    <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    ...
-  </Routes>
-</Suspense>
-```
+## Impact
 
-## Summary
+- Every piece of used equipment in the system gets a more accurate replacement value immediately (calculation fix)
+- Users adding/editing used equipment get prompted to enter the real new-replacement cost (UX fix)
+- All downstream values (equipment rates, FMS export, reserve calculations) improve automatically
 
-| Improvement | Benefit | Effort |
-|-------------|---------|--------|
-| Error Boundaries | Prevents full-app crashes, better UX | Low |
-| Code Splitting | Faster initial load, smaller bundles | Low |
-| Auth.tsx Refactor | Easier maintenance, testability | Medium |
-| EquipmentList.tsx Refactor | Easier maintenance, reusability | Medium |
-| React Query Migration | Better caching, less boilerplate | Medium |
-| E2E Test Expansion | Catch regressions, document behavior | Medium |
