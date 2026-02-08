@@ -76,7 +76,7 @@ export function EquipmentDetailsSheet({
       <SheetContent side="right" className="w-full md:max-w-xl lg:max-w-2xl flex flex-col p-0">
         <SheetHeader className="p-6 pb-4 border-b shrink-0">
           {sheetView === 'details' ? (
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start justify-between gap-2 pr-10">
               <div>
                 <SheetTitle>{equipment.name}</SheetTitle>
                 <SheetDescription>
