@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { Pencil, Trash2, FileText, Package, User, Building2 } from 'lucide-react';
 import {
@@ -15,9 +16,21 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EquipmentFormContent } from '@/components/EquipmentFormContent';
 import { EquipmentDocumentsContent } from '@/components/EquipmentDocumentsContent';
@@ -49,8 +62,8 @@ export function EquipmentDetailsSheet({
     setSheetView('details');
   };
 
-  const handleDelete = () => {
-    if (equipment && confirm('Are you sure you want to delete this equipment?')) {
+  const handleConfirmDelete = () => {
+    if (equipment) {
       onDelete(equipment.id);
       handleClose();
     }
@@ -63,12 +76,23 @@ export function EquipmentDetailsSheet({
       <SheetContent side="right" className="w-full md:max-w-xl lg:max-w-2xl flex flex-col p-0">
         <SheetHeader className="p-6 pb-4 border-b shrink-0">
           {sheetView === 'details' ? (
-            <>
-              <SheetTitle>{equipment.name}</SheetTitle>
-              <SheetDescription>
-                {equipment.make} {equipment.model} • {equipment.year}
-              </SheetDescription>
-            </>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <SheetTitle>{equipment.name}</SheetTitle>
+                <SheetDescription>
+                  {equipment.make} {equipment.model} • {equipment.year}
+                </SheetDescription>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                onClick={() => setSheetView('edit')}
+              >
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Edit Equipment</span>
+              </Button>
+            </div>
           ) : (
             <Breadcrumb>
               <BreadcrumbList>
@@ -98,10 +122,9 @@ export function EquipmentDetailsSheet({
             {sheetView === 'details' && (
               <EquipmentDetailsView 
                 equipment={equipment} 
-                onEdit={() => setSheetView('edit')}
                 onDocuments={() => setSheetView('documents')}
                 onAttachments={() => setSheetView('attachments')}
-                onDelete={handleDelete}
+                onConfirmDelete={handleConfirmDelete}
               />
             )}
 
@@ -150,22 +173,18 @@ export function EquipmentDetailsSheet({
 }
 
 // Internal component for the details view
-import { useState } from 'react';
-
 interface EquipmentDetailsViewProps {
   equipment: EquipmentCalculated;
-  onEdit: () => void;
   onDocuments: () => void;
   onAttachments: () => void;
-  onDelete: () => void;
+  onConfirmDelete: () => void;
 }
 
 function EquipmentDetailsView({
   equipment,
-  onEdit,
   onDocuments,
   onAttachments,
-  onDelete,
+  onConfirmDelete,
 }: EquipmentDetailsViewProps) {
   return (
     <div className="space-y-5">
@@ -185,6 +204,27 @@ function EquipmentDetailsView({
           </Badge>
         )}
       </div>
+
+      {/* REPLACEMENT COST HERO CARD */}
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+        <p className="text-xs font-medium text-muted-foreground">Replacement Cost</p>
+        <p className="text-2xl font-bold font-mono-nums tracking-tight">
+          {formatCurrency(equipment.replacementCostUsed)}
+        </p>
+        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+          <span className={equipment.estimatedYearsLeft <= 1 ? 'text-warning font-medium' : ''}>
+            {equipment.estimatedYearsLeft.toFixed(1)} years left
+          </span>
+          <span>
+            Resale: {formatCurrency(equipment.expectedResaleUsed)}
+            {equipment.expectedResaleOverride !== null && (
+              <span className="ml-1">(custom)</span>
+            )}
+          </span>
+        </div>
+      </div>
+
+      <Separator />
 
       {/* IDENTIFICATION */}
       <div className="space-y-2">
@@ -212,6 +252,8 @@ function EquipmentDetailsView({
           )}
         </div>
       </div>
+
+      <Separator />
 
       {/* PURCHASE & COST */}
       <div className="space-y-2">
@@ -256,6 +298,8 @@ function EquipmentDetailsView({
         </div>
       </div>
 
+      <Separator />
+
       {/* ALLOCATIONS */}
       <div className="space-y-2">
         <h4 className="text-sm font-medium text-muted-foreground">Allocations</h4>
@@ -275,6 +319,8 @@ function EquipmentDetailsView({
         </div>
       </div>
 
+      <Separator />
+
       {/* LIFECYCLE */}
       <div className="space-y-2">
         <h4 className="text-sm font-medium text-muted-foreground">Lifecycle</h4>
@@ -290,16 +336,6 @@ function EquipmentDetailsView({
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Years Left</p>
-            <p className={`text-sm font-medium font-mono-nums ${equipment.estimatedYearsLeft <= 1 ? 'text-warning' : ''}`}>
-              {equipment.estimatedYearsLeft.toFixed(1)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Replacement Cost</p>
-            <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.replacementCostUsed)}</p>
-          </div>
-          <div>
             <p className="text-xs text-muted-foreground">Expected Resale</p>
             <p className="text-sm font-medium font-mono-nums">
               {formatCurrency(equipment.expectedResaleUsed)}
@@ -313,84 +349,84 @@ function EquipmentDetailsView({
 
       {/* FINANCING - Only show if not owned */}
       {equipment.financingType !== 'owned' && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">Financing</h4>
-           <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
-            <div>
-              <p className="text-xs text-muted-foreground">Type</p>
-              <p className="text-sm font-medium capitalize">{equipment.financingType}</p>
+        <>
+          <Separator />
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-muted-foreground">Financing</h4>
+             <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">Type</p>
+                <p className="text-sm font-medium capitalize">{equipment.financingType}</p>
+              </div>
+              {equipment.depositAmount > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Deposit</p>
+                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.depositAmount)}</p>
+                </div>
+              )}
+              {equipment.financedAmount > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Financed Amount</p>
+                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.financedAmount)}</p>
+                </div>
+              )}
+              {equipment.monthlyPayment > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Monthly Payment</p>
+                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.monthlyPayment)}</p>
+                </div>
+              )}
+              {equipment.termMonths > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Term</p>
+                  <p className="text-sm font-medium font-mono-nums">{equipment.termMonths} months</p>
+                </div>
+              )}
+              {equipment.buyoutAmount > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Buyout</p>
+                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.buyoutAmount)}</p>
+                </div>
+              )}
+              {equipment.financingStartDate && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Start Date</p>
+                  <p className="text-sm font-medium">{format(parseLocalDate(equipment.financingStartDate), 'MMM d, yyyy')}</p>
+                </div>
+              )}
             </div>
-            {equipment.depositAmount > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground">Deposit</p>
-                <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.depositAmount)}</p>
-              </div>
-            )}
-            {equipment.financedAmount > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground">Financed Amount</p>
-                <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.financedAmount)}</p>
-              </div>
-            )}
-            {equipment.monthlyPayment > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground">Monthly Payment</p>
-                <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.monthlyPayment)}</p>
-              </div>
-            )}
-            {equipment.termMonths > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground">Term</p>
-                <p className="text-sm font-medium font-mono-nums">{equipment.termMonths} months</p>
-              </div>
-            )}
-            {equipment.buyoutAmount > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground">Buyout</p>
-                <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.buyoutAmount)}</p>
-              </div>
-            )}
-            {equipment.financingStartDate && (
-              <div>
-                <p className="text-xs text-muted-foreground">Start Date</p>
-                <p className="text-sm font-medium">{format(parseLocalDate(equipment.financingStartDate), 'MMM d, yyyy')}</p>
-              </div>
-            )}
           </div>
-        </div>
+        </>
       )}
 
       {/* SALE INFO - Only show if sold */}
       {equipment.status === 'Sold' && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">Sale Info</h4>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
-            {equipment.saleDate && (
-              <div>
-                <p className="text-xs text-muted-foreground">Sale Date</p>
-                <p className="text-sm font-medium">{format(parseLocalDate(equipment.saleDate), 'MMM d, yyyy')}</p>
-              </div>
-            )}
-            {equipment.salePrice !== null && equipment.salePrice !== undefined && (
-              <div>
-                <p className="text-xs text-muted-foreground">Sale Price</p>
-                <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.salePrice)}</p>
-              </div>
-            )}
+        <>
+          <Separator />
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-muted-foreground">Sale Info</h4>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 max-w-sm">
+              {equipment.saleDate && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Sale Date</p>
+                  <p className="text-sm font-medium">{format(parseLocalDate(equipment.saleDate), 'MMM d, yyyy')}</p>
+                </div>
+              )}
+              {equipment.salePrice !== null && equipment.salePrice !== undefined && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Sale Price</p>
+                  <p className="text-sm font-medium font-mono-nums">{formatCurrency(equipment.salePrice)}</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
       
+      <Separator />
+
       {/* ACTION BUTTONS */}
-      <div className="pt-4 border-t space-y-2">
-        <Button 
-          variant="outline" 
-          className="w-full justify-start"
-          onClick={onEdit}
-        >
-          <Pencil className="h-4 w-4 mr-2" />
-          Edit Equipment
-        </Button>
+      <div className="space-y-2">
         <Button 
           variant="outline" 
           className="w-full justify-start"
@@ -407,14 +443,35 @@ function EquipmentDetailsView({
           <Package className="h-4 w-4 mr-2" />
           Attachments
         </Button>
-        <Button 
-          variant="outline" 
-          className="w-full justify-start text-destructive hover:text-destructive"
-          onClick={onDelete}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </Button>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Equipment</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <span className="font-medium text-foreground">{equipment.name}</span>? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={onConfirmDelete}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
