@@ -1,27 +1,50 @@
 
 
-# Fix: Equipment Detail Sheet Not Auto-Updating After Edits
+# Fix: Purchase Date Showing One Day Off (Timezone Bug)
 
 ## Problem
-When you edit equipment and save, the detail sheet still shows the old values. You have to close and reopen it to see the changes. This happens because the selected equipment is stored as a snapshot in local state -- when the data refreshes from the database, the detail sheet still displays the stale copy.
+Dates like "2014-01-01" stored in the database are parsed by `new Date("2014-01-01")` as UTC midnight. In North American timezones, this converts to the previous evening (Dec 31, 2013), so the displayed date is one day behind.
+
+This affects every date displayed using `new Date(dateString)` throughout the app -- purchase dates, sale dates, financing start dates, and replacement cost as-of dates.
 
 ## Solution
-Instead of storing the full equipment object in state, store only the selected equipment **ID**. Then derive the displayed equipment from the live `calculatedEquipment` list on every render. This way, when data refreshes after an update, the detail sheet automatically shows the latest values.
+Replace `new Date(dateString)` with a timezone-safe parser that treats date-only strings as local dates. The simplest approach: append `T00:00:00` to date-only strings so JavaScript parses them as local time instead of UTC.
+
+Create a small utility function and use it everywhere dates are displayed.
 
 ## Technical Details
 
-**File:** `src/pages/EquipmentList.tsx`
+### 1. Add utility function in `src/lib/utils.ts`
 
-1. Change `selectedEquipment` state from storing a full object to storing just an ID:
-   - `const [selectedEquipmentId, setSelectedEquipmentId] = useState<string | null>(null)`
+```typescript
+/** Parse a date string as local time (avoids UTC timezone shift for date-only strings like "2014-01-01") */
+export function parseLocalDate(dateStr: string): Date {
+  // Date-only strings (YYYY-MM-DD) are parsed as UTC by JS.
+  // Adding T00:00:00 forces local-time interpretation.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return new Date(dateStr + 'T00:00:00');
+  }
+  return new Date(dateStr);
+}
+```
 
-2. Derive the equipment object from the live data:
-   - `const selectedEquipment = selectedEquipmentId ? calculatedEquipment.find(e => e.id === selectedEquipmentId) ?? null : null`
+### 2. Update `src/components/equipment/EquipmentDetailsSheet.tsx`
 
-3. Update all references:
-   - `onClose` sets `setSelectedEquipmentId(null)`
-   - `onSelectEquipment` passes `(eq) => setSelectedEquipmentId(eq.id)`
-   - Deep-link handler sets the ID instead of the object
-   - The `EquipmentDetailsSheet` still receives the full object (derived from live data)
+Replace all `new Date(equipment.someDate)` calls with `parseLocalDate()`:
+- Purchase Date (line ~207)
+- Financing Start Date (line ~299)
+- Sale Date (line ~345)
 
-No changes needed to `EquipmentDetailsSheet.tsx` itself -- only the parent page wiring changes.
+### 3. Update `src/lib/calculations.ts`
+
+Replace date parsing for:
+- `purchaseDate` (line ~50)
+- `replacementCostAsOfDate` (line ~63)
+
+### 4. Audit other files for the same pattern
+
+Check and fix any other files that parse date strings with `new Date()`:
+- `EquipmentFormContent.tsx`
+- `EquipmentTableRow.tsx`
+- `EquipmentMobileCard.tsx`
+- Any other components displaying equipment dates
