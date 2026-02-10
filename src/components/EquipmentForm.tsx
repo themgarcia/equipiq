@@ -3,13 +3,13 @@ import { Equipment, EquipmentCategory, EquipmentStatus, FinancingType, PurchaseC
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { ChevronDown, Info, ShieldCheck, Truck, Building2, UserCircle } from 'lucide-react';
-import { categoryDefaults } from '@/data/categoryDefaults';
+import { categoryDefaults, getCategoryDivisions, getCategoriesByDivision } from '@/data/categoryDefaults';
 
 interface EquipmentFormProps {
   open: boolean;
@@ -18,7 +18,7 @@ interface EquipmentFormProps {
   onSubmit: (data: Omit<Equipment, 'id'>) => void;
 }
 
-const categories: EquipmentCategory[] = categoryDefaults.map(c => c.category);
+const divisions = getCategoryDivisions();
 const statuses: EquipmentStatus[] = ['Active', 'Sold', 'Retired', 'Lost'];
 
 const financingTypes: { value: FinancingType; label: string }[] = [
@@ -40,7 +40,7 @@ const allocationCards: { value: AllocationType; label: string; description: stri
 
 const defaultFormData: Omit<Equipment, 'id'> = {
   name: '', // Will be auto-generated
-  category: 'Vehicle (Commercial)',
+  category: categoryDefaults[0]?.category || 'Fleet — Truck — Crew Cab 3/4 Ton',
   status: 'Active',
   make: '',
   model: '',
@@ -209,9 +209,16 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  <SelectContent className="max-h-80">
+                    {divisions.map(division => (
+                      <SelectGroup key={division}>
+                        <SelectLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{division}</SelectLabel>
+                        {getCategoriesByDivision(division).map(cat => (
+                          <SelectItem key={cat.category} value={cat.category}>
+                            {cat.category.replace(`${division} — `, '')}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>

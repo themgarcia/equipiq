@@ -3,7 +3,7 @@ import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from 'recharts';
 import { BuyVsRentInput, EquipmentCategory } from '@/types/equipment';
-import { categoryDefaults, getCategoryDefaults } from '@/data/categoryDefaults';
+import { categoryDefaults, getCategoryDefaults, getCategoryDivisions, getCategoriesByDivision } from '@/data/categoryDefaults';
 import { calculateBuyVsRent, formatCurrency, formatDays, calculateRentalCostByType } from '@/lib/buyVsRentCalculations';
 import { cn } from '@/lib/utils';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -35,11 +35,11 @@ import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { BuyVsRentSkeleton } from '@/components/PageSkeletons';
 import { FinancialValue } from '@/components/ui/financial-value';
 
-// Derive categories from categoryDefaults
-const categories: EquipmentCategory[] = categoryDefaults.map(c => c.category);
+// Derive divisions for grouped dropdown
+const divisions = getCategoryDivisions();
 
 const defaultInput: BuyVsRentInput = {
-  category: 'Excavator – Compact (≤ 6 ton)',
+  category: 'Construction — Excavator — Compact',
   description: '',
   purchasePrice: 50000,
   usefulLife: 10,
@@ -245,9 +245,16 @@ export default function BuyVsRentAnalysis() {
                       <SelectTrigger>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {categories.map(cat => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      <SelectContent className="max-h-80">
+                        {divisions.map(division => (
+                          <SelectGroup key={division}>
+                            <SelectLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{division}</SelectLabel>
+                            {getCategoriesByDivision(division).map(cat => (
+                              <SelectItem key={cat.category} value={cat.category}>
+                                {cat.category.replace(`${division} — `, '')}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
                         ))}
                       </SelectContent>
                     </Select>

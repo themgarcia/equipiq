@@ -1,161 +1,141 @@
-import { EquipmentCategory } from '@/types/equipment';
+import { CategoryDefaults, EquipmentCategory, EquipmentDivision } from '@/types/equipment';
 
-export interface CategoryDefaults {
-  category: EquipmentCategory;
-  defaultUsefulLife: number;
-  defaultResalePercent: number;
-  notes: string;
-  maintenancePercent: number; // % of purchase price per year
-  insurancePercent: number;   // % of purchase price per year
-}
+export { type CategoryDefaults } from '@/types/equipment';
+
+// ═══════════════════════════════════════════════════════════════
+// EquipIQ Equipment Taxonomy v3 — 92 categories across 7 divisions
+// System-locked. Users can override useful life & resale per item.
+// ═══════════════════════════════════════════════════════════════
 
 export const categoryDefaults: CategoryDefaults[] = [
-  {
-    category: 'Compaction (Heavy)',
-    defaultUsefulLife: 10,
-    defaultResalePercent: 20,
-    notes: 'Ride-on rollers, plate compactors over 500 lbs. These machines are simple and overbuilt, with few complex systems. They can physically operate much longer, but vibration fatigue, engine wear, and reliability drift become meaningful after about ten years.',
-    maintenancePercent: 3,
-    insurancePercent: 1.0,
-  },
-  {
-    category: 'Compaction (Light)',
-    defaultUsefulLife: 8,
-    defaultResalePercent: 10,
-    notes: 'Walk-behind plate compactors, jumping jacks, vibratory rammers. Light compaction equipment has smaller engines and is exposed to constant vibration and frequent abuse. Rebuilds become more common after eight years.',
-    maintenancePercent: 5,
-    insurancePercent: 1.0,
-  },
-  {
-    category: 'Excavator – Compact (≤ 6 ton)',
-    defaultUsefulLife: 8,
-    defaultResalePercent: 25,
-    notes: 'Compact excavators experience high cycle counts, tight-access work, and higher abuse per dollar of value. Smaller components are worked hard, leading to higher relative maintenance and shorter competitive life.',
-    maintenancePercent: 5.0,
-    insurancePercent: 1.5,
-  },
-  {
-    category: 'Excavator – Mid-Size (6–12 ton)',
-    defaultUsefulLife: 10,
-    defaultResalePercent: 25,
-    notes: 'Mid-size excavators represent the best balance of strength and efficiency for many contractors. They are less abused per dollar of asset value, have longer competitive life, and are often the most economically efficient excavators in a fleet.',
-    maintenancePercent: 4.0,
-    insurancePercent: 2.0,
-  },
-  {
-    category: 'Excavator – Large (12+ ton)',
-    defaultUsefulLife: 12,
-    defaultResalePercent: 25,
-    notes: 'Large excavators are overbuilt relative to most landscape work, experience lower abuse per dollar of value, and retain competitive usefulness longer. Insurance exposure is higher due to asset value and operating risk.',
-    maintenancePercent: 3.5,
-    insurancePercent: 2.5,
-  },
-  {
-    category: 'Handheld Power Tools',
-    defaultUsefulLife: 5,
-    defaultResalePercent: 5,
-    notes: 'Handheld power tools are frequently dropped, lost, stolen, and abused. Battery degradation alone limits effective life. Five years is a generous competitive assumption.',
-    maintenancePercent: 8,
-    insurancePercent: 0.5,
-  },
-  {
-    category: 'Large Demo & Specialty Tools',
-    defaultUsefulLife: 8,
-    defaultResalePercent: 15,
-    notes: 'Concrete saws, hammer drills, stump grinders. These tools are expensive and typically better cared for, but are used intermittently under high stress. After around eight years reliability declines sharply and parts availability becomes a concern.',
-    maintenancePercent: 5,
-    insurancePercent: 1.0,
-  },
-  {
-    category: 'Lawn (Commercial)',
-    defaultUsefulLife: 8,
-    defaultResalePercent: 15,
-    notes: 'Zero-turns, stand-ons, walk-behinds. Commercial mowers experience high seasonal intensity and visible wear to decks, hydros, bearings, and drivetrains. After roughly eight seasons, cut quality, uptime, and operator confidence decline.',
-    maintenancePercent: 6,
-    insurancePercent: 1.5,
-  },
-  {
-    category: 'Lawn (Handheld)',
-    defaultUsefulLife: 6,
-    defaultResalePercent: 5,
-    notes: 'Trimmers, blowers, edgers, hedge trimmers. Subject to constant vibration, dirt, moisture, and handling abuse. They are treated as consumables in practice. After six years repair effort and downtime outweigh reliability.',
-    maintenancePercent: 8,
-    insurancePercent: 0.5,
-  },
-  {
-    category: 'Loader – Skid Steer Mini',
-    defaultUsefulLife: 7,
-    defaultResalePercent: 15,
-    notes: 'Ditch Witch, Vermeer, Toro mini skids, compact power carriers. High wear rate, frequent attachment swaps, lower insurance exposure due to size. Often operated by less experienced crew members.',
-    maintenancePercent: 6,
-    insurancePercent: 1.0,
-  },
-  {
-    category: 'Loader – Skid Steer',
-    defaultUsefulLife: 8,
-    defaultResalePercent: 20,
-    notes: 'Wheeled skid steers and compact track loaders. High jobsite abuse, high wear per dollar of value, frequent undercarriage or tire costs. Core fleet workhorses with predictable wear patterns.',
-    maintenancePercent: 5.5,
-    insurancePercent: 1.75,
-  },
-  {
-    category: 'Loader – Mid-Size',
-    defaultUsefulLife: 10,
-    defaultResalePercent: 18,
-    notes: 'Larger CTLs and smaller wheel loaders. Heavier frames, higher capital cost, lower relative abuse per dollar. Bridge between compact loaders and full wheel loaders.',
-    maintenancePercent: 4.5,
-    insurancePercent: 2.0,
-  },
-  {
-    category: 'Loader – Wheel / Large',
-    defaultUsefulLife: 12,
-    defaultResalePercent: 15,
-    notes: 'Full wheel loaders and larger articulated loaders. Overbuilt for most landscape work, lower abuse per dollar of value, long competitive life. Usually operated by senior staff with more controlled usage.',
-    maintenancePercent: 4.0,
-    insurancePercent: 2.5,
-  },
-  {
-    category: 'Shop / Other',
-    defaultUsefulLife: 12,
-    defaultResalePercent: 10,
-    notes: 'These assets operate in controlled environments with low abuse and long service potential. Twelve years reflects extended usefulness without assuming indefinite life.',
-    maintenancePercent: 3,
-    insurancePercent: 1.0,
-  },
-  {
-    category: 'Snow Equipment',
-    defaultUsefulLife: 10,
-    defaultResalePercent: 25,
-    notes: 'Seasonal use combined with heavy salt exposure accelerates corrosion and wear. After ten seasons reliability declines and repair risk increases.',
-    maintenancePercent: 4,
-    insurancePercent: 1.5,
-  },
-  {
-    category: 'Trailer',
-    defaultUsefulLife: 15,
-    defaultResalePercent: 35,
-    notes: 'Trailers have simple mechanical systems and low technological obsolescence. Rust and structural degradation end their life, not complexity. Fifteen years is conservative for planning.',
-    maintenancePercent: 2,
-    insurancePercent: 1.0,
-  },
-  {
-    category: 'Vehicle (Commercial)',
-    defaultUsefulLife: 12,
-    defaultResalePercent: 15,
-    notes: 'Purpose-built work trucks: dump trucks, cab-and-chassis, service bodies, landscape trucks. Overbuilt for payload and jobsite use. Longer useful life due to commercial-grade construction.',
-    maintenancePercent: 3.5,
-    insurancePercent: 2.5,
-  },
-  {
-    category: 'Vehicle (Light-Duty)',
-    defaultUsefulLife: 8,
-    defaultResalePercent: 20,
-    notes: 'Pickups and mixed-use vehicles. High road mileage drives wear. Cycled sooner for reliability and image. Vehicle downtime impacts entire crews.',
-    maintenancePercent: 4,
-    insurancePercent: 2.0,
-  }
+  // ─── CONSTRUCTION (20 categories) ─────────────────────────────
+  { category: 'Construction — Attachment', division: 'Construction', defaultUsefulLife: 8, defaultResalePercent: 15, unit: 'Hours', defaultAllocation: 'operational', notes: 'Auger, breaker, hammer, broom, sweeper, brush cutter, bucket, 4-in-1, clam, cold planer, fork, pallet fork, grapple, root rake, landscape rake, stump grinder, tiller, trencher.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Construction — Compactor — Plate/Rammer', division: 'Construction', defaultUsefulLife: 8, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Forward plate, reversible plate, jumping jack, tamper, vibratory plate compactor. Wacker Neuson, Bomag, Weber MT, Mikasa.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Construction — Compactor — Roller', division: 'Construction', defaultUsefulLife: 10, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Ride-on roller, walk-behind roller, trench roller, single drum, double drum, smooth drum, padfoot. Wacker Neuson, Bomag, Hamm, Dynapac.', maintenancePercent: 3, insurancePercent: 1.0 },
+  { category: 'Construction — Concrete Mixer — Towable', division: 'Construction', defaultUsefulLife: 10, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Towable concrete mixer, mortar mixer. Multiquip, Crown, Imer, Gilson.', maintenancePercent: 3, insurancePercent: 1.0 },
+  { category: 'Construction — Concrete Vibrator', division: 'Construction', defaultUsefulLife: 7, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Concrete vibrator, flex shaft vibrator, backpack vibrator, internal vibrator. Multiquip, Wacker Neuson.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Construction — Excavator — Compact', division: 'Construction', defaultUsefulLife: 10, defaultResalePercent: 25, unit: 'Hours', defaultAllocation: 'operational', notes: 'Under 6,000 lb. Cat 301.7, 302, Kubota KX018, KX033, U17, U27, Bobcat E20, E26, E32, E35, Deere 17G, 26G, 30G, 35G, Takeuchi TB216, TB230. Mini excavator, micro excavator.', maintenancePercent: 5, insurancePercent: 1.5 },
+  { category: 'Construction — Excavator — Mini', division: 'Construction', defaultUsefulLife: 8, defaultResalePercent: 25, unit: 'Hours', defaultAllocation: 'operational', notes: '6,000–14,000 lb. Cat 305, 305.5, Kubota KX040, KX057, Bobcat E42, E50, E55, Deere 50G, 60G, Takeuchi TB250, TB260. Mid-size excavator.', maintenancePercent: 5, insurancePercent: 1.5 },
+  { category: 'Construction — Excavator — Standard', division: 'Construction', defaultUsefulLife: 12, defaultResalePercent: 25, unit: 'Hours', defaultAllocation: 'operational', notes: 'Over 14,000 lb. Cat 308, 309, 310, Kubota KX080, Deere 75G, 85G, Bobcat E85. Standard excavator.', maintenancePercent: 3.5, insurancePercent: 2.0 },
+  { category: 'Construction — Backhoe Loader', division: 'Construction', defaultUsefulLife: 10, defaultResalePercent: 20, unit: 'Hours', defaultAllocation: 'operational', notes: 'Cat 416, 420, 430, Deere 310, 410, Kubota B26, L47, Case 580, 590. TLB (tractor-loader-backhoe).', maintenancePercent: 4, insurancePercent: 2.0 },
+  { category: 'Construction — Compact Track Loader (CTL)', division: 'Construction', defaultUsefulLife: 7, defaultResalePercent: 25, unit: 'Hours', defaultAllocation: 'operational', notes: 'Compact track loader, CTL, tracked skid steer, rubber track loader. Cat 239, 249, 259, 279, 289, 299, Bobcat T450, T550, T595, T650, T770, T870, Deere 317G, 325G, 331G, 333G, Kubota SVL65, SVL75, SVL97.', maintenancePercent: 5.5, insurancePercent: 1.75 },
+  { category: 'Construction — Compact Utility (Stand-On)', division: 'Construction', defaultUsefulLife: 7, defaultResalePercent: 20, unit: 'Hours', defaultAllocation: 'operational', notes: 'Stand-on skid steer, mini skid steer, compact utility loader, walk-behind loader. Toro Dingo TX525, TX1000, TX2000, Ditch Witch SK600, SK800, SK1050, SK3000, Vermeer CTX50, CTX100, Bobcat MT55, MT85, MT100.', maintenancePercent: 6, insurancePercent: 1.0 },
+  { category: 'Construction — Loader — Skid Steer', division: 'Construction', defaultUsefulLife: 7, defaultResalePercent: 20, unit: 'Hours', defaultAllocation: 'operational', notes: 'Skid steer loader, wheeled skid steer. Bobcat S450, S510, S570, S590, S630, S650, S770, S850, Cat 226, 236, 242, 246, 262, 272, Deere 312GR, 314G, 316GR, 318G, 320G, 330G, 332G, Kubota SSV65, SSV75.', maintenancePercent: 5.5, insurancePercent: 1.75 },
+  { category: 'Construction — Loader — Telehandler', division: 'Construction', defaultUsefulLife: 10, defaultResalePercent: 20, unit: 'Hours', defaultAllocation: 'operational', notes: 'Telehandler, telescopic handler, reach forklift. JCB 505, 506, 507, 509, 510, Cat TH255, TH357, TH408, JLG, Genie, Skyjack.', maintenancePercent: 4, insurancePercent: 2.0 },
+  { category: 'Construction — Loader — Wheel Compact', division: 'Construction', defaultUsefulLife: 10, defaultResalePercent: 20, unit: 'Hours', defaultAllocation: 'operational', notes: 'Compact wheel loader, wheel loader, front-end loader, rubber tire loader. Cat 903, 906, 908, 910, 914, Kubota R430, R540, R640, Bobcat L28, L65, L85, Deere 204L, 244L, 304L, 324L.', maintenancePercent: 4, insurancePercent: 2.0 },
+  { category: 'Construction — Other', division: 'Construction', defaultUsefulLife: 5, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Uncategorized construction equipment. AI low-confidence fallback.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Construction — Saw — Cutoff/Demo', division: 'Construction', defaultUsefulLife: 5, defaultResalePercent: 10, unit: 'Hours', defaultAllocation: 'operational', notes: 'Cut-off saw, demo saw, chop saw, concrete saw handheld, power cutter. STIHL TS 420, TS 440, TS 500i, TS 700, TS 800, Husqvarna K770, K1270, K970.', maintenancePercent: 8, insurancePercent: 0.5 },
+  { category: 'Construction — Saw — Masonry/Tile', division: 'Construction', defaultUsefulLife: 7, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Masonry saw, tile saw, wet saw, paver saw, brick saw, block saw, table saw masonry. iQ Power Tools, MK Diamond, Husqvarna, Target, Norton Clipper.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Construction — Saw — Walk-Behind', division: 'Construction', defaultUsefulLife: 8, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Walk-behind saw, street saw, slab saw, flat saw, floor saw, concrete cutter. Husqvarna FS series, Multiquip, Diamond Products.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Construction — Sweeper — Walk-Behind', division: 'Construction', defaultUsefulLife: 7, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Walk-behind sweeper, power sweeper, push sweeper. Bissell, Karcher, Factory Cat. Parking lot, jobsite cleanup.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Construction — Tractor — Compact Utility', division: 'Construction', defaultUsefulLife: 15, defaultResalePercent: 25, unit: 'Hours', defaultAllocation: 'operational', notes: 'Compact utility tractor, CUT, sub-compact tractor, farm tractor. Kubota B series, BX series, L series, M series, Deere 1 Series, 2 Series, 3 Series, 4 Series, Mahindra, Kioti. PTO implements. Exceptional resale.', maintenancePercent: 3, insurancePercent: 1.5 },
+
+  // ─── FLEET (15 categories) ────────────────────────────────────
+  { category: 'Fleet — Other', division: 'Fleet', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Uncategorized fleet/vehicle. AI low-confidence fallback. User should recategorize.', maintenancePercent: 4, insurancePercent: 2.0 },
+  { category: 'Fleet — Trailer — Dump', division: 'Fleet', defaultUsefulLife: 12, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Dump trailer, hydraulic dump trailer. Big Tex, PJ Trailers, Load Trail, Sure-Trac, Diamond C.', maintenancePercent: 2, insurancePercent: 1.0 },
+  { category: 'Fleet — Trailer — Enclosed', division: 'Fleet', defaultUsefulLife: 12, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Enclosed trailer, cargo trailer, box trailer, tool trailer. Haulmark, Wells Cargo, Pace American, Continental Cargo, Look Trailers.', maintenancePercent: 2, insurancePercent: 1.0 },
+  { category: 'Fleet — Trailer — Equipment', division: 'Fleet', defaultUsefulLife: 15, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Equipment trailer, deckover trailer, flatbed trailer, heavy haul trailer, tilt trailer, gooseneck. Big Tex, PJ Trailers, Load Trail, Kaufman.', maintenancePercent: 2, insurancePercent: 1.0 },
+  { category: 'Fleet — Trailer — Landscape', division: 'Fleet', defaultUsefulLife: 12, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Landscape trailer, open trailer, utility trailer, lawn trailer, mowing trailer. Big Tex 35SA, 70PI, PJ U8, Load Trail. Most common landscape trailer.', maintenancePercent: 2, insurancePercent: 1.0 },
+  { category: 'Fleet — Truck — Cab Over', division: 'Fleet', defaultUsefulLife: 10, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Cab-over, landscape body truck, flatbed truck landscape, dovetail body. Isuzu NPR, NPR-HD, NQR, NRR, Hino L series, Fuso FE, Mitsubishi. Class 4–5 commercial truck.', maintenancePercent: 3.5, insurancePercent: 2.5 },
+  { category: 'Fleet — Truck — Crew Cab 1/2 Ton', division: 'Fleet', defaultUsefulLife: 8, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Half-ton truck, pickup truck, light duty truck. Ford F-150, Chevy Silverado 1500, GMC Sierra 1500, Ram 1500, Toyota Tundra, Nissan Titan. Foreman truck, sales vehicle.', maintenancePercent: 4, insurancePercent: 2.0 },
+  { category: 'Fleet — Truck — Crew Cab 3/4 Ton', division: 'Fleet', defaultUsefulLife: 10, defaultResalePercent: 25, unit: 'Days', defaultAllocation: 'operational', notes: 'Three-quarter ton truck, heavy duty pickup. Ford F-250, Super Duty, Chevy Silverado 2500, 2500HD, GMC Sierra 2500, Ram 2500. Primary crew truck.', maintenancePercent: 3.5, insurancePercent: 2.5 },
+  { category: 'Fleet — Truck — Crew Cab 1 Ton', division: 'Fleet', defaultUsefulLife: 10, defaultResalePercent: 25, unit: 'Days', defaultAllocation: 'operational', notes: 'One-ton truck, dually, DRW. Ford F-350, Chevy Silverado 3500, GMC Sierra 3500, Ram 3500. Heavy towing, plow truck, hauling.', maintenancePercent: 3.5, insurancePercent: 2.5 },
+  { category: 'Fleet — Truck — Dump Single Axle', division: 'Fleet', defaultUsefulLife: 10, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Single axle dump truck, medium duty dump, dump truck. Class 6–7. Ford F-650, F-750, International, Freightliner, Kenworth, Peterbilt.', maintenancePercent: 3.5, insurancePercent: 2.5 },
+  { category: 'Fleet — Truck — Dump Tandem', division: 'Fleet', defaultUsefulLife: 12, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Tandem axle dump truck, tri-axle dump, heavy dump. Class 8. Mack, Kenworth, Peterbilt, International, Freightliner.', maintenancePercent: 3.5, insurancePercent: 2.5 },
+  { category: 'Fleet — Truck — Flatbed/Stake', division: 'Fleet', defaultUsefulLife: 10, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Flatbed truck, stake body, stake truck, platform body. Ford F-450, F-550, F-600, Chevy 4500, 5500, Ram 4500, 5500, Isuzu.', maintenancePercent: 3.5, insurancePercent: 2.5 },
+  { category: 'Fleet — UTV', division: 'Fleet', defaultUsefulLife: 7, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'UTV, side-by-side, utility vehicle, Gator, RTV. John Deere Gator, Kubota RTV, RTV-X, Bobcat UV34, Polaris Ranger, Can-Am Defender, Kawasaki Mule.', maintenancePercent: 4, insurancePercent: 1.5 },
+  { category: 'Fleet — Van — Cargo', division: 'Fleet', defaultUsefulLife: 10, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Cargo van, work van, service van, sprinter van. Ford Transit, E-Series, Ram ProMaster, Mercedes Sprinter, Chevy Express, GMC Savana, Nissan NV.', maintenancePercent: 4, insurancePercent: 2.0 },
+  { category: 'Fleet — Van — Passenger', division: 'Fleet', defaultUsefulLife: 8, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Passenger van, crew van, 12-passenger van, 15-passenger van. Ford Transit Passenger, Chevy Express Passenger, Ram ProMaster Window. Crew transport.', maintenancePercent: 4, insurancePercent: 2.0 },
+
+  // ─── IRRIGATION (5 categories) ────────────────────────────────
+  { category: 'Irrigation — Other', division: 'Irrigation', defaultUsefulLife: 5, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Uncategorized irrigation equipment. AI low-confidence fallback. User should recategorize.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Irrigation — Trencher — Ride-On', division: 'Irrigation', defaultUsefulLife: 10, defaultResalePercent: 20, unit: 'Hours', defaultAllocation: 'operational', notes: 'Ride-on trencher, riding trencher, trenching machine. Ditch Witch RT45, RT80, RT100, RT125, Vermeer RTX250, RTX450, RTX550, Toro TRX-250, TRX-300.', maintenancePercent: 5, insurancePercent: 1.5 },
+  { category: 'Irrigation — Trencher — Walk-Behind', division: 'Irrigation', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Walk-behind trencher. Ditch Witch C16X, C24X, C30X, Barreto 712MT, 912HM, 1324D, Vermeer RT100, RT200. Chain/teeth consumable.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Irrigation — Underground — Directional Drill', division: 'Irrigation', defaultUsefulLife: 12, defaultResalePercent: 20, unit: 'Hours', defaultAllocation: 'operational', notes: 'HDD, horizontal directional drill, directional bore, boring machine. Ditch Witch JT5, JT9, JT10, JT20, JT24, JT25, JT30, Vermeer D7x11, D9x13, D20x22, D23x30.', maintenancePercent: 4, insurancePercent: 2.0 },
+  { category: 'Irrigation — Underground — Vibratory Plow', division: 'Irrigation', defaultUsefulLife: 10, defaultResalePercent: 20, unit: 'Hours', defaultAllocation: 'operational', notes: 'Vibratory plow, cable plow, pipe puller. Ditch Witch 410SX, VP30, Vermeer LM42, RTX250 with plow. Irrigation mainline installation.', maintenancePercent: 4, insurancePercent: 1.5 },
+
+  // ─── LAWN (25 categories) ─────────────────────────────────────
+  { category: 'Lawn — Aerator — Ride-On', division: 'Lawn', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Hours', defaultAllocation: 'operational', notes: 'Ride-on aerator. XT5, XT8, TurnAer, Ryan Lawnaire, Plugr PL855. Spring/fall seasonal aeration.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Lawn — Aerator — Towable', division: 'Lawn', defaultUsefulLife: 10, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Towable aerator, pull-behind aerator, PTO aerator. Ryan, Bluebird, Classen. Simple mechanics, ground-driven or PTO.', maintenancePercent: 3, insurancePercent: 1.0 },
+  { category: 'Lawn — Aerator — Walk-Behind', division: 'Lawn', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Walk-behind aerator, push aerator, core aerator. Ryan Lawnaire 28, IV, V, Bluebird Lawn Aerator, Classen SA-26, TA-26.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Lawn — Blower — Backpack', division: 'Lawn', defaultUsefulLife: 4, defaultResalePercent: 5, unit: 'Hours', defaultAllocation: 'operational', notes: 'Backpack blower, leaf blower. STIHL BR 350, BR 430, BR 500, BR 600, BR 700, BR 800, Husqvarna 550iBT, 570BTS, 580BTS, Echo PB-580, PB-770, PB-9010, RedMax EBZ8560.', maintenancePercent: 8, insurancePercent: 0.5 },
+  { category: 'Lawn — Blower — Wheeled', division: 'Lawn', defaultUsefulLife: 8, defaultResalePercent: 10, unit: 'Hours', defaultAllocation: 'operational', notes: 'Wheeled blower, walk-behind blower, push blower, parking lot blower. Billy Goat F601V, F902, F1302, Little Wonder 9160, 9270.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Lawn — Debris Loader — Truck Mount', division: 'Lawn', defaultUsefulLife: 10, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Debris loader, leaf loader, truck loader, leaf vacuum. Billy Goat DL series, Giant-Vac, Scag Windstorm. Fall leaf cleanup.', maintenancePercent: 4, insurancePercent: 1.0 },
+  { category: 'Lawn — Dethatcher — Walk-Behind', division: 'Lawn', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Dethatcher, power rake, thatch rake, lawn renovator. Ryan Ren-O-Thin, Bluebird PR22, Classen TR-20, Billy Goat.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Lawn — Edger — Bed Redefiner', division: 'Lawn', defaultUsefulLife: 5, defaultResalePercent: 10, unit: 'Hours', defaultAllocation: 'operational', notes: 'Bed redefiner, bed edger, landscape bed edger, turf edger. STIHL FBK-KM, Brown Bed Edger, E-Z Trench.', maintenancePercent: 6, insurancePercent: 0.5 },
+  { category: 'Lawn — Edger — Stick', division: 'Lawn', defaultUsefulLife: 3, defaultResalePercent: 5, unit: 'Hours', defaultAllocation: 'operational', notes: 'Stick edger, sidewalk edger, walk-behind edger, lawn edger. STIHL FC 56, FC 91, FC 96, Husqvarna, Echo PE-2620, Maruyama.', maintenancePercent: 8, insurancePercent: 0.5 },
+  { category: 'Lawn — Hedge Trimmer — Extended Reach', division: 'Lawn', defaultUsefulLife: 5, defaultResalePercent: 5, unit: 'Hours', defaultAllocation: 'operational', notes: 'Pole hedge trimmer, extended reach hedge trimmer, articulating hedge trimmer. STIHL HL 56, HL 92, HL 94, HL 100, Husqvarna 525HE, 535iFR.', maintenancePercent: 6, insurancePercent: 0.5 },
+  { category: 'Lawn — Hedge Trimmer — Standard', division: 'Lawn', defaultUsefulLife: 5, defaultResalePercent: 5, unit: 'Hours', defaultAllocation: 'operational', notes: 'Hedge trimmer, hedge clipper. STIHL HS 45, HS 56, HS 82, HS 87, Husqvarna 122HD60, 522HDR75S, Echo HC-2020, HC-2810, Redmax CHT220.', maintenancePercent: 6, insurancePercent: 0.5 },
+  { category: 'Lawn — Mower — Brush/Front Mount', division: 'Lawn', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Hours', defaultAllocation: 'operational', notes: 'Brush mower, flail mower, front mount mower, out-front mower, rough cut mower. Deere 1500, Exmark Navigator, Ventrac, Grasshopper, DR Power.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Lawn — Mower — Robotic Commercial', division: 'Lawn', defaultUsefulLife: 5, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Robotic mower, autonomous mower, robot mower. Husqvarna Automower CEORA, EPOS, 550, Robin Autopilot. Emerging.', maintenancePercent: 4, insurancePercent: 1.0 },
+  { category: 'Lawn — Mower — Stand-On', division: 'Lawn', defaultUsefulLife: 5, defaultResalePercent: 15, unit: 'Hours', defaultAllocation: 'operational', notes: 'Exmark Vertex, Wright Stander, Stander B, Stander ZK, Toro GrandStand, Scag V-Ride, V-Ride II.', maintenancePercent: 6, insurancePercent: 1.5 },
+  { category: 'Lawn — Mower — Walk-Behind 21"', division: 'Lawn', defaultUsefulLife: 4, defaultResalePercent: 5, unit: 'Hours', defaultAllocation: 'operational', notes: '21-inch mower, push mower, trim mower. Exmark Commercial 21, Honda HRC216, Toro Proline 21, Scag SW21, Billy Goat. High volume, short life.', maintenancePercent: 8, insurancePercent: 0.5 },
+  { category: 'Lawn — Mower — Walk-Behind 32"+', division: 'Lawn', defaultUsefulLife: 5, defaultResalePercent: 10, unit: 'Hours', defaultAllocation: 'operational', notes: 'Walk-behind mower, hydro walk-behind. Exmark Turf Tracer, Viking, Metro, Scag Hydro-Drive, Toro Mid-Size, Wright Velke.', maintenancePercent: 6, insurancePercent: 1.0 },
+  { category: 'Lawn — Mower — Wide Area', division: 'Lawn', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Hours', defaultAllocation: 'operational', notes: 'Wide area mower, wing mower, WAM, large property mower. Toro Groundsmaster 4000, 4100, 4300, Deere 1500, 1600, Jacobsen, Ventrac.', maintenancePercent: 4, insurancePercent: 1.5 },
+  { category: 'Lawn — Mower — Zero Turn', division: 'Lawn', defaultUsefulLife: 5, defaultResalePercent: 15, unit: 'Hours', defaultAllocation: 'operational', notes: 'Zero turn mower, ZTR, Z-mower. Exmark Lazer Z, Radius, Scag Turf Tiger, Cheetah, Deere Z900, Z700, Toro Z Master, Husqvarna MZ, PZ, Ferris IS, Wright ZTO.', maintenancePercent: 6, insurancePercent: 1.5 },
+  { category: 'Lawn — Other', division: 'Lawn', defaultUsefulLife: 5, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Uncategorized lawn/maintenance equipment. AI low-confidence fallback. User should recategorize.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Lawn — Overseeder', division: 'Lawn', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Overseeder, slit seeder, slice seeder, interseeder, power seeder. Turfco TriWave, JRCO, Ryan Mataway, Bluebird, Classen.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Lawn — Sod Cutter', division: 'Lawn', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Sod cutter, turf cutter, sod harvester. Ryan Jr Sod Cutter, Classen SC-18, Billy Goat SC181H.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Lawn — Spreader — Broadcast Push', division: 'Lawn', defaultUsefulLife: 5, defaultResalePercent: 5, unit: 'Days', defaultAllocation: 'operational', notes: 'Broadcast spreader, push spreader, rotary spreader, fertilizer spreader. Lesco, Earthway, Spyker, Agri-Fab.', maintenancePercent: 6, insurancePercent: 0.5 },
+  { category: 'Lawn — Spreader — Ride-On Applicator', division: 'Lawn', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Hours', defaultAllocation: 'operational', notes: 'Permagreen Triumph, Z-Spray Junior, Intermediate, Max, Turfco T3000, T5000. Combo spray + spread unit.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Lawn — Sprayer — Backpack', division: 'Lawn', defaultUsefulLife: 4, defaultResalePercent: 5, unit: 'Hours', defaultAllocation: 'operational', notes: 'Backpack sprayer, manual sprayer, pump sprayer, hand sprayer. STIHL SG 20, SG 71, Solo 425, 475, Chapin. Chemical corrosion limits life.', maintenancePercent: 8, insurancePercent: 0.5 },
+  { category: 'Lawn — Sprayer — Pull-Behind/Skid', division: 'Lawn', defaultUsefulLife: 8, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Pull-behind sprayer, skid sprayer, tow-behind sprayer, tank sprayer, boom sprayer, truck-mount sprayer. Fimco, NorthStar, Green Garde.', maintenancePercent: 4, insurancePercent: 1.0 },
+  { category: 'Lawn — Sprayer — Ride-On', division: 'Lawn', defaultUsefulLife: 7, defaultResalePercent: 15, unit: 'Hours', defaultAllocation: 'operational', notes: 'Ride-on sprayer. Toro Multi Pro 1750, 5800, Z-Spray. Lawn care treatment division.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Lawn — Trimmer', division: 'Lawn', defaultUsefulLife: 4, defaultResalePercent: 5, unit: 'Hours', defaultAllocation: 'operational', notes: 'String trimmer, weed trimmer, weed whacker, line trimmer, brushcutter, clearing saw. STIHL FS 56, FS 70, FS 91, FS 111, FS 131, FS 240, Husqvarna 525L, 535iFR, 555RXT, Echo SRM-2620, SRM-3020, RedMax BCZ260TS. Highest-turnover category.', maintenancePercent: 8, insurancePercent: 0.5 },
+
+  // ─── SHOP (8 categories) ──────────────────────────────────────
+  { category: 'Shop — Compressor', division: 'Shop', defaultUsefulLife: 12, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'overhead_only', notes: 'Air compressor, portable compressor, pancake compressor, wheelbarrow compressor, towable compressor. Ingersoll Rand, Sullair, Atlas Copco, Doosan, DeWalt.', maintenancePercent: 3, insurancePercent: 1.0 },
+  { category: 'Shop — Generator — Portable', division: 'Shop', defaultUsefulLife: 8, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'overhead_only', notes: 'Portable generator, inverter generator, jobsite generator. Honda EU series, EB series, Generac GP, iQ, DeWalt, Cat RP.', maintenancePercent: 4, insurancePercent: 1.0 },
+  { category: 'Shop — Generator — Towable', division: 'Shop', defaultUsefulLife: 12, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'overhead_only', notes: 'Towable generator, mobile generator, diesel generator. Doosan, Atlas Copco, Multiquip, Wacker Neuson, Cat.', maintenancePercent: 3, insurancePercent: 1.0 },
+  { category: 'Shop — Light Tower', division: 'Shop', defaultUsefulLife: 10, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'overhead_only', notes: 'Light tower, portable light, construction light, tower light, light plant. Doosan, Generac MLT, Wacker.', maintenancePercent: 3, insurancePercent: 1.0 },
+  { category: 'Shop — Other', division: 'Shop', defaultUsefulLife: 5, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'overhead_only', notes: 'Uncategorized shop/overhead equipment. AI low-confidence fallback. User should recategorize.', maintenancePercent: 3, insurancePercent: 1.0 },
+  { category: 'Shop — Pressure Washer', division: 'Shop', defaultUsefulLife: 6, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'overhead_only', notes: 'Pressure washer, power washer, steam cleaner. Simpson, Karcher, Hotsy, Mi-T-M, Landa, NorthStar. Cold and hot water units.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Shop — Pump', division: 'Shop', defaultUsefulLife: 7, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'overhead_only', notes: 'Pump, centrifugal pump. Honda, Wacker Neuson, Tsurumi, Multiquip. Jobsite dewatering, irrigation winterization.', maintenancePercent: 4, insurancePercent: 1.0 },
+  { category: 'Shop — Welder — Portable', division: 'Shop', defaultUsefulLife: 15, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'overhead_only', notes: 'Welder/generator, portable welder. Lincoln, Miller, Hobart. Metal repair, custom fabrication.', maintenancePercent: 2, insurancePercent: 1.0 },
+
+  // ─── SNOW (11 categories) ─────────────────────────────────────
+  { category: 'Snow — Attachment', division: 'Snow', defaultUsefulLife: 10, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Snow blade attachment, snow blower attachment, skid steer snow blade, CTL snow blower, loader snow pusher. For skid steer/CTL-mounted plowing and snow removal.', maintenancePercent: 4, insurancePercent: 1.0 },
+  { category: 'Snow — Blower — Walk-Behind', division: 'Snow', defaultUsefulLife: 8, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Snow blower, snowblower, two-stage snow blower, commercial snow blower. Honda HS, HSS series, Ariens Professional, Husqvarna, Toro Power Max.', maintenancePercent: 4, insurancePercent: 1.0 },
+  { category: 'Snow — Brine/Liquid Sprayer', division: 'Snow', defaultUsefulLife: 7, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Brine sprayer, liquid deicer, anti-icing system, pre-treatment sprayer, calcium chloride sprayer. Boss VSI, SnowEx Liqui Maxx, Henderson.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Snow — Other', division: 'Snow', defaultUsefulLife: 5, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Uncategorized snow/ice equipment. AI low-confidence fallback. User should recategorize.', maintenancePercent: 4, insurancePercent: 1.0 },
+  { category: 'Snow — Plow — Blade', division: 'Snow', defaultUsefulLife: 10, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Snow plow, straight blade plow, V-plow, V-blade plow, truck plow, pickup plow. Boss HTX, Sport Duty, Super Duty, DXT V-Plow, Western Pro, Pro Plus, MVP3, Fisher HD2, XtremeV, XV2, SnowEx.', maintenancePercent: 4, insurancePercent: 1.5 },
+  { category: 'Snow — Plow — Box/Wing', division: 'Snow', defaultUsefulLife: 10, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Box plow, box pusher, snow pusher, containment plow, expandable wing plow. Arctic Sectional, Pro-Tech Sno Pusher, Boss EXT, SK-R, Western Wideout, Fisher XLS, SnowEx Power Pusher.', maintenancePercent: 4, insurancePercent: 1.5 },
+  { category: 'Snow — Sidewalk Machine', division: 'Snow', defaultUsefulLife: 8, defaultResalePercent: 15, unit: 'Days', defaultAllocation: 'operational', notes: 'Sidewalk machine, sidewalk plow, sidewalk tractor, snow utility vehicle. Boss Snowrator, SR Mag, Ventrac SSV, Holder, Trackless.', maintenancePercent: 5, insurancePercent: 1.5 },
+  { category: 'Snow — Spreader — Drop', division: 'Snow', defaultUsefulLife: 8, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Drop spreader, precision spreader, walk-path spreader. Boss EXACT PATH, SnowEx Drop Pro. Precision sidewalk and narrow-path salt application.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Snow — Spreader — Hopper (V-Box)', division: 'Snow', defaultUsefulLife: 7, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'V-box spreader, hopper spreader, truck-bed spreader, bulk spreader. Boss VBX 8000, VBX 9000, Western Tornado, Fisher Poly-Caster, SnowEx V-Maxx. Salt corrosion shortens life.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Snow — Spreader — Tailgate', division: 'Snow', defaultUsefulLife: 5, defaultResalePercent: 5, unit: 'Days', defaultAllocation: 'operational', notes: 'Tailgate spreader. Boss TGS 300, TGS 600, TGS 800, TGS 1100, Western 250, 500, 1000, Fisher 500, 1000. Pickup-truck mount.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Snow — Spreader — Walk-Behind', division: 'Snow', defaultUsefulLife: 5, defaultResalePercent: 5, unit: 'Days', defaultAllocation: 'operational', notes: 'Walk-behind salt spreader, push salt spreader, ice melt spreader. Boss Walk-Behind, Earthway, Chapin, Meyer. Sidewalk ice treatment.', maintenancePercent: 5, insurancePercent: 0.5 },
+
+  // ─── TREE (5 categories) ──────────────────────────────────────
+  { category: 'Tree — Chainsaw', division: 'Tree', defaultUsefulLife: 5, defaultResalePercent: 5, unit: 'Hours', defaultAllocation: 'operational', notes: 'Chainsaw, chain saw, pole saw, pole pruner, arborist saw, tree saw. STIHL MS 170, MS 261, MS 362, MS 462, MS 500i, MS 661, HT 56, HT 103, HT 135, Husqvarna 440, 450, 460, 562XP, 572XP, T540XP, 525PT.', maintenancePercent: 8, insurancePercent: 0.5 },
+  { category: 'Tree — Chipper — Brush 6"', division: 'Tree', defaultUsefulLife: 10, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Small chipper, brush chipper, 6-inch chipper, residential chipper. Vermeer BC600, BC700, Bandit 65XP, 90XP, Morbark Beever, Altec DC610.', maintenancePercent: 4, insurancePercent: 1.5 },
+  { category: 'Tree — Chipper — Brush 12"+', division: 'Tree', defaultUsefulLife: 12, defaultResalePercent: 25, unit: 'Days', defaultAllocation: 'operational', notes: 'Large chipper, whole tree chipper, 12-inch chipper, 15-inch chipper, commercial chipper. Vermeer BC1000, BC1200, BC1500, BC1800, Bandit 200XP, 250XP, 255XP, Morbark 15, 20. Strong secondary market.', maintenancePercent: 3.5, insurancePercent: 2.0 },
+  { category: 'Tree — Log Splitter', division: 'Tree', defaultUsefulLife: 12, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Log splitter, wood splitter, hydraulic splitter, towable splitter. Brave, NorthStar, Champion, Husqvarna. Firewood processing.', maintenancePercent: 3, insurancePercent: 1.0 },
+  { category: 'Tree — Other', division: 'Tree', defaultUsefulLife: 5, defaultResalePercent: 10, unit: 'Days', defaultAllocation: 'operational', notes: 'Uncategorized tree/arborist equipment. AI low-confidence fallback. User should recategorize.', maintenancePercent: 5, insurancePercent: 1.0 },
+  { category: 'Tree — Stump Grinder', division: 'Tree', defaultUsefulLife: 10, defaultResalePercent: 20, unit: 'Days', defaultAllocation: 'operational', notes: 'Stump grinder, stump cutter, stump remover. Vermeer SC292, SC382, SC552, SC852, Carlton SP4012, SP7015, Bandit SG-40, SG-75, Rayco RG45, RG55, RG100. Teeth consumable.', maintenancePercent: 5, insurancePercent: 1.5 },
 ];
 
-export function getCategoryDefaults(category: EquipmentCategory): CategoryDefaults {
+// ─── Helper Functions ───────────────────────────────────────────
+
+/** Get unique division names in display order */
+export function getCategoryDivisions(): EquipmentDivision[] {
+  return ['Construction', 'Fleet', 'Irrigation', 'Lawn', 'Shop', 'Snow', 'Tree'];
+}
+
+/** Get categories filtered by division, sorted alphabetically */
+export function getCategoriesByDivision(division: EquipmentDivision): CategoryDefaults[] {
+  return categoryDefaults
+    .filter(c => c.division === division)
+    .sort((a, b) => a.category.localeCompare(b.category));
+}
+
+/** Get a category by name (case-insensitive partial match) */
+export function getCategoryByName(name: string): CategoryDefaults | undefined {
+  return categoryDefaults.find(c => c.category === name) 
+    || categoryDefaults.find(c => c.category.toLowerCase() === name.toLowerCase());
+}
+
+/** Get defaults for a category, with fallback to last entry */
+export function getCategoryDefaults(category: string): CategoryDefaults {
   return categoryDefaults.find(c => c.category === category) || categoryDefaults[categoryDefaults.length - 1];
 }

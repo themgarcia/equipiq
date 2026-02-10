@@ -6,25 +6,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-type EquipmentCategory = 
-  | 'Compaction (Heavy)'
-  | 'Compaction (Light)'
-  | 'Excavator – Compact (≤ 6 ton)'
-  | 'Excavator – Mid-Size (6–12 ton)'
-  | 'Excavator – Large (12+ ton)'
-  | 'Handheld Power Tools'
-  | 'Large Demo & Specialty Tools'
-  | 'Lawn (Commercial)'
-  | 'Lawn (Handheld)'
-  | 'Loader – Skid Steer Mini'
-  | 'Loader – Skid Steer'
-  | 'Loader – Mid-Size'
-  | 'Loader – Wheel / Large'
-  | 'Shop / Other'
-  | 'Snow Equipment'
-  | 'Trailer'
-  | 'Vehicle (Commercial)'
-  | 'Vehicle (Light-Duty)';
+// v3 taxonomy categories (92 categories across 7 divisions)
+const V3_CATEGORIES = [
+  "Construction — Attachment","Construction — Compactor — Plate/Rammer","Construction — Compactor — Roller","Construction — Concrete Mixer — Towable","Construction — Concrete Vibrator","Construction — Excavator — Compact","Construction — Excavator — Mini","Construction — Excavator — Standard","Construction — Backhoe Loader","Construction — Compact Track Loader (CTL)","Construction — Compact Utility (Stand-On)","Construction — Loader — Skid Steer","Construction — Loader — Telehandler","Construction — Loader — Wheel Compact","Construction — Other","Construction — Saw — Cutoff/Demo","Construction — Saw — Masonry/Tile","Construction — Saw — Walk-Behind","Construction — Sweeper — Walk-Behind","Construction — Tractor — Compact Utility",
+  "Fleet — Other","Fleet — Trailer — Dump","Fleet — Trailer — Enclosed","Fleet — Trailer — Equipment","Fleet — Trailer — Landscape","Fleet — Truck — Cab Over","Fleet — Truck — Crew Cab 1/2 Ton","Fleet — Truck — Crew Cab 3/4 Ton","Fleet — Truck — Crew Cab 1 Ton","Fleet — Truck — Dump Single Axle","Fleet — Truck — Dump Tandem","Fleet — Truck — Flatbed/Stake","Fleet — UTV","Fleet — Van — Cargo","Fleet — Van — Passenger",
+  "Irrigation — Other","Irrigation — Trencher — Ride-On","Irrigation — Trencher — Walk-Behind","Irrigation — Underground — Directional Drill","Irrigation — Underground — Vibratory Plow",
+  "Lawn — Aerator — Ride-On","Lawn — Aerator — Towable","Lawn — Aerator — Walk-Behind","Lawn — Blower — Backpack","Lawn — Blower — Wheeled","Lawn — Debris Loader — Truck Mount","Lawn — Dethatcher — Walk-Behind","Lawn — Edger — Bed Redefiner","Lawn — Edger — Stick","Lawn — Hedge Trimmer — Extended Reach","Lawn — Hedge Trimmer — Standard","Lawn — Mower — Brush/Front Mount","Lawn — Mower — Robotic Commercial","Lawn — Mower — Stand-On","Lawn — Mower — Walk-Behind 21\"","Lawn — Mower — Walk-Behind 32\"+","Lawn — Mower — Wide Area","Lawn — Mower — Zero Turn","Lawn — Other","Lawn — Overseeder","Lawn — Sod Cutter","Lawn — Spreader — Broadcast Push","Lawn — Spreader — Ride-On Applicator","Lawn — Sprayer — Backpack","Lawn — Sprayer — Pull-Behind/Skid","Lawn — Sprayer — Ride-On","Lawn — Trimmer",
+  "Shop — Compressor","Shop — Generator — Portable","Shop — Generator — Towable","Shop — Light Tower","Shop — Other","Shop — Pressure Washer","Shop — Pump","Shop — Welder — Portable",
+  "Snow — Attachment","Snow — Blower — Walk-Behind","Snow — Brine/Liquid Sprayer","Snow — Other","Snow — Plow — Blade","Snow — Plow — Box/Wing","Snow — Sidewalk Machine","Snow — Spreader — Drop","Snow — Spreader — Hopper (V-Box)","Snow — Spreader — Tailgate","Snow — Spreader — Walk-Behind",
+  "Tree — Chainsaw","Tree — Chipper — Brush 6\"","Tree — Chipper — Brush 12\"+","Tree — Log Splitter","Tree — Other","Tree — Stump Grinder",
+] as const;
+
+type EquipmentCategory = typeof V3_CATEGORIES[number];
 
 interface ExtractedEquipment {
   make: string;
@@ -165,25 +158,8 @@ For SEPARATE ASSETS:
 2. Each record should reference its source document(s) via sourceDocumentIndices
 
 CATEGORY CLASSIFICATION (REQUIRED):
-You MUST suggest a category for each piece of equipment. Valid categories:
-- "Compaction (Light)": Tamping rammers, vibratory rammers, jumping jacks, walk-behind plate compactors (Bartell, Wacker Neuson, Bomag handheld units)
-- "Compaction (Heavy)": Ride-on rollers, large plate compactors (500+ lbs), trench rollers
-- "Excavator – Compact (≤ 6 ton)": Mini excavators under 6 tons (Kubota KX, CAT 303, Bobcat E35)
-- "Excavator – Mid-Size (6–12 ton)": Medium excavators 6-12 tons
-- "Excavator – Large (12+ ton)": Large excavators over 12 tons
-- "Handheld Power Tools": Battery/gas powered hand tools, drills, demo saws
-- "Large Demo & Specialty Tools": Walk-behind concrete saws, stump grinders, core drills
-- "Lawn (Commercial)": Zero-turn mowers, stand-on mowers, walk-behind commercial mowers
-- "Lawn (Handheld)": String trimmers, blowers, edgers, hedge trimmers, chainsaws
-- "Loader – Skid Steer Mini": Ditch Witch, Vermeer, Toro Dingo mini skid steers
-- "Loader – Skid Steer": Wheeled skid steers, compact track loaders (Bobcat, CAT, Case)
-- "Loader – Mid-Size": Larger CTLs, smaller wheel loaders
-- "Loader – Wheel / Large": Full wheel loaders, articulated loaders
-- "Shop / Other": Generators, pressure washers, shop equipment, compressors
-- "Snow Equipment": Plows, spreaders, snow blowers, salt equipment
-- "Trailer": Equipment trailers, utility trailers, dump trailers
-- "Vehicle (Commercial)": Dump trucks, cab-and-chassis, service body trucks, F-450+
-- "Vehicle (Light-Duty)": Pickups, vans, SUVs, F-150/F-250/F-350
+You MUST suggest a category for each piece of equipment. Categories follow Division — Category — Segment naming. Valid categories:
+${V3_CATEGORIES.map(c => `- "${c}"`).join('\n')}
 
 YEAR EXTRACTION (CRITICAL):
 - "year" = the MODEL YEAR (manufacturing year)
@@ -219,25 +195,8 @@ Your task is to extract equipment information from the uploaded document. Look f
   - Buyout amount (for leases)
 
 CATEGORY CLASSIFICATION (REQUIRED):
-You MUST suggest a category for each piece of equipment. Valid categories:
-- "Compaction (Light)": Tamping rammers, vibratory rammers, jumping jacks, walk-behind plate compactors (Bartell, Wacker Neuson, Bomag handheld units)
-- "Compaction (Heavy)": Ride-on rollers, large plate compactors (500+ lbs), trench rollers
-- "Excavator – Compact (≤ 6 ton)": Mini excavators under 6 tons (Kubota KX, CAT 303, Bobcat E35)
-- "Excavator – Mid-Size (6–12 ton)": Medium excavators 6-12 tons
-- "Excavator – Large (12+ ton)": Large excavators over 12 tons
-- "Handheld Power Tools": Battery/gas powered hand tools, drills, demo saws
-- "Large Demo & Specialty Tools": Walk-behind concrete saws, stump grinders, core drills
-- "Lawn (Commercial)": Zero-turn mowers, stand-on mowers, walk-behind commercial mowers
-- "Lawn (Handheld)": String trimmers, blowers, edgers, hedge trimmers, chainsaws
-- "Loader – Skid Steer Mini": Ditch Witch, Vermeer, Toro Dingo mini skid steers
-- "Loader – Skid Steer": Wheeled skid steers, compact track loaders (Bobcat, CAT, Case)
-- "Loader – Mid-Size": Larger CTLs, smaller wheel loaders
-- "Loader – Wheel / Large": Full wheel loaders, articulated loaders
-- "Shop / Other": Generators, pressure washers, shop equipment, compressors
-- "Snow Equipment": Plows, spreaders, snow blowers, salt equipment
-- "Trailer": Equipment trailers, utility trailers, dump trailers
-- "Vehicle (Commercial)": Dump trucks, cab-and-chassis, service body trucks, F-450+
-- "Vehicle (Light-Duty)": Pickups, vans, SUVs, F-150/F-250/F-350
+You MUST suggest a category for each piece of equipment. Categories follow Division — Category — Segment naming. Valid categories:
+${V3_CATEGORIES.map(c => `- "${c}"`).join('\n')}
 
 YEAR EXTRACTION (CRITICAL - READ CAREFULLY):
 - "year" = the MODEL YEAR of the equipment (manufacturing year, what year the equipment IS)
@@ -334,28 +293,8 @@ const getToolDefinition = () => ({
               },
               suggestedCategory: {
                 type: ["string", "null"],
-                enum: [
-                  "Compaction (Heavy)",
-                  "Compaction (Light)",
-                  "Excavator – Compact (≤ 6 ton)",
-                  "Excavator – Mid-Size (6–12 ton)",
-                  "Excavator – Large (12+ ton)",
-                  "Handheld Power Tools",
-                  "Large Demo & Specialty Tools",
-                  "Lawn (Commercial)",
-                  "Lawn (Handheld)",
-                  "Loader – Skid Steer Mini",
-                  "Loader – Skid Steer",
-                  "Loader – Mid-Size",
-                  "Loader – Wheel / Large",
-                  "Shop / Other",
-                  "Snow Equipment",
-                  "Trailer",
-                  "Vehicle (Commercial)",
-                  "Vehicle (Light-Duty)",
-                  null
-                ],
-                description: "Suggested equipment category based on make/model analysis"
+                enum: [...V3_CATEGORIES, null],
+                description: "Suggested equipment category from v3 taxonomy"
               },
               sourceDocumentIndices: {
                 type: "array",

@@ -6,31 +6,25 @@ export type PurchaseCondition = 'new' | 'used';
 
 export type AllocationType = 'operational' | 'overhead_only' | 'owner_perk';
 
-export type EquipmentCategory = 
-  | 'Compaction (Heavy)'
-  | 'Compaction (Light)'
-  | 'Excavator – Compact (≤ 6 ton)'
-  | 'Excavator – Mid-Size (6–12 ton)'
-  | 'Excavator – Large (12+ ton)'
-  | 'Handheld Power Tools'
-  | 'Large Demo & Specialty Tools'
-  | 'Lawn (Commercial)'
-  | 'Lawn (Handheld)'
-  | 'Loader – Skid Steer Mini'
-  | 'Loader – Skid Steer'
-  | 'Loader – Mid-Size'
-  | 'Loader – Wheel / Large'
-  | 'Shop / Other'
-  | 'Snow Equipment'
-  | 'Trailer'
-  | 'Vehicle (Commercial)'
-  | 'Vehicle (Light-Duty)';
+// v3 taxonomy: 92 categories across 7 divisions — too large for a union type
+export type EquipmentCategory = string;
+
+export type EquipmentDivision = 'Construction' | 'Fleet' | 'Irrigation' | 'Lawn' | 'Shop' | 'Snow' | 'Tree';
+
+export type UnitType = 'Hours' | 'Days';
+
+export type DefaultAllocation = 'operational' | 'overhead_only';
 
 export interface CategoryDefaults {
   category: EquipmentCategory;
+  division: EquipmentDivision;
   defaultUsefulLife: number;
   defaultResalePercent: number;
+  unit: UnitType;
+  defaultAllocation: DefaultAllocation;
   notes: string;
+  maintenancePercent: number;
+  insurancePercent: number;
 }
 
 // Entry source for tracking how equipment was added
