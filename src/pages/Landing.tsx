@@ -223,6 +223,7 @@ export default function Landing() {
 
   // Totals
   const totalAnnualLoss = unbilledDepreciation + lostOverhead + lostProfit + insuranceWaste;
+  const totalLifetimeLoss = totalAnnualLoss * usefulLife;
   const perJobLoss = totalAnnualLoss / jobsPerYear;
 
   // Mobile menu state
@@ -603,7 +604,7 @@ export default function Landing() {
                   </div>
                 </div>
                 
-                {/* Total Loss */}
+                {/* Total Annual Loss */}
                 <div className="text-center p-4 bg-destructive/15 rounded-lg border border-destructive/30">
                   <p className="text-sm text-muted-foreground mb-1">
                     Total Annual Loss
@@ -614,10 +615,24 @@ export default function Landing() {
                   <p className="text-sm text-muted-foreground mt-2">
                     <span className="font-medium text-foreground">{formatCurrency(perJobLoss)}</span> per job (est.)
                   </p>
-                  <p className="text-xs text-muted-foreground/70 mt-3">
-                    Estimates based on your inputs. Actual recovery depends on your costing methods and billing practices.
+                </div>
+
+                {/* Total Lifetime Loss */}
+                <div className="text-center p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Total Loss Over {usefulLife} Years
+                  </p>
+                  <p className="text-3xl font-bold text-destructive font-mono">
+                    {formatCurrency(totalLifetimeLoss)}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    That's {usefulLife} years of unrecovered costs eating into your profit.
                   </p>
                 </div>
+
+                <p className="text-xs text-muted-foreground/70 text-center">
+                  Estimates based on your inputs. Actual recovery depends on your costing methods and billing practices.
+                </p>
               </div>
             </div>
           </div>
