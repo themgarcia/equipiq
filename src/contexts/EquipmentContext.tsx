@@ -35,17 +35,9 @@ interface EquipmentContextType {
 
 const EquipmentContext = createContext<EquipmentContextType | undefined>(undefined);
 
-// Legacy category mapping for renamed categories
-const LEGACY_CATEGORY_MAP: Record<string, string> = {
-  'Loader (Mini-Skid)': 'Loader – Skid Steer Mini',
-  'Loader (Skid / CTL)': 'Loader – Skid Steer',
-  'Loader (Mid-Size)': 'Loader – Mid-Size',
-  'Loader (Large / Wheel)': 'Loader – Wheel / Large',
-};
-
 // Helper to convert DB record to Equipment type
 function dbToEquipment(record: any): Equipment {
-  const category = LEGACY_CATEGORY_MAP[record.category] || record.category;
+  const category = record.category;
   return {
     id: record.id,
     name: record.name,
