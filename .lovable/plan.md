@@ -1,56 +1,37 @@
 
 
-# P0 Step 2: Allocation Flag UI (Three Cards)
+# Add Lifetime Loss to the Landing Page Calculator
 
 ## What Changes
 
-Replace the technical "Allocation Type" dropdown with three intuitive selectable cards under the plain-language question: **"Do you charge clients for this equipment?"**
+Add a "Total Loss Over Useful Life" figure to the calculator results, multiplying the annual loss by the useful life the user already entered. This makes the financial impact visceral -- seeing a loss compounded over 8 years hits harder than a single year.
 
-## The Three Options
+## How It Works
 
-1. **Yes -- Field Equipment** (maps to `operational`, Truck icon)
-   - "Goes on estimates. Recovered through COGS and overhead."
-   - This is the default for most equipment.
+The `usefulLife` state variable already exists (line 201, default 8 years). The calculation is simply:
 
-2. **No -- Overhead** (maps to `overhead_only`, Building2 icon)
-   - "Business cost not tied to specific jobs. Recovered through overhead budget."
-   - Shop tools, office equipment, general fleet vehicles, etc.
+```
+totalLifetimeLoss = totalAnnualLoss * usefulLife
+```
 
-3. **No -- Owner Perk** (maps to `owner_perk`, UserCircle icon)
-   - "Personal use on company books. Included in insurance but excluded from job costing and FMS export."
-   - The contractor's spouse's vehicle, personal-use equipment that lives on the P&L and insurance policy but shouldn't touch operational budgets. Comes out of net profit.
+## UI Update
 
-## UI Design
+Below the existing "Total Annual Loss" card (lines 607-620), add a second result card with a slightly different visual treatment:
 
-- Three cards in a responsive grid (3 columns on desktop, stacked on mobile)
-- Selected state: `border-primary bg-primary/5`
-- Each card shows icon, title, and one-line description
-- When `owner_perk` is selected, COGS % is disabled and set to 0 (existing behavior preserved)
-- COGS % and Overhead % fields remain below the cards (unchanged)
+- Background: `bg-destructive/10` with `border-destructive/20` (slightly softer than the annual card to create hierarchy)
+- Label: **"Total Loss Over {usefulLife} Years"**
+- Value: The lifetime loss in large bold text (matching the annual card's `text-3xl font-bold text-destructive font-mono` style)
+- Subtitle: "That's {usefulLife} years of unrecovered costs eating into your profit."
 
 ## What Stays the Same
 
-- No database or schema changes
-- No changes to calculations, FMS Export, Dashboard, or EquipmentContext
-- The `owner_perk` exclusion logic throughout the app is untouched
+- No new state or inputs -- uses existing `usefulLife` slider value
+- Annual loss card, per-job estimate, and disclaimer text remain unchanged
+- No changes to any other page or component
 
-## Technical Details
+## File Modified
 
-### Files Modified
-
-**1. `src/components/EquipmentForm.tsx`** (Add Equipment modal)
-- Add `Truck`, `Building2`, `UserCircle` to lucide-react imports
-- Replace the Allocation section (lines 374-428) with:
-  - Header: "LMN Allocation"
-  - Label: "Do you charge clients for this equipment?"
-  - Three selectable cards in `grid-cols-1 sm:grid-cols-3`
-  - Keep COGS % and Overhead % inputs below, unchanged
-
-**2. `src/components/EquipmentFormContent.tsx`** (Edit form in side sheet)
-- Add `Truck`, `Building2`, `UserCircle` to lucide-react imports
-- Replace the Allocation section (lines 355-409) with the same three-card layout
-  - Use `grid-cols-1 md:grid-cols-3` (adapts to sheet width)
-  - Keep COGS % and Overhead % inputs below, unchanged
-
-Both files already define the `allocationTypes` array (lines 35-39) which will be replaced with a richer structure containing icons and updated descriptions.
+**`src/pages/Landing.tsx`**
+- Add one computed variable: `totalLifetimeLoss = totalAnnualLoss * usefulLife` (near line 226)
+- Insert a new result card after line 620 (after the Total Annual Loss card's closing div)
 
