@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Package, DollarSign, TrendingUp } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp, Wand2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { UserActivityTab } from '@/components/admin/UserActivityTab';
 import { ErrorLogTab } from '@/components/admin/ErrorLogTab';
 import { EntrySourcesTab } from '@/components/admin/EntrySourcesTab';
@@ -18,6 +19,9 @@ import { useDeviceType } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MobileTabSelect } from '@/components/MobileTabSelect';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
 import { 
   getIndustryLabel, 
   getFieldEmployeesLabel, 
@@ -50,6 +54,10 @@ export default function AdminDashboard() {
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [loadingActivityLog, setLoadingActivityLog] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
+  const [migrationOpen, setMigrationOpen] = useState(false);
+  const [migrating, setMigrating] = useState(false);
+  const [migrationResults, setMigrationResults] = useState<Array<{ id: string; name: string; oldCategory: string; newCategory: string }> | null>(null);
+  const [migrationMessage, setMigrationMessage] = useState('');
   const { toast } = useToast();
   const deviceType = useDeviceType();
   const isMobileOrTablet = deviceType !== 'desktop';
@@ -502,6 +510,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const runCategoryMigration = async () => {
+    setMigrating(true);
+    setMigrationResults(null);
+    setMigrationMessage('');
+    try {
+      const { data, error } = await supabase.functions.invoke('migrate-categories');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setMigrationResults(data.results || []);
+      setMigrationMessage(data.message || 'Migration complete');
+      toast({
+        title: "Category migration complete",
+        description: data.message,
+      });
+    } catch (error: any) {
+      console.error('Migration error:', error);
+      toast({
+        title: "Migration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setMigrationMessage(`Error: ${error.message}`);
+    } finally {
+      setMigrating(false);
+    }
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -525,10 +560,82 @@ export default function AdminDashboard() {
     <Layout>
       <div className="p-4 md:p-6 lg:p-8 space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Platform analytics and user management</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Platform analytics and user management</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMigrationOpen(true)}
+            className="shrink-0"
+          >
+            <Wand2 className="h-4 w-4 mr-2" />
+            Migrate Categories
+          </Button>
         </div>
+
+        {/* Category Migration Dialog */}
+        <Dialog open={migrationOpen} onOpenChange={setMigrationOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>AI Category Migration</DialogTitle>
+              <DialogDescription>
+                This will use AI to automatically re-categorize equipment items that use old category names 
+                into the v3 taxonomy. It affects all users' equipment.
+              </DialogDescription>
+            </DialogHeader>
+
+            {!migrationResults && !migrating && (
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setMigrationOpen(false)}>Cancel</Button>
+                <Button onClick={runCategoryMigration}>
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Run Migration
+                </Button>
+              </DialogFooter>
+            )}
+
+            {migrating && (
+              <div className="space-y-3 py-4">
+                <p className="text-sm text-muted-foreground">AI is analyzing equipment and assigning categories...</p>
+                <Progress value={undefined} className="animate-pulse" />
+              </div>
+            )}
+
+            {migrationMessage && !migrating && (
+              <p className="text-sm font-medium">{migrationMessage}</p>
+            )}
+
+            {migrationResults && migrationResults.length > 0 && (
+              <div className="border rounded-md overflow-auto max-h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Old Category</TableHead>
+                      <TableHead>New Category</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {migrationResults.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="font-medium text-sm">{r.name}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{r.oldCategory}</TableCell>
+                        <TableCell className="text-sm">{r.newCategory}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {migrationResults && migrationResults.length === 0 && !migrating && (
+              <p className="text-sm text-muted-foreground py-4">No items needed migration — all equipment already uses v3 categories.</p>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
