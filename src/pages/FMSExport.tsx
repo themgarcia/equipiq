@@ -3,20 +3,21 @@ import { useEquipment } from '@/contexts/EquipmentContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { Layout } from '@/components/Layout';
-import { toFMSExport, formatCurrency } from '@/lib/calculations';
+import { formatCurrency } from '@/lib/calculations';
+import { rollupEquipment, rollupToCSV, RollupLine, RollupTotals } from '@/lib/rollupEngine';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   Table, 
   TableBody, 
   TableCell, 
   TableHead, 
   TableHeader, 
-  TableRow 
+  TableRow,
+  TableFooter, 
 } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
-import { Copy, Download, Check, FileSpreadsheet, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, Construction, ExternalLink } from 'lucide-react';
-import { FMSExportData } from '@/types/equipment';
+import { Copy, Download, Check, FileSpreadsheet, ChevronRight, Construction, ExternalLink, Truck, Building2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -60,206 +61,216 @@ const fmsOptions = [
   { value: 'aspire', label: 'Aspire' },
 ];
 
-type ColumnKey = keyof FMSExportData;
-type SortDirection = 'asc' | 'desc';
+// ─── Rollup Table Component ────────────────────────────────────
 
-interface ColumnConfig {
-  key: ColumnKey;
-  label: string;
-  format: (value: FMSExportData[ColumnKey]) => string;
-  align: 'left' | 'right';
-  sortType: 'string' | 'number';
-  hideOnMobile?: boolean;
+interface RollupSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  lines: RollupLine[];
+  totals: RollupTotals;
+  showType: boolean;
+  copiedCell: string | null;
+  onCopyCell: (id: string, value: string) => void;
+  onSelectLine: (line: RollupLine) => void;
+  isMobile: boolean;
+  emptyMessage: string;
+  emptyHint: string;
 }
 
-const columns: ColumnConfig[] = [
-  { 
-    key: 'equipmentName', 
-    label: 'Equipment Name', 
-    format: (v) => String(v),
-    align: 'left',
-    sortType: 'string'
-  },
-  { 
-    key: 'replacementValue', 
-    label: 'Replacement Value', 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number'
-  },
-  { 
-    key: 'usefulLife', 
-    label: 'Useful Life (yrs)', 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number'
-  },
-  { 
-    key: 'expectedValueAtEndOfLife', 
-    label: 'End Value', 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number',
-    hideOnMobile: true,
-  },
-  { 
-    key: 'cogsAllocatedCost', 
-    label: 'COGS $', 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number',
-    hideOnMobile: true,
-  },
-  { 
-    key: 'overheadAllocatedCost', 
-    label: 'OH $', 
-    format: (v) => String(v),
-    align: 'right',
-    sortType: 'number',
-    hideOnMobile: true,
-  },
-];
+function RollupSection({ 
+  title, icon, lines, totals, showType, copiedCell, onCopyCell, onSelectLine, isMobile, emptyMessage, emptyHint 
+}: RollupSectionProps) {
+  if (lines.length === 0) {
+    return (
+      <div className="bg-card border rounded-lg p-8 text-center">
+        <p className="text-muted-foreground font-medium">{emptyMessage}</p>
+        <p className="text-sm text-muted-foreground mt-1">{emptyHint}</p>
+      </div>
+    );
+  }
+
+  const CopyButton = ({ cellId, value }: { cellId: string; value: string }) => {
+    const isCopied = copiedCell === cellId;
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-5 w-5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-primary/10 shrink-0"
+        onClick={(e) => { e.stopPropagation(); onCopyCell(cellId, value); }}
+        title="Copy value"
+      >
+        {isCopied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+      </Button>
+    );
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        {icon}
+        <h3 className="font-semibold text-lg">{title}</h3>
+        <Badge variant="secondary" className="ml-1">{totals.totalQty} items</Badge>
+      </div>
+      
+      <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
+        {isMobile ? (
+          <div className="divide-y">
+            {lines.map((line, idx) => (
+              <div 
+                key={`${line.category}-${line.financingType}-${idx}`}
+                className="flex items-center justify-between p-4 hover:bg-muted/30 cursor-pointer"
+                onClick={() => onSelectLine(line)}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium truncate">{line.category}</p>
+                    {showType && (
+                      <Badge variant={line.financingType === 'leased' ? 'outline' : 'secondary'} className="text-[10px] shrink-0">
+                        {line.financingType === 'leased' ? 'Leased' : 'Owned'}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Qty: {line.qty} · {formatCurrency(line.totalAnnualRecovery)}/yr
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-2" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="table-header-cell">Category</TableHead>
+                  <TableHead className="table-header-cell text-right">Qty</TableHead>
+                  <TableHead className="table-header-cell text-right">Avg Replacement</TableHead>
+                  <TableHead className="table-header-cell text-right">Life (Yrs)</TableHead>
+                  <TableHead className="table-header-cell text-right hidden md:table-cell">Avg End Value</TableHead>
+                  {showType && <TableHead className="table-header-cell text-center">Type</TableHead>}
+                  <TableHead className="table-header-cell text-center hidden md:table-cell">Unit</TableHead>
+                  <TableHead className="table-header-cell text-right">Annual Recovery</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lines.map((line, idx) => {
+                  const lineId = `${line.category}-${line.financingType}-${idx}`;
+                  return (
+                    <TableRow key={lineId} className="group">
+                      <TableCell className="font-medium">
+                        <div>
+                          <span>{line.category}</span>
+                          {line.qty > 1 && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                              {line.itemNames.join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span>{line.qty}</span>
+                          <CopyButton cellId={`${lineId}-qty`} value={String(line.qty)} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span>{formatCurrency(line.avgReplacementValue)}</span>
+                          <CopyButton cellId={`${lineId}-rv`} value={String(Math.round(line.avgReplacementValue))} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span>{Math.round(line.avgUsefulLife)}</span>
+                          <CopyButton cellId={`${lineId}-life`} value={String(Math.round(line.avgUsefulLife))} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums hidden md:table-cell">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span>{formatCurrency(line.avgEndValue)}</span>
+                          <CopyButton cellId={`${lineId}-ev`} value={String(Math.round(line.avgEndValue))} />
+                        </div>
+                      </TableCell>
+                      {showType && (
+                        <TableCell className="text-center">
+                          <Badge variant={line.financingType === 'leased' ? 'outline' : 'secondary'} className="text-[10px]">
+                            {line.financingType === 'leased' ? 'Leased' : 'Owned'}
+                          </Badge>
+                        </TableCell>
+                      )}
+                      <TableCell className="text-center hidden md:table-cell">
+                        <Badge variant="outline" className="text-[10px]">{line.unit}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums font-medium">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span>{formatCurrency(line.totalAnnualRecovery)}</span>
+                          <CopyButton cellId={`${lineId}-ar`} value={String(Math.round(line.totalAnnualRecovery))} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+              <TableFooter>
+                <TableRow className="bg-muted/30 font-semibold">
+                  <TableCell>Total</TableCell>
+                  <TableCell className="text-right font-mono-nums">{totals.totalQty}</TableCell>
+                  <TableCell className="text-right" />
+                  <TableCell className="text-right" />
+                  <TableCell className="text-right hidden md:table-cell" />
+                  {showType && <TableCell />}
+                  <TableCell className="hidden md:table-cell" />
+                  <TableCell className="text-right font-mono-nums">{formatCurrency(totals.totalAnnualRecovery)}</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ────────────────────────────────────────────
 
 export default function FMSExport() {
   const { calculatedEquipment } = useEquipment();
   const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'phone' || deviceType === 'tablet';
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
-  const [sortColumn, setSortColumn] = useState<ColumnKey>('equipmentName');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [selectedEquipmentForSheet, setSelectedEquipmentForSheet] = useState<{ id: string; data: FMSExportData } | null>(null);
+  const [selectedLine, setSelectedLine] = useState<RollupLine | null>(null);
   const [activeTab, setActiveTab] = useState('lmn');
 
-  // Mark onboarding step on mount
   useEffect(() => {
     markStepComplete('step_fms_exported');
   }, [markStepComplete]);
 
-  const activeEquipment = calculatedEquipment.filter(e => e.status === 'Active');
-  
-  const exportData = useMemo(() => {
-    const data = activeEquipment.map(e => ({
-      id: e.id,
-      data: toFMSExport(e) // Attachments already included in replacementCostUsed
-    }));
-    
-    const columnConfig = columns.find(c => c.key === sortColumn);
-    if (!columnConfig) return data;
-    
-    return [...data].sort((a, b) => {
-      const aVal = a.data[sortColumn];
-      const bVal = b.data[sortColumn];
-      
-      let comparison = 0;
-      if (columnConfig.sortType === 'string') {
-        comparison = String(aVal).localeCompare(String(bVal));
-      } else {
-        comparison = (Number(aVal) || 0) - (Number(bVal) || 0);
-      }
-      
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
-  }, [activeEquipment, sortColumn, sortDirection]);
+  const rollupResult = useMemo(() => {
+    return rollupEquipment(calculatedEquipment);
+  }, [calculatedEquipment]);
 
-  const handleSort = (columnKey: ColumnKey) => {
-    if (sortColumn === columnKey) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortColumn(columnKey);
-      setSortDirection('asc');
-    }
-  };
-
-  const getSortIcon = (columnKey: ColumnKey) => {
-    if (sortColumn !== columnKey) {
-      return <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />;
-    }
-    return sortDirection === 'asc' 
-      ? <ArrowUp className="h-3 w-3 text-primary" />
-      : <ArrowDown className="h-3 w-3 text-primary" />;
-  };
-
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  const toggleAll = () => {
-    if (selectedIds.size === exportData.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(exportData.map(e => e.id)));
-    }
-  };
-
-  const copyCell = async (id: string, columnKey: ColumnKey, value: FMSExportData[ColumnKey]) => {
-    const cellId = `${id}-${columnKey}`;
-    
-    // For currency columns, round to nearest dollar (no decimals)
-    let copyValue: string;
-    if (columnKey === 'equipmentName' || columnKey === 'usefulLife') {
-      copyValue = String(value);
-    } else {
-      copyValue = String(Math.round(Number(value)));
-    }
-    
-    await navigator.clipboard.writeText(copyValue);
-    
-    setCopiedCell(cellId);
+  const copyCell = async (id: string, value: string) => {
+    await navigator.clipboard.writeText(value);
+    setCopiedCell(id);
     setTimeout(() => setCopiedCell(null), 1500);
   };
 
   const exportCSV = () => {
-    const headers = columns.map(c => c.label);
-
-    const dataToExport = selectedIds.size > 0 
-      ? exportData.filter(e => selectedIds.has(e.id))
-      : exportData;
-
-    const csvContent = [
-      headers.join(','),
-      ...dataToExport.map(e => [
-        `"${e.data.equipmentName}"`,
-        Math.round(e.data.replacementValue),
-        e.data.usefulLife,
-        Math.round(e.data.expectedValueAtEndOfLife),
-        e.data.cogsAllocatedCost > 0 ? Math.round(e.data.cogsAllocatedCost) : '',
-        e.data.overheadAllocatedCost > 0 ? Math.round(e.data.overheadAllocatedCost) : '',
-      ].join(','))
-    ].join('\n');
-
+    const csvContent = rollupToCSV(rollupResult);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `fms-equipment-export-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `lmn-equipment-export-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
+    URL.revokeObjectURL(link.href);
 
+    const totalLines = rollupResult.fieldLines.length + rollupResult.overheadLines.length;
     toast({
       title: 'CSV exported',
-      description: `${dataToExport.length} rows exported successfully`,
+      description: `${totalLines} category lines exported (${rollupResult.fieldTotals.totalQty + rollupResult.overheadTotals.totalQty} total items)`,
     });
-  };
-
-  const formatCellValue = (key: ColumnKey, value: FMSExportData[ColumnKey]) => {
-    if (key === 'equipmentName') return String(value);
-    if (key === 'usefulLife') return String(value);
-    
-    // For COGS/OH columns, show blank if $0
-    if (key === 'cogsAllocatedCost' || key === 'overheadAllocatedCost') {
-      const numValue = value as number;
-      return numValue > 0 ? formatCurrency(numValue) : '';
-    }
-    
-    return formatCurrency(value as number);
   };
 
   return (
@@ -295,7 +306,7 @@ export default function FMSExport() {
           )}
 
           {/* LMN Tab - Active Integration */}
-          <TabsContent value="lmn" className="space-y-6">
+          <TabsContent value="lmn" className="space-y-8">
             {/* Export Button */}
             <div className="flex justify-end">
               <Button onClick={exportCSV} className="gap-2">
@@ -310,190 +321,108 @@ export default function FMSExport() {
               <div>
                 <h3 className="font-semibold mb-1">Copy Values for LMN</h3>
                 <p className="text-sm text-muted-foreground">
-                  Most FMS tools require pasting one field at a time. Click the <Copy className="h-3 w-3 inline mx-1" /> 
-                  button next to any value to copy it to your clipboard. Click column headers to sort. Replacement value includes equipment + attachments.
+                  Equipment is rolled up by category to match how LMN expects data. Click <Copy className="h-3 w-3 inline mx-1" /> to copy individual values.
+                  Items in the same category are combined into one line with averaged values. Replacement values include attachments.
                 </p>
               </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
-              {isMobile ? (
-                /* Mobile Card View */
-                <div className="divide-y">
-                  {exportData.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No active equipment to export. Add equipment and set status to "Active".
-                    </div>
-                  ) : (
-                    exportData.map(({ id, data }) => (
-                      <div 
-                        key={id}
-                        className="flex items-center justify-between p-4 hover:bg-muted/30 cursor-pointer"
-                        onClick={() => setSelectedEquipmentForSheet({ id, data })}
-                      >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <Checkbox 
-                            checked={selectedIds.has(id)}
-                            onCheckedChange={() => toggleSelect(id)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <div className="min-w-0">
-                            <p className="font-medium truncate">{data.equipmentName}</p>
-                            <p className="text-sm text-muted-foreground font-mono-nums">
-                              {formatCurrency(data.replacementValue)}
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground ml-2" />
-                      </div>
-                    ))
-                  )}
-                </div>
-              ) : (
-                /* Desktop Table View */
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead className="w-[50px]">
-                          <Checkbox 
-                            checked={selectedIds.size === exportData.length && exportData.length > 0}
-                            onCheckedChange={toggleAll}
-                          />
-                        </TableHead>
-                        {columns.map(col => (
-                          <TableHead 
-                            key={col.key} 
-                            className={`table-header-cell cursor-pointer hover:bg-muted/70 transition-colors ${col.align === 'right' ? 'text-right' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
-                            onClick={() => handleSort(col.key)}
-                          >
-                            <div className={`flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
-                              <span>{col.label}</span>
-                              {getSortIcon(col.key)}
-                            </div>
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {exportData.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={columns.length + 1} className="text-center py-8 text-muted-foreground">
-                            No active equipment to export. Add equipment and set status to "Active".
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        exportData.map(({ id, data }) => (
-                          <TableRow key={id} className="group">
-                            <TableCell>
-                              <Checkbox 
-                                checked={selectedIds.has(id)}
-                                onCheckedChange={() => toggleSelect(id)}
-                              />
-                            </TableCell>
-                            {columns.map(col => {
-                              const cellId = `${id}-${col.key}`;
-                              const isCopied = copiedCell === cellId;
-                              return (
-                                <TableCell 
-                                  key={col.key}
-                                  className={`${col.align === 'right' ? 'text-right' : ''} ${col.key === 'equipmentName' ? 'font-medium' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
-                                >
-                                  <div className={`flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
-                                    <span className={col.align === 'right' ? 'font-mono-nums' : ''}>
-                                      {formatCellValue(col.key, data[col.key])}
-                                    </span>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-5 w-5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-primary/10 shrink-0"
-                                      onClick={() => copyCell(id, col.key, data[col.key])}
-                                      title="Copy value"
-                                    >
-                                      {isCopied ? (
-                                        <Check className="h-3 w-3 text-success" />
-                                      ) : (
-                                        <Copy className="h-3 w-3" />
-                                      )}
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              );
-                            })}
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
+            {/* Field Equipment Section */}
+            <RollupSection
+              title="Field Equipment — LMN Equipment Budget"
+              icon={<Truck className="h-5 w-5 text-primary" />}
+              lines={rollupResult.fieldLines}
+              totals={rollupResult.fieldTotals}
+              showType={true}
+              copiedCell={copiedCell}
+              onCopyCell={copyCell}
+              onSelectLine={setSelectedLine}
+              isMobile={isMobile}
+              emptyMessage="No field equipment"
+              emptyHint="Add operational equipment to see it here. Items marked 'Yes — Field Equipment' appear in this section."
+            />
+
+            {/* Overhead Equipment Section */}
+            <RollupSection
+              title="Overhead Equipment — LMN Overhead Budget"
+              icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
+              lines={rollupResult.overheadLines}
+              totals={rollupResult.overheadTotals}
+              showType={false}
+              copiedCell={copiedCell}
+              onCopyCell={copyCell}
+              onSelectLine={setSelectedLine}
+              isMobile={isMobile}
+              emptyMessage="No overhead equipment"
+              emptyHint="Items marked 'No — Overhead' or 'No — Owner Perk' appear in this section."
+            />
 
             {/* Summary */}
             <div className="text-sm text-muted-foreground">
               <p>
-                {selectedIds.size > 0 
-                  ? `${selectedIds.size} of ${exportData.length} items selected`
-                  : `${exportData.length} active equipment items ready for export`
-                }
+                {rollupResult.fieldTotals.totalQty + rollupResult.overheadTotals.totalQty} active items across {rollupResult.fieldLines.length + rollupResult.overheadLines.length} category lines
               </p>
             </div>
           </TabsContent>
 
-          {/* SynkedUp Tab - Coming Soon */}
+          {/* Coming Soon Tabs */}
           <TabsContent value="synkedup">
-            <ComingSoonTab 
-              platformName="SynkedUp" 
-              platformUrl="https://synkedup.com/" 
-            />
+            <ComingSoonTab platformName="SynkedUp" platformUrl="https://synkedup.com/" />
           </TabsContent>
-
-          {/* DynaManage Tab - Coming Soon */}
           <TabsContent value="dynamanage">
-            <ComingSoonTab 
-              platformName="DynaManage" 
-              platformUrl="https://www.dynascape.com/solutions/manage360/" 
-            />
+            <ComingSoonTab platformName="DynaManage" platformUrl="https://www.dynascape.com/solutions/manage360/" />
           </TabsContent>
-
-          {/* Aspire Tab - Coming Soon */}
           <TabsContent value="aspire">
-            <ComingSoonTab 
-              platformName="Aspire" 
-              platformUrl="https://www.youraspire.com/" 
-            />
+            <ComingSoonTab platformName="Aspire" platformUrl="https://www.youraspire.com/" />
           </TabsContent>
         </Tabs>
 
-        {/* FMS Equipment Details Sheet (Mobile) */}
-        <Sheet open={!!selectedEquipmentForSheet} onOpenChange={(open) => !open && setSelectedEquipmentForSheet(null)}>
+        {/* Line Details Sheet (Mobile) */}
+        <Sheet open={!!selectedLine} onOpenChange={(open) => !open && setSelectedLine(null)}>
           <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-            {selectedEquipmentForSheet && (
+            {selectedLine && (
               <>
                 <SheetHeader>
-                  <SheetTitle>{selectedEquipmentForSheet.data.equipmentName}</SheetTitle>
-                  <SheetDescription>FMS Export Values</SheetDescription>
+                  <SheetTitle>{selectedLine.category}</SheetTitle>
+                  <SheetDescription>
+                    {selectedLine.qty} item{selectedLine.qty > 1 ? 's' : ''} · {selectedLine.financingType === 'leased' ? 'Leased' : 'Owned'}
+                  </SheetDescription>
                 </SheetHeader>
                 <div className="mt-6 space-y-4">
-                  {columns.map(col => (
-                    <div key={col.key} className="flex items-center justify-between py-2 border-b">
-                      <span className="text-sm text-muted-foreground">{col.label}</span>
+                  {[
+                    { label: 'Quantity', value: String(selectedLine.qty) },
+                    { label: 'Avg Replacement Value', value: formatCurrency(selectedLine.avgReplacementValue), raw: String(Math.round(selectedLine.avgReplacementValue)) },
+                    { label: 'Avg Useful Life (Yrs)', value: String(Math.round(selectedLine.avgUsefulLife)) },
+                    { label: 'Avg End Value', value: formatCurrency(selectedLine.avgEndValue), raw: String(Math.round(selectedLine.avgEndValue)) },
+                    { label: 'Unit', value: selectedLine.unit },
+                    { label: 'Annual Recovery', value: formatCurrency(selectedLine.totalAnnualRecovery), raw: String(Math.round(selectedLine.totalAnnualRecovery)) },
+                  ].map(({ label, value, raw }) => (
+                    <div key={label} className="flex items-center justify-between py-2 border-b">
+                      <span className="text-sm text-muted-foreground">{label}</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium font-mono-nums">
-                          {formatCellValue(col.key, selectedEquipmentForSheet.data[col.key])}
-                        </span>
+                        <span className="font-medium font-mono-nums">{value}</span>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => copyCell(selectedEquipmentForSheet.id, col.key, selectedEquipmentForSheet.data[col.key])}
+                          onClick={() => copyCell(`sheet-${label}`, raw || value)}
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
                   ))}
+                  
+                  {selectedLine.itemNames.length > 0 && (
+                    <div className="pt-2">
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Items in this group:</p>
+                      <ul className="space-y-1">
+                        {selectedLine.itemNames.map((name, i) => (
+                          <li key={i} className="text-sm">{name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </>
             )}
