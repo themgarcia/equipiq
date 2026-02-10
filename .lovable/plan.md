@@ -1,81 +1,48 @@
 
 
-# AI-Powered Category Migration
+# Add Manual Override to Category Migration
 
-## The Problem
+## What Happened
 
-37 equipment items across 3 users use old category names that don't exist in the v3 taxonomy. You can't manually edit other users' items. We need an automated migration that's smart enough to pick the right v3 category based on the item's make, model, and old category name.
+The migration already ran successfully -- 36 of 37 items were re-categorized. One item (2025 FORD F150, old category "Vehicle (Light-Duty)") was skipped because the AI returned an invalid category name.
 
-## The Approach
+Your equipment list should now show most items in v3 groups. The "Other/Uncategorized" group should only have 1 item left.
 
-Build a one-time admin migration tool: a backend function that reads all equipment with old categories, sends them to AI in a single batch to pick the best v3 category for each, then updates the database directly using the service role (bypassing RLS so it works across all users).
+## What's Missing
+
+The migration results table is read-only. You need the ability to:
+1. **Override** any AI-assigned category that looks wrong
+2. **Fix** the 1 skipped item by manually picking its category
+3. **See items still needing migration** even after the dialog closes
 
 ## Changes
 
-### 1. New backend function: `supabase/functions/migrate-categories/index.ts`
+### 1. Add dropdown override to each row in the migration results table
 
-- Requires admin authentication (checks `user_roles` for admin role)
-- Queries all equipment where `category` is NOT in the v3 category list
-- Sends the list to Lovable AI (Gemini Flash) with the full v3 taxonomy as context
-- Prompt: "Given this equipment item (old category, make, model, year), pick the single best v3 category name from this list"
-- Uses tool calling to get structured output (array of `{id, newCategory}`)
-- Updates each item's `category` column using the service role client
-- Returns a summary of what was migrated
+In `src/pages/AdminDashboard.tsx`, replace the plain text "New Category" column with a grouped `<Select>` dropdown (same grouped-by-division pattern used in the equipment form). When changed, it immediately updates the database via a direct Supabase call using the admin's auth.
 
-### 2. New admin UI: button on the Admin Dashboard
+### 2. Add a "Fix Uncategorized" section
 
-- Add a "Migrate Categories" button in the admin area (only visible to admins)
-- Shows a confirmation dialog explaining what will happen
-- Calls the edge function, shows progress/results
-- Displays a table of changes made: item name, old category, new category
-- One-time use -- button disables or hides once no items need migration
+Below the migration results, show any items still using old categories (the skipped ones). Each gets the same dropdown so you can manually assign them a v3 category.
 
-### 3. Clean up legacy code
+### 3. Persist overrides immediately
 
-- Remove `LEGACY_CATEGORY_MAP` from `src/contexts/EquipmentContext.tsx` (lines 39-44)
-- Update `dbToEquipment` to pass category through without mapping (line 48)
+When an admin picks a new category from the dropdown, call `supabase.from('equipment').update({ category: newValue }).eq('id', itemId)` directly. No edge function needed since the admin RLS policy already allows viewing all equipment -- but we need to add an admin UPDATE policy for equipment.
 
-## Files
+### 4. Add admin UPDATE RLS policy for equipment
 
-- **Create**: `supabase/functions/migrate-categories/index.ts`
-- **Modify**: `src/pages/AdminDashboard.tsx` -- add migration button/UI
-- **Modify**: `src/contexts/EquipmentContext.tsx` -- remove legacy map
-- **Modify**: `supabase/config.toml` -- register the new function
+Currently admins can only SELECT all equipment. Add an UPDATE policy so admins can change the category on any user's equipment.
 
-## How It Works (Technical)
+## Files Modified
 
-1. Admin clicks "Migrate Categories" on the admin dashboard
-2. Frontend calls the `migrate-categories` edge function
-3. Edge function queries: `SELECT id, name, category, make, model, year FROM equipment WHERE category NOT IN (...v3 list...)`
-4. Sends batch to Lovable AI with structured tool calling:
-   - Input: `{id, name, oldCategory, make, model, year}` for each item
-   - Tool schema: returns `{id, newCategory}` array
-5. Edge function updates each item: `UPDATE equipment SET category = $newCategory WHERE id = $id` (service role, no RLS)
-6. Returns results to frontend for display
+- **`src/pages/AdminDashboard.tsx`** -- Add category dropdown to migration results table rows, add "uncategorized items" section, add direct update logic
+- **Database migration** -- Add RLS policy: "Admins can update all equipment" for UPDATE on equipment table
 
-## What This Does NOT Change
+## Technical Details
 
-- No schema changes
-- No changes to the v3 taxonomy
-- Equipment list, FMS Export, forms all stay the same
-- Only the `category` column value changes on affected rows
-
-## Expected Mappings (for reference)
-
-Based on the 37 items in the database:
-
-| Old Category | Example Items | Likely v3 Category |
-|---|---|---|
-| Lawn (Commercial) | Exmark Lazer Z, John Deere Z955R | Lawn -- Mower -- Zero-Turn |
-| Vehicle (Light-Duty) | Ford F-150 type trucks | Fleet -- Truck -- Crew Cab 1/2 Ton |
-| Vehicle (Commercial) | Larger trucks | Fleet -- Truck -- Crew Cab 3/4 Ton |
-| Trailer | Miska Dump, Sure Trac | Fleet -- Trailer -- various |
-| Loader -- Skid Steer | Wacker Neuson ST50 Track | Construction -- Compact Track Loader (CTL) |
-| Loader -- Skid Steer Mini | Toro Dingo, Cormidi C50 | Construction -- Compact Utility (Stand-On) |
-| Snow Equipment | Boss Snorator | Snow -- Spreader -- Walk-Behind |
-| Compaction (Light) | Bartell BR1570, BT1600H | Construction -- Compactor -- Plate/Rammer |
-| Excavator -- Compact | Bobcat 324 | Construction -- Excavator -- Compact |
-| Large Demo & Specialty Tools | IQ 362 Masonry Saw, blower | Construction -- Saw -- Masonry/Tile (varies) |
-
-The AI will make better individual decisions than a static map because it can look at the specific make and model.
+- The dropdown reuses the `categoryDefaults` data grouped by division
+- Each row shows: Item Name | Old Category | New Category (dropdown, pre-filled with AI result)
+- On dropdown change, immediately updates the DB and shows a success checkmark
+- A "Refresh" button lets you re-check for any remaining uncategorized items
+- The skipped F150 will appear in the "needs manual assignment" section
 
