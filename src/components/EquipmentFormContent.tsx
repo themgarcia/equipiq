@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { ChevronDown, Info, ShieldCheck } from 'lucide-react';
+import { ChevronDown, Info, ShieldCheck, Truck, Building2, UserCircle } from 'lucide-react';
 import { categoryDefaults } from '@/data/categoryDefaults';
 
 interface EquipmentFormContentProps {
@@ -32,10 +32,10 @@ const purchaseConditions: { value: PurchaseCondition; label: string }[] = [
   { value: 'used', label: 'Used' },
 ];
 
-const allocationTypes: { value: AllocationType; label: string; description: string }[] = [
-  { value: 'operational', label: 'Operational', description: 'Charged to jobs via COGS & overhead' },
-  { value: 'overhead_only', label: 'Overhead Only', description: 'Business overhead, not job-specific' },
-  { value: 'owner_perk', label: 'Owner Perk', description: 'Excluded from overhead recovery' },
+const allocationCards: { value: AllocationType; label: string; description: string; icon: typeof Truck }[] = [
+  { value: 'operational', label: 'Yes — Field Equipment', description: 'Goes on estimates. Recovered through COGS and overhead.', icon: Truck },
+  { value: 'overhead_only', label: 'No — Overhead', description: 'Business cost not tied to specific jobs. Recovered through overhead budget.', icon: Building2 },
+  { value: 'owner_perk', label: 'No — Owner Perk', description: 'Personal use on company books. Included in insurance but excluded from job costing and FMS export.', icon: UserCircle },
 ];
 
 const defaultFormData: Omit<Equipment, 'id'> = {
@@ -352,35 +352,47 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel, hideFooter
         </div>
       </div>
 
-      {/* Allocation */}
+      {/* LMN Allocation */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          Allocation
-        </h3>
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <Label htmlFor="allocationType">Allocation Type</Label>
-            <Select 
-              value={formData.allocationType} 
-              onValueChange={(v) => handleChange('allocationType', v as AllocationType)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {allocationTypes.map(at => (
-                  <SelectItem key={at.value} value={at.value}>
-                    <div className="flex flex-col">
-                      <span>{at.label}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              {allocationTypes.find(at => at.value === formData.allocationType)?.description}
-            </p>
+        <div>
+          <h3 className="text-sm font-medium text-muted-foreground">
+            LMN Allocation
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1">Controls how this equipment flows into your LMN budget.</p>
+        </div>
+        <div>
+          <Label className="text-sm font-medium">Do you charge clients for this equipment?</Label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+            {allocationCards.map(card => {
+              const Icon = card.icon;
+              const isSelected = formData.allocationType === card.value;
+              return (
+                <button
+                  key={card.value}
+                  type="button"
+                  onClick={() => {
+                    handleChange('allocationType', card.value);
+                    if (card.value === 'owner_perk') {
+                      handleChange('cogsPercent', 0);
+                    }
+                  }}
+                  className={`flex flex-col items-start gap-2 rounded-lg border p-3 text-left transition-colors ${
+                    isSelected
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-muted-foreground/30'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon className={`h-4 w-4 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={`text-sm font-medium ${isSelected ? 'text-foreground' : 'text-foreground'}`}>{card.label}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-snug">{card.description}</p>
+                </button>
+              );
+            })}
           </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label htmlFor="cogsPercent">% Used for COGS (0-100) *</Label>
             <Input
