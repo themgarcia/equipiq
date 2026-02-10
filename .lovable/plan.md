@@ -1,112 +1,81 @@
 
 
-# P0 Step 3: Smart Rollup Engine + v3 Taxonomy
+# AI-Powered Category Migration
 
-This is a three-part change that transforms the FMS Export from one-row-per-asset to aggregated category-level lines matching how LMN expects data, and replaces the 18-category taxonomy with the 92-category v3 taxonomy.
+## The Problem
 
----
+37 equipment items across 3 users use old category names that don't exist in the v3 taxonomy. You can't manually edit other users' items. We need an automated migration that's smart enough to pick the right v3 category based on the item's make, model, and old category name.
 
-## Part 1: Replace the Category Taxonomy (v3, 92 categories)
+## The Approach
 
-### What changes
+Build a one-time admin migration tool: a backend function that reads all equipment with old categories, sends them to AI in a single batch to pick the best v3 category for each, then updates the database directly using the service role (bypassing RLS so it works across all users).
 
-The `EquipmentCategory` union type (18 values) and `categoryDefaults` array are replaced with the v3 taxonomy: 92 categories across 7 divisions (Construction, Fleet, Irrigation, Lawn, Shop, Snow, Tree).
+## Changes
 
-### Files modified
+### 1. New backend function: `supabase/functions/migrate-categories/index.ts`
 
-**`src/types/equipment.ts`**
-- Replace the `EquipmentCategory` union type with a `string` type alias (the 92-category list is too large and dynamic for a union type -- category names come from the data file)
-- Update the `CategoryDefaults` interface to include new fields: `division`, `unit` (`'Hours' | 'Days'`), `defaultAllocation` (`'operational' | 'overhead_only'`), `maintenancePercent`, `insurancePercent`
+- Requires admin authentication (checks `user_roles` for admin role)
+- Queries all equipment where `category` is NOT in the v3 category list
+- Sends the list to Lovable AI (Gemini Flash) with the full v3 taxonomy as context
+- Prompt: "Given this equipment item (old category, make, model, year), pick the single best v3 category name from this list"
+- Uses tool calling to get structured output (array of `{id, newCategory}`)
+- Updates each item's `category` column using the service role client
+- Returns a summary of what was migrated
 
-**`src/data/categoryDefaults.ts`**
-- Replace the 18-entry array with all 92 categories from the uploaded taxonomy document
-- Each entry maps the taxonomy columns: `category` (full name like "Construction -- Loader -- Skid Steer"), `division`, `defaultUsefulLife`, `defaultResalePercent` (as whole number, e.g. 25 not 0.25 -- matching existing convention), `unit`, `defaultAllocation`, `notes`
-- Add helper functions: `getCategoryDivisions()`, `getCategoriesByDivision()`, `getCategoryByName()`
-- Keep `maintenancePercent` and `insurancePercent` with reasonable defaults per division
+### 2. New admin UI: button on the Admin Dashboard
 
-**`src/components/EquipmentForm.tsx`** and **`src/components/EquipmentFormContent.tsx`**
-- Update the category dropdown to use a grouped `<Select>` with division headers (Construction, Fleet, Irrigation, Lawn, Shop, Snow, Tree)
-- Categories within each division are listed alphabetically
+- Add a "Migrate Categories" button in the admin area (only visible to admins)
+- Shows a confirmation dialog explaining what will happen
+- Calls the edge function, shows progress/results
+- Displays a table of changes made: item name, old category, new category
+- One-time use -- button disables or hides once no items need migration
 
-**`src/pages/BuyVsRentAnalysis.tsx`**
-- Update to use the new category list from the updated `categoryDefaults`
+### 3. Clean up legacy code
 
-**`supabase/functions/parse-equipment-docs/index.ts`** and **`supabase/functions/parse-equipment-spreadsheet/index.ts`**
-- Update the hardcoded `EquipmentCategory` type to include all 92 v3 category names so AI parsing can match to the new taxonomy
+- Remove `LEGACY_CATEGORY_MAP` from `src/contexts/EquipmentContext.tsx` (lines 39-44)
+- Update `dbToEquipment` to pass category through without mapping (line 48)
 
-**`src/pages/EquipmentList.tsx`**
-- The category grouping logic already uses dynamic category names from data, so it should work. Expanded categories initialization will adapt to the new list.
+## Files
 
-### Migration note for existing data
-Existing equipment records in the database use old category names (e.g. "Loader -- Skid Steer"). The code will handle unrecognized categories gracefully by falling back to the last entry in `categoryDefaults`. No database migration required -- users can recategorize equipment as needed.
+- **Create**: `supabase/functions/migrate-categories/index.ts`
+- **Modify**: `src/pages/AdminDashboard.tsx` -- add migration button/UI
+- **Modify**: `src/contexts/EquipmentContext.tsx` -- remove legacy map
+- **Modify**: `supabase/config.toml` -- register the new function
 
----
+## How It Works (Technical)
 
-## Part 2: Create the Rollup Engine
+1. Admin clicks "Migrate Categories" on the admin dashboard
+2. Frontend calls the `migrate-categories` edge function
+3. Edge function queries: `SELECT id, name, category, make, model, year FROM equipment WHERE category NOT IN (...v3 list...)`
+4. Sends batch to Lovable AI with structured tool calling:
+   - Input: `{id, name, oldCategory, make, model, year}` for each item
+   - Tool schema: returns `{id, newCategory}` array
+5. Edge function updates each item: `UPDATE equipment SET category = $newCategory WHERE id = $id` (service role, no RLS)
+6. Returns results to frontend for display
 
-### New file: `src/lib/rollupEngine.ts`
+## What This Does NOT Change
 
-A pure function that takes `EquipmentCalculated[]` and returns aggregated category-level lines split into Field Equipment and Overhead Equipment sections.
+- No schema changes
+- No changes to the v3 taxonomy
+- Equipment list, FMS Export, forms all stay the same
+- Only the `category` column value changes on affected rows
 
-**Grouping key:** `category + allocationType + financingType` (owned vs leased)
+## Expected Mappings (for reference)
 
-This means:
-- 3 crew cab trucks in the same category = 1 line, Qty: 3
-- 1 owned skid steer + 1 leased skid steer = 2 lines (one Owned, one Leased)
-- Owner perk items go to Overhead section
+Based on the 37 items in the database:
 
-**Per-line calculations:**
-- `avgReplacementValue` = average of `replacementCostUsed` across items
-- `avgUsefulLife` = average of `usefulLifeUsed`
-- `avgEndValue` = average of `expectedResaleUsed`
-- `totalAnnualRecovery` = sum of `(replacementCostUsed - expectedResaleUsed) / usefulLifeUsed` per item
-- `totalCogs` / `totalOverhead` = sums of `cogsAllocatedCost` / `overheadAllocatedCost`
+| Old Category | Example Items | Likely v3 Category |
+|---|---|---|
+| Lawn (Commercial) | Exmark Lazer Z, John Deere Z955R | Lawn -- Mower -- Zero-Turn |
+| Vehicle (Light-Duty) | Ford F-150 type trucks | Fleet -- Truck -- Crew Cab 1/2 Ton |
+| Vehicle (Commercial) | Larger trucks | Fleet -- Truck -- Crew Cab 3/4 Ton |
+| Trailer | Miska Dump, Sure Trac | Fleet -- Trailer -- various |
+| Loader -- Skid Steer | Wacker Neuson ST50 Track | Construction -- Compact Track Loader (CTL) |
+| Loader -- Skid Steer Mini | Toro Dingo, Cormidi C50 | Construction -- Compact Utility (Stand-On) |
+| Snow Equipment | Boss Snorator | Snow -- Spreader -- Walk-Behind |
+| Compaction (Light) | Bartell BR1570, BT1600H | Construction -- Compactor -- Plate/Rammer |
+| Excavator -- Compact | Bobcat 324 | Construction -- Excavator -- Compact |
+| Large Demo & Specialty Tools | IQ 362 Masonry Saw, blower | Construction -- Saw -- Masonry/Tile (varies) |
 
-**Exports:**
-- `rollupEquipment(calculatedEquipment)` -> `RollupResult`
-- `rollupToCSV(result)` -> CSV string for download
-
----
-
-## Part 3: Update FMS Export Page
-
-### File modified: `src/pages/FMSExport.tsx`
-
-Replace the per-asset table in the LMN tab with two rolled-up sections:
-
-**Section 1: Field Equipment -- LMN Equipment Budget**
-- Table columns: Equipment Name, Qty, Avg Replacement Value, Life (Yrs), Avg End Value, Type (Owned/Leased badge), Unit (Hours/Days), Annual Recovery
-- Each row shows the category name, with individual item names listed below in small text
-- Footer row with totals
-
-**Section 2: Overhead Equipment -- LMN Overhead Budget**
-- Same table structure but without Type column (overhead items don't split by financing in LMN)
-- Includes `overhead_only` and `owner_perk` items
-
-**Other changes:**
-- CSV export updated to use `rollupToCSV()`
-- Per-cell copy buttons retained for each value
-- Mobile card view adapted for rolled-up lines
-- Empty state messages updated: "No field equipment" / "No overhead equipment" with guidance
-- Existing SynkedUp/DynaManage/Aspire tabs unchanged
-
----
-
-## What Does NOT Change
-
-- No database or schema changes
-- No changes to `EquipmentContext` logic (rollup reads from existing `calculatedEquipment`)
-- No changes to Dashboard, Insurance, or Cashflow pages
-- No changes to the calculation engine (`src/lib/calculations.ts`) -- it already produces the values the rollup consumes
-
----
-
-## How to Verify
-
-1. Add 3 items in the same category (e.g. 3 "Fleet -- Truck -- Crew Cab 3/4 Ton"). FMS Export should show 1 line with Qty: 3 and averaged values
-2. Tag one item as "No -- Overhead". It should appear in the Overhead section
-3. Have both an owned and leased item in the same category -- should produce 2 lines
-4. Categories should sort A-Z (Construction before Fleet before Lawn, etc.)
-5. CSV export should contain both Field and Overhead sections
-6. Category dropdown in equipment forms should show grouped divisions
+The AI will make better individual decisions than a static map because it can look at the specific make and model.
 
