@@ -1,55 +1,56 @@
 
 
-# Streamline Equipment Details Sheet
+# P0 Step 2: Allocation Flag UI (Three Cards)
 
 ## What Changes
 
-The details view will be redesigned from a data dump into a focused summary. When a contractor clicks on a piece of equipment, they should immediately see:
+Replace the technical "Allocation Type" dropdown with three intuitive selectable cards under the plain-language question: **"Do you charge clients for this equipment?"**
 
-1. **What it costs to replace** (hero card -- already done)
-2. **Key financial snapshot** -- cost basis, COGS/overhead split, and financing status
-3. **Actions** -- Edit, Documents, Attachments, Delete
+## The Three Options
 
-Everything else (serial numbers, tax line items, freight, purchase condition, asset ID, individual lifecycle fields) moves into the edit form where it belongs. Users only need those details when they are entering or correcting data.
+1. **Yes -- Field Equipment** (maps to `operational`, Truck icon)
+   - "Goes on estimates. Recovered through COGS and overhead."
+   - This is the default for most equipment.
 
-## New Layout (top to bottom)
+2. **No -- Overhead** (maps to `overhead_only`, Building2 icon)
+   - "Business cost not tied to specific jobs. Recovered through overhead budget."
+   - Shop tools, office equipment, general fleet vehicles, etc.
 
-1. **Status badges** -- Active/Sold + allocation type (unchanged)
-2. **Replacement Cost hero card** -- unchanged
-3. **Financial snapshot** -- a compact grid with:
-   - Total Cost Basis
-   - COGS / Overhead split
-   - Financing status (Owned, or monthly payment + payments remaining)
-4. **Action buttons** -- Edit, Documents, Attachments, Delete
+3. **No -- Owner Perk** (maps to `owner_perk`, UserCircle icon)
+   - "Personal use on company books. Included in insurance but excluded from job costing and FMS export."
+   - The contractor's spouse's vehicle, personal-use equipment that lives on the P&L and insurance policy but shouldn't touch operational budgets. Comes out of net profit.
 
-## What Gets Removed from Details View
+## UI Design
 
-- Identification section (category, condition, serial/VIN, asset ID) -- visible in the header subtitle and edit form
-- Purchase & Cost line-item breakdown (tax, freight, other CapEx lines) -- collapsed into just "Total Cost Basis"
-- Lifecycle section (useful life, expected resale) -- already shown in hero card supporting details
-- Financing detail grid (deposit, financed amount, term, buyout, start date) -- collapsed into a single status line
-- Sale Info section -- only relevant for sold items, available in edit form
+- Three cards in a responsive grid (3 columns on desktop, stacked on mobile)
+- Selected state: `border-primary bg-primary/5`
+- Each card shows icon, title, and one-line description
+- When `owner_perk` is selected, COGS % is disabled and set to 0 (existing behavior preserved)
+- COGS % and Overhead % fields remain below the cards (unchanged)
+
+## What Stays the Same
+
+- No database or schema changes
+- No changes to calculations, FMS Export, Dashboard, or EquipmentContext
+- The `owner_perk` exclusion logic throughout the app is untouched
 
 ## Technical Details
 
-### File: `src/components/equipment/EquipmentDetailsSheet.tsx`
+### Files Modified
 
-**EquipmentDetailsView** (lines 181-476) will be rewritten to contain only:
+**1. `src/components/EquipmentForm.tsx`** (Add Equipment modal)
+- Add `Truck`, `Building2`, `UserCircle` to lucide-react imports
+- Replace the Allocation section (lines 374-428) with:
+  - Header: "LMN Allocation"
+  - Label: "Do you charge clients for this equipment?"
+  - Three selectable cards in `grid-cols-1 sm:grid-cols-3`
+  - Keep COGS % and Overhead % inputs below, unchanged
 
-1. Status badges block (lines 189-204) -- keep as-is
-2. Hero card (lines 206-223) -- keep as-is
-3. New compact "Financial Snapshot" section replacing all the granular sections:
-   - Single row: Total Cost Basis value
-   - Single row: COGS % / Overhead % 
-   - Conditional row: Financing status -- "Owned" or "$X/mo -- Y payments left" with payoff context
-4. Action buttons (lines 426-474) -- keep as-is, with separators cleaned up
+**2. `src/components/EquipmentFormContent.tsx`** (Edit form in side sheet)
+- Add `Truck`, `Building2`, `UserCircle` to lucide-react imports
+- Replace the Allocation section (lines 355-409) with the same three-card layout
+  - Use `grid-cols-1 md:grid-cols-3` (adapts to sheet width)
+  - Keep COGS % and Overhead % inputs below, unchanged
 
-**Sections removed entirely:**
-- Identification (lines 227-252)
-- Purchase & Cost breakdown (lines 256-297)
-- Allocations (lines 301-318)
-- Lifecycle (lines 322-346)
-- Financing detail grid (lines 348-398)
-- Sale Info (lines 400-422)
+Both files already define the `allocationTypes` array (lines 35-39) which will be replaced with a richer structure containing icons and updated descriptions.
 
-No other files are modified. All removed data remains accessible in the edit form via `EquipmentFormContent`.
