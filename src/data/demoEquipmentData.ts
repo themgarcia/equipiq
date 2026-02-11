@@ -358,7 +358,7 @@ const FREE_TIER_EQUIPMENT: Equipment[] = [
   {
     id: 'demo-1',
     name: '2022 Kubota KX040-4',
-    category: 'Construction - Excavator - Compact',
+    category: 'Construction — Excavator — Compact',
     status: 'Active',
     assetId: 'EX-001',
     make: 'Kubota',
@@ -385,7 +385,7 @@ const FREE_TIER_EQUIPMENT: Equipment[] = [
   {
     id: 'demo-2',
     name: '2023 Ford F-250 XL',
-    category: 'Fleet - Truck - 3/4 Ton',
+    category: 'Fleet — Truck — 3/4 Ton',
     status: 'Active',
     assetId: 'TK-001',
     make: 'Ford',
@@ -413,7 +413,7 @@ const FREE_TIER_EQUIPMENT: Equipment[] = [
   {
     id: 'demo-3',
     name: '2021 Bobcat S570',
-    category: 'Construction - Loader - Skid Steer',
+    category: 'Construction — Loader — Skid Steer',
     status: 'Active',
     assetId: 'SS-001',
     make: 'Bobcat',
@@ -439,7 +439,7 @@ const FREE_TIER_EQUIPMENT: Equipment[] = [
   {
     id: 'demo-4',
     name: '2023 Big Tex 14ET',
-    category: 'Fleet - Trailer - Flat Deck',
+    category: 'Fleet — Trailer — Flat Deck',
     status: 'Active',
     assetId: 'TR-001',
     make: 'Big Tex',
@@ -470,7 +470,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
   {
     id: 'demo-5',
     name: '2020 CAT 320',
-    category: 'Construction - Excavator - Standard',
+    category: 'Construction — Excavator — Standard',
     status: 'Active',
     assetId: 'EX-002',
     make: 'Caterpillar',
@@ -496,7 +496,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
   {
     id: 'demo-6',
     name: '2021 John Deere 310SL',
-    category: 'Construction - Loader - Backhoe',
+    category: 'Construction — Loader — Backhoe',
     status: 'Active',
     assetId: 'BH-001',
     make: 'John Deere',
@@ -522,7 +522,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
   {
     id: 'demo-7',
     name: '2022 Toro Dingo TX 1000',
-    category: 'Construction - Loader - Stand-On',
+    category: 'Construction — Loader — Stand-On',
     status: 'Active',
     assetId: 'SO-001',
     make: 'Toro',
@@ -548,7 +548,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
   {
     id: 'demo-8',
     name: '2023 Isuzu NPR-HD',
-    category: 'Fleet - Truck - Cab Over',
+    category: 'Fleet — Truck — Cab Over',
     status: 'Active',
     assetId: 'CO-001',
     make: 'Isuzu',
@@ -574,7 +574,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
   {
     id: 'demo-9',
     name: '2023 Kenworth T880',
-    category: 'Fleet - Truck - Dump Tandem',
+    category: 'Fleet — Truck — Dump Tandem',
     status: 'Active',
     assetId: 'DT-001',
     make: 'Kenworth',
@@ -600,7 +600,7 @@ const PROFESSIONAL_TIER_EQUIPMENT: Equipment[] = [
   {
     id: 'demo-10',
     name: '2020 Case CX80C',
-    category: 'Construction - Excavator - Standard',
+    category: 'Construction — Excavator — Standard',
     status: 'Active',
     assetId: 'EX-003',
     make: 'Case',
