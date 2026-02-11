@@ -226,9 +226,7 @@ export default function Landing() {
   const totalLifetimeLoss = totalAnnualLoss * usefulLife;
   const perJobLoss = totalAnnualLoss / jobsPerYear;
 
-  // Mobile menu state
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+  // Back to top button visibility
   // Back to top button visibility
   const [showBackToTop, setShowBackToTop] = useState(false);
   
@@ -316,16 +314,16 @@ export default function Landing() {
                 <span className="font-bold group-hover:text-primary transition-colors">equipIQ</span>
               </button>
               <div className="flex flex-col gap-4 pt-4">
-                  <button onClick={() => { scrollToSection('who-its-for'); setMobileMenuOpen(false); }} className="text-lg font-medium hover:text-primary transition-colors text-left">
+                  <button onClick={() => scrollToSection('who-its-for')} className="text-lg font-medium hover:text-primary transition-colors text-left">
                     Who It's For
                   </button>
-                  <button onClick={() => { scrollToSection('how-it-works'); setMobileMenuOpen(false); }} className="text-lg font-medium hover:text-primary transition-colors text-left">
+                  <button onClick={() => scrollToSection('how-it-works')} className="text-lg font-medium hover:text-primary transition-colors text-left">
                     How It Works
                   </button>
-                  <button onClick={() => { scrollToSection('what-youll-know'); setMobileMenuOpen(false); }} className="text-lg font-medium hover:text-primary transition-colors text-left">
+                  <button onClick={() => scrollToSection('what-youll-know')} className="text-lg font-medium hover:text-primary transition-colors text-left">
                     What You'll Know
                   </button>
-                  <button onClick={() => { scrollToSection('features'); setMobileMenuOpen(false); }} className="text-lg font-medium hover:text-primary transition-colors text-left">
+                  <button onClick={() => scrollToSection('features')} className="text-lg font-medium hover:text-primary transition-colors text-left">
                     Features
                   </button>
                 <hr className="border-border" />

@@ -4,41 +4,17 @@ import { useEquipment } from '@/contexts/EquipmentContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { Layout } from '@/components/Layout';
-import { EquipmentForm } from '@/components/EquipmentForm';
 import { AddEquipmentModal } from '@/components/AddEquipmentModal';
 import { EquipmentImportReview } from '@/components/EquipmentImportReview';
-import { EquipmentDocuments } from '@/components/EquipmentDocuments';
-import { EquipmentAttachments } from '@/components/EquipmentAttachments';
-import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { EquipmentFilters } from '@/components/equipment/EquipmentFilters';
 import { EquipmentCategoryGroup } from '@/components/equipment/EquipmentCategoryGroup';
 import { EquipmentDetailsSheet } from '@/components/equipment/EquipmentDetailsSheet';
 import { formatCurrency } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { Equipment, EquipmentCalculated } from '@/types/equipment';
+import { Equipment, ExtractedEquipmentBase } from '@/types/equipment';
 import { categoryDefaults } from '@/data/categoryDefaults';
 import { EquipmentListSkeleton } from '@/components/PageSkeletons';
-
-interface ExtractedEquipment {
-  make: string;
-  model: string;
-  year: number | null;
-  serialVin: string | null;
-  purchaseDate: string | null;
-  purchasePrice: number | null;
-  salesTax: number | null;
-  freightSetup: number | null;
-  financingType: 'owned' | 'financed' | 'leased' | null;
-  depositAmount: number | null;
-  financedAmount: number | null;
-  monthlyPayment: number | null;
-  termMonths: number | null;
-  buyoutAmount: number | null;
-  confidence: 'high' | 'medium' | 'low';
-  notes: string | null;
-  sourceFile?: File;
-}
 
 export default function EquipmentList() {
   const { calculatedEquipment, addEquipment, updateEquipment, deleteEquipment, attachmentsByEquipmentId, loading } = useEquipment();
@@ -50,21 +26,10 @@ export default function EquipmentList() {
   const [statusFilter, setStatusFilter] = useState<string>('Active');
   
   // Modal/sheet state
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingEquipment, setEditingEquipment] = useState<Equipment | undefined>();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
-  const [extractedEquipment, setExtractedEquipment] = useState<ExtractedEquipment[]>([]);
+  const [extractedEquipment, setExtractedEquipment] = useState<ExtractedEquipmentBase[]>([]);
   const [importEntrySource, setImportEntrySource] = useState<'ai_document' | 'spreadsheet'>('ai_document');
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  
-  // Legacy document/attachment modals
-  const [documentsOpen, setDocumentsOpen] = useState(false);
-  const [documentsEquipmentId, setDocumentsEquipmentId] = useState<string>('');
-  const [documentsEquipmentName, setDocumentsEquipmentName] = useState<string>('');
-  const [attachmentsOpen, setAttachmentsOpen] = useState(false);
-  const [attachmentsEquipmentId, setAttachmentsEquipmentId] = useState<string>('');
-  const [attachmentsEquipmentName, setAttachmentsEquipmentName] = useState<string>('');
   
   // Category/attachment expansion
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => 
@@ -117,7 +82,7 @@ export default function EquipmentList() {
   };
 
   const handleEquipmentExtracted = (
-    equipment: ExtractedEquipment[],
+    equipment: ExtractedEquipmentBase[],
     _documentSummaries?: any,
     _conflicts?: any,
     _processingNotes?: string,
@@ -142,13 +107,8 @@ export default function EquipmentList() {
     setIsAddModalOpen(false);
   };
 
-  const handleFormSubmit = (data: Omit<Equipment, 'id'>) => {
-    if (editingEquipment) {
-      updateEquipment(editingEquipment.id, data);
-    } else {
-      addEquipment(data);
-    }
-  };
+
+
 
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this equipment?')) {
@@ -259,13 +219,6 @@ export default function EquipmentList() {
         </div>
 
         {/* Modals & Sheets */}
-        <EquipmentForm
-          open={isFormOpen}
-          onOpenChange={setIsFormOpen}
-          equipment={editingEquipment}
-          onSubmit={handleFormSubmit}
-        />
-
         <AddEquipmentModal
           open={isAddModalOpen}
           onOpenChange={setIsAddModalOpen}
@@ -279,28 +232,6 @@ export default function EquipmentList() {
           extractedEquipment={extractedEquipment}
           onComplete={handleImportComplete}
           entrySource={importEntrySource}
-        />
-
-        <EquipmentDocuments
-          open={documentsOpen}
-          onOpenChange={setDocumentsOpen}
-          equipmentId={documentsEquipmentId}
-          equipmentName={documentsEquipmentName}
-        />
-
-        <EquipmentAttachments
-          open={attachmentsOpen}
-          onOpenChange={setAttachmentsOpen}
-          equipmentId={attachmentsEquipmentId}
-          equipmentName={attachmentsEquipmentName}
-        />
-
-        <UpgradePrompt
-          feature="AI Document Import"
-          description="Automatically extract equipment details from purchase orders, invoices, and financing documents. Upgrade to Professional or Business to unlock this time-saving feature."
-          variant="modal"
-          open={showUpgradePrompt}
-          onOpenChange={setShowUpgradePrompt}
         />
 
         <EquipmentDetailsSheet
