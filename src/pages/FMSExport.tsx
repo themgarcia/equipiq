@@ -340,16 +340,6 @@ export default function FMSExport() {
               </Button>
             </div>
 
-            {/* Summary Stat Bar */}
-            {(rollupResult.fieldTotals.totalQty + rollupResult.overheadTotals.totalQty) > 0 && (
-              <div className="bg-muted/50 border rounded-lg px-4 py-3 flex items-center gap-2 text-sm">
-                <Info className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span>
-                  <span className="font-semibold">Total Annual Equipment Recovery: {formatCurrency(rollupResult.fieldTotals.totalAnnualRecovery + rollupResult.overheadTotals.totalAnnualRecovery)}</span>
-                  <span className="text-muted-foreground"> (Field: {formatCurrency(rollupResult.fieldTotals.totalAnnualRecovery)} · Overhead: {formatCurrency(rollupResult.overheadTotals.totalAnnualRecovery)})</span>
-                </span>
-              </div>
-            )}
 
             {/* Info */}
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-start gap-3">
