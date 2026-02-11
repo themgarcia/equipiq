@@ -159,7 +159,7 @@ export function rollupToCSV(result: RollupResult): string {
 
   // Field Equipment Section
   rows.push(['FIELD EQUIPMENT — LMN Equipment Budget']);
-  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg End Value', 'Type', 'Unit', 'Annual Recovery']);
+  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg End Value', 'Type']);
 
   for (const line of result.fieldLines) {
     rows.push([
@@ -169,17 +169,15 @@ export function rollupToCSV(result: RollupResult): string {
       String(Math.round(line.avgUsefulLife)),
       String(Math.round(line.avgEndValue)),
       line.financingType === 'leased' ? 'Leased' : 'Owned',
-      line.unit,
-      String(Math.round(line.totalAnnualRecovery)),
     ]);
   }
 
-  rows.push(['Total', String(result.fieldTotals.totalQty), '', '', '', '', '', String(Math.round(result.fieldTotals.totalAnnualRecovery))]);
+  rows.push(['Total', String(result.fieldTotals.totalQty), '', '', '', '']);
   rows.push([]); // blank row
 
   // Overhead Equipment Section
   rows.push(['OVERHEAD EQUIPMENT — LMN Overhead Budget']);
-  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg End Value', 'Unit', 'Annual Recovery']);
+  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg End Value']);
 
   for (const line of result.overheadLines) {
     rows.push([
@@ -188,12 +186,10 @@ export function rollupToCSV(result: RollupResult): string {
       String(Math.round(line.avgReplacementValue)),
       String(Math.round(line.avgUsefulLife)),
       String(Math.round(line.avgEndValue)),
-      line.unit,
-      String(Math.round(line.totalAnnualRecovery)),
     ]);
   }
 
-  rows.push(['Total', String(result.overheadTotals.totalQty), '', '', '', '', String(Math.round(result.overheadTotals.totalAnnualRecovery))]);
+  rows.push(['Total', String(result.overheadTotals.totalQty), '', '', '']);
 
   // Build CSV string
   const escapeCsvValue = (value: string): string => {
