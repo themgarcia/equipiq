@@ -1,61 +1,41 @@
 
 
-# v5 Fix Pass + Locale-Aware Mileage
+# Fix Table Column Formatting
 
-Three fixes from reviewing the v5 taxonomy migration output.
-
----
-
-## Fix 1: Data Accuracy Corrections
-
-Known issues confirmed in `categoryDefaults.ts`:
-
-| Line | Category | Fix |
-|------|----------|-----|
-| 39 | Fleet -- Truck -- Cab Over Body | Rename to "Fleet -- Truck -- Cab Over" |
-| 34 | Fleet -- Other | Change benchmarkType to 'calendar', benchmarkRange to null |
-| 31 | Construction -- Tractor | benchmarkRange '4,000-6,000 hrs' to '6,000-10,000 hrs' |
-| 27 | Construction -- Saw -- Cut-Off | benchmarkRange '1,000-2,000 hrs' to '1,000-1,500 hrs' |
-| 38 | Fleet -- Trailer -- Landscape | usefulLife 12 to 15, resalePercent 20 to 25 |
-
-A full audit of all 92 categories will be done against the uploaded taxonomy document. Any additional mismatches will be corrected.
-
-A database migration will rename "Fleet -- Truck -- Cab Over Body" to "Fleet -- Truck -- Cab Over" for existing equipment records.
-
-### Files modified
-- `src/data/categoryDefaults.ts` -- fix all mismatched values
-- SQL migration -- rename Cab Over in equipment table
+Two layout issues across Category Lifespans and FMS Export pages.
 
 ---
 
-## Fix 2: Overhead Table Type Column
+## Issue 1: Category Lifespans — Header Wrapping
 
-Currently `FMSExport.tsx` passes `showType={false}` to the Overhead RollupSection. Change to `showType={true}` so both Field and Overhead tables show the Owned/Leased badge column.
+The "Useful Life (yrs)" column header wraps to two lines even though there's plenty of horizontal space. Fix by adding `whitespace-nowrap` to the header cells that shouldn't wrap.
 
-### Files modified
-- `src/pages/FMSExport.tsx` -- change one prop from false to true (line ~265)
-
----
-
-## Fix 3: Locale-Aware Mileage Display
-
-Store benchmarks in miles (source of truth). Convert to km on display for Canadian/metric users.
-
-### New utility: `src/lib/benchmarkUtils.ts`
-- `useMetricUnits()` hook -- checks browser locale for Canadian/metric signals (en-CA, fr-CA, non-US locales), returns boolean
-- `formatBenchmarkRange(benchmarkType, benchmarkRange, useMetric)` -- returns display string. For miles benchmarks with metric=true, parses the range, multiplies by 1.609, rounds to nearest 5,000 km
-
-### UI updates
-- `src/pages/CategoryLifespans.tsx` -- use `useMetricUnits()` + `formatBenchmarkRange()` for benchmark display
-- `src/pages/FMSExport.tsx` -- same for Life column tooltips
+### File: `src/pages/CategoryLifespans.tsx`
+- Add `whitespace-nowrap` to "Useful Life (yrs)" and "Resale %" table headers (lines 127-128)
+- This prevents unnecessary line breaks when the viewport is wide enough
 
 ---
 
-## Implementation Order
+## Issue 2: FMS Export — Misaligned Columns Between Tables
 
-1. Fix data in `categoryDefaults.ts` (all known + audited issues)
-2. Database migration for Cab Over rename
-3. Change `showType={true}` for Overhead section in FMSExport
-4. Create `src/lib/benchmarkUtils.ts` with metric detection and formatting
-5. Wire up locale-aware display in CategoryLifespans and FMSExport
+The Field Equipment and Overhead Equipment tables render as separate `<Table>` elements, so the browser sizes each table's columns independently. This causes headers and values to not line up vertically between the two tables.
+
+### File: `src/pages/FMSExport.tsx`
+- Add fixed percentage-based widths to all column headers in the `RollupSection` component so both tables use identical column sizing:
+  - Category: flexible (no fixed width, takes remaining space)
+  - Qty: `w-[80px]` with `text-right`
+  - Avg Replacement: `w-[160px]` with `text-right`
+  - Life (Yrs): `w-[100px]` with `text-right`
+  - Avg End Value: `w-[140px]` with `text-right`
+  - Type: `w-[80px]` with `text-center`
+- Add `whitespace-nowrap` to all header cells to prevent wrapping
+- Apply `table-fixed` to the `<Table>` component so both tables respect the same widths
+
+---
+
+## Technical Details
+
+- Both fixes are CSS-only changes (className updates), no logic or data changes
+- The `table-fixed` layout with explicit widths on `<th>` elements forces both Field and Overhead tables to use identical column sizing regardless of content length
+- The `whitespace-nowrap` class prevents header text from wrapping when there is sufficient viewport width
 
