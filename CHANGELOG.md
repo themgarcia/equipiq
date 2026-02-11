@@ -5,6 +5,30 @@ All notable changes to EquipIQ will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.6] - 2026-02-11
+
+### Added
+- BenchmarkType (hours | miles | calendar) and benchmarkRange fields on CategoryDefaults
+- benchmarkUtils.ts with formatBenchmarkRange() including mi-to-km conversion
+- lmn_recovery_method column on equipment table (owned | leased)
+- lmnRecoveryMethod field on EquipmentCalculated type
+- LmnRecoveryMethod type and recovery method grouping in rollup engine
+- leasedItemCount, leasedItemMonthlyPayment, leasedItemDepositTotal, leasedItemAvgTermMonths fields on RollupLine
+- CostComparisonTooltip component with deposit amortization logic
+- LeasedRollupSection component for lease pass-through sub-tables
+- Split RollupResult into fieldOwnedLines, fieldLeasedLines, overheadOwnedLines, overheadLeasedLines with corresponding totals
+- Canadian province detection triggers automatic distance_unit = km on signup via database trigger
+
+### Improved
+- Rollup engine groups by category + recovery method (not just category)
+- rollupToCSV exports separate Owned and Leased sections for both Field and Overhead
+- FMS Export uses table-fixed layout with absolute-positioned copy buttons for vertical alignment
+- Tooltip wording updated from saves/Saving to more competitive/cheaper
+- Category taxonomy bumped to v6 (93 categories) with benchmark metadata
+
+### Fixed
+- Renamed Construction -- Loader -- Mini Skid Steer to Construction -- Loader -- Stand-On in taxonomy and database migration
+
 ## [1.3.5] - 2026-02-08
 
 ### Improved
