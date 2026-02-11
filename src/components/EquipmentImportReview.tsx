@@ -109,26 +109,9 @@ interface EquipmentImportReviewProps {
   entrySource?: 'ai_document' | 'spreadsheet';
 }
 
-const CATEGORIES: EquipmentCategory[] = [
-  'Compaction (Heavy)',
-  'Compaction (Light)',
-  'Excavator – Compact (≤ 6 ton)',
-  'Excavator – Mid-Size (6–12 ton)',
-  'Excavator – Large (12+ ton)',
-  'Handheld Power Tools',
-  'Large Demo & Specialty Tools',
-  'Lawn (Commercial)',
-  'Lawn (Handheld)',
-  'Loader – Skid Steer Mini',
-  'Loader – Skid Steer',
-  'Loader – Mid-Size',
-  'Loader – Wheel / Large',
-  'Shop / Other',
-  'Snow Equipment',
-  'Trailer',
-  'Vehicle (Commercial)',
-  'Vehicle (Light-Duty)',
-];
+// Derive CATEGORIES from the canonical taxonomy
+import { categoryDefaults } from "@/data/categoryDefaults";
+const CATEGORIES: EquipmentCategory[] = categoryDefaults.map(c => c.category);
 
 // Field labels for display
 const FIELD_LABELS: Record<string, string> = {
@@ -243,58 +226,58 @@ const attachmentMatches = (
   return intersection.length >= 2 || (minLen > 0 && intersection.length / minLen >= 0.66);
 };
 
-// Guess category based on make/model
+// Guess category based on make/model — returns v6 taxonomy strings
 const guessCategory = (make: string, model: string): EquipmentCategory => {
   const combined = `${make} ${model}`.toLowerCase();
   
   if (combined.includes('mower') || combined.includes('ztr') || combined.includes('z-turn') || 
       combined.includes('turf') || combined.includes('lawn')) {
-    return 'Lawn (Commercial)';
+    return 'Lawn — Mower — Ride-On' as EquipmentCategory;
   }
   if (combined.includes('truck') || combined.includes('f-150') || combined.includes('f150') || 
       combined.includes('f-250') || combined.includes('silverado') || combined.includes('ram') ||
       combined.includes('pickup') || combined.includes('van')) {
     if (combined.includes('dump') || combined.includes('commercial') || combined.includes('f-550') ||
         combined.includes('f-450') || combined.includes('flatbed')) {
-      return 'Vehicle (Commercial)';
+      return 'Fleet — Truck — Cab Over' as EquipmentCategory;
     }
-    return 'Vehicle (Light-Duty)';
+    return 'Fleet — Truck — 3/4 Ton' as EquipmentCategory;
   }
-  if (combined.includes('trailer')) return 'Trailer';
+  if (combined.includes('trailer')) return 'Fleet — Trailer — Flat Deck' as EquipmentCategory;
   if (combined.includes('trimmer') || combined.includes('edger') || combined.includes('weed') ||
       combined.includes('blower') || combined.includes('chainsaw') || combined.includes('hedge')) {
-    return 'Lawn (Handheld)';
+    return 'Lawn — Handheld — Trimmer' as EquipmentCategory;
   }
   if (combined.includes('mini skid') || combined.includes('dingo') || combined.includes('mini-skid')) {
-    return 'Loader – Skid Steer Mini';
+    return 'Construction — Loader — Stand-On' as EquipmentCategory;
   }
   if (combined.includes('skid') || combined.includes('track loader') || combined.includes('ctl')) {
-    return 'Loader – Skid Steer';
+    return 'Construction — Loader — Skid Steer' as EquipmentCategory;
   }
-  if (combined.includes('wheel loader')) return 'Loader – Wheel / Large';
+  if (combined.includes('wheel loader')) return 'Construction — Loader — Wheel' as EquipmentCategory;
   if (combined.includes('excavator') || combined.includes('mini ex') || combined.includes('digger')) {
-    return 'Excavator – Compact (≤ 6 ton)';
+    return 'Construction — Excavator — Compact' as EquipmentCategory;
   }
   if (combined.includes('compactor') || combined.includes('roller') || combined.includes('plate') || 
       combined.includes('rammer') || combined.includes('tamping') || combined.includes('tamper')) {
     if (combined.includes('walk') || combined.includes('plate') || combined.includes('jumping') || 
         combined.includes('rammer') || combined.includes('tamping') || combined.includes('tamper')) {
-      return 'Compaction (Light)';
+      return 'Construction — Compactor — Plate/Rammer' as EquipmentCategory;
     }
-    return 'Compaction (Heavy)';
+    return 'Construction — Compactor — Roller' as EquipmentCategory;
   }
   if (combined.includes('plow') || combined.includes('salt') || combined.includes('snow')) {
-    return 'Snow Equipment';
+    return 'Snow — Plow' as EquipmentCategory;
   }
   if (combined.includes('drill') || combined.includes('saw') || combined.includes('grinder') ||
       combined.includes('hammer')) {
-    return 'Handheld Power Tools';
+    return 'Construction — Saw — Cut-Off' as EquipmentCategory;
   }
   if (combined.includes('breaker') || combined.includes('demo') || combined.includes('concrete')) {
-    return 'Large Demo & Specialty Tools';
+    return 'Construction — Concrete — Vibrator' as EquipmentCategory;
   }
   
-  return 'Shop / Other';
+  return 'Construction — Other' as EquipmentCategory;
 };
 
 // Check if a field is empty/default in the existing equipment
