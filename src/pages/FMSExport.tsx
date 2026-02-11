@@ -104,7 +104,7 @@ function RollupSection({
       <Button
         variant="ghost"
         size="icon"
-        className="h-5 w-5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-primary/10 shrink-0"
+        className="h-5 w-5 absolute -right-6 top-1/2 -translate-y-1/2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-primary/10 shrink-0"
         onClick={(e) => { e.stopPropagation(); onCopyCell(cellId, value); }}
         title="Copy value"
       >
@@ -195,13 +195,13 @@ function RollupSection({
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="relative inline-flex justify-end">
                           <span>{line.qty}</span>
                           <CopyButton cellId={`${lineId}-qty`} value={String(line.qty)} />
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="relative inline-flex justify-end">
                           <span>{formatCurrency(line.avgReplacementValue)}</span>
                           <CopyButton cellId={`${lineId}-rv`} value={String(Math.round(line.avgReplacementValue))} />
                         </div>
@@ -210,7 +210,7 @@ function RollupSection({
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="flex items-center justify-end gap-1.5 cursor-help">
+                              <div className="relative inline-flex justify-end cursor-help">
                                 <span>{Math.round(line.avgUsefulLife)}</span>
                                 <CopyButton cellId={`${lineId}-life`} value={String(Math.round(line.avgUsefulLife))} />
                               </div>
@@ -222,7 +222,7 @@ function RollupSection({
                         </TooltipProvider>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums hidden md:table-cell">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="relative inline-flex justify-end">
                           <span>{formatCurrency(line.avgEndValue)}</span>
                           <CopyButton cellId={`${lineId}-ev`} value={String(Math.round(line.avgEndValue))} />
                         </div>
