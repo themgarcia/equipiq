@@ -27,8 +27,9 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Save, User, Building2, AlertTriangle } from 'lucide-react';
+import { Loader2, Save, User, Building2, AlertTriangle, Ruler } from 'lucide-react';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
+import { useDistanceUnit } from '@/hooks/useDistanceUnit';
 import {
   industryOptions,
   fieldEmployeesOptions,
@@ -54,6 +55,7 @@ export default function Profile() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { distanceUnit, updateDistanceUnit } = useDistanceUnit();
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -391,6 +393,43 @@ export default function Profile() {
             </Button>
           </form>
         </Form>
+
+        {/* Preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Ruler className="h-5 w-5" />
+              Preferences
+            </CardTitle>
+            <CardDescription>Display and unit preferences</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label>Distance Units</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Controls how mileage benchmarks are displayed (e.g., Fleet trucks)
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={distanceUnit === 'mi' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => updateDistanceUnit('mi')}
+                >
+                  Miles
+                </Button>
+                <Button
+                  type="button"
+                  variant={distanceUnit === 'km' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => updateDistanceUnit('km')}
+                >
+                  Kilometers
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Danger Zone */}
         <Card className="border-destructive/50">
