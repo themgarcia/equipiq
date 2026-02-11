@@ -124,8 +124,8 @@ export default function CategoryLifespans() {
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="table-header-cell min-w-[150px]">Category</TableHead>
-              <TableHead className="table-header-cell text-center min-w-[100px]">Useful Life (yrs)</TableHead>
-              <TableHead className="table-header-cell text-center min-w-[80px]">Resale %</TableHead>
+              <TableHead className="table-header-cell text-center min-w-[100px] whitespace-nowrap">Useful Life (yrs)</TableHead>
+              <TableHead className="table-header-cell text-center min-w-[80px] whitespace-nowrap">Resale %</TableHead>
               <TableHead className="table-header-cell min-w-[200px] hidden md:table-cell">Notes & Assumptions</TableHead>
               <TableHead className="table-header-cell w-[80px]"></TableHead>
             </TableRow>

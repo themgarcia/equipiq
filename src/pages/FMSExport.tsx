@@ -149,13 +149,13 @@ function RollupSection({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="table-header-cell">Category</TableHead>
-                  <TableHead className="table-header-cell text-right">Qty</TableHead>
-                  <TableHead className="table-header-cell text-right">Avg Replacement</TableHead>
-                  <TableHead className="table-header-cell text-right">
+                  <TableHead className="table-header-cell whitespace-nowrap">Category</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[80px]">Qty</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[160px]">Avg Replacement</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[100px]">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -170,8 +170,8 @@ function RollupSection({
                       </Tooltip>
                     </TooltipProvider>
                   </TableHead>
-                  <TableHead className="table-header-cell text-right hidden md:table-cell">Avg End Value</TableHead>
-                  {showType && <TableHead className="table-header-cell text-center">Type</TableHead>}
+                  <TableHead className="table-header-cell text-right whitespace-nowrap hidden md:table-cell w-[140px]">Avg End Value</TableHead>
+                  {showType && <TableHead className="table-header-cell text-center whitespace-nowrap w-[80px]">Type</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
