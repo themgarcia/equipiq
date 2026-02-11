@@ -6,6 +6,7 @@ import { Layout } from '@/components/Layout';
 import { formatCurrency } from '@/lib/calculations';
 import { rollupEquipment, rollupToCSV, RollupLine, RollupTotals } from '@/lib/rollupEngine';
 import { getCategoryDefaults } from '@/data/categoryDefaults';
+import { useMetricUnits, formatBenchmarkRange } from '@/lib/benchmarkUtils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -82,10 +83,11 @@ interface RollupSectionProps {
   isMobile: boolean;
   emptyMessage: string;
   emptyHint: string;
+  useMetric: boolean;
 }
 
 function RollupSection({ 
-  title, icon, lines, totals, showType, copiedCell, onCopyCell, onSelectLine, isMobile, emptyMessage, emptyHint 
+  title, icon, lines, totals, showType, copiedCell, onCopyCell, onSelectLine, isMobile, emptyMessage, emptyHint, useMetric 
 }: RollupSectionProps) {
   if (lines.length === 0) {
     return (
@@ -176,8 +178,9 @@ function RollupSection({
                 {lines.map((line, idx) => {
                   const lineId = `${line.category}-${line.financingType}-${idx}`;
                   const catDef = getCategoryDefaults(line.category);
+                  const formattedBenchmark = formatBenchmarkRange(catDef.benchmarkType, catDef.benchmarkRange, useMetric);
                   const benchmarkText = catDef.benchmarkRange
-                    ? `Default ${Math.round(line.avgUsefulLife)} yrs based on ${catDef.benchmarkRange} at commercial production.`
+                    ? `Default ${Math.round(line.avgUsefulLife)} yrs based on ${formattedBenchmark} at commercial production.`
                     : `Default ${Math.round(line.avgUsefulLife)} yrs — calendar-based replacement.`;
                   return (
                     <TableRow key={lineId} className="group">
@@ -263,6 +266,7 @@ export default function FMSExport() {
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
   const [selectedLine, setSelectedLine] = useState<RollupLine | null>(null);
   const [activeTab, setActiveTab] = useState('lmn');
+  const useMetric = useMetricUnits();
 
   useEffect(() => {
     markStepComplete('step_fms_exported');
@@ -372,6 +376,7 @@ export default function FMSExport() {
               isMobile={isMobile}
               emptyMessage="No field equipment"
               emptyHint="Add operational equipment to see it here. Items marked 'Yes — Field Equipment' appear in this section."
+              useMetric={useMetric}
             />
 
             {/* Overhead Equipment Section */}
@@ -380,13 +385,14 @@ export default function FMSExport() {
               icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
               lines={rollupResult.overheadLines}
               totals={rollupResult.overheadTotals}
-              showType={false}
+              showType={true}
               copiedCell={copiedCell}
               onCopyCell={copyCell}
               onSelectLine={setSelectedLine}
               isMobile={isMobile}
               emptyMessage="No overhead equipment"
               emptyHint="Items marked 'No — Overhead' or 'No — Owner Perk' appear in this section."
+              useMetric={useMetric}
             />
 
             {/* Summary */}
