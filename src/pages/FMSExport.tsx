@@ -6,7 +6,8 @@ import { Layout } from '@/components/Layout';
 import { formatCurrency } from '@/lib/calculations';
 import { rollupEquipment, rollupToCSV, RollupLine, RollupTotals } from '@/lib/rollupEngine';
 import { getCategoryDefaults } from '@/data/categoryDefaults';
-import { useMetricUnits, formatBenchmarkRange } from '@/lib/benchmarkUtils';
+import { formatBenchmarkRange } from '@/lib/benchmarkUtils';
+import { useDistanceUnit } from '@/hooks/useDistanceUnit';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -83,11 +84,11 @@ interface RollupSectionProps {
   isMobile: boolean;
   emptyMessage: string;
   emptyHint: string;
-  useMetric: boolean;
+  distanceUnit: 'mi' | 'km';
 }
 
 function RollupSection({ 
-  title, icon, lines, totals, showType, copiedCell, onCopyCell, onSelectLine, isMobile, emptyMessage, emptyHint, useMetric 
+  title, icon, lines, totals, showType, copiedCell, onCopyCell, onSelectLine, isMobile, emptyMessage, emptyHint, distanceUnit 
 }: RollupSectionProps) {
   if (lines.length === 0) {
     return (
@@ -178,7 +179,7 @@ function RollupSection({
                 {lines.map((line, idx) => {
                   const lineId = `${line.category}-${line.financingType}-${idx}`;
                   const catDef = getCategoryDefaults(line.category);
-                  const formattedBenchmark = formatBenchmarkRange(catDef.benchmarkType, catDef.benchmarkRange, useMetric);
+                  const formattedBenchmark = formatBenchmarkRange(catDef.benchmarkType, catDef.benchmarkRange, distanceUnit);
                   const benchmarkText = catDef.benchmarkRange
                     ? `Default ${Math.round(line.avgUsefulLife)} yrs based on ${formattedBenchmark} at commercial production.`
                     : `Default ${Math.round(line.avgUsefulLife)} yrs — calendar-based replacement.`;
@@ -266,7 +267,7 @@ export default function FMSExport() {
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
   const [selectedLine, setSelectedLine] = useState<RollupLine | null>(null);
   const [activeTab, setActiveTab] = useState('lmn');
-  const useMetric = useMetricUnits();
+  const { distanceUnit } = useDistanceUnit();
 
   useEffect(() => {
     markStepComplete('step_fms_exported');
@@ -366,7 +367,7 @@ export default function FMSExport() {
               isMobile={isMobile}
               emptyMessage="No field equipment"
               emptyHint="Add operational equipment to see it here. Items marked 'Yes — Field Equipment' appear in this section."
-              useMetric={useMetric}
+              distanceUnit={distanceUnit}
             />
 
             {/* Overhead Equipment Section */}
@@ -382,7 +383,7 @@ export default function FMSExport() {
               isMobile={isMobile}
               emptyMessage="No overhead equipment"
               emptyHint="Items marked 'No — Overhead' or 'No — Owner Perk' appear in this section."
-              useMetric={useMetric}
+              distanceUnit={distanceUnit}
             />
 
             {/* Summary */}

@@ -695,6 +695,7 @@ export type Database = {
           company_name: string | null
           company_website: string | null
           created_at: string
+          distance_unit: string | null
           field_employees: string | null
           full_name: string | null
           id: string
@@ -708,6 +709,7 @@ export type Database = {
           company_name?: string | null
           company_website?: string | null
           created_at?: string
+          distance_unit?: string | null
           field_employees?: string | null
           full_name?: string | null
           id: string
@@ -721,6 +723,7 @@ export type Database = {
           company_name?: string | null
           company_website?: string | null
           created_at?: string
+          distance_unit?: string | null
           field_employees?: string | null
           full_name?: string | null
           id?: string
