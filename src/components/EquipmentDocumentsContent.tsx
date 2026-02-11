@@ -176,29 +176,35 @@ export function EquipmentDocumentsContent({
     }
   };
 
+  const ImageThumbnail = ({ doc }: { doc: DocumentWithPreview }) => {
+    const [failed, setFailed] = useState(false);
+    return (
+      <button
+        type="button"
+        onClick={() => setLightboxImage(doc)}
+        className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+        title="Click to view full size"
+      >
+        {failed ? (
+          <span className="text-2xl flex items-center justify-center w-full h-full">🖼️</span>
+        ) : (
+          <img 
+            src={doc.previewUrl} 
+            alt={doc.fileName}
+            className="w-full h-full object-cover"
+            onError={() => setFailed(true)}
+          />
+        )}
+      </button>
+    );
+  };
+
   const renderThumbnail = (doc: DocumentWithPreview) => {
     const isImage = doc.fileType.includes('image');
     const canPreview = isImage && doc.previewUrl;
     
     if (doc.previewUrl && isImage) {
-      return (
-        <button
-          type="button"
-          onClick={() => setLightboxImage(doc)}
-          className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-          title="Click to view full size"
-        >
-          <img 
-            src={doc.previewUrl} 
-            alt={doc.fileName}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl flex items-center justify-center w-full h-full">🖼️</span>';
-            }}
-          />
-        </button>
-      );
+      return <ImageThumbnail doc={doc} />;
     }
     
     if (doc.previewUrl && doc.fileType.includes('pdf')) {
