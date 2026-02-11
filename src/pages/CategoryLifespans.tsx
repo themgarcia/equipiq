@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useMetricUnits, formatBenchmarkRange } from '@/lib/benchmarkUtils';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Layout } from '@/components/Layout';
@@ -31,6 +32,7 @@ export default function CategoryLifespans() {
   const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isPhone = deviceType === 'phone';
+  const useMetric = useMetricUnits();
   
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<CategoryDefaults>>({});
@@ -94,7 +96,7 @@ export default function CategoryLifespans() {
               <span className="text-muted-foreground">Life: </span>
               <span className="font-medium font-mono-nums">{category.defaultUsefulLife} yrs</span>
               {category.benchmarkRange ? (
-                <span className="text-muted-foreground"> · {category.benchmarkRange}</span>
+                <span className="text-muted-foreground"> · {formatBenchmarkRange(category.benchmarkType, category.benchmarkRange, useMetric)}</span>
               ) : (
                 <span className="text-muted-foreground"> · Calendar-based</span>
               )}
@@ -152,7 +154,7 @@ export default function CategoryLifespans() {
                       <div>
                         <span className="font-mono-nums">{category.defaultUsefulLife}</span>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {category.benchmarkRange || 'Calendar-based'}
+                          {formatBenchmarkRange(category.benchmarkType, category.benchmarkRange, useMetric)}
                         </p>
                       </div>
                     )}
