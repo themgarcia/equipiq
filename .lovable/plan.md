@@ -1,49 +1,40 @@
 
 
-# Fix: Include Deposit in Lease Cost Comparison
+# Tooltip Language Fix + Category Rename
 
-## Problem
+## Fix 1: Tooltip Wording
 
-The cost comparison tooltip calculates lease recovery as `monthlyPayment x 12`, but this ignores the deposit/down payment. For the Zero Turn mower, a deposit was paid upfront, which lowers the monthly payment. The tooltip then shows the lease as "cheaper" than owned recovery -- but that's misleading because the deposit is real money that isn't captured in the monthly figure.
+Replace "Saving" / "saves" language with "more competitive" across all cost comparison tooltips on the FMS Export page.
 
-## Solution
+**Changes in `src/pages/FMSExport.tsx`:**
 
-Amortize the deposit over the lease term so the comparison is apples-to-apples:
+- Line 127: `Lease saves $X/yr vs owned recovery` --> `$X/yr more competitive vs owned recovery`
+- Line 152: `Saving $X/yr vs lease pass-through` --> `$X/yr more competitive vs lease pass-through`
+- Line 154: `Lease would save $X/yr, but owned recovery keeps your rate consistent` --> `Lease is $X/yr cheaper, but owned recovery keeps your rate consistent`
 
-```text
-True annual lease cost = (monthlyPayment x 12) + (depositAmount x 12 / termMonths)
-```
+## Fix 2: Rename "Mini Skid Steer" to "Stand-On"
 
-This spreads the upfront deposit evenly across each year of the lease, giving an honest annual figure.
+**Database:** Update 2 equipment records that currently use `Construction — Loader — Mini Skid Steer`:
+- 2011 Cormidi C50
+- 2022 Toro Dingo TX 1000
 
-## Changes
+SQL migration to rename category on these records.
 
-### `src/lib/rollupEngine.ts`
+**Taxonomy file (`src/data/categoryDefaults.ts`):** Rename the category string from `Construction — Loader — Mini Skid Steer` to `Construction — Loader — Stand-On` on line 22.
 
-Add two new fields to `RollupLine`:
-- `leasedItemDepositTotal: number` -- sum of deposit amounts from leased items only
-- `leasedItemAvgTermMonths: number` -- average term in months across leased items
+## Fix 3: Category Mismatch Sweep
 
-Update `buildLine()` to compute these from the leased items subset.
+Add a temporary console log in the equipment loading path that checks every equipment record's category against the 92 valid names in `categoryDefaults.ts`. Any mismatches will be logged to the browser console so you can spot other stragglers.
 
-### `src/pages/FMSExport.tsx`
+This will be added in `src/contexts/EquipmentContext.tsx` (where equipment data is loaded), comparing each record's category against the exported list from `categoryDefaults.ts`.
 
-Update `CostComparisonTooltip` to calculate the true annual lease cost:
+---
 
-```text
-amortizedDeposit = (leasedItemDepositTotal / leasedItemCount) * 12 / leasedItemAvgTermMonths
-leaseRecovery = (leasedItemMonthlyPayment / leasedItemCount) * 12 + amortizedDeposit
-```
-
-When there's a deposit, the tooltip will also note it:
-- "Includes $X deposit amortized over Y-month term"
-
-This way the Zero Turn comparison will show the full cost of leasing (payments plus deposit), and the savings number will accurately reflect the real difference.
-
-## Files Modified
+## Technical Details
 
 | File | Change |
 |---|---|
-| `src/lib/rollupEngine.ts` | Add `leasedItemDepositTotal` and `leasedItemAvgTermMonths` to RollupLine |
-| `src/pages/FMSExport.tsx` | Amortize deposit into lease recovery calculation in tooltip |
-
+| `src/pages/FMSExport.tsx` | Update 3 tooltip text strings to use "more competitive" instead of "Saving/saves" |
+| `src/data/categoryDefaults.ts` | Rename category on line 22 from "Mini Skid Steer" to "Stand-On" |
+| Database migration | `UPDATE equipment SET category = 'Construction — Loader — Stand-On' WHERE category = 'Construction — Loader — Mini Skid Steer'` |
+| `src/contexts/EquipmentContext.tsx` | Add category validation sweep that logs mismatches to console |
