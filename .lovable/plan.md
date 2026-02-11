@@ -1,50 +1,105 @@
 
 
-# Fix Remaining Stale Category References
+# Codebase Cleanup and Optimization
 
-## Problem
+## Issues Found
 
-The v6 taxonomy update was applied to `categoryDefaults.ts` and `demoEquipmentData.ts`, but three other files still use the **old category names**. This causes mismatches in the insurance demo data, the legacy import review component, and an unused mock data file.
+### 1. Dead Code: Legacy Document/Attachment Modals in EquipmentList
 
-## Files to Fix
+**File: `src/pages/EquipmentList.tsx`**
 
-### 1. `src/data/demoInsuranceData.ts` -- Old categories in demo insurance records
+Six state variables and two modal components (`EquipmentDocuments`, `EquipmentAttachments`) are declared but **never triggered** -- the setters for `documentsOpen`, `documentsEquipmentId`, `documentsEquipmentName`, `attachmentsOpen`, `attachmentsEquipmentId`, and `attachmentsEquipmentName` are never called. These were made obsolete when document/attachment management moved into the `EquipmentDetailsSheet`.
 
-All `InsuredEquipment` and `InsuredEquipment` (unreviewed) entries still use old category strings. These need updating to v6:
+**Fix:** Remove the 6 state variables, the 2 modal components from JSX, and the 2 corresponding imports (`EquipmentDocuments`, `EquipmentAttachments`).
 
-| Old | New (v6) |
-|---|---|
-| `Excavator – Compact (≤ 6 ton)` | `Construction — Excavator — Compact` |
-| `Loader – Skid Steer` | `Construction — Loader — Skid Steer` |
-| `Vehicle (Light-Duty)` | `Fleet — Truck — 3/4 Ton` |
-| `Excavator – Large (12+ ton)` | `Construction — Excavator — Standard` |
-| `Loader – Mid-Size` | `Construction — Loader — Backhoe` |
-| `Trailer` | `Fleet — Trailer — Flat Deck` |
+---
 
-Approximately 15 occurrences across the free/professional/business/beta tiers.
+### 2. Dead Code: Unused EquipmentForm State in EquipmentList
 
-### 2. `src/components/EquipmentImportReview.tsx` -- Hardcoded old category list + guessCategory function
+**File: `src/pages/EquipmentList.tsx`**
 
-Two problems in this file:
+`isFormOpen`, `editingEquipment`, and the `handleFormSubmit` function are declared but never triggered. The `EquipmentForm` modal is rendered but can never be opened because nothing ever calls `setIsFormOpen(true)`. Equipment editing now goes through the `EquipmentDetailsSheet`.
 
-**a) Lines 112-131**: A hardcoded `CATEGORIES` array with 18 old category names. This needs to be replaced with the v6 taxonomy categories (imported from `categoryDefaults.ts`).
+**Fix:** Remove `isFormOpen`, `editingEquipment`, `handleFormSubmit`, the `EquipmentForm` component from JSX, and the `EquipmentForm` import.
 
-**b) Lines 247-298**: The `guessCategory()` function returns old category strings like `'Vehicle (Light-Duty)'`, `'Loader – Skid Steer Mini'`, `'Excavator – Compact (≤ 6 ton)'`, etc. All return values need updating to v6 equivalents.
+---
 
-### 3. `src/data/mockEquipment.ts` -- Unused legacy mock data
+### 3. Dead Code: Unused UpgradePrompt State in EquipmentList
 
-This file is **not imported anywhere** in the codebase. It contains 10 equipment items all using old category names. Since it's dead code, the cleanest fix is to **delete it entirely**.
+**File: `src/pages/EquipmentList.tsx`**
 
-### 4. `src/types/equipment.ts` line 201 -- Minor comment reference
+`showUpgradePrompt` is declared with `useState(false)` but `setShowUpgradePrompt(true)` is never called anywhere. The `UpgradePrompt` modal is rendered but can never be shown.
 
-A comment says `"Mini Skid paid off"` as an example. This is cosmetic but should say `"Stand-On paid off"` for consistency.
+**Fix:** Remove `showUpgradePrompt` state, the `UpgradePrompt` component from JSX, and the `UpgradePrompt` import.
+
+---
+
+### 4. Unused Import: `EquipmentCalculated` in EquipmentList
+
+**File: `src/pages/EquipmentList.tsx`**
+
+`EquipmentCalculated` is imported but never referenced in the file.
+
+**Fix:** Remove from the import statement.
+
+---
+
+### 5. Dead Code: `ExtractedEquipment` Interface Duplicated in EquipmentList
+
+**File: `src/pages/EquipmentList.tsx`**
+
+Lines 23-44 define an `ExtractedEquipment` interface locally. This type is already defined in `src/types/equipment.ts` as `ExtractedEquipmentBase`. The local version is only used to type the `extractedEquipment` state and the `handleEquipmentExtracted` callback. It should use the canonical type from the types file.
+
+**Fix:** Replace the local interface with an import of `ExtractedEquipmentBase` from `@/types/equipment`.
+
+---
+
+### 6. Dead State: `mobileMenuOpen` in Landing Page
+
+**File: `src/pages/Landing.tsx`**
+
+`mobileMenuOpen` state is set to false in scroll-to-section callbacks, but the Sheet component manages its own open state internally. `setMobileMenuOpen(false)` has no effect since `mobileMenuOpen` is never passed to the Sheet.
+
+**Fix:** Remove `mobileMenuOpen` state and the `setMobileMenuOpen(false)` calls from the scroll handlers.
+
+---
+
+### 7. Duplicated Utility: `formatPhoneNumber` in Two Insurance Files
+
+**Files: `src/components/insurance/InsuranceSettingsTab.tsx`, `src/components/insurance/InsurancePolicyImportReview.tsx`**
+
+The identical `formatPhoneNumber` function is defined in both files.
+
+**Fix:** Extract to a shared utility (e.g., `src/lib/formatUtils.ts`) and import in both files.
+
+---
+
+### 8. Debug-Only Code: `console.log` Statements in Import Review
+
+**File: `src/components/EquipmentImportReview.tsx`**
+
+Multiple `console.log` calls for document attachment flow (lines ~1260-1414). These are development debug logs that should be cleaned up for production.
+
+**Fix:** Remove or downgrade to `console.debug` so they don't appear in production console.
+
+---
 
 ## Summary of Changes
 
 | File | Action |
 |---|---|
-| `src/data/demoInsuranceData.ts` | Update ~15 category strings to v6 format |
-| `src/components/EquipmentImportReview.tsx` | Replace hardcoded CATEGORIES with import from categoryDefaults; update all guessCategory return values to v6 |
-| `src/data/mockEquipment.ts` | Delete (unused, no imports) |
-| `src/types/equipment.ts` | Update comment on line 201 from "Mini Skid" to "Stand-On" |
+| `src/pages/EquipmentList.tsx` | Remove 11 dead state variables, 3 unused modal components + imports, unused type import, replace local interface with canonical import |
+| `src/pages/Landing.tsx` | Remove dead `mobileMenuOpen` state and ineffective setter calls |
+| `src/lib/formatUtils.ts` | Create shared `formatPhoneNumber` utility |
+| `src/components/insurance/InsuranceSettingsTab.tsx` | Import shared `formatPhoneNumber` instead of local definition |
+| `src/components/insurance/InsurancePolicyImportReview.tsx` | Import shared `formatPhoneNumber` instead of local definition |
+| `src/components/EquipmentImportReview.tsx` | Remove or downgrade debug `console.log` statements |
+
+## Impact
+
+- Smaller bundle for the Equipment page (removes 2 unused component imports)
+- Cleaner state management (11 fewer useState hooks on the Equipment page)
+- Cleaner production console output
+- Single source of truth for shared utilities
+- No functional changes -- all removed code is confirmed unreachable
 
