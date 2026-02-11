@@ -207,6 +207,17 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     return attachmentsByEquipmentId;
   }, [isDemoData, demoPlan, attachmentsByEquipmentId]);
 
+  // Category mismatch sweep — temporary debug tool
+  useMemo(() => {
+    if (effectiveEquipment.length === 0) return;
+    const validCategories = new Set(defaultCategories.map(c => c.category));
+    const mismatches = effectiveEquipment.filter(e => !validCategories.has(e.category));
+    if (mismatches.length > 0) {
+      console.warn('[EquipIQ] Category mismatch sweep — these items have categories not in taxonomy:');
+      mismatches.forEach(e => console.warn(`  • "${e.name}" → "${e.category}"`));
+    }
+  }, [effectiveEquipment]);
+
   const calculatedEquipment = useMemo(() => 
     effectiveEquipment.map(e => {
       const attachments = effectiveAttachmentsByEquipmentId[e.id] || [];
