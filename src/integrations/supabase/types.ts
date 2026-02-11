@@ -163,6 +163,7 @@ export type Database = {
           insurance_notes: string | null
           insurance_reviewed_at: string | null
           is_insured: boolean | null
+          lmn_recovery_method: string | null
           make: string
           model: string
           monthly_payment: number
@@ -203,6 +204,7 @@ export type Database = {
           insurance_notes?: string | null
           insurance_reviewed_at?: string | null
           is_insured?: boolean | null
+          lmn_recovery_method?: string | null
           make: string
           model: string
           monthly_payment?: number
@@ -243,6 +245,7 @@ export type Database = {
           insurance_notes?: string | null
           insurance_reviewed_at?: string | null
           is_insured?: boolean | null
+          lmn_recovery_method?: string | null
           make?: string
           model?: string
           monthly_payment?: number

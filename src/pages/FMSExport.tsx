@@ -70,7 +70,82 @@ const fmsOptions = [
   { value: 'aspire', label: 'Aspire' },
 ];
 
-// ─── Rollup Table Component ────────────────────────────────────
+// ─── Copy Button ───────────────────────────────────────────────
+
+function CopyButton({ cellId, value, copiedCell, onCopy }: { cellId: string; value: string; copiedCell: string | null; onCopy: (id: string, value: string) => void }) {
+  const isCopied = copiedCell === cellId;
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-5 w-5 absolute -right-6 top-1/2 -translate-y-1/2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-primary/10 shrink-0"
+      onClick={(e) => { e.stopPropagation(); onCopy(cellId, value); }}
+      title="Copy value"
+    >
+      {isCopied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+    </Button>
+  );
+}
+
+// ─── Cost Comparison Tooltip ───────────────────────────────────
+
+function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned' | 'leased' }) {
+  const leaseRecovery = (line.totalMonthlyPayment / line.qty) * 12;
+  const ownedRecovery = line.avgUsefulLife > 0 
+    ? (line.avgReplacementValue - line.avgEndValue) / line.avgUsefulLife 
+    : 0;
+  const diff = leaseRecovery - ownedRecovery;
+
+  if (mode === 'leased') {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help inline ml-1" />
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs space-y-1">
+            <p className="font-medium text-xs">Cost Comparison</p>
+            <p className="text-xs">Lease recovery: {formatCurrency(leaseRecovery)}/yr</p>
+            <p className="text-xs">Owned recovery: {formatCurrency(ownedRecovery)}/yr</p>
+            {diff > 0 && (
+              <p className="text-xs text-warning">
+                Lease costs {formatCurrency(diff)}/yr more. Consider switching to Owned Recovery.
+              </p>
+            )}
+            {diff <= 0 && (
+              <p className="text-xs text-success">
+                Lease saves {formatCurrency(Math.abs(diff))}/yr vs owned recovery.
+              </p>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  // For owned rows that have lease financing
+  if (line.financingType === 'leased' && line.totalMonthlyPayment > 0) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 text-muted-foreground/50 cursor-help inline ml-1" />
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs space-y-1">
+            <p className="text-xs">This leased item is modeled as Owned for a more competitive rate.</p>
+            {diff > 0 && (
+              <p className="text-xs text-success">Saving {formatCurrency(diff)}/yr vs lease pass-through.</p>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return null;
+}
+
+// ─── Owned Rollup Table Component ──────────────────────────────
 
 interface RollupSectionProps {
   title: string;
@@ -99,21 +174,6 @@ function RollupSection({
     );
   }
 
-  const CopyButton = ({ cellId, value }: { cellId: string; value: string }) => {
-    const isCopied = copiedCell === cellId;
-    return (
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-5 w-5 absolute -right-6 top-1/2 -translate-y-1/2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-primary/10 shrink-0"
-        onClick={(e) => { e.stopPropagation(); onCopyCell(cellId, value); }}
-        title="Copy value"
-      >
-        {isCopied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
-      </Button>
-    );
-  };
-
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
@@ -127,7 +187,7 @@ function RollupSection({
           <div className="divide-y">
             {lines.map((line, idx) => (
               <div 
-                key={`${line.category}-${line.financingType}-${idx}`}
+                key={`${line.category}-${line.lmnRecoveryMethod}-${idx}`}
                 className="flex items-center justify-between p-4 hover:bg-muted/30 cursor-pointer"
                 onClick={() => onSelectLine(line)}
               >
@@ -177,7 +237,7 @@ function RollupSection({
               </TableHeader>
               <TableBody>
                 {lines.map((line, idx) => {
-                  const lineId = `${line.category}-${line.financingType}-${idx}`;
+                  const lineId = `${line.category}-${line.lmnRecoveryMethod}-${idx}`;
                   const catDef = getCategoryDefaults(line.category);
                   const formattedBenchmark = formatBenchmarkRange(catDef.benchmarkType, catDef.benchmarkRange, distanceUnit);
                   const benchmarkText = catDef.benchmarkRange
@@ -187,7 +247,10 @@ function RollupSection({
                     <TableRow key={lineId} className="group">
                       <TableCell className="font-medium">
                         <div>
-                          <span>{line.category}</span>
+                          <span>
+                            {line.category}
+                            <CostComparisonTooltip line={line} mode="owned" />
+                          </span>
                           {line.qty > 1 && (
                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                               {line.itemNames.join(', ')}
@@ -198,13 +261,13 @@ function RollupSection({
                       <TableCell className="text-right font-mono-nums">
                         <div className="relative inline-flex justify-end">
                           <span>{line.qty}</span>
-                          <CopyButton cellId={`${lineId}-qty`} value={String(line.qty)} />
+                          <CopyButton cellId={`${lineId}-qty`} value={String(line.qty)} copiedCell={copiedCell} onCopy={onCopyCell} />
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums">
                         <div className="relative inline-flex justify-end">
                           <span>{formatCurrency(line.avgReplacementValue)}</span>
-                          <CopyButton cellId={`${lineId}-rv`} value={String(Math.round(line.avgReplacementValue))} />
+                          <CopyButton cellId={`${lineId}-rv`} value={String(Math.round(line.avgReplacementValue))} copiedCell={copiedCell} onCopy={onCopyCell} />
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums">
@@ -213,7 +276,7 @@ function RollupSection({
                             <TooltipTrigger asChild>
                               <div className="relative inline-flex justify-end cursor-help">
                                 <span>{Math.round(line.avgUsefulLife)}</span>
-                                <CopyButton cellId={`${lineId}-life`} value={String(Math.round(line.avgUsefulLife))} />
+                                <CopyButton cellId={`${lineId}-life`} value={String(Math.round(line.avgUsefulLife))} copiedCell={copiedCell} onCopy={onCopyCell} />
                               </div>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="max-w-xs">
@@ -225,7 +288,7 @@ function RollupSection({
                       <TableCell className="text-right font-mono-nums hidden md:table-cell">
                         <div className="relative inline-flex justify-end">
                           <span>{formatCurrency(line.avgEndValue)}</span>
-                          <CopyButton cellId={`${lineId}-ev`} value={String(Math.round(line.avgEndValue))} />
+                          <CopyButton cellId={`${lineId}-ev`} value={String(Math.round(line.avgEndValue))} copiedCell={copiedCell} onCopy={onCopyCell} />
                         </div>
                       </TableCell>
                       {showType && (
@@ -247,6 +310,127 @@ function RollupSection({
                   <TableCell className="text-right" />
                   <TableCell className="text-right hidden md:table-cell" />
                   {showType && <TableCell />}
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Leased Rollup Table Component ─────────────────────────────
+
+interface LeasedRollupSectionProps {
+  lines: RollupLine[];
+  totals: RollupTotals;
+  copiedCell: string | null;
+  onCopyCell: (id: string, value: string) => void;
+  onSelectLine: (line: RollupLine) => void;
+  isMobile: boolean;
+}
+
+function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLine, isMobile }: LeasedRollupSectionProps) {
+  if (lines.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Badge variant="outline" className="text-xs">Leased</Badge>
+        <span className="text-sm text-muted-foreground">
+          {totals.totalQty} item{totals.totalQty !== 1 ? 's' : ''} in {lines.length} categor{lines.length !== 1 ? 'ies' : 'y'}
+        </span>
+      </div>
+      
+      <div className="bg-card border border-dashed rounded-lg shadow-sm overflow-hidden">
+        {isMobile ? (
+          <div className="divide-y">
+            {lines.map((line, idx) => (
+              <div 
+                key={`leased-${line.category}-${idx}`}
+                className="flex items-center justify-between p-4 hover:bg-muted/30 cursor-pointer"
+                onClick={() => onSelectLine(line)}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium truncate">{line.category}</p>
+                    <Badge variant="outline" className="text-[10px] shrink-0">Leased</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Qty: {line.qty} · {formatCurrency(line.totalMonthlyPayment / line.qty)}/mo
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-2" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table className="table-fixed">
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="table-header-cell whitespace-nowrap">Category</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[80px]">Qty</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[160px]">Monthly Payment</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[120px]">Payments/Yr</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[120px]">Months Used</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lines.map((line, idx) => {
+                  const lineId = `leased-${line.category}-${idx}`;
+                  const avgMonthly = line.totalMonthlyPayment / line.qty;
+                  return (
+                    <TableRow key={lineId} className="group">
+                      <TableCell className="font-medium">
+                        <div>
+                          <span>
+                            {line.category}
+                            <CostComparisonTooltip line={line} mode="leased" />
+                          </span>
+                          {line.qty > 1 && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                              {line.itemNames.join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums">
+                        <div className="relative inline-flex justify-end">
+                          <span>{line.qty}</span>
+                          <CopyButton cellId={`${lineId}-qty`} value={String(line.qty)} copiedCell={copiedCell} onCopy={onCopyCell} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums">
+                        <div className="relative inline-flex justify-end">
+                          <span>{formatCurrency(avgMonthly)}</span>
+                          <CopyButton cellId={`${lineId}-mp`} value={String(Math.round(avgMonthly))} copiedCell={copiedCell} onCopy={onCopyCell} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums">
+                        <div className="relative inline-flex justify-end">
+                          <span>{line.paymentsPerYear}</span>
+                          <CopyButton cellId={`${lineId}-ppy`} value={String(line.paymentsPerYear)} copiedCell={copiedCell} onCopy={onCopyCell} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums">
+                        <div className="relative inline-flex justify-end">
+                          <span>{line.monthsUsed}</span>
+                          <CopyButton cellId={`${lineId}-mu`} value={String(line.monthsUsed)} copiedCell={copiedCell} onCopy={onCopyCell} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+              <TableFooter>
+                <TableRow className="bg-muted/30 font-semibold">
+                  <TableCell>Total</TableCell>
+                  <TableCell className="text-right font-mono-nums">{totals.totalQty}</TableCell>
+                  <TableCell className="text-right" />
+                  <TableCell className="text-right" />
+                  <TableCell className="text-right" />
                 </TableRow>
               </TableFooter>
             </Table>
@@ -299,6 +483,8 @@ export default function FMSExport() {
     });
   };
 
+  const isLeased = selectedLine?.lmnRecoveryMethod === 'leased';
+
   return (
     <Layout>
       <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
@@ -341,7 +527,6 @@ export default function FMSExport() {
               </Button>
             </div>
 
-
             {/* Info */}
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-start gap-3">
               <FileSpreadsheet className="h-5 w-5 text-primary mt-0.5" />
@@ -355,36 +540,58 @@ export default function FMSExport() {
             </div>
 
             {/* Field Equipment Section */}
-            <RollupSection
-              title="Field Equipment — LMN Equipment Budget"
-              icon={<Truck className="h-5 w-5 text-primary" />}
-              lines={rollupResult.fieldLines}
-              totals={rollupResult.fieldTotals}
-              showType={true}
-              copiedCell={copiedCell}
-              onCopyCell={copyCell}
-              onSelectLine={setSelectedLine}
-              isMobile={isMobile}
-              emptyMessage="No field equipment"
-              emptyHint="Add operational equipment to see it here. Items marked 'Yes — Field Equipment' appear in this section."
-              distanceUnit={distanceUnit}
-            />
+            <div className="space-y-4">
+              <RollupSection
+                title="Field Equipment — LMN Equipment Budget"
+                icon={<Truck className="h-5 w-5 text-primary" />}
+                lines={rollupResult.fieldOwnedLines}
+                totals={rollupResult.fieldOwnedTotals}
+                showType={true}
+                copiedCell={copiedCell}
+                onCopyCell={copyCell}
+                onSelectLine={setSelectedLine}
+                isMobile={isMobile}
+                emptyMessage="No field equipment"
+                emptyHint="Add operational equipment to see it here. Items marked 'Yes — Field Equipment' appear in this section."
+                distanceUnit={distanceUnit}
+              />
+
+              <LeasedRollupSection
+                lines={rollupResult.fieldLeasedLines}
+                totals={rollupResult.fieldLeasedTotals}
+                copiedCell={copiedCell}
+                onCopyCell={copyCell}
+                onSelectLine={setSelectedLine}
+                isMobile={isMobile}
+              />
+            </div>
 
             {/* Overhead Equipment Section */}
-            <RollupSection
-              title="Overhead Equipment — LMN Overhead Budget"
-              icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
-              lines={rollupResult.overheadLines}
-              totals={rollupResult.overheadTotals}
-              showType={true}
-              copiedCell={copiedCell}
-              onCopyCell={copyCell}
-              onSelectLine={setSelectedLine}
-              isMobile={isMobile}
-              emptyMessage="No overhead equipment"
-              emptyHint="Items marked 'No — Overhead' or 'No — Owner Perk' appear in this section."
-              distanceUnit={distanceUnit}
-            />
+            <div className="space-y-4">
+              <RollupSection
+                title="Overhead Equipment — LMN Overhead Budget"
+                icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
+                lines={rollupResult.overheadOwnedLines}
+                totals={rollupResult.overheadOwnedTotals}
+                showType={true}
+                copiedCell={copiedCell}
+                onCopyCell={copyCell}
+                onSelectLine={setSelectedLine}
+                isMobile={isMobile}
+                emptyMessage="No overhead equipment"
+                emptyHint="Items marked 'No — Overhead' or 'No — Owner Perk' appear in this section."
+                distanceUnit={distanceUnit}
+              />
+
+              <LeasedRollupSection
+                lines={rollupResult.overheadLeasedLines}
+                totals={rollupResult.overheadLeasedTotals}
+                copiedCell={copiedCell}
+                onCopyCell={copyCell}
+                onSelectLine={setSelectedLine}
+                isMobile={isMobile}
+              />
+            </div>
 
             {/* Summary */}
             <div className="text-sm text-muted-foreground">
@@ -414,31 +621,61 @@ export default function FMSExport() {
                 <SheetHeader>
                   <SheetTitle>{selectedLine.category}</SheetTitle>
                   <SheetDescription>
-                    {selectedLine.qty} item{selectedLine.qty > 1 ? 's' : ''} · {selectedLine.financingType === 'leased' ? 'Leased' : 'Owned'}
+                    {selectedLine.qty} item{selectedLine.qty > 1 ? 's' : ''} · {selectedLine.lmnRecoveryMethod === 'leased' ? 'Lease Recovery' : selectedLine.financingType === 'leased' ? 'Leased (Owned Recovery)' : 'Owned'}
                   </SheetDescription>
                 </SheetHeader>
                 <div className="mt-6 space-y-4">
-                  {[
-                    { label: 'Quantity', value: String(selectedLine.qty) },
-                    { label: 'Avg Replacement Value', value: formatCurrency(selectedLine.avgReplacementValue), raw: String(Math.round(selectedLine.avgReplacementValue)) },
-                    { label: 'Avg Useful Life (Yrs)', value: String(Math.round(selectedLine.avgUsefulLife)) },
-                    { label: 'Avg End Value', value: formatCurrency(selectedLine.avgEndValue), raw: String(Math.round(selectedLine.avgEndValue)) },
-                  ].map(({ label, value, raw }) => (
-                    <div key={label} className="flex items-center justify-between py-2 border-b">
-                      <span className="text-sm text-muted-foreground">{label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium font-mono-nums">{value}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => copyCell(`sheet-${label}`, raw || value)}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                  {isLeased ? (
+                    // Leased recovery sheet fields
+                    <>
+                      {[
+                        { label: 'Quantity', value: String(selectedLine.qty) },
+                        { label: 'Monthly Payment', value: formatCurrency(selectedLine.totalMonthlyPayment / selectedLine.qty), raw: String(Math.round(selectedLine.totalMonthlyPayment / selectedLine.qty)) },
+                        { label: 'Payments/Year', value: String(selectedLine.paymentsPerYear) },
+                        { label: 'Months Used', value: String(selectedLine.monthsUsed) },
+                      ].map(({ label, value, raw }) => (
+                        <div key={label} className="flex items-center justify-between py-2 border-b">
+                          <span className="text-sm text-muted-foreground">{label}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium font-mono-nums">{value}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => copyCell(`sheet-${label}`, raw || value)}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    // Owned recovery sheet fields
+                    <>
+                      {[
+                        { label: 'Quantity', value: String(selectedLine.qty) },
+                        { label: 'Avg Replacement Value', value: formatCurrency(selectedLine.avgReplacementValue), raw: String(Math.round(selectedLine.avgReplacementValue)) },
+                        { label: 'Avg Useful Life (Yrs)', value: String(Math.round(selectedLine.avgUsefulLife)) },
+                        { label: 'Avg End Value', value: formatCurrency(selectedLine.avgEndValue), raw: String(Math.round(selectedLine.avgEndValue)) },
+                      ].map(({ label, value, raw }) => (
+                        <div key={label} className="flex items-center justify-between py-2 border-b">
+                          <span className="text-sm text-muted-foreground">{label}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium font-mono-nums">{value}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => copyCell(`sheet-${label}`, raw || value)}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
                   
                   {selectedLine.itemNames.length > 0 && (
                     <div className="pt-2">
