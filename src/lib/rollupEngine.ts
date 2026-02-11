@@ -36,6 +36,10 @@ export interface RollupLine {
   paymentsPerYear: number;
   /** Months used per year — default 12 */
   monthsUsed: number;
+  /** Count of items where financingType === 'leased' */
+  leasedItemCount: number;
+  /** Sum of monthly payments only from leased items */
+  leasedItemMonthlyPayment: number;
 }
 
 export interface RollupResult {
@@ -109,6 +113,9 @@ function buildLine(items: EquipmentCalculated[], recoveryMethod: LmnRecoveryMeth
   const totalCogs = items.reduce((sum, i) => sum + i.cogsAllocatedCost, 0);
   const totalOverhead = items.reduce((sum, i) => sum + i.overheadAllocatedCost, 0);
   const totalMonthlyPayment = items.reduce((sum, i) => sum + i.monthlyPayment, 0);
+  const leasedItems = items.filter(i => i.financingType === 'leased');
+  const leasedItemCount = leasedItems.length;
+  const leasedItemMonthlyPayment = leasedItems.reduce((sum, i) => sum + i.monthlyPayment, 0);
 
   // Determine financing type for display
   const financingType: FinancingType = recoveryMethod === 'leased' ? 'leased' : 
@@ -131,6 +138,8 @@ function buildLine(items: EquipmentCalculated[], recoveryMethod: LmnRecoveryMeth
     totalMonthlyPayment,
     paymentsPerYear: 12,
     monthsUsed: 12,
+    leasedItemCount,
+    leasedItemMonthlyPayment,
   };
 }
 
