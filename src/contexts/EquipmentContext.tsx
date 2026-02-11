@@ -69,6 +69,7 @@ function dbToEquipment(record: any): Equipment {
     financingStartDate: record.financing_start_date || undefined,
     purchaseCondition: record.purchase_condition || 'new',
     allocationType: record.allocation_type || 'operational',
+    lmnRecoveryMethod: record.lmn_recovery_method || 'owned',
   };
 }
 
@@ -106,6 +107,7 @@ function equipmentToDb(equipment: Omit<Equipment, 'id'>, userId: string, entrySo
     purchase_condition: equipment.purchaseCondition || 'new',
     allocation_type: equipment.allocationType || 'operational',
     entry_source: entrySource || 'manual',
+    lmn_recovery_method: equipment.lmnRecoveryMethod || 'owned',
   };
 }
 
@@ -312,6 +314,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (updatesWithName.financingStartDate !== undefined) dbUpdates.financing_start_date = updatesWithName.financingStartDate || null;
       if (updatesWithName.purchaseCondition !== undefined) dbUpdates.purchase_condition = updatesWithName.purchaseCondition;
       if (updatesWithName.allocationType !== undefined) dbUpdates.allocation_type = updatesWithName.allocationType;
+      if (updatesWithName.lmnRecoveryMethod !== undefined) dbUpdates.lmn_recovery_method = updatesWithName.lmnRecoveryMethod;
 
       const { error } = await supabase
         .from('equipment')

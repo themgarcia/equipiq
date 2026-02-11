@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ChevronDown, Info, ShieldCheck, Truck, Building2, UserCircle } from 'lucide-react';
 import { categoryDefaults, getCategoryDivisions, getCategoriesByDivision } from '@/data/categoryDefaults';
 
@@ -62,6 +63,7 @@ const defaultFormData: Omit<Equipment, 'id'> = {
   financingStartDate: undefined,
   purchaseCondition: 'new',
   allocationType: 'operational',
+  lmnRecoveryMethod: 'owned',
 };
 
 // Numeric fields that need blur-based validation
@@ -103,6 +105,11 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel, hideFooter
       
       if (field === 'financingType' && value !== 'owned' && !prev.financingStartDate) {
         updated.financingStartDate = prev.purchaseDate;
+      }
+      
+      // Reset lmnRecoveryMethod when financing type changes away from leased
+      if (field === 'financingType' && value !== 'leased') {
+        updated.lmnRecoveryMethod = 'owned';
       }
       
       if (field === 'replacementCostNew') {
@@ -613,17 +620,55 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel, hideFooter
             </div>
 
             {formData.financingType === 'leased' && (
-              <div className="col-span-2">
-                <Label htmlFor="buyoutAmount">Buyout Amount ($)</Label>
-                <Input
-                  id="buyoutAmount"
-                  type="number"
-                  value={getNumericInputValue('buyoutAmount', formData.buyoutAmount)}
-                  onChange={(e) => handleNumericInputChange('buyoutAmount', e.target.value)}
-                  onBlur={() => handleNumericInputBlur('buyoutAmount')}
-                  placeholder="End-of-lease purchase option"
-                />
-              </div>
+              <>
+                <div className="col-span-2">
+                  <Label htmlFor="buyoutAmount">Buyout Amount ($)</Label>
+                  <Input
+                    id="buyoutAmount"
+                    type="number"
+                    value={getNumericInputValue('buyoutAmount', formData.buyoutAmount)}
+                    onChange={(e) => handleNumericInputChange('buyoutAmount', e.target.value)}
+                    onBlur={() => handleNumericInputBlur('buyoutAmount')}
+                    placeholder="End-of-lease purchase option"
+                  />
+                </div>
+
+                <div className="col-span-2 space-y-3">
+                  <Label className="text-sm font-medium">LMN Recovery Method</Label>
+                  <RadioGroup
+                    value={formData.lmnRecoveryMethod || 'owned'}
+                    onValueChange={(v) => handleChange('lmnRecoveryMethod', v as 'owned' | 'leased')}
+                    className="grid gap-3"
+                  >
+                    <label
+                      className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                        formData.lmnRecoveryMethod !== 'leased' ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground/30'
+                      }`}
+                    >
+                      <RadioGroupItem value="owned" className="mt-0.5" />
+                      <div>
+                        <span className="text-sm font-medium">Owned Recovery (recommended)</span>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Recover based on replacement value and useful life. Typically produces a more competitive rate.
+                        </p>
+                      </div>
+                    </label>
+                    <label
+                      className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                        formData.lmnRecoveryMethod === 'leased' ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground/30'
+                      }`}
+                    >
+                      <RadioGroupItem value="leased" className="mt-0.5" />
+                      <div>
+                        <span className="text-sm font-medium">Lease Payment Recovery</span>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Pass monthly lease payment through to LMN. Simpler, but may inflate your equipment rate.
+                        </p>
+                      </div>
+                    </label>
+                  </RadioGroup>
+                </div>
+              </>
             )}
           </div>
         </CollapsibleContent>

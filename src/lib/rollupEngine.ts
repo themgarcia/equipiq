@@ -3,6 +3,8 @@ import { getCategoryDefaults } from '@/data/categoryDefaults';
 
 // ─── Types ──────────────────────────────────────────────────────
 
+export type LmnRecoveryMethod = 'owned' | 'leased';
+
 export interface RollupLine {
   /** Category name used as grouping key */
   category: string;
@@ -26,17 +28,41 @@ export interface RollupLine {
   financingType: FinancingType;
   /** Unit type from category defaults */
   unit: 'Hours' | 'Days';
+  /** Which sub-table this line belongs to */
+  lmnRecoveryMethod: LmnRecoveryMethod;
+  /** Sum of monthly payments for leased group */
+  totalMonthlyPayment: number;
+  /** Payments per year — default 12 */
+  paymentsPerYear: number;
+  /** Months used per year — default 12 */
+  monthsUsed: number;
 }
 
 export interface RollupResult {
-  /** Field equipment lines (operational allocation) */
+  /** Field equipment lines (operational allocation) — all combined */
   fieldLines: RollupLine[];
-  /** Overhead equipment lines (overhead_only + owner_perk) */
+  /** Overhead equipment lines (overhead_only + owner_perk) — all combined */
   overheadLines: RollupLine[];
+  /** Field owned recovery lines */
+  fieldOwnedLines: RollupLine[];
+  /** Field leased recovery lines */
+  fieldLeasedLines: RollupLine[];
+  /** Overhead owned recovery lines */
+  overheadOwnedLines: RollupLine[];
+  /** Overhead leased recovery lines */
+  overheadLeasedLines: RollupLine[];
   /** Totals for field section */
   fieldTotals: RollupTotals;
   /** Totals for overhead section */
   overheadTotals: RollupTotals;
+  /** Totals for field owned */
+  fieldOwnedTotals: RollupTotals;
+  /** Totals for field leased */
+  fieldLeasedTotals: RollupTotals;
+  /** Totals for overhead owned */
+  overheadOwnedTotals: RollupTotals;
+  /** Totals for overhead leased */
+  overheadLeasedTotals: RollupTotals;
 }
 
 export interface RollupTotals {
@@ -52,17 +78,22 @@ function isFieldEquipment(allocationType: AllocationType): boolean {
   return allocationType === 'operational';
 }
 
-function getGroupKey(item: EquipmentCalculated, isField: boolean): string {
-  if (isField) {
-    // Field equipment: group by category + financing type
-    const finType = item.financingType === 'leased' ? 'leased' : 'owned';
-    return `${item.category}|||${finType}`;
+function getRecoveryMethod(item: EquipmentCalculated): LmnRecoveryMethod {
+  if (item.financingType === 'leased' && (item as any).lmnRecoveryMethod === 'leased') {
+    return 'leased';
   }
-  // Overhead equipment: group by category only (no financing split)
-  return `${item.category}|||overhead`;
+  return 'owned';
 }
 
-function buildLine(items: EquipmentCalculated[], financingType: FinancingType): RollupLine {
+function getGroupKey(item: EquipmentCalculated, isField: boolean): string {
+  const recoveryMethod = getRecoveryMethod(item);
+  if (isField) {
+    return `${item.category}|||${recoveryMethod}`;
+  }
+  return `${item.category}|||${recoveryMethod}`;
+}
+
+function buildLine(items: EquipmentCalculated[], recoveryMethod: LmnRecoveryMethod): RollupLine {
   const qty = items.length;
   const categoryDef = getCategoryDefaults(items[0].category);
 
@@ -77,6 +108,12 @@ function buildLine(items: EquipmentCalculated[], financingType: FinancingType): 
 
   const totalCogs = items.reduce((sum, i) => sum + i.cogsAllocatedCost, 0);
   const totalOverhead = items.reduce((sum, i) => sum + i.overheadAllocatedCost, 0);
+  const totalMonthlyPayment = items.reduce((sum, i) => sum + i.monthlyPayment, 0);
+
+  // Determine financing type for display
+  const financingType: FinancingType = recoveryMethod === 'leased' ? 'leased' : 
+    (items.some(i => i.financingType === 'leased') ? 'leased' : 
+     items.some(i => i.financingType === 'financed') ? 'financed' : 'owned');
 
   return {
     category: items[0].category,
@@ -90,6 +127,10 @@ function buildLine(items: EquipmentCalculated[], financingType: FinancingType): 
     totalOverhead,
     financingType,
     unit: categoryDef.unit || 'Hours',
+    lmnRecoveryMethod: recoveryMethod,
+    totalMonthlyPayment,
+    paymentsPerYear: 12,
+    monthsUsed: 12,
   };
 }
 
@@ -110,7 +151,7 @@ export function rollupEquipment(calculatedEquipment: EquipmentCalculated[]): Rol
   const fieldItems = active.filter(e => isFieldEquipment(e.allocationType));
   const overheadItems = active.filter(e => !isFieldEquipment(e.allocationType));
 
-  // Group field items
+  // Group field items by category + recovery method
   const fieldGroups = new Map<string, EquipmentCalculated[]>();
   for (const item of fieldItems) {
     const key = getGroupKey(item, true);
@@ -119,7 +160,7 @@ export function rollupEquipment(calculatedEquipment: EquipmentCalculated[]): Rol
     fieldGroups.set(key, group);
   }
 
-  // Group overhead items
+  // Group overhead items by category + recovery method
   const overheadGroups = new Map<string, EquipmentCalculated[]>();
   for (const item of overheadItems) {
     const key = getGroupKey(item, false);
@@ -131,24 +172,41 @@ export function rollupEquipment(calculatedEquipment: EquipmentCalculated[]): Rol
   // Build lines
   const fieldLines: RollupLine[] = [];
   for (const [key, items] of fieldGroups) {
-    const finType = key.split('|||')[1] as FinancingType;
-    fieldLines.push(buildLine(items, finType === 'leased' ? 'leased' : 'owned'));
+    const recoveryMethod = key.split('|||')[1] as LmnRecoveryMethod;
+    fieldLines.push(buildLine(items, recoveryMethod));
   }
 
   const overheadLines: RollupLine[] = [];
-  for (const [, items] of overheadGroups) {
-    overheadLines.push(buildLine(items, 'owned'));
+  for (const [key, items] of overheadGroups) {
+    const recoveryMethod = key.split('|||')[1] as LmnRecoveryMethod;
+    overheadLines.push(buildLine(items, recoveryMethod));
   }
 
   // Sort alphabetically by category
-  fieldLines.sort((a, b) => a.category.localeCompare(b.category) || a.financingType.localeCompare(b.financingType));
-  overheadLines.sort((a, b) => a.category.localeCompare(b.category));
+  const sortFn = (a: RollupLine, b: RollupLine) => 
+    a.category.localeCompare(b.category) || a.lmnRecoveryMethod.localeCompare(b.lmnRecoveryMethod);
+  fieldLines.sort(sortFn);
+  overheadLines.sort(sortFn);
+
+  // Split into owned/leased sub-arrays
+  const fieldOwnedLines = fieldLines.filter(l => l.lmnRecoveryMethod === 'owned');
+  const fieldLeasedLines = fieldLines.filter(l => l.lmnRecoveryMethod === 'leased');
+  const overheadOwnedLines = overheadLines.filter(l => l.lmnRecoveryMethod === 'owned');
+  const overheadLeasedLines = overheadLines.filter(l => l.lmnRecoveryMethod === 'leased');
 
   return {
     fieldLines,
     overheadLines,
+    fieldOwnedLines,
+    fieldLeasedLines,
+    overheadOwnedLines,
+    overheadLeasedLines,
     fieldTotals: computeTotals(fieldLines),
     overheadTotals: computeTotals(overheadLines),
+    fieldOwnedTotals: computeTotals(fieldOwnedLines),
+    fieldLeasedTotals: computeTotals(fieldLeasedLines),
+    overheadOwnedTotals: computeTotals(overheadOwnedLines),
+    overheadLeasedTotals: computeTotals(overheadLeasedLines),
   };
 }
 
@@ -157,11 +215,11 @@ export function rollupEquipment(calculatedEquipment: EquipmentCalculated[]): Rol
 export function rollupToCSV(result: RollupResult): string {
   const rows: string[][] = [];
 
-  // Field Equipment Section
-  rows.push(['FIELD EQUIPMENT — LMN Equipment Budget']);
+  // Field Equipment — Owned Section
+  rows.push(['FIELD EQUIPMENT — LMN Equipment Budget — Owned']);
   rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg End Value', 'Type']);
 
-  for (const line of result.fieldLines) {
+  for (const line of result.fieldOwnedLines) {
     rows.push([
       line.category,
       String(line.qty),
@@ -172,14 +230,33 @@ export function rollupToCSV(result: RollupResult): string {
     ]);
   }
 
-  rows.push(['Total', String(result.fieldTotals.totalQty), '', '', '', '']);
+  rows.push(['Total', String(result.fieldOwnedTotals.totalQty), '', '', '', '']);
   rows.push([]); // blank row
 
-  // Overhead Equipment Section
-  rows.push(['OVERHEAD EQUIPMENT — LMN Overhead Budget']);
+  // Field Equipment — Leased Section (only if items exist)
+  if (result.fieldLeasedLines.length > 0) {
+    rows.push(['FIELD EQUIPMENT — LMN Equipment Budget — Leased']);
+    rows.push(['Category', 'Qty', 'Monthly Payment', 'Payments/Yr', 'Months Used']);
+
+    for (const line of result.fieldLeasedLines) {
+      rows.push([
+        line.category,
+        String(line.qty),
+        String(Math.round(line.totalMonthlyPayment / line.qty)),
+        String(line.paymentsPerYear),
+        String(line.monthsUsed),
+      ]);
+    }
+
+    rows.push(['Total', String(result.fieldLeasedTotals.totalQty), '', '', '']);
+    rows.push([]); // blank row
+  }
+
+  // Overhead Equipment — Owned Section
+  rows.push(['OVERHEAD EQUIPMENT — LMN Overhead Budget — Owned']);
   rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg End Value']);
 
-  for (const line of result.overheadLines) {
+  for (const line of result.overheadOwnedLines) {
     rows.push([
       line.category,
       String(line.qty),
@@ -189,7 +266,26 @@ export function rollupToCSV(result: RollupResult): string {
     ]);
   }
 
-  rows.push(['Total', String(result.overheadTotals.totalQty), '', '', '']);
+  rows.push(['Total', String(result.overheadOwnedTotals.totalQty), '', '', '']);
+
+  // Overhead Equipment — Leased Section (only if items exist)
+  if (result.overheadLeasedLines.length > 0) {
+    rows.push([]); // blank row
+    rows.push(['OVERHEAD EQUIPMENT — LMN Overhead Budget — Leased']);
+    rows.push(['Category', 'Qty', 'Monthly Payment', 'Payments/Yr', 'Months Used']);
+
+    for (const line of result.overheadLeasedLines) {
+      rows.push([
+        line.category,
+        String(line.qty),
+        String(Math.round(line.totalMonthlyPayment / line.qty)),
+        String(line.paymentsPerYear),
+        String(line.monthsUsed),
+      ]);
+    }
+
+    rows.push(['Total', String(result.overheadLeasedTotals.totalQty), '', '', '']);
+  }
 
   // Build CSV string
   const escapeCsvValue = (value: string): string => {

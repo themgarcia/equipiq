@@ -1,0 +1,1 @@
+ALTER TABLE public.equipment ADD COLUMN lmn_recovery_method text DEFAULT 'owned';

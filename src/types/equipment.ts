@@ -92,6 +92,9 @@ export interface Equipment {
 
   // Entry source tracking
   entrySource?: EntrySource;
+
+  // LMN Recovery Method (only meaningful when financingType === 'leased')
+  lmnRecoveryMethod?: 'owned' | 'leased';
 }
 
 // Calculated fields (derived from Equipment)
