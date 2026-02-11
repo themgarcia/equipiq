@@ -124,7 +124,7 @@ function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned'
             )}
             {diff <= 0 && (
               <p className="text-xs text-success">
-                Lease saves {formatCurrency(Math.abs(diff))}/yr vs owned recovery.
+                {formatCurrency(Math.abs(diff))}/yr more competitive vs owned recovery.
               </p>
             )}
           </TooltipContent>
@@ -149,9 +149,9 @@ function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned'
               <p className="text-xs text-muted-foreground/70">Incl. {formatCurrency(amortizedDeposit)}/yr deposit amortized over {Math.round(line.leasedItemAvgTermMonths)}mo term</p>
             )}
             {diff > 0 ? (
-              <p className="text-xs text-success">Saving {formatCurrency(diff)}/yr vs lease pass-through.</p>
+              <p className="text-xs text-success">{formatCurrency(diff)}/yr more competitive vs lease pass-through.</p>
             ) : (
-              <p className="text-xs text-muted-foreground">Lease would save {formatCurrency(Math.abs(diff))}/yr, but owned recovery keeps your rate consistent.</p>
+              <p className="text-xs text-muted-foreground">Lease is {formatCurrency(Math.abs(diff))}/yr cheaper, but owned recovery keeps your rate consistent.</p>
             )}
           </TooltipContent>
         </Tooltip>
