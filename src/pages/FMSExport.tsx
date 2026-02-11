@@ -5,6 +5,7 @@ import { useDeviceType } from '@/hooks/use-mobile';
 import { Layout } from '@/components/Layout';
 import { formatCurrency } from '@/lib/calculations';
 import { rollupEquipment, rollupToCSV, RollupLine, RollupTotals } from '@/lib/rollupEngine';
+import { getCategoryDefaults } from '@/data/categoryDefaults';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -17,7 +18,13 @@ import {
   TableFooter, 
 } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
-import { Copy, Download, Check, FileSpreadsheet, ChevronRight, Construction, ExternalLink, Truck, Building2 } from 'lucide-react';
+import { Copy, Download, Check, FileSpreadsheet, ChevronRight, Construction, ExternalLink, Truck, Building2, Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Sheet,
   SheetContent,
@@ -131,7 +138,7 @@ function RollupSection({
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Qty: {line.qty} · {formatCurrency(line.totalAnnualRecovery)}/yr
+                    Qty: {line.qty}
                   </p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground ml-2" />
@@ -146,16 +153,32 @@ function RollupSection({
                   <TableHead className="table-header-cell">Category</TableHead>
                   <TableHead className="table-header-cell text-right">Qty</TableHead>
                   <TableHead className="table-header-cell text-right">Avg Replacement</TableHead>
-                  <TableHead className="table-header-cell text-right">Life (Yrs)</TableHead>
+                  <TableHead className="table-header-cell text-right">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help inline-flex items-center gap-1">
+                            Life (Yrs)
+                            <Info className="h-3 w-3 text-muted-foreground" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p>Competitive useful life — how long the equipment helps you compete, not mechanical life. Benchmark context shown per category.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
                   <TableHead className="table-header-cell text-right hidden md:table-cell">Avg End Value</TableHead>
                   {showType && <TableHead className="table-header-cell text-center">Type</TableHead>}
-                  <TableHead className="table-header-cell text-center hidden md:table-cell">Unit</TableHead>
-                  <TableHead className="table-header-cell text-right">Annual Recovery</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {lines.map((line, idx) => {
                   const lineId = `${line.category}-${line.financingType}-${idx}`;
+                  const catDef = getCategoryDefaults(line.category);
+                  const benchmarkText = catDef.benchmarkRange
+                    ? `Default ${Math.round(line.avgUsefulLife)} yrs based on ${catDef.benchmarkRange} at commercial production.`
+                    : `Default ${Math.round(line.avgUsefulLife)} yrs — calendar-based replacement.`;
                   return (
                     <TableRow key={lineId} className="group">
                       <TableCell className="font-medium">
@@ -181,10 +204,19 @@ function RollupSection({
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <span>{Math.round(line.avgUsefulLife)}</span>
-                          <CopyButton cellId={`${lineId}-life`} value={String(Math.round(line.avgUsefulLife))} />
-                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-end gap-1.5 cursor-help">
+                                <span>{Math.round(line.avgUsefulLife)}</span>
+                                <CopyButton cellId={`${lineId}-life`} value={String(Math.round(line.avgUsefulLife))} />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p>{benchmarkText}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums hidden md:table-cell">
                         <div className="flex items-center justify-end gap-1.5">
@@ -199,15 +231,6 @@ function RollupSection({
                           </Badge>
                         </TableCell>
                       )}
-                      <TableCell className="text-center hidden md:table-cell">
-                        <Badge variant="outline" className="text-[10px]">{line.unit}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono-nums font-medium">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <span>{formatCurrency(line.totalAnnualRecovery)}</span>
-                          <CopyButton cellId={`${lineId}-ar`} value={String(Math.round(line.totalAnnualRecovery))} />
-                        </div>
-                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -220,8 +243,6 @@ function RollupSection({
                   <TableCell className="text-right" />
                   <TableCell className="text-right hidden md:table-cell" />
                   {showType && <TableCell />}
-                  <TableCell className="hidden md:table-cell" />
-                  <TableCell className="text-right font-mono-nums">{formatCurrency(totals.totalAnnualRecovery)}</TableCell>
                 </TableRow>
               </TableFooter>
             </Table>
@@ -315,6 +336,17 @@ export default function FMSExport() {
               </Button>
             </div>
 
+            {/* Summary Stat Bar */}
+            {(rollupResult.fieldTotals.totalQty + rollupResult.overheadTotals.totalQty) > 0 && (
+              <div className="bg-muted/50 border rounded-lg px-4 py-3 flex items-center gap-2 text-sm">
+                <Info className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span>
+                  <span className="font-semibold">Total Annual Equipment Recovery: {formatCurrency(rollupResult.fieldTotals.totalAnnualRecovery + rollupResult.overheadTotals.totalAnnualRecovery)}</span>
+                  <span className="text-muted-foreground"> (Field: {formatCurrency(rollupResult.fieldTotals.totalAnnualRecovery)} · Overhead: {formatCurrency(rollupResult.overheadTotals.totalAnnualRecovery)})</span>
+                </span>
+              </div>
+            )}
+
             {/* Info */}
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-start gap-3">
               <FileSpreadsheet className="h-5 w-5 text-primary mt-0.5" />
@@ -394,8 +426,6 @@ export default function FMSExport() {
                     { label: 'Avg Replacement Value', value: formatCurrency(selectedLine.avgReplacementValue), raw: String(Math.round(selectedLine.avgReplacementValue)) },
                     { label: 'Avg Useful Life (Yrs)', value: String(Math.round(selectedLine.avgUsefulLife)) },
                     { label: 'Avg End Value', value: formatCurrency(selectedLine.avgEndValue), raw: String(Math.round(selectedLine.avgEndValue)) },
-                    { label: 'Unit', value: selectedLine.unit },
-                    { label: 'Annual Recovery', value: formatCurrency(selectedLine.totalAnnualRecovery), raw: String(Math.round(selectedLine.totalAnnualRecovery)) },
                   ].map(({ label, value, raw }) => (
                     <div key={label} className="flex items-center justify-between py-2 border-b">
                       <span className="text-sm text-muted-foreground">{label}</span>

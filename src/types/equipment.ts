@@ -15,6 +15,8 @@ export type UnitType = 'Hours' | 'Days';
 
 export type DefaultAllocation = 'operational' | 'overhead_only';
 
+export type BenchmarkType = 'hours' | 'miles' | 'calendar';
+
 export interface CategoryDefaults {
   category: EquipmentCategory;
   division: EquipmentDivision;
@@ -25,6 +27,8 @@ export interface CategoryDefaults {
   notes: string;
   maintenancePercent: number;
   insurancePercent: number;
+  benchmarkType: BenchmarkType;
+  benchmarkRange: string | null;
 }
 
 // Entry source for tracking how equipment was added
