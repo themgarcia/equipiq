@@ -198,7 +198,7 @@ export interface CashflowProjectionPoint {
   annualPayments: number;              // decreasing annual payments as items pay off
   netAnnualCashflow: number;
   activePayments: number;              // count of items still making payments
-  events: string[];                    // e.g., ["Truck paid off", "Stand-On paid off"]
+  events: string[];                    // e.g., ["Truck paid off", "Stand-on paid off"]
 }
 
 export interface CashflowStabilization {

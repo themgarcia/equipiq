@@ -1257,7 +1257,7 @@ export function EquipmentImportReview({
       try {
         // Skip if attachmentAction is 'skip'
         if (eq.attachmentAction === 'skip') {
-          console.log(`Skipping attachment "${eq.attachmentName || eq.make + ' ' + eq.model}" per user selection`);
+          // Skipping attachment per user selection
           continue;
         }
         
@@ -1309,7 +1309,7 @@ export function EquipmentImportReview({
           );
           
           if (isDuplicate) {
-            console.log(`Attachment "${attachmentName}" already exists on parent, skipping to prevent duplicate`);
+            // Attachment already exists on parent, skipping to prevent duplicate
             results.succeeded.push(`${attachmentName} (attachment - skipped duplicate)`);
             continue;
           }
@@ -1361,7 +1361,7 @@ export function EquipmentImportReview({
             
             // Skip if document already exists on this equipment
             if (existingFileNames.has(file.name)) {
-              console.log(`Document ${file.name} already exists on equipment, skipping`);
+              // Document already exists on equipment, skipping
               continue;
             }
             
@@ -1388,7 +1388,7 @@ export function EquipmentImportReview({
         }
         
         if (parentEquipmentId && filesToAttach.length > 0) {
-          console.log(`Attaching ${filesToAttach.length} document(s) to parent equipment ${parentEquipmentId} for attachment "${eq.attachmentName || eq.make + ' ' + eq.model}"`);
+          // Attaching document(s) to parent equipment for attachment
           
           // Fetch existing documents to check for duplicates in database
           const existingDocs = await getDocuments(parentEquipmentId);
@@ -1398,20 +1398,20 @@ export function EquipmentImportReview({
             // Skip if already uploaded in this session
             const uploadKey = `${parentEquipmentId}:${file.name}`;
             if (uploadedDocumentKeys.has(uploadKey)) {
-              console.log(`Document ${file.name} already uploaded in this session, skipping`);
+              // Document already uploaded in this session, skipping
               continue;
             }
             
             // Skip if document already exists on this equipment
             if (existingFileNames.has(file.name)) {
-              console.log(`Document ${file.name} already exists on parent equipment, skipping`);
+              // Document already exists on parent equipment, skipping
               continue;
             }
             
             uploadedDocumentKeys.add(uploadKey);
             try {
               await uploadDocument(parentEquipmentId, file);
-              console.log(`Successfully attached document ${file.name} to parent equipment`);
+              // Successfully attached document to parent equipment
             } catch (error) {
               console.error(`Failed to attach document ${file.name} to parent:`, error);
             }
