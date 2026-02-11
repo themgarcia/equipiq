@@ -86,7 +86,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-1',
       name: '2022 Kubota KX040-4',
-      category: 'Excavator – Compact (≤ 6 ton)',
+      category: 'Construction — Excavator — Compact',
       serialVin: 'DEMO123456',
       declaredValue: 55000,
       purchasePrice: 58000,
@@ -97,7 +97,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-3',
       name: '2021 Bobcat S570',
-      category: 'Loader – Skid Steer',
+      category: 'Construction — Loader — Skid Steer',
       serialVin: 'DEMO345678',
       declaredValue: 38000,
       purchasePrice: 42000,
@@ -110,7 +110,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-1',
       name: '2022 Kubota KX040-4',
-      category: 'Excavator – Compact (≤ 6 ton)',
+      category: 'Construction — Excavator — Compact',
       serialVin: 'DEMO123456',
       declaredValue: 55000,
       purchasePrice: 58000,
@@ -121,7 +121,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-2',
       name: '2023 Ford F-250 XL',
-      category: 'Vehicle (Light-Duty)',
+      category: 'Fleet — Truck — 3/4 Ton',
       serialVin: 'DEMO789012',
       declaredValue: 48000,
       purchasePrice: 52000,
@@ -132,7 +132,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-3',
       name: '2021 Bobcat S570',
-      category: 'Loader – Skid Steer',
+      category: 'Construction — Loader — Skid Steer',
       serialVin: 'DEMO345678',
       declaredValue: 38000,
       purchasePrice: 42000,
@@ -143,7 +143,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-5',
       name: '2020 CAT 320',
-      category: 'Excavator – Large (12+ ton)',
+      category: 'Construction — Excavator — Standard',
       serialVin: null,
       declaredValue: 175000,
       purchasePrice: 185000,
@@ -156,7 +156,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-1',
       name: '2022 Kubota KX040-4',
-      category: 'Excavator – Compact (≤ 6 ton)',
+      category: 'Construction — Excavator — Compact',
       serialVin: 'DEMO123456',
       declaredValue: 55000,
       purchasePrice: 58000,
@@ -167,7 +167,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-2',
       name: '2023 Ford F-250 XL',
-      category: 'Vehicle (Light-Duty)',
+      category: 'Fleet — Truck — 3/4 Ton',
       serialVin: 'DEMO789012',
       declaredValue: 48000,
       purchasePrice: 52000,
@@ -178,7 +178,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-3',
       name: '2021 Bobcat S570',
-      category: 'Loader – Skid Steer',
+      category: 'Construction — Loader — Skid Steer',
       serialVin: 'DEMO345678',
       declaredValue: 38000,
       purchasePrice: 42000,
@@ -189,7 +189,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-5',
       name: '2020 CAT 320',
-      category: 'Excavator – Large (12+ ton)',
+      category: 'Construction — Excavator — Standard',
       serialVin: null,
       declaredValue: 175000,
       purchasePrice: 185000,
@@ -200,7 +200,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-6',
       name: '2021 John Deere 310SL',
-      category: 'Loader – Mid-Size',
+      category: 'Construction — Loader — Backhoe',
       serialVin: null,
       declaredValue: 90000,
       purchasePrice: 95000,
@@ -214,7 +214,7 @@ const DEMO_INSURED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = {
     {
       id: 'demo-1',
       name: '2022 Kubota KX040-4',
-      category: 'Excavator – Compact (≤ 6 ton)',
+      category: 'Construction — Excavator — Compact',
       serialVin: 'DEMO123456',
       declaredValue: 55000,
       purchasePrice: 58000,
@@ -231,7 +231,7 @@ const DEMO_UNREVIEWED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = 
     {
       id: 'demo-4',
       name: '2023 Big Tex 14ET',
-      category: 'Trailer',
+      category: 'Fleet — Trailer — Flat Deck',
       serialVin: 'DEMO901234',
       declaredValue: 8500,
       purchasePrice: 8500,
@@ -244,7 +244,7 @@ const DEMO_UNREVIEWED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = 
     {
       id: 'demo-4',
       name: '2023 Big Tex 14ET',
-      category: 'Trailer',
+      category: 'Fleet — Trailer — Flat Deck',
       serialVin: 'DEMO901234',
       declaredValue: 8500,
       purchasePrice: 8500,
@@ -257,7 +257,7 @@ const DEMO_UNREVIEWED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = 
     {
       id: 'demo-4',
       name: '2023 Big Tex 14ET',
-      category: 'Trailer',
+      category: 'Fleet — Trailer — Flat Deck',
       serialVin: 'DEMO901234',
       declaredValue: 8500,
       purchasePrice: 8500,
@@ -270,7 +270,7 @@ const DEMO_UNREVIEWED_EQUIPMENT: Record<SubscriptionPlan, InsuredEquipment[]> = 
     {
       id: 'demo-4',
       name: '2023 Big Tex 14ET',
-      category: 'Trailer',
+      category: 'Fleet — Trailer — Flat Deck',
       serialVin: 'DEMO901234',
       declaredValue: 8500,
       purchasePrice: 8500,
