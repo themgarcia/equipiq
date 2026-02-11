@@ -135,8 +135,12 @@ function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned'
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs space-y-1">
             <p className="text-xs">This category includes leased items modeled as Owned for a more competitive rate.</p>
-            {diff > 0 && (
+            <p className="text-xs text-muted-foreground">Owned recovery: {formatCurrency(ownedRecovery)}/yr</p>
+            <p className="text-xs text-muted-foreground">Lease pass-through: {formatCurrency(leaseRecovery)}/yr</p>
+            {diff > 0 ? (
               <p className="text-xs text-success">Saving {formatCurrency(diff)}/yr vs lease pass-through.</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Lease would save {formatCurrency(Math.abs(diff))}/yr, but owned recovery keeps your rate consistent.</p>
             )}
           </TooltipContent>
         </Tooltip>
