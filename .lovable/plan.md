@@ -1,107 +1,61 @@
 
 
-# Taxonomy v5 Migration + FMS Export Cleanup
+# v5 Fix Pass + Locale-Aware Mileage
 
-Three coordinated changes: rename 37 categories, add usage benchmarks, and clean up FMS Export columns.
+Three fixes from reviewing the v5 taxonomy migration output.
 
 ---
 
-## Change 1: Rename 37 Category Names
+## Fix 1: Data Accuracy Corrections
 
-Shorten category names for better UI readability. The full mapping covers names like "Construction -- Loader -- Compact Track (CTL)" becoming "Construction -- Loader -- CTL".
+Known issues confirmed in `categoryDefaults.ts`:
+
+| Line | Category | Fix |
+|------|----------|-----|
+| 39 | Fleet -- Truck -- Cab Over Body | Rename to "Fleet -- Truck -- Cab Over" |
+| 34 | Fleet -- Other | Change benchmarkType to 'calendar', benchmarkRange to null |
+| 31 | Construction -- Tractor | benchmarkRange '4,000-6,000 hrs' to '6,000-10,000 hrs' |
+| 27 | Construction -- Saw -- Cut-Off | benchmarkRange '1,000-2,000 hrs' to '1,000-1,500 hrs' |
+| 38 | Fleet -- Trailer -- Landscape | usefulLife 12 to 15, resalePercent 20 to 25 |
+
+A full audit of all 92 categories will be done against the uploaded taxonomy document. Any additional mismatches will be corrected.
+
+A database migration will rename "Fleet -- Truck -- Cab Over Body" to "Fleet -- Truck -- Cab Over" for existing equipment records.
 
 ### Files modified
-
-**`src/data/categoryDefaults.ts`** -- Update the `category` field for all 37 renamed entries. For example:
-- `Construction — Compact Track Loader (CTL)` becomes `Construction — Loader — CTL`
-- `Fleet — Truck — Crew Cab 1/2 Ton` becomes `Fleet — Truck — 1/2 Ton`
-- (all 37+ renames from the prompt document)
-
-**Database migration** -- A SQL migration to update existing equipment records:
-```sql
-UPDATE equipment SET category = 'Construction — Loader — CTL' 
-  WHERE category = 'Construction — Compact Track Loader (CTL)';
--- ... one UPDATE per renamed category (37 statements)
-```
-
-No other file changes needed -- the Equipment form dropdown, Category Lifespans page, and FMS Export all read from `categoryDefaults`, so names flow through automatically.
+- `src/data/categoryDefaults.ts` -- fix all mismatched values
+- SQL migration -- rename Cab Over in equipment table
 
 ---
 
-## Change 2: Add Usage Benchmarks
+## Fix 2: Overhead Table Type Column
 
-Add reference data showing lifetime hours or miles per category. Informational only -- no calculation changes.
-
-### Data model
-
-**`src/types/equipment.ts`** -- Add two fields to `CategoryDefaults`:
-```
-benchmarkType: 'hours' | 'miles' | 'calendar'
-benchmarkRange: string | null
-```
-
-**`src/data/categoryDefaults.ts`** -- Add `benchmarkType` and `benchmarkRange` to every entry. Values come from the taxonomy document. Examples:
-- Excavator -- Compact: `benchmarkType: 'hours'`, `benchmarkRange: '3,000-5,000 hrs'`
-- Truck -- 3/4 Ton: `benchmarkType: 'miles'`, `benchmarkRange: '150,000-200,000 mi'`
-- Trailer -- Landscape: `benchmarkType: 'calendar'`, `benchmarkRange: null`
-
-### UI changes
-
-**`src/pages/CategoryLifespans.tsx`** -- Show benchmark as secondary text below useful life:
-- Mobile cards: "Life: 5 yrs" becomes "Life: 5 yrs -- 3,000-5,000 hrs"
-- Desktop table: Add a muted secondary line under the useful life number
-- Calendar types show "Calendar-based"
-
-**FMS Export tooltips** -- Add a tooltip on the Life (Yrs) column showing the benchmark context, e.g. "Default 5 years based on 3,000-5,000 hrs at commercial production."
-
----
-
-## Change 3: FMS Export Column Cleanup
-
-Remove columns that don't map to LMN's Equipment Budget.
-
-### Columns removed from both tables
-- **Unit** (Hours/Days) -- belongs in Rate Builder, not budget
-- **Annual Recovery** -- internal EquipIQ calculation, not an LMN field
-
-### Summary stat bar
-Add an info bar above the tables showing total annual recovery:
-```
-Total Annual Equipment Recovery: $31,613 (Field: $21,483 -- Overhead: $10,130)
-```
+Currently `FMSExport.tsx` passes `showType={false}` to the Overhead RollupSection. Change to `showType={true}` so both Field and Overhead tables show the Owned/Leased badge column.
 
 ### Files modified
+- `src/pages/FMSExport.tsx` -- change one prop from false to true (line ~265)
 
-**`src/pages/FMSExport.tsx`**:
-- Remove Unit column header and cells from the desktop table
-- Remove Annual Recovery column header and cells from the desktop table
-- Remove both from the table footer totals row
-- Add summary stat bar between the info card and the first table
-- Update mobile card view to remove Annual Recovery display
-- Update mobile sheet detail view to remove Unit and Annual Recovery rows
+---
 
-**`src/lib/rollupEngine.ts`** -- Remove Unit and Annual Recovery columns from `rollupToCSV()` function. CSV output columns become: Category, Qty, Avg Replacement Value, Life (Yrs), Avg End Value, Type.
+## Fix 3: Locale-Aware Mileage Display
 
-Note: The `RollupLine` interface keeps `unit` and `totalAnnualRecovery` fields since they're used elsewhere (Dashboard, Cashflow Analysis). We only remove them from the FMS Export display and CSV.
+Store benchmarks in miles (source of truth). Convert to km on display for Canadian/metric users.
+
+### New utility: `src/lib/benchmarkUtils.ts`
+- `useMetricUnits()` hook -- checks browser locale for Canadian/metric signals (en-CA, fr-CA, non-US locales), returns boolean
+- `formatBenchmarkRange(benchmarkType, benchmarkRange, useMetric)` -- returns display string. For miles benchmarks with metric=true, parses the range, multiplies by 1.609, rounds to nearest 5,000 km
+
+### UI updates
+- `src/pages/CategoryLifespans.tsx` -- use `useMetricUnits()` + `formatBenchmarkRange()` for benchmark display
+- `src/pages/FMSExport.tsx` -- same for Life column tooltips
 
 ---
 
 ## Implementation Order
 
-1. Update `CategoryDefaults` interface (add benchmark fields)
-2. Update `categoryDefaults.ts` (rename categories + add benchmarks)
-3. Database migration (rename categories in existing records)
-4. Update `CategoryLifespans.tsx` (show benchmarks)
-5. Update `FMSExport.tsx` (remove columns, add summary bar, add life tooltip)
-6. Update `rollupToCSV()` in `rollupEngine.ts` (remove columns from CSV)
-
----
-
-## Technical Details
-
-- The 37 category renames require exact string matching in the SQL migration since categories are stored as plain text in the `equipment` table
-- The `benchmarkRange` field uses `string | null` because calendar-based categories have no numeric range
-- No database schema changes needed for benchmarks -- they live only in the frontend `categoryDefaults` array
-- The rollup engine grouping logic is unaffected since it groups by category name, and both the source data and DB records get renamed together
-- The admin UPDATE RLS policy (already in place) is not needed for this migration since we'll use a standard SQL migration
+1. Fix data in `categoryDefaults.ts` (all known + audited issues)
+2. Database migration for Cab Over rename
+3. Change `showType={true}` for Overhead section in FMSExport
+4. Create `src/lib/benchmarkUtils.ts` with metric detection and formatting
+5. Wire up locale-aware display in CategoryLifespans and FMSExport
 
