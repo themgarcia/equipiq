@@ -40,6 +40,10 @@ export interface RollupLine {
   leasedItemCount: number;
   /** Sum of monthly payments only from leased items */
   leasedItemMonthlyPayment: number;
+  /** Sum of deposit amounts from leased items only */
+  leasedItemDepositTotal: number;
+  /** Average term in months across leased items */
+  leasedItemAvgTermMonths: number;
 }
 
 export interface RollupResult {
@@ -116,6 +120,10 @@ function buildLine(items: EquipmentCalculated[], recoveryMethod: LmnRecoveryMeth
   const leasedItems = items.filter(i => i.financingType === 'leased');
   const leasedItemCount = leasedItems.length;
   const leasedItemMonthlyPayment = leasedItems.reduce((sum, i) => sum + i.monthlyPayment, 0);
+  const leasedItemDepositTotal = leasedItems.reduce((sum, i) => sum + i.depositAmount, 0);
+  const leasedItemAvgTermMonths = leasedItemCount > 0
+    ? leasedItems.reduce((sum, i) => sum + i.termMonths, 0) / leasedItemCount
+    : 0;
 
   // Determine financing type for display
   const financingType: FinancingType = recoveryMethod === 'leased' ? 'leased' : 
@@ -140,6 +148,8 @@ function buildLine(items: EquipmentCalculated[], recoveryMethod: LmnRecoveryMeth
     monthsUsed: 12,
     leasedItemCount,
     leasedItemMonthlyPayment,
+    leasedItemDepositTotal,
+    leasedItemAvgTermMonths,
   };
 }
 

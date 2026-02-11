@@ -90,9 +90,14 @@ function CopyButton({ cellId, value, copiedCell, onCopy }: { cellId: string; val
 // ─── Cost Comparison Tooltip ───────────────────────────────────
 
 function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned' | 'leased' }) {
-  const leaseRecovery = line.leasedItemCount > 0
-    ? (line.leasedItemMonthlyPayment / line.leasedItemCount) * 12
+  const avgMonthlyPayment = line.leasedItemCount > 0
+    ? line.leasedItemMonthlyPayment / line.leasedItemCount
     : 0;
+  const amortizedDeposit = (line.leasedItemCount > 0 && line.leasedItemAvgTermMonths > 0)
+    ? (line.leasedItemDepositTotal / line.leasedItemCount) * 12 / line.leasedItemAvgTermMonths
+    : 0;
+  const leaseRecovery = avgMonthlyPayment * 12 + amortizedDeposit;
+  const hasDeposit = line.leasedItemDepositTotal > 0;
   const ownedRecovery = line.avgUsefulLife > 0 
     ? (line.avgReplacementValue - line.avgEndValue) / line.avgUsefulLife 
     : 0;
@@ -108,6 +113,9 @@ function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned'
           <TooltipContent side="top" className="max-w-xs space-y-1">
             <p className="font-medium text-xs">Cost Comparison</p>
             <p className="text-xs">Lease recovery: {formatCurrency(leaseRecovery)}/yr</p>
+            {hasDeposit && (
+              <p className="text-xs text-muted-foreground">Incl. {formatCurrency(amortizedDeposit)}/yr deposit amortized over {Math.round(line.leasedItemAvgTermMonths)}mo term</p>
+            )}
             <p className="text-xs">Owned recovery: {formatCurrency(ownedRecovery)}/yr</p>
             {diff > 0 && (
               <p className="text-xs text-warning">
@@ -137,6 +145,9 @@ function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned'
             <p className="text-xs">This category includes leased items modeled as Owned for a more competitive rate.</p>
             <p className="text-xs text-muted-foreground">Owned recovery: {formatCurrency(ownedRecovery)}/yr</p>
             <p className="text-xs text-muted-foreground">Lease pass-through: {formatCurrency(leaseRecovery)}/yr</p>
+            {hasDeposit && (
+              <p className="text-xs text-muted-foreground/70">Incl. {formatCurrency(amortizedDeposit)}/yr deposit amortized over {Math.round(line.leasedItemAvgTermMonths)}mo term</p>
+            )}
             {diff > 0 ? (
               <p className="text-xs text-success">Saving {formatCurrency(diff)}/yr vs lease pass-through.</p>
             ) : (
