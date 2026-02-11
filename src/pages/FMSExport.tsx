@@ -90,7 +90,9 @@ function CopyButton({ cellId, value, copiedCell, onCopy }: { cellId: string; val
 // ─── Cost Comparison Tooltip ───────────────────────────────────
 
 function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned' | 'leased' }) {
-  const leaseRecovery = (line.totalMonthlyPayment / line.qty) * 12;
+  const leaseRecovery = line.leasedItemCount > 0
+    ? (line.leasedItemMonthlyPayment / line.leasedItemCount) * 12
+    : 0;
   const ownedRecovery = line.avgUsefulLife > 0 
     ? (line.avgReplacementValue - line.avgEndValue) / line.avgUsefulLife 
     : 0;
@@ -123,8 +125,8 @@ function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned'
     );
   }
 
-  // For owned rows that have lease financing
-  if (line.financingType === 'leased' && line.totalMonthlyPayment > 0) {
+  // For owned rows that have leased items in the category
+  if (line.leasedItemCount > 0 && line.leasedItemMonthlyPayment > 0) {
     return (
       <TooltipProvider>
         <Tooltip>
@@ -132,7 +134,7 @@ function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned'
             <Info className="h-3.5 w-3.5 text-muted-foreground/50 cursor-help inline ml-1" />
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs space-y-1">
-            <p className="text-xs">This leased item is modeled as Owned for a more competitive rate.</p>
+            <p className="text-xs">This category includes leased items modeled as Owned for a more competitive rate.</p>
             {diff > 0 && (
               <p className="text-xs text-success">Saving {formatCurrency(diff)}/yr vs lease pass-through.</p>
             )}
