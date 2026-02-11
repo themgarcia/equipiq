@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Package, DollarSign, TrendingUp, Wand2, Check, RefreshCw } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserActivityTab } from '@/components/admin/UserActivityTab';
 import { ErrorLogTab } from '@/components/admin/ErrorLogTab';
@@ -19,11 +19,6 @@ import { useDeviceType } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MobileTabSelect } from '@/components/MobileTabSelect';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { categoryDefaults } from '@/data/categoryDefaults';
 import { 
   getIndustryLabel, 
   getFieldEmployeesLabel, 
@@ -32,13 +27,6 @@ import {
   getReferralSourceLabel,
 } from '@/data/signupOptions';
 
-// Build grouped categories for the dropdown
-const v3Categories = categoryDefaults.map(c => c.category);
-const categoryByDivision = categoryDefaults.reduce((acc, c) => {
-  if (!acc[c.division]) acc[c.division] = [];
-  acc[c.division].push(c.category);
-  return acc;
-}, {} as Record<string, string[]>);
 
 export default function AdminDashboard() {
   const [userStats, setUserStats] = useState<UserStats[]>([]);
@@ -64,13 +52,6 @@ export default function AdminDashboard() {
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [loadingActivityLog, setLoadingActivityLog] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
-  const [migrationOpen, setMigrationOpen] = useState(false);
-  const [migrating, setMigrating] = useState(false);
-  const [migrationResults, setMigrationResults] = useState<Array<{ id: string; name: string; oldCategory: string; newCategory: string }> | null>(null);
-  const [migrationMessage, setMigrationMessage] = useState('');
-  const [uncategorizedItems, setUncategorizedItems] = useState<Array<{ id: string; name: string; category: string }>>([]);
-  const [updatedIds, setUpdatedIds] = useState<Set<string>>(new Set());
-  const [loadingUncategorized, setLoadingUncategorized] = useState(false);
   const { toast } = useToast();
   const deviceType = useDeviceType();
   const isMobileOrTablet = deviceType !== 'desktop';
@@ -523,75 +504,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const runCategoryMigration = async () => {
-    setMigrating(true);
-    setMigrationResults(null);
-    setMigrationMessage('');
-    setUpdatedIds(new Set());
-    try {
-      const { data, error } = await supabase.functions.invoke('migrate-categories');
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setMigrationResults(data.results || []);
-      setMigrationMessage(data.message || 'Migration complete');
-      toast({
-        title: "Category migration complete",
-        description: data.message,
-      });
-      // Auto-fetch uncategorized after migration
-      fetchUncategorizedItems();
-    } catch (error: any) {
-      console.error('Migration error:', error);
-      toast({
-        title: "Migration failed",
-        description: error.message,
-        variant: "destructive",
-      });
-      setMigrationMessage(`Error: ${error.message}`);
-    } finally {
-      setMigrating(false);
-    }
-  };
-
-  const fetchUncategorizedItems = useCallback(async () => {
-    setLoadingUncategorized(true);
-    try {
-      const { data, error } = await supabase
-        .from('equipment')
-        .select('id, name, category')
-        .not('category', 'in', `(${v3Categories.map(c => `"${c}"`).join(',')})`);
-      if (error) throw error;
-      setUncategorizedItems(data || []);
-    } catch (error) {
-      console.error('Error fetching uncategorized items:', error);
-    } finally {
-      setLoadingUncategorized(false);
-    }
-  }, []);
-
-  const handleCategoryOverride = async (itemId: string, newCategory: string) => {
-    try {
-      const { error } = await supabase
-        .from('equipment')
-        .update({ category: newCategory })
-        .eq('id', itemId);
-      if (error) throw error;
-      
-      setUpdatedIds(prev => new Set(prev).add(itemId));
-      
-      // Update migration results if present
-      setMigrationResults(prev => prev?.map(r => 
-        r.id === itemId ? { ...r, newCategory } : r
-      ) || null);
-      
-      // Remove from uncategorized if it was there
-      setUncategorizedItems(prev => prev.filter(item => item.id !== itemId));
-      
-      toast({ title: "Category updated" });
-    } catch (error: any) {
-      toast({ title: "Update failed", description: error.message, variant: "destructive" });
-    }
-  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -621,154 +533,7 @@ export default function AdminDashboard() {
             <h1 className="text-2xl md:text-3xl font-bold">Admin Dashboard</h1>
             <p className="text-muted-foreground">Platform analytics and user management</p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setMigrationOpen(true)}
-            className="shrink-0"
-          >
-            <Wand2 className="h-4 w-4 mr-2" />
-            Migrate Categories
-          </Button>
         </div>
-
-{/* Category Migration Dialog */}
-        <Dialog open={migrationOpen} onOpenChange={(open) => {
-          setMigrationOpen(open);
-          if (open && !migrationResults) fetchUncategorizedItems();
-        }}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>AI Category Migration</DialogTitle>
-              <DialogDescription>
-                Re-categorize equipment into the v3 taxonomy. You can override any assignment using the dropdowns.
-              </DialogDescription>
-            </DialogHeader>
-
-            {!migrationResults && !migrating && (
-              <div className="space-y-4">
-                {uncategorizedItems.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">{uncategorizedItems.length} item(s) need categorization</p>
-                      <Button variant="ghost" size="sm" onClick={fetchUncategorizedItems} disabled={loadingUncategorized}>
-                        <RefreshCw className={`h-3 w-3 mr-1 ${loadingUncategorized ? 'animate-spin' : ''}`} />
-                        Refresh
-                      </Button>
-                    </div>
-                    <div className="border rounded-md overflow-auto max-h-[300px]">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Item</TableHead>
-                            <TableHead>Current Category</TableHead>
-                            <TableHead>Assign Category</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {uncategorizedItems.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell className="font-medium text-sm">{item.name}</TableCell>
-                              <TableCell className="text-sm text-muted-foreground">{item.category}</TableCell>
-                              <TableCell>
-                                <Select onValueChange={(val) => handleCategoryOverride(item.id, val)}>
-                                  <SelectTrigger className="h-8 w-[220px] text-xs">
-                                    <SelectValue placeholder="Pick category…" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {Object.entries(categoryByDivision).map(([division, cats]) => (
-                                      <SelectGroup key={division}>
-                                        <SelectLabel className="text-xs font-bold">{division}</SelectLabel>
-                                        {cats.map((cat) => (
-                                          <SelectItem key={cat} value={cat} className="text-xs">{cat}</SelectItem>
-                                        ))}
-                                      </SelectGroup>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                )}
-                {uncategorizedItems.length === 0 && !loadingUncategorized && (
-                  <p className="text-sm text-muted-foreground">All items already use v3 categories.</p>
-                )}
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setMigrationOpen(false)}>Cancel</Button>
-                  <Button onClick={runCategoryMigration}>
-                    <Wand2 className="h-4 w-4 mr-2" />
-                    Run AI Migration
-                  </Button>
-                </DialogFooter>
-              </div>
-            )}
-
-            {migrating && (
-              <div className="space-y-3 py-4">
-                <p className="text-sm text-muted-foreground">AI is analyzing equipment and assigning categories...</p>
-                <Progress value={undefined} className="animate-pulse" />
-              </div>
-            )}
-
-            {migrationMessage && !migrating && (
-              <p className="text-sm font-medium">{migrationMessage}</p>
-            )}
-
-            {migrationResults && migrationResults.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">Use the dropdowns to override any AI assignment.</p>
-                <div className="border rounded-md overflow-auto max-h-[400px]">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Item</TableHead>
-                        <TableHead>Old Category</TableHead>
-                        <TableHead>New Category</TableHead>
-                        <TableHead className="w-8"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {migrationResults.map((r) => (
-                        <TableRow key={r.id}>
-                          <TableCell className="font-medium text-sm">{r.name}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{r.oldCategory}</TableCell>
-                          <TableCell>
-                            <Select value={r.newCategory} onValueChange={(val) => handleCategoryOverride(r.id, val)}>
-                              <SelectTrigger className="h-8 w-[220px] text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(categoryByDivision).map(([division, cats]) => (
-                                  <SelectGroup key={division}>
-                                    <SelectLabel className="text-xs font-bold">{division}</SelectLabel>
-                                    {cats.map((cat) => (
-                                      <SelectItem key={cat} value={cat} className="text-xs">{cat}</SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            {updatedIds.has(r.id) && <Check className="h-4 w-4 text-primary" />}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
-
-            {migrationResults && migrationResults.length === 0 && !migrating && (
-              <p className="text-sm text-muted-foreground py-4">No items needed migration — all equipment already uses v3 categories.</p>
-            )}
-          </DialogContent>
-        </Dialog>
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
