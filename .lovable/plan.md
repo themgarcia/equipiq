@@ -1,39 +1,52 @@
 
 
-# Version Bump to v1.3.6 + Full Changelog
+# Fix Demo Equipment Data to Match v6 Taxonomy
 
-Bump `APP_VERSION` to `"1.3.6"` and add a comprehensive changelog entry covering everything since v1.3.5.
+## Problem
 
----
+All 10 demo equipment items use **old category names** that no longer exist in the v6 taxonomy. Two items (Volvo A25G articulated hauler, CAT D6T bulldozer) are heavy civil machines that don't belong in a landscape contractor's fleet and have no matching category. Leased items are also missing the new `lmnRecoveryMethod` field.
 
-## Changelog Entry: v1.3.6 (2026-02-11)
+## Changes
 
-### Added (user-facing)
-- Usage benchmarks per category on FMS Export and Category Lifespans pages (e.g., "5,000-8,000 hrs at commercial production")
-- Benchmark ranges automatically convert miles to kilometers for Canadian users
-- Choose how leased equipment is recovered in LMN: "Owned Recovery" (replacement value / useful life) or "Lease Payment Recovery" (monthly payments passed through)
-- Side-by-side cost comparison tooltips on FMS Export showing owned vs. lease annual costs, including amortized deposits
-- FMS Export now splits Field and Overhead sections into separate Owned and Leased sub-tables
-- Canadian users automatically default to kilometers during signup
+### 1. Update all category strings to v6 format
 
-### Improved (user-facing)
-- Lease vs. owned cost comparisons now include deposits for a true apples-to-apples annual cost
-- Clearer tooltip language on FMS Export -- comparisons use "more competitive" instead of "saves"
-- Equipment taxonomy updated to 93 categories with benchmark data for every category
-- "Mini Skid Steer" category renamed to "Stand-On" to match current industry terminology
+| Demo Item | Old Category | New v6 Category |
+|---|---|---|
+| Kubota KX040-4 | `Excavator - Compact (<=6 ton)` | `Construction - Excavator - Compact` |
+| Ford F-250 XL | `Vehicle (Light-Duty)` | `Fleet - Truck - 3/4 Ton` |
+| Bobcat S570 | `Loader - Skid Steer` | `Construction - Loader - Skid Steer` |
+| Big Tex 14ET | `Trailer` | `Fleet - Trailer - Flat Deck` |
+| CAT 320 | `Excavator - Large (12+ ton)` | `Construction - Excavator - Standard` |
+| John Deere 310SL | `Loader - Mid-Size` | `Construction - Loader - Backhoe` |
+| Kenworth T880 | `Vehicle (Commercial)` | `Fleet - Truck - Dump Tandem` |
+| Case CX80C | `Excavator - Mid-Size (6-12 ton)` | `Construction - Excavator - Standard` |
 
-### Fixed (user-facing)
-- Equipment using the old "Mini Skid Steer" category automatically updated to "Stand-On"
+### 2. Replace two items that don't fit the taxonomy
 
----
+**Volvo A25G (demo-7)** -- Replace with a realistic landscape machine, e.g.:
+- **2022 Toro Dingo TX 1000** -- `Construction - Loader - Stand-On` (stand-on track loader, very common for landscape crews, showcases the renamed Stand-On category)
 
-## Files Modified
+**CAT D6T (demo-8)** -- Replace with something landscape contractors actually own, e.g.:
+- **2023 Isuzu NPR-HD** -- `Fleet - Truck - Cab Over` (landscape body truck, extremely common in the industry)
+
+These replacements give better category coverage and are machines landscape contractors actually own.
+
+### 3. Add `lmnRecoveryMethod` to leased items
+
+The Ford F-250 (demo-2) and the replacement for demo-7 (if leased) need `lmnRecoveryMethod: 'owned'` (default) or `'leased'` added to show off the new FMS Export split.
+
+Set the F-250 to `lmnRecoveryMethod: 'leased'` so the demo data demonstrates the Owned vs. Leased sub-table split on the FMS Export page.
+
+## File Modified
 
 | File | Change |
 |---|---|
-| `src/lib/version.ts` | Bump `APP_VERSION` from `"1.3.5"` to `"1.3.6"` |
-| `src/data/changelog.json` | Add new v1.3.6 entry at top of entries array with all items above (both userFacing and technical arrays) |
-| `CHANGELOG.md` | Add corresponding v1.3.6 section at top, generated from the JSON data |
+| `src/data/demoEquipmentData.ts` | Update all 8 category strings to v6 format; replace demo-7 and demo-8 with landscape-appropriate equipment; add `lmnRecoveryMethod` to leased items |
 
-No code changes beyond these three files. The Canadian auto-default is already implemented via a database trigger -- it just needs to be documented.
+## What This Fixes
+
+- Demo data will pass the category mismatch validation sweep without console warnings
+- All demo equipment will match `categoryDefaults.ts` for correct useful life, resale, and benchmark lookups
+- FMS Export demo will show the new Owned vs. Leased sub-table split
+- Equipment shown represents a realistic small landscape contractor fleet
 
