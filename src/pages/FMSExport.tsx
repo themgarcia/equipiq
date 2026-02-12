@@ -248,7 +248,7 @@ function RollupSection({
                       </Tooltip>
                     </TooltipProvider>
                   </TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap hidden md:table-cell w-[140px]">Avg End Value</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap hidden md:table-cell w-[140px]">Avg Resale Value</TableHead>
                   {showType && <TableHead className="table-header-cell text-center whitespace-nowrap w-[80px]">Type</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -674,7 +674,7 @@ export default function FMSExport() {
                         { label: 'Quantity', value: String(selectedLine.qty) },
                         { label: 'Avg Replacement Value', value: formatCurrency(selectedLine.avgReplacementValue), raw: String(Math.round(selectedLine.avgReplacementValue)) },
                         { label: 'Avg Useful Life (Yrs)', value: String(Math.round(selectedLine.avgUsefulLife)) },
-                        { label: 'Avg End Value', value: formatCurrency(selectedLine.avgEndValue), raw: String(Math.round(selectedLine.avgEndValue)) },
+                        { label: 'Avg Resale Value', value: formatCurrency(selectedLine.avgEndValue), raw: String(Math.round(selectedLine.avgEndValue)) },
                       ].map(({ label, value, raw }) => (
                         <div key={label} className="flex items-center justify-between py-2 border-b">
                           <span className="text-sm text-muted-foreground">{label}</span>
