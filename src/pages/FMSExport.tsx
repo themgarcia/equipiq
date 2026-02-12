@@ -20,7 +20,7 @@ import {
   TableFooter, 
 } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
-import { Copy, Download, Check, FileSpreadsheet, ChevronRight, Construction, ExternalLink, Truck, Building2, Info } from 'lucide-react';
+import { Copy, Download, Check, FileSpreadsheet, ChevronRight, Construction, ExternalLink, Truck, Building2, Info, List } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -269,6 +269,15 @@ function RollupSection({
                             <CostComparisonTooltip line={line} mode="owned" />
                           </span>
                           <CopyButton cellId={`${lineId}-cat`} value={line.category} copiedCell={copiedCell} onCopy={onCopyCell} />
+                          {line.qty > 1 && (
+                            <button
+                              onClick={() => onSelectLine(line)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-0.5 hover:bg-muted rounded"
+                              title="View items in this group"
+                            >
+                              <List className="h-3.5 w-3.5 text-muted-foreground" />
+                            </button>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums">
@@ -403,6 +412,15 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
                             <CostComparisonTooltip line={line} mode="leased" />
                           </span>
                           <CopyButton cellId={`${lineId}-cat`} value={line.category} copiedCell={copiedCell} onCopy={onCopyCell} />
+                          {line.qty > 1 && (
+                            <button
+                              onClick={() => onSelectLine(line)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-0.5 hover:bg-muted rounded"
+                              title="View items in this group"
+                            >
+                              <List className="h-3.5 w-3.5 text-muted-foreground" />
+                            </button>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums">
