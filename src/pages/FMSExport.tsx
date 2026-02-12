@@ -20,7 +20,7 @@ import {
   TableFooter, 
 } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
-import { Copy, Download, Check, FileSpreadsheet, ChevronRight, Construction, ExternalLink, Truck, Building2, Info, List } from 'lucide-react';
+import { Copy, Download, Check, FileSpreadsheet, ChevronRight, Construction, ExternalLink, Truck, Building2, Info } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -182,6 +182,15 @@ interface RollupSectionProps {
 function RollupSection({ 
   title, icon, lines, totals, showType, copiedCell, onCopyCell, onSelectLine, isMobile, emptyMessage, emptyHint, distanceUnit 
 }: RollupSectionProps) {
+  const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
+  const toggleExpand = (lineId: string) => {
+    setExpandedLines(prev => {
+      const next = new Set(prev);
+      if (next.has(lineId)) next.delete(lineId);
+      else next.add(lineId);
+      return next;
+    });
+  };
   if (lines.length === 0) {
     return (
       <div className="bg-card border rounded-lg p-8 text-center">
@@ -261,23 +270,24 @@ function RollupSection({
                     ? `Default ${Math.round(line.avgUsefulLife)} yrs based on ${formattedBenchmark} at commercial production.`
                     : `Default ${Math.round(line.avgUsefulLife)} yrs — calendar-based replacement.`;
                   return (
+                    <>
                     <TableRow key={lineId} className="group">
                       <TableCell className="font-medium">
-                         <div className="relative inline-flex">
+                         <div className="relative inline-flex items-center">
+                          {line.qty > 1 && (
+                            <button
+                              onClick={() => toggleExpand(lineId)}
+                              className="p-0.5 hover:bg-muted rounded mr-1 shrink-0"
+                              title="View items in this group"
+                            >
+                              <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${expandedLines.has(lineId) ? 'rotate-90' : ''}`} />
+                            </button>
+                          )}
                           <span>
                             {line.category}
                             <CostComparisonTooltip line={line} mode="owned" />
                           </span>
                           <CopyButton cellId={`${lineId}-cat`} value={line.category} copiedCell={copiedCell} onCopy={onCopyCell} />
-                          {line.qty > 1 && (
-                            <button
-                              onClick={() => onSelectLine(line)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-0.5 hover:bg-muted rounded"
-                              title="View items in this group"
-                            >
-                              <List className="h-3.5 w-3.5 text-muted-foreground" />
-                            </button>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums">
@@ -321,6 +331,16 @@ function RollupSection({
                         </TableCell>
                       )}
                     </TableRow>
+                    {expandedLines.has(lineId) && line.itemNames && line.itemNames.length > 0 && (
+                      <TableRow className="bg-muted/20">
+                        <TableCell colSpan={showType ? 6 : 5} className="py-2 pl-8">
+                          <p className="text-sm text-muted-foreground">
+                            {line.itemNames.join(', ')}
+                          </p>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    </>
                   );
                 })}
               </TableBody>
@@ -354,6 +374,15 @@ interface LeasedRollupSectionProps {
 }
 
 function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLine, isMobile }: LeasedRollupSectionProps) {
+  const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
+  const toggleExpand = (lineId: string) => {
+    setExpandedLines(prev => {
+      const next = new Set(prev);
+      if (next.has(lineId)) next.delete(lineId);
+      else next.add(lineId);
+      return next;
+    });
+  };
   if (lines.length === 0) return null;
 
   return (
@@ -404,23 +433,24 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
                   const lineId = `leased-${line.category}-${idx}`;
                   const avgMonthly = line.totalMonthlyPayment / line.qty;
                   return (
+                    <>
                     <TableRow key={lineId} className="group">
                       <TableCell className="font-medium">
-                        <div className="relative inline-flex">
+                        <div className="relative inline-flex items-center">
+                          {line.qty > 1 && (
+                            <button
+                              onClick={() => toggleExpand(lineId)}
+                              className="p-0.5 hover:bg-muted rounded mr-1 shrink-0"
+                              title="View items in this group"
+                            >
+                              <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${expandedLines.has(lineId) ? 'rotate-90' : ''}`} />
+                            </button>
+                          )}
                           <span>
                             {line.category}
                             <CostComparisonTooltip line={line} mode="leased" />
                           </span>
                           <CopyButton cellId={`${lineId}-cat`} value={line.category} copiedCell={copiedCell} onCopy={onCopyCell} />
-                          {line.qty > 1 && (
-                            <button
-                              onClick={() => onSelectLine(line)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-0.5 hover:bg-muted rounded"
-                              title="View items in this group"
-                            >
-                              <List className="h-3.5 w-3.5 text-muted-foreground" />
-                            </button>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-mono-nums">
@@ -448,6 +478,16 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
                         </div>
                       </TableCell>
                     </TableRow>
+                    {expandedLines.has(lineId) && line.itemNames && line.itemNames.length > 0 && (
+                      <TableRow className="bg-muted/20">
+                        <TableCell colSpan={5} className="py-2 pl-8">
+                          <p className="text-sm text-muted-foreground">
+                            {line.itemNames.join(', ')}
+                          </p>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    </>
                   );
                 })}
               </TableBody>
