@@ -1,17 +1,34 @@
 
 
-# Clean Up Category Rows — Remove Inline Item Names
+# Add "View Items" Hover Button to Category Rows
 
-## What Changes
-Remove the inline equipment name list that appears below category names in the FMS Export table. The detail sheet (slide-out panel) already shows "Items in this group" when you click any row, so the audit capability is preserved -- just one click away.
+## Problem
+Making the full row clickable would cause frustration — users trying to copy a value could accidentally open the detail sheet.
+
+## Solution
+Add a small icon button (e.g., a list/eye icon) that appears **on hover only**, positioned next to the existing copy button in the category cell. This follows the same hover-reveal pattern the copy button already uses, keeping the interaction intentional.
 
 ## Technical Details
 
 ### `src/pages/FMSExport.tsx`
 
-**Owned section (~lines 272-276):** Remove the conditional block that renders `line.itemNames.join(', ')` below the category name.
+**Owned section (~line 264):** Inside the category `<TableCell>`, after the `<CopyButton>`, add a hover-visible icon button that calls `onSelectLine(line)`. Only show it when `line.qty > 1` (single-item categories don't need auditing).
 
-**Leased section (~lines 410-414):** Remove the same conditional block in the leased table rows.
+```tsx
+{line.qty > 1 && (
+  <button
+    onClick={() => onSelectLine(line)}
+    className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-0.5 hover:bg-muted rounded"
+    title="View items in this group"
+  >
+    <List className="h-3.5 w-3.5 text-muted-foreground" />
+  </button>
+)}
+```
 
-The category cell will simplify to just the category name, tooltip, and copy button -- no more cramped item-name text running across the row.
+**Leased section (~line 403):** Same change in the leased table's category cell.
+
+**Import:** Add `List` to the existing `lucide-react` import at the top of the file.
+
+The `group` class is already on the `<TableRow>`, so the hover-reveal will work automatically. No row-level `onClick` needed — users click the icon intentionally, not accidentally.
 
