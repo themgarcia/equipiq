@@ -263,11 +263,12 @@ function RollupSection({
                   return (
                     <TableRow key={lineId} className="group">
                       <TableCell className="font-medium">
-                        <div>
+                        <div className="relative">
                           <span>
                             {line.category}
                             <CostComparisonTooltip line={line} mode="owned" />
                           </span>
+                          <CopyButton cellId={`${lineId}-cat`} value={line.category} copiedCell={copiedCell} onCopy={onCopyCell} />
                           {line.qty > 1 && (
                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                               {line.itemNames.join(', ')}
@@ -401,11 +402,12 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
                   return (
                     <TableRow key={lineId} className="group">
                       <TableCell className="font-medium">
-                        <div>
+                        <div className="relative">
                           <span>
                             {line.category}
                             <CostComparisonTooltip line={line} mode="leased" />
                           </span>
+                          <CopyButton cellId={`${lineId}-cat`} value={line.category} copiedCell={copiedCell} onCopy={onCopyCell} />
                           {line.qty > 1 && (
                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                               {line.itemNames.join(', ')}
