@@ -1,80 +1,70 @@
 
 
-# Unify Light/Dark Theme Color System
+# Fix: Make Primary = Brand Amber in Both Modes
 
-## The Problem
+## The Real Problem
 
-The root cause of the inconsistency is that `--primary` and `--secondary` **swap roles** between light and dark mode:
+The previous fix went the wrong direction. It made `--primary` = slate blue in both modes, but there are **300+ uses** of `text-primary` and `bg-primary` across the app for icons, buttons, highlights, and selection states. These all look best as amber (the brand color). Only the Landing page was updated to use the new `brand` variant -- every other page still uses `primary` and now renders as muted slate blue in dark mode.
 
-| Token | Light Mode | Dark Mode |
-|-------|-----------|-----------|
-| `--primary` | Dark slate blue | Amber |
-| `--secondary` | Amber | Dark slate blue |
-
-This means every `bg-primary` button is blue in light mode but amber in dark mode. Every `text-primary` heading follows the same swap. The result: buttons, icons, headings, and accents all shift color unpredictably between modes. There is no stable "brand" color.
+Updating 300+ usages across 36 files to switch from `primary` to `accent` is impractical and fragile. The simpler, correct fix: make `--primary` = amber in both modes, since that is what the vast majority of the codebase expects.
 
 ## The Fix
 
-Stop swapping primary/secondary between modes. Instead, keep the token roles consistent:
-
-- **`--primary`** = Dark slate blue in BOTH modes (adjusted for contrast in dark mode -- lighter slate blue)
-- **`--accent`** = Amber in BOTH modes (the brand highlight color, stays amber everywhere)
-- **`--secondary`** = A neutral supporting color in both modes
-
-Then introduce a dedicated **`--brand`** token that is always amber -- the EquipIQ signature color -- for CTA buttons, the logo, and key highlights that should look identical in both modes.
+Flip the approach: `--primary` becomes the brand amber in both modes. The structural dark slate blue (only needed for the sidebar, which already has its own tokens) stays in sidebar-specific tokens. Everything else "just works" because the 300+ existing `text-primary` and `bg-primary` usages will be amber everywhere.
 
 ## What Changes
 
-### 1. CSS Token Redesign (`src/index.css`)
+### 1. `src/index.css` -- Token update
 
-**Light mode** (stays mostly the same):
-- `--primary`: dark slate blue (unchanged)
-- `--accent`: amber (unchanged)
+**Light mode:**
+- `--primary`: change from `215 50% 23%` (slate blue) to `38 92% 50%` (amber)
+- `--primary-foreground`: change to dark text (`215 25% 15%`) for contrast on amber
+- `--ring`: update to match amber primary
 
-**Dark mode** (the big fix):
-- `--primary`: lighter slate blue (NOT amber) -- provides contrast on dark backgrounds while keeping the same role
-- `--accent`: amber (stays the same as light mode)
-- `--secondary`: muted slate (a neutral, not the old blue swap)
-- `--ring`: updated to match new primary
+**Dark mode:**
+- `--primary`: change from `215 40% 55%` (slate blue) to `38 92% 50%` (amber) -- same as light
+- `--primary-foreground`: dark text for contrast on amber
+- `--ring`: amber
 
-### 2. Component-Level Fixes
+Sidebar tokens remain unchanged (they already use their own independent variables).
 
-Audit and update components that rely on the current swap behavior. Key areas:
+### 2. `src/components/ui/button.tsx` -- Remove the `brand` variant
 
-- **Landing page** (`src/pages/Landing.tsx`): CTA buttons and hero text currently using `text-primary` and `bg-primary` -- update any that need the amber brand color to use `bg-accent text-accent-foreground` instead
-- **Sidebar** (`src/components/Layout.tsx`): Sidebar tokens are already independent and stay as-is
-- **MetricCard** (`src/components/MetricCard.tsx`): `border-primary/20 bg-primary/5` variant -- will naturally become consistent
-- **GetStarted page** (`src/pages/GetStarted.tsx`): Step indicators using `bg-primary text-primary-foreground`
-- **EquipIQIcon** (`src/components/EquipIQIcon.tsx`): Already hardcoded to amber -- no change needed
-- **Button component**: The default variant (`bg-primary text-primary-foreground`) will now render as slate blue in both modes instead of flipping to amber in dark mode
+Since `default` will now be amber, the `brand` variant is redundant. Remove it to simplify.
 
-### 3. CTA / Brand Accent Pattern
+### 3. `src/pages/Landing.tsx` -- Revert `brand` to `default`
 
-For buttons and elements that should always be amber (the "brand action" color):
-- Use `bg-accent text-accent-foreground` instead of `bg-primary`
-- Or add a new button variant called `"brand"` to the button component that explicitly uses the accent token
+All `variant="brand"` buttons on the Landing page switch back to using the default variant (or just remove the variant prop entirely since `default` is the default).
 
-This gives two clear button styles:
-- **Default (primary)**: Slate blue -- standard actions, navigation
-- **Brand (accent)**: Amber -- CTAs, key actions, highlights
+### 4. Spot-check: components using `text-primary` for icons
 
-## Technical Details
+No changes needed -- these will automatically become amber in both modes. Examples:
+- Dashboard page icons
+- CashflowAnalysis lock/check icons  
+- BuyVsRentAnalysis card header icons
+- GetStarted rocket icon
+- NotificationBell dot and link color
+- PageLoader spinner
+- AI indicator badge
 
-### Files to modify:
-1. **`src/index.css`** -- Redesign dark mode tokens so primary stays in the blue family
-2. **`src/components/ui/button.tsx`** -- Add a `brand` variant using accent colors
-3. **`src/pages/Landing.tsx`** -- Update CTA buttons to use brand/accent
-4. **`src/pages/GetStarted.tsx`** -- Update step indicators
-5. **`src/components/MetricCard.tsx`** -- Verify variant colors work with new tokens
-6. **Other pages** -- Scan for any `bg-primary` / `text-primary` usage that was relying on the amber color in dark mode and update to `accent` or `brand` as appropriate
+All of these will look correct with amber as primary.
 
-### What stays the same:
-- Sidebar colors (already independent tokens)
-- Status colors (success, warning, destructive, info)
-- Chart colors (already mode-specific)
-- The EquipIQ icon (already hardcoded amber)
-- Muted/foreground/background tokens (these are fine)
+### 5. What stays the same
 
-### The key principle:
-"If it should be amber in both modes, use `accent`. If it should be the structural UI color, use `primary`."
+- Sidebar colors: already independent tokens, unaffected
+- Status colors (success, warning, destructive, info): unchanged
+- Chart colors: unchanged
+- EquipIQ icon component: already hardcoded amber, unchanged
+- MetricCard `primary` variant: `border-primary/20 bg-primary/5` will now be a subtle amber tint in both modes -- looks correct
+- `--secondary`: stays as the neutral supporting color in both modes
+- `--accent`: stays amber (now same as primary, but that is fine -- accent is used for hover states on ghost/outline buttons and can remain)
 
+### Summary of file changes
+
+| File | Change |
+|------|--------|
+| `src/index.css` | Update `--primary`, `--primary-foreground`, `--ring` in both `:root` and `.dark` to amber |
+| `src/components/ui/button.tsx` | Remove `brand` variant |
+| `src/pages/Landing.tsx` | Replace all `variant="brand"` with default |
+
+Three files, and 300+ icon/button usages across the entire app are fixed automatically.
