@@ -1,36 +1,25 @@
 
-# Add Copy Button to Category Name Cell
+
+# Fix Category Copy Button Positioning
 
 ## Problem
-Every data cell in the FMS Export table has a copy button except the **Category** column. Users need to copy the category name into LMN when transferring data, so it should be copyable like all other cells.
+The copy button on the Category column is too far from the category name text. It appears at the far right edge of the cell because the wrapper `<div>` uses `className="relative"` (a block element spanning the full cell width), while all other cells use `className="relative inline-flex"` which keeps the button anchored next to the text content.
 
-## Change
+## Fix
 
 ### `src/pages/FMSExport.tsx`
 
-Update the category `TableCell` to include a `CopyButton`, matching the pattern used by all other cells. This applies to both the **Owned** table rows (around line 265) and the **Leased** table rows (which likely have the same omission).
+Change the category cell wrapper from `"relative"` to `"relative inline-flex"` in both the Owned and Leased table sections:
 
-The category name text will be wrapped in the same `relative inline-flex` pattern used by the other cells, with a `CopyButton` positioned alongside it.
-
-**Before:**
-```tsx
-<TableCell className="font-medium">
-  <div>
-    <span>{line.category}<CostComparisonTooltip ... /></span>
-    ...
-  </div>
-</TableCell>
+**Owned section (~line 266):**
+```
+"relative"  -->  "relative inline-flex"
 ```
 
-**After:**
-```tsx
-<TableCell className="font-medium">
-  <div className="relative">
-    <span>{line.category}<CostComparisonTooltip ... /></span>
-    <CopyButton cellId={`${lineId}-cat`} value={line.category} copiedCell={copiedCell} onCopy={onCopyCell} />
-    ...
-  </div>
-</TableCell>
+**Leased section (~line 404):**
+```
+"relative"  -->  "relative inline-flex"
 ```
 
-Both owned and leased table sections will be updated to ensure consistency across the entire export view.
+This matches the exact pattern used by every other copyable cell (qty, replacement value, useful life, etc.) and will position the copy icon right next to the category name on hover.
+
