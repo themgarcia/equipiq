@@ -138,9 +138,9 @@
     --primary: 38 92% 50%;
     --primary-foreground: 215 25% 15%;
 
-    /* Neutral muted slate — supporting color */
-    --secondary: 215 25% 22%;
-    --secondary-foreground: 210 40% 96%;
+    /* Brand amber — matching light mode */
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 215 25% 15%;
 
     --muted: 215 30% 18%;
     --muted-foreground: 215 15% 60%;
