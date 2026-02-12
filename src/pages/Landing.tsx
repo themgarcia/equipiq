@@ -352,13 +352,14 @@ export default function Landing() {
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
             Your equipment's losing money.
-            <span className="block text-primary">You just need the right numbers.</span>
+            <span className="block text-accent">You just need the right numbers.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-3xl mx-auto">
             EquipIQ crunches the numbers on your fleet and gives you the exact rates to plug into your estimating software—so you stop giving equipment away for free.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button 
+              variant="brand"
               size="lg" 
               className="text-lg px-8"
               onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
@@ -370,7 +371,7 @@ export default function Landing() {
           <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
             {benefits.map((benefit) => (
               <div key={benefit} className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle2 className="h-5 w-5 text-primary" />
+                <CheckCircle2 className="h-5 w-5 text-accent" />
                 <span>{benefit}</span>
               </div>
             ))}
@@ -636,7 +637,7 @@ export default function Landing() {
           </div>
           
           <div className="text-center mt-8">
-            <Button size="lg" asChild>
+             <Button variant="brand" size="lg" asChild>
               <Link to="/auth">
                 Start Charging What You're Owed
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -679,7 +680,7 @@ export default function Landing() {
           </p>
           
           <div className="mt-8">
-            <Button size="lg" asChild>
+            <Button variant="brand" size="lg" asChild>
               <Link to="/auth">
                 Plug the Leaks
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -779,7 +780,7 @@ export default function Landing() {
               </p>
               
               <div className="mt-6">
-                <Button size="lg" asChild>
+                <Button variant="brand" size="lg" asChild>
                   <Link to="/auth">
                     See What You're Missing
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -809,16 +810,16 @@ export default function Landing() {
                 {/* Connector line - visible on md+ screens, not after last item */}
                 {index < howItWorksSteps.length - 1 && (
                   <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-[2px]">
-                    <div className="w-full h-full bg-gradient-to-r from-primary/40 via-primary/20 to-transparent" />
-                    <ArrowRight className="absolute -right-1 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/40" />
+                    <div className="w-full h-full bg-gradient-to-r from-accent/40 via-accent/20 to-transparent" />
+                    <ArrowRight className="absolute -right-1 top-1/2 -translate-y-1/2 h-4 w-4 text-accent/40" />
                   </div>
                 )}
                 <div className="flex flex-col items-center">
                   <div className="relative mb-6">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 border-2 border-primary/20">
-                      <step.icon className="h-10 w-10 text-primary" />
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent/10 border-2 border-accent/20">
+                      <step.icon className="h-10 w-10 text-accent" />
                     </div>
-                    <span className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md">
+                    <span className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground font-bold text-sm shadow-md">
                       {step.step}
                     </span>
                   </div>
@@ -838,7 +839,7 @@ export default function Landing() {
               <span className="font-medium text-foreground">Works with:</span> Invoices, lease agreements, purchase orders, insurance declarations
             </p>
             <div>
-              <Button size="lg" asChild>
+              <Button variant="brand" size="lg" asChild>
                 <Link to="/auth">
                   Upload Your First Document
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -884,7 +885,7 @@ export default function Landing() {
           </div>
           
           <div className="mt-12 text-center">
-            <Button size="lg" asChild>
+            <Button variant="brand" size="lg" asChild>
               <Link to="/auth">
                 Get These Answers Now
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -931,7 +932,7 @@ export default function Landing() {
       {/* Beta CTA Section */}
       <section className="container py-20">
         <div className="mx-auto max-w-3xl">
-          <Card className="border-primary bg-card shadow-lg">
+          <Card className="border-accent bg-card shadow-lg">
             <CardHeader className="text-center pb-4">
               <CardTitle className="text-2xl">Full Access. No Cost. No Credit Card.</CardTitle>
               <p className="text-muted-foreground mt-2">
@@ -941,28 +942,28 @@ export default function Landing() {
             <CardContent className="space-y-6">
               <ul className="space-y-3">
                 <li className="flex items-center gap-3">
-                  <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+                  <Sparkles className="h-5 w-5 text-accent flex-shrink-0" />
                   <span><strong>No data entry</strong> – just drop in your paperwork</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <BarChart3 className="h-5 w-5 text-primary flex-shrink-0" />
+                  <BarChart3 className="h-5 w-5 text-accent flex-shrink-0" />
                   <span>See what your whole fleet is actually costing you</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0" />
+                  <ShieldCheck className="h-5 w-5 text-accent flex-shrink-0" />
                   <span>Keep your broker in the loop without the phone tag</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                  <CheckCircle2 className="h-5 w-5 text-accent flex-shrink-0" />
                   <span>Run the numbers on buying vs renting before you decide</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <FileSpreadsheet className="h-5 w-5 text-primary flex-shrink-0" />
+                  <FileSpreadsheet className="h-5 w-5 text-accent flex-shrink-0" />
                   <span>Get the exact rates to plug into your estimates</span>
                 </li>
               </ul>
               
-              <Button className="w-full" size="lg" asChild>
+              <Button variant="brand" className="w-full" size="lg" asChild>
                 <Link to="/auth">
                   Try equipIQ Free
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -986,7 +987,7 @@ export default function Landing() {
           <p className="text-lg text-muted-foreground mb-8">
             Let the software do the math so you can get back to the jobsite.
           </p>
-          <Button size="lg" asChild className="text-lg px-8">
+          <Button variant="brand" size="lg" asChild className="text-lg px-8">
             <Link to="/auth">
               Try equipIQ Free
               <ArrowRight className="ml-2 h-5 w-5" />
