@@ -1,25 +1,17 @@
 
 
-# Fix Category Copy Button Positioning
+# Clean Up Category Rows — Remove Inline Item Names
 
-## Problem
-The copy button on the Category column is too far from the category name text. It appears at the far right edge of the cell because the wrapper `<div>` uses `className="relative"` (a block element spanning the full cell width), while all other cells use `className="relative inline-flex"` which keeps the button anchored next to the text content.
+## What Changes
+Remove the inline equipment name list that appears below category names in the FMS Export table. The detail sheet (slide-out panel) already shows "Items in this group" when you click any row, so the audit capability is preserved -- just one click away.
 
-## Fix
+## Technical Details
 
 ### `src/pages/FMSExport.tsx`
 
-Change the category cell wrapper from `"relative"` to `"relative inline-flex"` in both the Owned and Leased table sections:
+**Owned section (~lines 272-276):** Remove the conditional block that renders `line.itemNames.join(', ')` below the category name.
 
-**Owned section (~line 266):**
-```
-"relative"  -->  "relative inline-flex"
-```
+**Leased section (~lines 410-414):** Remove the same conditional block in the leased table rows.
 
-**Leased section (~line 404):**
-```
-"relative"  -->  "relative inline-flex"
-```
-
-This matches the exact pattern used by every other copyable cell (qty, replacement value, useful life, etc.) and will position the copy icon right next to the category name on hover.
+The category cell will simplify to just the category name, tooltip, and copy button -- no more cramped item-name text running across the row.
 
