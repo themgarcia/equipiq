@@ -359,7 +359,7 @@ export default function Landing() {
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button 
-              variant="brand"
+              variant="default"
               size="lg" 
               className="text-lg px-8"
               onClick={() => document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' })}
@@ -637,7 +637,7 @@ export default function Landing() {
           </div>
           
           <div className="text-center mt-8">
-             <Button variant="brand" size="lg" asChild>
+             <Button size="lg" asChild>
               <Link to="/auth">
                 Start Charging What You're Owed
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -680,7 +680,7 @@ export default function Landing() {
           </p>
           
           <div className="mt-8">
-            <Button variant="brand" size="lg" asChild>
+            <Button size="lg" asChild>
               <Link to="/auth">
                 Plug the Leaks
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -780,7 +780,7 @@ export default function Landing() {
               </p>
               
               <div className="mt-6">
-                <Button variant="brand" size="lg" asChild>
+                <Button size="lg" asChild>
                   <Link to="/auth">
                     See What You're Missing
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -839,7 +839,7 @@ export default function Landing() {
               <span className="font-medium text-foreground">Works with:</span> Invoices, lease agreements, purchase orders, insurance declarations
             </p>
             <div>
-              <Button variant="brand" size="lg" asChild>
+              <Button size="lg" asChild>
                 <Link to="/auth">
                   Upload Your First Document
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -885,7 +885,7 @@ export default function Landing() {
           </div>
           
           <div className="mt-12 text-center">
-            <Button variant="brand" size="lg" asChild>
+            <Button size="lg" asChild>
               <Link to="/auth">
                 Get These Answers Now
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -963,7 +963,7 @@ export default function Landing() {
                 </li>
               </ul>
               
-              <Button variant="brand" className="w-full" size="lg" asChild>
+              <Button className="w-full" size="lg" asChild>
                 <Link to="/auth">
                   Try equipIQ Free
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -987,7 +987,7 @@ export default function Landing() {
           <p className="text-lg text-muted-foreground mb-8">
             Let the software do the math so you can get back to the jobsite.
           </p>
-          <Button variant="brand" size="lg" asChild className="text-lg px-8">
+          <Button size="lg" asChild className="text-lg px-8">
             <Link to="/auth">
               Try equipIQ Free
               <ArrowRight className="ml-2 h-5 w-5" />
