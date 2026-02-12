@@ -236,7 +236,7 @@ export function rollupToCSV(result: RollupResult): string {
 
   // Field Equipment — Owned Section
   rows.push(['FIELD EQUIPMENT — LMN Equipment Budget — Owned']);
-  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg End Value', 'Type']);
+  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg Resale Value', 'Type']);
 
   for (const line of result.fieldOwnedLines) {
     rows.push([
@@ -273,7 +273,7 @@ export function rollupToCSV(result: RollupResult): string {
 
   // Overhead Equipment — Owned Section
   rows.push(['OVERHEAD EQUIPMENT — LMN Overhead Budget — Owned']);
-  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg End Value']);
+  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg Resale Value']);
 
   for (const line of result.overheadOwnedLines) {
     rows.push([
