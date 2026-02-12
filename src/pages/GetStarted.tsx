@@ -233,7 +233,7 @@ export default function GetStarted() {
                         isComplete 
                           ? 'bg-muted/50' 
                           : isNext
-                            ? 'bg-primary/5 border-2 border-primary/20 hover:border-primary/40'
+                            ? 'bg-accent/5 border-2 border-accent/20 hover:border-accent/40'
                             : 'bg-card hover:bg-muted/50 border'
                       )}
                     >
@@ -243,7 +243,7 @@ export default function GetStarted() {
                         isComplete 
                           ? 'bg-success text-success-foreground' 
                           : isNext
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-accent text-accent-foreground'
                             : 'bg-muted'
                       )}>
                         {isComplete ? (
