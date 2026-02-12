@@ -62,9 +62,9 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
 
-    /* Deep slate blue - professional, grounded */
-    --primary: 215 50% 23%;
-    --primary-foreground: 210 40% 98%;
+    /* Brand amber - primary action color */
+    --primary: 38 92% 50%;
+    --primary-foreground: 215 25% 15%;
 
     /* Warm amber accent - action, highlights */
     --secondary: 38 92% 50%;
@@ -81,7 +81,7 @@
 
     --border: 214 20% 88%;
     --input: 214 20% 88%;
-    --ring: 215 50% 23%;
+    --ring: 38 92% 50%;
 
     --radius: 0.5rem;
 
@@ -134,9 +134,9 @@
     --popover: 215 30% 13%;
     --popover-foreground: 210 40% 96%;
 
-    /* Lighter slate blue — same role as light mode, contrast-adjusted */
-    --primary: 215 40% 55%;
-    --primary-foreground: 215 30% 10%;
+    /* Brand amber - same as light mode */
+    --primary: 38 92% 50%;
+    --primary-foreground: 215 25% 15%;
 
     /* Neutral muted slate — supporting color */
     --secondary: 215 25% 22%;
@@ -154,7 +154,7 @@
 
     --border: 215 30% 22%;
     --input: 215 30% 22%;
-    --ring: 215 40% 55%;
+    --ring: 38 92% 50%;
 
     --sidebar-background: 215 35% 8%;
     --sidebar-foreground: 210 40% 96%;
