@@ -263,7 +263,7 @@ function RollupSection({
                   return (
                     <TableRow key={lineId} className="group">
                       <TableCell className="font-medium">
-                        <div className="relative">
+                         <div className="relative inline-flex">
                           <span>
                             {line.category}
                             <CostComparisonTooltip line={line} mode="owned" />
@@ -402,7 +402,7 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
                   return (
                     <TableRow key={lineId} className="group">
                       <TableCell className="font-medium">
-                        <div className="relative">
+                        <div className="relative inline-flex">
                           <span>
                             {line.category}
                             <CostComparisonTooltip line={line} mode="leased" />
