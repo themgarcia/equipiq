@@ -1,21 +1,27 @@
 
 
-# Fix: Show "Payments Complete" in Lease Pass-Through Tooltips Too
+# Version Bump to 1.3.7 + Changelog Update
 
-## Problem
+Bump version from 1.3.6 to 1.3.7 and add a new changelog entry for the Lease Cost Education features and the paid-off lease fix.
 
-The lease pass-through tooltip (lines 220-243) still shows full lease cost breakdowns for paid-off items, even though the owned recovery tooltip already handles this correctly.
+---
 
-## Fix
+## Changes
 
-Update the lease pass-through tooltip section (lines 223-229) to check each item's `paidOff` flag:
+### 1. `src/lib/version.ts`
+- Update `APP_VERSION` from `"1.3.6"` to `"1.3.7"`
 
-- **If paid off**: Show the item name and a "Payments complete" message instead of the lease recovery amount and owned comparison
-- **If still active**: Show the existing lease recovery, deposit amortization, and owned comparison lines as before
+### 2. `src/data/changelog.json`
+Add a new entry at the top of the `entries` array for version 1.3.7 (date: 2026-02-16) with:
 
-Also update the summary line (line 231) — if ALL items in the category are paid off, show "All payments complete" instead of "No cash gap — recovery matches your payments."
+**Added**
+- User-facing: "Cash Gap Warning on FMS Export highlights when your actual lease payments exceed what you're recovering through LMN rates", "Detailed per-item cost comparison tooltips showing owned recovery vs. actual lease cost including deposit amortization", "Switch an item's recovery method directly from the FMS Export page without going back to the equipment form", "New 'Owned vs. Leased Recovery in LMN' reference section on the Definitions page explaining when to use each method"
+- Technical: CashGapSummary component computing from raw calculatedEquipment, restructured CostComparisonTooltip with per-item breakdowns, inline recovery method toggle with AlertDialog for multi-item categories, new Definitions accordion entry with #lease-recovery anchor and auto-open on hash navigation
 
-### Single file changed
+**Improved**
+- User-facing: "Recovery method labels on equipment form now describe what each option does", "Paid-off leases no longer trigger cash gap warnings -- tooltips show 'Payments complete' instead"
+- Technical: Updated EquipmentFormContent radio labels with descriptive text and "Which should I choose?" link to /definitions#lease-recovery, isPaymentComplete helper excludes finished leases from CashGapSummary and both tooltip variants
 
-`src/pages/FMSExport.tsx` — lines 223-231 in the lease pass-through tooltip section.
+### 3. `CHANGELOG.md`
+Run the generator script logic inline -- add the corresponding `## [1.3.7] - 2026-02-16` section at the top using the technical descriptions from the JSON.
 
