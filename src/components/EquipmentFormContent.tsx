@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Equipment, EquipmentCategory, EquipmentStatus, FinancingType, PurchaseCondition, AllocationType } from '@/types/equipment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ChevronDown, Info, ShieldCheck, Truck, Building2, UserCircle } from 'lucide-react';
+import { ChevronDown, Info, ShieldCheck, Truck, Building2, UserCircle, HelpCircle } from 'lucide-react';
 import { categoryDefaults, getCategoryDivisions, getCategoriesByDivision } from '@/data/categoryDefaults';
 
 interface EquipmentFormContentProps {
@@ -647,9 +648,9 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel, hideFooter
                     >
                       <RadioGroupItem value="owned" className="mt-0.5" />
                       <div>
-                        <span className="text-sm font-medium">Owned Recovery (recommended)</span>
+                        <span className="text-sm font-medium">Owned Recovery — based on replacement value and useful life</span>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Recover based on replacement value and useful life. Typically produces a more competitive rate.
+                          Typically produces a more competitive rate.
                         </p>
                       </div>
                     </label>
@@ -660,13 +661,20 @@ export function EquipmentFormContent({ equipment, onSubmit, onCancel, hideFooter
                     >
                       <RadioGroupItem value="leased" className="mt-0.5" />
                       <div>
-                        <span className="text-sm font-medium">Lease Payment Recovery</span>
+                        <span className="text-sm font-medium">Lease Payment Recovery — based on your actual monthly payments</span>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Pass monthly lease payment through to LMN. Simpler, but may inflate your equipment rate.
+                          Simpler, but may inflate your equipment rate.
                         </p>
                       </div>
                     </label>
                   </RadioGroup>
+                  <Link
+                    to="/definitions#lease-recovery"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                  >
+                    <HelpCircle className="h-3 w-3" />
+                    Which should I choose?
+                  </Link>
                 </div>
               </>
             )}
