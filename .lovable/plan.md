@@ -1,25 +1,37 @@
 
-# Fix: Prorate Current-Year Payments in Portfolio Summary
 
-## Problem
+# Add "Construction — Vacuum Lifter" Category
 
-The summary cards use `calculatePortfolioCashflow()` which calculates payments as a flat `monthlyPayment * 12` for every active financed item -- ignoring that some items pay off partway through the current year. The projection chart already prorates correctly, causing a mismatch (cards show ~$500 net vs chart showing ~$27k).
+## What
 
-## Fix
+Add one new entry to the equipment taxonomy for battery-powered vacuum lifting equipment used in hardscape and natural stone installation (MQuip, WiMAG, Probst, etc.). This brings the Construction division from 20 to 21 categories and the total taxonomy to 93.
 
-Update `calculatePortfolioCashflow()` in `src/lib/cashflowCalculations.ts` to prorate current-year payments, mirroring the logic already in `calculateCashflowProjection()`:
+## Changes
 
-For each financed item:
-- **Payoff before Jan 1 this year** -- 0 payments (already done)
-- **Payoff after Dec 31 this year** -- full 12 months
-- **Payoff mid-year** -- only count months until payoff
+### `src/data/categoryDefaults.ts`
 
-This is a single function change in one file. The cards already read from `portfolioSummary.totalAnnualPayments` and `netAnnualCashflow`, so they update automatically.
+1. Update the Construction section comment from "20 categories" to "21 categories"
+2. Insert the new entry after "Construction -- Tractor" (alphabetical order within Construction):
 
-## File Changed
+| Field | Value |
+|-------|-------|
+| category | Construction -- Vacuum Lifter |
+| division | Construction |
+| defaultUsefulLife | 7 |
+| defaultResalePercent | 15 |
+| unit | Days |
+| defaultAllocation | operational |
+| notes | Vacuum lifter, stone lifter, paver lifter, suction lifter, MQuip, MK2, Grizzly, Moose, Blizzard, Micro, WiMAG, Probst, stone clamp, slab lifter. Battery-powered self-contained units for natural stone and paver installation |
+| maintenancePercent | 5 |
+| insurancePercent | 1.0 |
+| benchmarkType | hours |
+| benchmarkRange | 2,000--3,500 hrs |
 
-| File | Change |
-|------|--------|
-| `src/lib/cashflowCalculations.ts` | Replace the `totalAnnualPayments` reduce with prorated logic checking each item's payoff date against the current year |
+No other files need changes. The category dropdown, Category Lifespans page, and AI document parsing all read from `categoryDefaults` dynamically.
 
-No other files need changes -- the UI reads from the same summary object.
+## Verification
+
+- Category Lifespans page shows "Construction -- Vacuum Lifter" with 7 yrs useful life and 2,000--3,500 hrs benchmark
+- Equipment form category dropdown includes the new entry under Construction
+- AI document parser can match keywords like "MQuip", "vacuum lifter", "stone lifter" to this category
+
