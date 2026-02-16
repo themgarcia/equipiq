@@ -4,6 +4,7 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { Layout } from '@/components/Layout';
 import { formatCurrency } from '@/lib/calculations';
+import { differenceInMonths, parseISO } from 'date-fns';
 import { rollupEquipment, rollupToCSV, RollupLine, RollupTotals } from '@/lib/rollupEngine';
 import { getCategoryDefaults } from '@/data/categoryDefaults';
 import { formatBenchmarkRange } from '@/lib/benchmarkUtils';
@@ -107,6 +108,12 @@ interface CashGapItem {
   gap: number;
 }
 
+function isPaymentComplete(item: EquipmentCalculated): boolean {
+  if (!item.financingStartDate || !item.termMonths || item.termMonths <= 0) return false;
+  const elapsed = differenceInMonths(new Date(), parseISO(item.financingStartDate));
+  return elapsed >= item.termMonths;
+}
+
 function CashGapSummary({ calculatedEquipment }: { calculatedEquipment: EquipmentCalculated[] }) {
   const gapItems = useMemo(() => {
     const items: CashGapItem[] = [];
@@ -114,6 +121,7 @@ function CashGapSummary({ calculatedEquipment }: { calculatedEquipment: Equipmen
       if (item.status !== 'Active') continue;
       if (item.financingType !== 'leased') continue;
       if ((item as any).lmnRecoveryMethod === 'leased') continue;
+      if (isPaymentComplete(item)) continue;
       
       const life = item.usefulLifeUsed || 1;
       const ownedRecovery = (item.replacementCostUsed - item.expectedResaleUsed) / life;
@@ -188,10 +196,11 @@ function CostComparisonTooltip({ line, mode, calculatedEquipment, onToggleRecove
   const itemBreakdowns = categoryItems.map(item => {
     const life = item.usefulLifeUsed || 1;
     const ownedRecovery = (item.replacementCostUsed - item.expectedResaleUsed) / life;
+    const paidOff = isPaymentComplete(item);
     const depositAmort = item.termMonths > 0 ? (item.depositAmount * 12 / item.termMonths) : 0;
-    const actualLeaseCost = (item.monthlyPayment * 12) + depositAmort;
+    const actualLeaseCost = paidOff ? 0 : (item.monthlyPayment * 12) + depositAmort;
     const diff = actualLeaseCost - ownedRecovery;
-    return { name: item.name, ownedRecovery, actualLeaseCost, depositAmort, diff, hasDeposit: item.depositAmount > 0, termMonths: item.termMonths };
+    return { name: item.name, ownedRecovery, actualLeaseCost, depositAmort, diff, hasDeposit: item.depositAmount > 0, termMonths: item.termMonths, paidOff };
   });
 
   const targetMethod = mode === 'owned' ? 'leased' : 'owned';
@@ -248,13 +257,22 @@ function CostComparisonTooltip({ line, mode, calculatedEquipment, onToggleRecove
             {itemBreakdowns.map((item, i) => (
               <div key={i} className="text-xs border-t border-border/50 pt-1">
                 <p className="font-medium">{item.name}</p>
-                <p>Owned recovery: {formatCurrency(item.ownedRecovery)}/yr</p>
-                <p>Actual lease cost: {formatCurrency(item.actualLeaseCost)}/yr</p>
-                {item.hasDeposit && <p className="text-muted-foreground">Incl. {formatCurrency(item.depositAmort)}/yr deposit over {Math.round(item.termMonths)}mo</p>}
-                {item.diff > 0 ? (
-                  <p className="text-warning">⚠ {formatCurrency(item.diff)}/yr cash gap</p>
+                {item.paidOff ? (
+                  <>
+                    <p>Owned recovery: {formatCurrency(item.ownedRecovery)}/yr</p>
+                    <p className="text-success">✓ Payments complete — no active cash gap</p>
+                  </>
                 ) : (
-                  <p className="text-success">✓ {formatCurrency(Math.abs(item.diff))}/yr more competitive</p>
+                  <>
+                    <p>Owned recovery: {formatCurrency(item.ownedRecovery)}/yr</p>
+                    <p>Actual lease cost: {formatCurrency(item.actualLeaseCost)}/yr</p>
+                    {item.hasDeposit && <p className="text-muted-foreground">Incl. {formatCurrency(item.depositAmort)}/yr deposit over {Math.round(item.termMonths)}mo</p>}
+                    {item.diff > 0 ? (
+                      <p className="text-warning">⚠ {formatCurrency(item.diff)}/yr cash gap</p>
+                    ) : (
+                      <p className="text-success">✓ {formatCurrency(Math.abs(item.diff))}/yr more competitive</p>
+                    )}
+                  </>
                 )}
               </div>
             ))}
