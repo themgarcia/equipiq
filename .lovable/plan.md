@@ -1,47 +1,21 @@
 
 
-# Fix: Exclude Paid-Off Leases from Cash Gap Warning
+# Fix: Show "Payments Complete" in Lease Pass-Through Tooltips Too
 
 ## Problem
 
-The `CashGapSummary` and `CostComparisonTooltip` flag every leased item modeled as "Owned Recovery" — even those that have finished making payments. A zero-turn mower that completed its lease term months ago still shows a cash gap warning because the code never checks whether payments are actually still happening.
-
-## Root Cause
-
-The current filter logic (line 114-116 of FMSExport.tsx) checks:
-1. Is it Active?
-2. Is it a lease?
-3. Is it modeled as "Owned"?
-
-It does NOT check whether the lease term has ended. The annual lease cost is calculated as `(monthlyPayment * 12) + depositAmortization` regardless of whether payments are still being made.
+The lease pass-through tooltip (lines 220-243) still shows full lease cost breakdowns for paid-off items, even though the owned recovery tooltip already handles this correctly.
 
 ## Fix
 
-Add a "payments complete" check to both the `CashGapSummary` and `CostComparisonTooltip` components. An item's payments are complete when:
+Update the lease pass-through tooltip section (lines 223-229) to check each item's `paidOff` flag:
 
-```text
-financingStartDate exists
-  AND termMonths > 0
-  AND months since financingStartDate >= termMonths
-```
+- **If paid off**: Show the item name and a "Payments complete" message instead of the lease recovery amount and owned comparison
+- **If still active**: Show the existing lease recovery, deposit amortization, and owned comparison lines as before
 
-This is the same logic the cashflow engine already uses to compute `paymentsCompleted` and `remainingPayments`.
+Also update the summary line (line 231) — if ALL items in the category are paid off, show "All payments complete" instead of "No cash gap — recovery matches your payments."
 
-### Changes in `src/pages/FMSExport.tsx`
+### Single file changed
 
-**CashGapSummary (around line 113-126)**: After the existing `financingType` and `lmnRecoveryMethod` checks, add:
+`src/pages/FMSExport.tsx` — lines 223-231 in the lease pass-through tooltip section.
 
-- If `financingStartDate` and `termMonths` are set, calculate months elapsed since start
-- If elapsed months >= termMonths, skip the item (payments are done, no ongoing cash gap)
-
-**CostComparisonTooltip (around line 170+)**: Apply the same paid-off check so tooltips for fully-paid leases show a "Payments complete" status instead of a cash gap warning. The tooltip should still render (the item is still a lease), but should show that there is no active cash gap since payments have ended.
-
-### No other files change
-
-The Equipment type already has `financingStartDate` and `termMonths` on every item, so no new data is needed.
-
-## Result
-
-- Paid-off leases no longer appear in the Cash Gap Warning card
-- Tooltips for paid-off leases show a neutral "Payments complete" message instead of a warning
-- Leases still actively being paid continue to show warnings as before
