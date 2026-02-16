@@ -5,6 +5,18 @@ All notable changes to EquipIQ will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.7] - 2026-02-16
+
+### Added
+- CashGapSummary component computing from raw calculatedEquipment
+- Restructured CostComparisonTooltip with per-item breakdowns
+- Inline recovery method toggle with AlertDialog for multi-item categories
+- New Definitions accordion entry with #lease-recovery anchor and auto-open on hash navigation
+
+### Improved
+- Updated EquipmentFormContent radio labels with descriptive text and "Which should I choose?" link to /definitions#lease-recovery
+- isPaymentComplete helper excludes finished leases from CashGapSummary and both tooltip variants
+
 ## [1.3.6] - 2026-02-11
 
 ### Added

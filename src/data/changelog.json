@@ -1,6 +1,38 @@
 {
   "entries": [
     {
+      "version": "1.3.7",
+      "date": "2026-02-16",
+      "changes": [
+        {
+          "type": "added",
+          "userFacing": [
+            "Cash Gap Warning on FMS Export highlights when your actual lease payments exceed what you're recovering through LMN rates",
+            "Detailed per-item cost comparison tooltips showing owned recovery vs. actual lease cost including deposit amortization",
+            "Switch an item's recovery method directly from the FMS Export page without going back to the equipment form",
+            "New 'Owned vs. Leased Recovery in LMN' reference section on the Definitions page explaining when to use each method"
+          ],
+          "technical": [
+            "CashGapSummary component computing from raw calculatedEquipment",
+            "Restructured CostComparisonTooltip with per-item breakdowns",
+            "Inline recovery method toggle with AlertDialog for multi-item categories",
+            "New Definitions accordion entry with #lease-recovery anchor and auto-open on hash navigation"
+          ]
+        },
+        {
+          "type": "improved",
+          "userFacing": [
+            "Recovery method labels on equipment form now describe what each option does",
+            "Paid-off leases no longer trigger cash gap warnings — tooltips show 'Payments complete' instead"
+          ],
+          "technical": [
+            "Updated EquipmentFormContent radio labels with descriptive text and 'Which should I choose?' link to /definitions#lease-recovery",
+            "isPaymentComplete helper excludes finished leases from CashGapSummary and both tooltip variants"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.3.6",
       "date": "2026-02-11",
       "changes": [
