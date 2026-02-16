@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { 
@@ -7,7 +8,7 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
-import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale, Shield, TrendingUp, Wallet, Percent } from 'lucide-react';
+import { BookOpen, Target, DollarSign, Clock, ArrowRight, Calculator, Scale, Shield, TrendingUp, Wallet, Percent, Repeat } from 'lucide-react';
 
 const definitions = [
   {
@@ -403,15 +404,56 @@ This means you own 70% of your fleet's value outright.
 - New equipment purchases temporarily lower equity ratio until payments are made
     `.trim(),
   },
+  {
+    id: 'lease-recovery',
+    icon: Repeat,
+    title: 'Owned vs. Leased Recovery in LMN',
+    content: `
+**When you lease equipment, you have two choices for how LMN recovers the cost through job pricing.**
+
+**Owned Recovery (based on replacement value and useful life)**
+- LMN calculates: (Replacement Value − Resale Value) ÷ Useful Life = Annual Recovery
+- This is the same formula used for equipment you own outright
+- It typically produces a lower, more competitive rate
+- But it may not cover your actual lease payments — creating a "cash gap"
+
+**Lease Pass-Through (based on your actual monthly payments)**
+- LMN calculates: Monthly Payment × 12 = Annual Recovery
+- If you made a deposit, EquipIQ amortizes it: + (Deposit × 12 ÷ Term Months)
+- This ensures your rate covers every dollar leaving your bank account
+- But it can inflate your equipment rate, especially on short-term leases
+
+**Why there's a gap**
+- Lease payments include interest, fees, and profit margin for the lessor
+- Owned recovery is based on the equipment's actual value, not financing cost
+- Short-term leases compress the same cost into fewer years, making payments higher per year
+- Result: actual lease payments often exceed owned recovery
+
+**Which should you use?**
+- **Owned Recovery** keeps your rates competitive and consistent across your fleet. Choose this if you want to price jobs the same way regardless of how equipment was financed.
+- **Lease Pass-Through** guarantees you recover every dollar you're paying. Choose this if cash coverage matters more than rate consistency.
+
+**The real fix**
+- Neither method is wrong — they answer different questions
+- Owned Recovery answers: "What does this equipment cost to use?"
+- Lease Pass-Through answers: "What am I actually paying?"
+- The FMS Export page shows you the cash gap so you can make an informed choice
+- You can switch methods anytime — your FMS data updates immediately
+    `.trim(),
+  },
 ];
 
 export default function Definitions() {
   const { markStepComplete } = useOnboarding();
+  const location = useLocation();
 
   // Mark onboarding step on mount
   useEffect(() => {
     markStepComplete('step_methodology_reviewed');
   }, [markStepComplete]);
+
+  // Auto-open accordion from URL hash
+  const defaultAccordionValue = location.hash ? location.hash.replace('#', '') : undefined;
 
   return (
     <Layout>
@@ -443,7 +485,7 @@ export default function Definitions() {
         </div>
 
         {/* Accordion */}
-        <Accordion type="single" collapsible className="space-y-4">
+        <Accordion type="single" collapsible defaultValue={defaultAccordionValue} className="space-y-4">
           {definitions.map(def => (
             <AccordionItem 
               key={def.id} 

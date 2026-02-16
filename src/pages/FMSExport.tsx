@@ -8,6 +8,7 @@ import { rollupEquipment, rollupToCSV, RollupLine, RollupTotals } from '@/lib/ro
 import { getCategoryDefaults } from '@/data/categoryDefaults';
 import { formatBenchmarkRange } from '@/lib/benchmarkUtils';
 import { useDistanceUnit } from '@/hooks/useDistanceUnit';
+import { EquipmentCalculated } from '@/types/equipment';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -20,13 +21,23 @@ import {
   TableFooter, 
 } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
-import { Copy, Download, Check, FileSpreadsheet, ChevronRight, Construction, ExternalLink, Truck, Building2, Info } from 'lucide-react';
+import { Copy, Download, Check, FileSpreadsheet, ChevronRight, Construction, ExternalLink, Truck, Building2, Info, AlertTriangle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Sheet,
   SheetContent,
@@ -87,45 +98,135 @@ function CopyButton({ cellId, value, copiedCell, onCopy }: { cellId: string; val
   );
 }
 
+// ─── Cash Gap Summary Card ─────────────────────────────────────
+
+interface CashGapItem {
+  name: string;
+  ownedRecovery: number;
+  actualLeaseCost: number;
+  gap: number;
+}
+
+function CashGapSummary({ calculatedEquipment }: { calculatedEquipment: EquipmentCalculated[] }) {
+  const gapItems = useMemo(() => {
+    const items: CashGapItem[] = [];
+    for (const item of calculatedEquipment) {
+      if (item.status !== 'Active') continue;
+      if (item.financingType !== 'leased') continue;
+      if ((item as any).lmnRecoveryMethod === 'leased') continue;
+      
+      const life = item.usefulLifeUsed || 1;
+      const ownedRecovery = (item.replacementCostUsed - item.expectedResaleUsed) / life;
+      const depositAmort = item.termMonths > 0 ? (item.depositAmount * 12 / item.termMonths) : 0;
+      const actualLeaseCost = (item.monthlyPayment * 12) + depositAmort;
+      const gap = actualLeaseCost - ownedRecovery;
+      
+      if (gap > 0) {
+        items.push({ name: item.name, ownedRecovery, actualLeaseCost, gap });
+      }
+    }
+    return items;
+  }, [calculatedEquipment]);
+
+  if (gapItems.length === 0) return null;
+
+  const totalRecovery = gapItems.reduce((s, i) => s + i.ownedRecovery, 0);
+  const totalPayments = gapItems.reduce((s, i) => s + i.actualLeaseCost, 0);
+  const totalGap = totalPayments - totalRecovery;
+
+  return (
+    <div className="rounded-lg border border-warning/50 bg-warning/10 p-4 flex items-start gap-3">
+      <AlertTriangle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
+      <div className="space-y-2 flex-1">
+        <h3 className="font-semibold text-sm">Cash Gap Warning</h3>
+        <p className="text-sm text-muted-foreground">
+          {gapItems.length} leased item{gapItems.length !== 1 ? 's' : ''} modeled as "Owned Recovery" {gapItems.length !== 1 ? 'have' : 'has'} actual payments exceeding the recovery amount.
+        </p>
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <p className="text-muted-foreground text-xs">Annual Recovery</p>
+            <p className="font-mono-nums font-medium">{formatCurrency(totalRecovery)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground text-xs">Annual Payments</p>
+            <p className="font-mono-nums font-medium">{formatCurrency(totalPayments)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground text-xs">Cash Gap</p>
+            <p className="font-mono-nums font-medium text-warning">{formatCurrency(totalGap)}</p>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          This is normal for short-term leases — your recovery rate is lower than your actual payments. 
+          <a href="/definitions#lease-recovery" className="text-primary hover:underline ml-1">Learn more</a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Cost Comparison Tooltip ───────────────────────────────────
 
-function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned' | 'leased' }) {
-  const avgMonthlyPayment = line.leasedItemCount > 0
-    ? line.leasedItemMonthlyPayment / line.leasedItemCount
-    : 0;
-  const amortizedDeposit = (line.leasedItemCount > 0 && line.leasedItemAvgTermMonths > 0)
-    ? (line.leasedItemDepositTotal / line.leasedItemCount) * 12 / line.leasedItemAvgTermMonths
-    : 0;
-  const leaseRecovery = avgMonthlyPayment * 12 + amortizedDeposit;
-  const hasDeposit = line.leasedItemDepositTotal > 0;
-  const ownedRecovery = line.avgUsefulLife > 0 
-    ? (line.avgReplacementValue - line.avgEndValue) / line.avgUsefulLife 
-    : 0;
-  const diff = leaseRecovery - ownedRecovery;
+interface CostComparisonTooltipProps {
+  line: RollupLine;
+  mode: 'owned' | 'leased';
+  calculatedEquipment: EquipmentCalculated[];
+  onToggleRecovery?: (category: string, itemCount: number) => void;
+}
+
+function CostComparisonTooltip({ line, mode, calculatedEquipment, onToggleRecovery }: CostComparisonTooltipProps) {
+  // Get per-item data for this category
+  const categoryItems = useMemo(() => {
+    return calculatedEquipment.filter(
+      item => item.status === 'Active' && item.category === line.category && item.financingType === 'leased'
+    );
+  }, [calculatedEquipment, line.category]);
+
+  if (categoryItems.length === 0 && mode === 'owned' && line.leasedItemCount === 0) return null;
+
+  // Per-item calculations
+  const itemBreakdowns = categoryItems.map(item => {
+    const life = item.usefulLifeUsed || 1;
+    const ownedRecovery = (item.replacementCostUsed - item.expectedResaleUsed) / life;
+    const depositAmort = item.termMonths > 0 ? (item.depositAmount * 12 / item.termMonths) : 0;
+    const actualLeaseCost = (item.monthlyPayment * 12) + depositAmort;
+    const diff = actualLeaseCost - ownedRecovery;
+    return { name: item.name, ownedRecovery, actualLeaseCost, depositAmort, diff, hasDeposit: item.depositAmount > 0, termMonths: item.termMonths };
+  });
+
+  const targetMethod = mode === 'owned' ? 'leased' : 'owned';
+  const toggleLabel = mode === 'owned' ? 'Switch to Lease Pass-Through' : 'Switch to Owned Recovery';
 
   if (mode === 'leased') {
+    // Lease pass-through tooltip
+    const totalLeaseRecovery = itemBreakdowns.reduce((s, i) => s + i.actualLeaseCost, 0) / (itemBreakdowns.length || 1);
+    const totalOwnedRecovery = itemBreakdowns.reduce((s, i) => s + i.ownedRecovery, 0) / (itemBreakdowns.length || 1);
+
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help inline ml-1" />
           </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-xs space-y-1">
-            <p className="font-medium text-xs">Cost Comparison</p>
-            <p className="text-xs">Lease recovery: {formatCurrency(leaseRecovery)}/yr</p>
-            {hasDeposit && (
-              <p className="text-xs text-muted-foreground">Incl. {formatCurrency(amortizedDeposit)}/yr deposit amortized over {Math.round(line.leasedItemAvgTermMonths)}mo term</p>
-            )}
-            <p className="text-xs">Owned recovery: {formatCurrency(ownedRecovery)}/yr</p>
-            {diff > 0 && (
-              <p className="text-xs text-warning">
-                Lease costs {formatCurrency(diff)}/yr more. Consider switching to Owned Recovery.
-              </p>
-            )}
-            {diff <= 0 && (
-              <p className="text-xs text-success">
-                {formatCurrency(Math.abs(diff))}/yr more competitive vs owned recovery.
-              </p>
+          <TooltipContent side="top" className="max-w-sm space-y-2">
+            <p className="font-medium text-xs">Recovery Method: Lease Pass-Through</p>
+            <p className="text-xs text-muted-foreground">Your LMN rate is based on actual lease payments — what you pay is what you charge.</p>
+            {itemBreakdowns.map((item, i) => (
+              <div key={i} className="text-xs border-t border-border/50 pt-1">
+                <p className="font-medium">{item.name}</p>
+                <p>Lease recovery: {formatCurrency(item.actualLeaseCost)}/yr</p>
+                {item.hasDeposit && <p className="text-muted-foreground">Incl. {formatCurrency(item.depositAmort)}/yr deposit over {Math.round(item.termMonths)}mo</p>}
+                <p className="text-muted-foreground">Owned comparison: {formatCurrency(item.ownedRecovery)}/yr</p>
+              </div>
+            ))}
+            <p className="text-xs text-success">✓ No cash gap — recovery matches your payments.</p>
+            {onToggleRecovery && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleRecovery(line.category, categoryItems.length); }}
+                className="text-xs text-primary hover:underline cursor-pointer block"
+              >
+                {toggleLabel}
+              </button>
             )}
           </TooltipContent>
         </Tooltip>
@@ -133,25 +234,37 @@ function CostComparisonTooltip({ line, mode }: { line: RollupLine; mode: 'owned'
     );
   }
 
-  // For owned rows that have leased items in the category
+  // Owned recovery tooltip (for rows with leased items modeled as owned)
   if (line.leasedItemCount > 0 && line.leasedItemMonthlyPayment > 0) {
+    const hasGap = itemBreakdowns.some(i => i.diff > 0);
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Info className="h-3.5 w-3.5 text-muted-foreground/50 cursor-help inline ml-1" />
+            <Info className={`h-3.5 w-3.5 cursor-help inline ml-1 ${hasGap ? 'text-warning' : 'text-muted-foreground/50'}`} />
           </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-xs space-y-1">
-            <p className="text-xs">This category includes leased items modeled as Owned for a more competitive rate.</p>
-            <p className="text-xs text-muted-foreground">Owned recovery: {formatCurrency(ownedRecovery)}/yr</p>
-            <p className="text-xs text-muted-foreground">Lease pass-through: {formatCurrency(leaseRecovery)}/yr</p>
-            {hasDeposit && (
-              <p className="text-xs text-muted-foreground/70">Incl. {formatCurrency(amortizedDeposit)}/yr deposit amortized over {Math.round(line.leasedItemAvgTermMonths)}mo term</p>
-            )}
-            {diff > 0 ? (
-              <p className="text-xs text-success">{formatCurrency(diff)}/yr more competitive vs lease pass-through.</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">Lease is {formatCurrency(Math.abs(diff))}/yr cheaper, but owned recovery keeps your rate consistent.</p>
+          <TooltipContent side="top" className="max-w-sm space-y-2">
+            <p className="font-medium text-xs">Recovery Method: Owned (Replacement Value)</p>
+            {itemBreakdowns.map((item, i) => (
+              <div key={i} className="text-xs border-t border-border/50 pt-1">
+                <p className="font-medium">{item.name}</p>
+                <p>Owned recovery: {formatCurrency(item.ownedRecovery)}/yr</p>
+                <p>Actual lease cost: {formatCurrency(item.actualLeaseCost)}/yr</p>
+                {item.hasDeposit && <p className="text-muted-foreground">Incl. {formatCurrency(item.depositAmort)}/yr deposit over {Math.round(item.termMonths)}mo</p>}
+                {item.diff > 0 ? (
+                  <p className="text-warning">⚠ {formatCurrency(item.diff)}/yr cash gap</p>
+                ) : (
+                  <p className="text-success">✓ {formatCurrency(Math.abs(item.diff))}/yr more competitive</p>
+                )}
+              </div>
+            ))}
+            {onToggleRecovery && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleRecovery(line.category, categoryItems.length); }}
+                className="text-xs text-primary hover:underline cursor-pointer block border-t border-border/50 pt-1"
+              >
+                {toggleLabel}
+              </button>
             )}
           </TooltipContent>
         </Tooltip>
@@ -177,10 +290,12 @@ interface RollupSectionProps {
   emptyMessage: string;
   emptyHint: string;
   distanceUnit: 'mi' | 'km';
+  calculatedEquipment: EquipmentCalculated[];
+  onToggleRecovery?: (category: string, itemCount: number) => void;
 }
 
 function RollupSection({ 
-  title, icon, lines, totals, showType, copiedCell, onCopyCell, onSelectLine, isMobile, emptyMessage, emptyHint, distanceUnit 
+  title, icon, lines, totals, showType, copiedCell, onCopyCell, onSelectLine, isMobile, emptyMessage, emptyHint, distanceUnit, calculatedEquipment, onToggleRecovery 
 }: RollupSectionProps) {
   const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
   const toggleExpand = (lineId: string) => {
@@ -285,7 +400,7 @@ function RollupSection({
                           )}
                           <span>
                             {line.category}
-                            <CostComparisonTooltip line={line} mode="owned" />
+                            <CostComparisonTooltip line={line} mode="owned" calculatedEquipment={calculatedEquipment} onToggleRecovery={onToggleRecovery} />
                           </span>
                           <CopyButton cellId={`${lineId}-cat`} value={line.category} copiedCell={copiedCell} onCopy={onCopyCell} />
                         </div>
@@ -371,9 +486,11 @@ interface LeasedRollupSectionProps {
   onCopyCell: (id: string, value: string) => void;
   onSelectLine: (line: RollupLine) => void;
   isMobile: boolean;
+  calculatedEquipment: EquipmentCalculated[];
+  onToggleRecovery?: (category: string, itemCount: number) => void;
 }
 
-function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLine, isMobile }: LeasedRollupSectionProps) {
+function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLine, isMobile, calculatedEquipment, onToggleRecovery }: LeasedRollupSectionProps) {
   const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
   const toggleExpand = (lineId: string) => {
     setExpandedLines(prev => {
@@ -448,7 +565,7 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
                           )}
                           <span>
                             {line.category}
-                            <CostComparisonTooltip line={line} mode="leased" />
+                            <CostComparisonTooltip line={line} mode="leased" calculatedEquipment={calculatedEquipment} onToggleRecovery={onToggleRecovery} />
                           </span>
                           <CopyButton cellId={`${lineId}-cat`} value={line.category} copiedCell={copiedCell} onCopy={onCopyCell} />
                         </div>
@@ -511,7 +628,7 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
 // ─── Main Component ────────────────────────────────────────────
 
 export default function FMSExport() {
-  const { calculatedEquipment } = useEquipment();
+  const { calculatedEquipment, updateEquipment } = useEquipment();
   const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'phone' || deviceType === 'tablet';
@@ -519,6 +636,7 @@ export default function FMSExport() {
   const [selectedLine, setSelectedLine] = useState<RollupLine | null>(null);
   const [activeTab, setActiveTab] = useState('lmn');
   const { distanceUnit } = useDistanceUnit();
+  const [toggleConfirm, setToggleConfirm] = useState<{ category: string; itemCount: number; targetMethod: 'owned' | 'leased' } | null>(null);
 
   useEffect(() => {
     markStepComplete('step_fms_exported');
@@ -532,6 +650,44 @@ export default function FMSExport() {
     await navigator.clipboard.writeText(value);
     setCopiedCell(id);
     setTimeout(() => setCopiedCell(null), 1500);
+  };
+
+  const handleToggleRecovery = (category: string, itemCount: number) => {
+    // Determine current method for items in this category
+    const categoryItems = calculatedEquipment.filter(
+      item => item.status === 'Active' && item.category === category && item.financingType === 'leased'
+    );
+    if (categoryItems.length === 0) return;
+    
+    const currentMethod = (categoryItems[0] as any).lmnRecoveryMethod || 'owned';
+    const targetMethod: 'owned' | 'leased' = currentMethod === 'owned' ? 'leased' : 'owned';
+
+    if (itemCount === 1) {
+      // Single item — toggle immediately
+      updateEquipment(categoryItems[0].id, { lmnRecoveryMethod: targetMethod });
+      toast({
+        title: 'Recovery method updated',
+        description: `${categoryItems[0].name} switched to ${targetMethod === 'leased' ? 'Lease Pass-Through' : 'Owned Recovery'}.`,
+      });
+    } else {
+      // Multi-item — show confirmation
+      setToggleConfirm({ category, itemCount, targetMethod });
+    }
+  };
+
+  const confirmBatchToggle = async () => {
+    if (!toggleConfirm) return;
+    const categoryItems = calculatedEquipment.filter(
+      item => item.status === 'Active' && item.category === toggleConfirm.category && item.financingType === 'leased'
+    );
+    for (const item of categoryItems) {
+      await updateEquipment(item.id, { lmnRecoveryMethod: toggleConfirm.targetMethod });
+    }
+    toast({
+      title: 'Recovery method updated',
+      description: `${categoryItems.length} items in ${toggleConfirm.category} switched to ${toggleConfirm.targetMethod === 'leased' ? 'Lease Pass-Through' : 'Owned Recovery'}.`,
+    });
+    setToggleConfirm(null);
   };
 
   const exportCSV = () => {
@@ -608,6 +764,8 @@ export default function FMSExport() {
 
             {/* Field Equipment Section */}
             <div className="space-y-4">
+              <CashGapSummary calculatedEquipment={calculatedEquipment} />
+              
               <RollupSection
                 title="Field Equipment — LMN Equipment Budget"
                 icon={<Truck className="h-5 w-5 text-primary" />}
@@ -621,6 +779,8 @@ export default function FMSExport() {
                 emptyMessage="No field equipment"
                 emptyHint="Add operational equipment to see it here. Items marked 'Yes — Field Equipment' appear in this section."
                 distanceUnit={distanceUnit}
+                calculatedEquipment={calculatedEquipment}
+                onToggleRecovery={handleToggleRecovery}
               />
 
               <LeasedRollupSection
@@ -630,6 +790,8 @@ export default function FMSExport() {
                 onCopyCell={copyCell}
                 onSelectLine={setSelectedLine}
                 isMobile={isMobile}
+                calculatedEquipment={calculatedEquipment}
+                onToggleRecovery={handleToggleRecovery}
               />
             </div>
 
@@ -648,6 +810,8 @@ export default function FMSExport() {
                 emptyMessage="No overhead equipment"
                 emptyHint="Items marked 'No — Overhead' or 'No — Owner Perk' appear in this section."
                 distanceUnit={distanceUnit}
+                calculatedEquipment={calculatedEquipment}
+                onToggleRecovery={handleToggleRecovery}
               />
 
               <LeasedRollupSection
@@ -657,6 +821,8 @@ export default function FMSExport() {
                 onCopyCell={copyCell}
                 onSelectLine={setSelectedLine}
                 isMobile={isMobile}
+                calculatedEquipment={calculatedEquipment}
+                onToggleRecovery={handleToggleRecovery}
               />
             </div>
 
@@ -759,6 +925,26 @@ export default function FMSExport() {
             )}
           </SheetContent>
         </Sheet>
+
+        {/* Batch Toggle Confirmation Dialog */}
+        <AlertDialog open={!!toggleConfirm} onOpenChange={(open) => !open && setToggleConfirm(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Change Recovery Method</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will switch {toggleConfirm?.itemCount} items in "{toggleConfirm?.category}" to{' '}
+                {toggleConfirm?.targetMethod === 'leased' ? 'Lease Pass-Through' : 'Owned Recovery'}.
+                The FMS Export will update automatically.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmBatchToggle}>
+                Switch {toggleConfirm?.itemCount} Items
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );
