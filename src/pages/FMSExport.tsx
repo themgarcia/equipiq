@@ -223,12 +223,22 @@ function CostComparisonTooltip({ line, mode, calculatedEquipment, onToggleRecove
             {itemBreakdowns.map((item, i) => (
               <div key={i} className="text-xs border-t border-border/50 pt-1">
                 <p className="font-medium">{item.name}</p>
-                <p>Lease recovery: {formatCurrency(item.actualLeaseCost)}/yr</p>
-                {item.hasDeposit && <p className="text-muted-foreground">Incl. {formatCurrency(item.depositAmort)}/yr deposit over {Math.round(item.termMonths)}mo</p>}
-                <p className="text-muted-foreground">Owned comparison: {formatCurrency(item.ownedRecovery)}/yr</p>
+                {item.paidOff ? (
+                  <p className="text-success">✓ Payments complete</p>
+                ) : (
+                  <>
+                    <p>Lease recovery: {formatCurrency(item.actualLeaseCost)}/yr</p>
+                    {item.hasDeposit && <p className="text-muted-foreground">Incl. {formatCurrency(item.depositAmort)}/yr deposit over {Math.round(item.termMonths)}mo</p>}
+                    <p className="text-muted-foreground">Owned comparison: {formatCurrency(item.ownedRecovery)}/yr</p>
+                  </>
+                )}
               </div>
             ))}
-            <p className="text-xs text-success">✓ No cash gap — recovery matches your payments.</p>
+            {itemBreakdowns.every(i => i.paidOff) ? (
+              <p className="text-xs text-success">✓ All payments complete</p>
+            ) : (
+              <p className="text-xs text-success">✓ No cash gap — recovery matches your payments.</p>
+            )}
             {onToggleRecovery && (
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleRecovery(line.category, categoryItems.length); }}
