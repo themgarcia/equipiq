@@ -116,10 +116,32 @@ export function calculatePortfolioCashflow(
     0
   );
   
-  const totalAnnualPayments = activeItems.reduce(
-    (sum, item) => sum + item.cashflow.annualCashOutflow, 
-    0
-  );
+  // Prorate current-year payments: mirror logic from calculateCashflowProjection()
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const yearEnd = new Date(now.getFullYear(), 11, 31);
+  
+  let totalAnnualPayments = 0;
+  for (const item of activeItems) {
+    if (item.equipment.financingType === 'owned') continue;
+    if (!item.cashflow.payoffDate) {
+      // No payoff date but has payments (e.g. open-ended lease)
+      totalAnnualPayments += item.cashflow.annualCashOutflow;
+      continue;
+    }
+    const payoffDate = new Date(item.cashflow.payoffDate);
+    if (payoffDate <= yearStart) {
+      // Already paid off before this year
+      continue;
+    } else if (payoffDate >= yearEnd) {
+      // Full year of payments
+      totalAnnualPayments += item.cashflow.annualCashOutflow;
+    } else {
+      // Partial year — prorate
+      const monthsInYear = payoffDate.getMonth() + 1;
+      totalAnnualPayments += item.equipment.monthlyPayment * monthsInYear;
+    }
+  }
   
   const netAnnualCashflow = totalAnnualRecovery - totalAnnualPayments;
   
