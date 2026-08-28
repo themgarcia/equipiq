@@ -4,6 +4,7 @@ import { Equipment, EquipmentCalculated, CategoryDefaults, EquipmentDocument, Eq
 import { categoryDefaults as defaultCategories } from '@/data/categoryDefaults';
 import { calculateEquipment } from '@/lib/calculations';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesUpdate } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminMode } from '@/contexts/AdminModeContext';
 import { useToast } from '@/hooks/use-toast';
@@ -296,7 +297,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       const generatedName = `${mergedData.year} ${mergedData.make.trim()} ${mergedData.model.trim()}`;
       const updatesWithName = { ...updates, name: generatedName };
 
-      const dbUpdates: Record<string, any> = { name: generatedName };
+      const dbUpdates: TablesUpdate<'equipment'> = { name: generatedName };
       if (updatesWithName.category !== undefined) dbUpdates.category = updatesWithName.category;
       if (updatesWithName.status !== undefined) dbUpdates.status = updatesWithName.status;
       if (updatesWithName.assetId !== undefined) dbUpdates.asset_id = updatesWithName.assetId || null;
@@ -604,7 +605,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
-      const dbUpdates: Record<string, any> = {};
+      const dbUpdates: TablesUpdate<'equipment_attachments'> = {};
       if (updates.name !== undefined) dbUpdates.name = updates.name;
       if (updates.description !== undefined) dbUpdates.description = updates.description || null;
       if (updates.value !== undefined) dbUpdates.value = updates.value;

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesUpdate } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminMode } from '@/contexts/AdminModeContext';
 import { useToast } from '@/hooks/use-toast';
@@ -146,7 +147,7 @@ export function useInsurance() {
     if (!user) return;
 
     try {
-      const dbUpdates: Record<string, any> = {};
+      const dbUpdates: TablesUpdate<'insurance_settings'> = {};
       if (updates.brokerName !== undefined) dbUpdates.broker_name = updates.brokerName;
       if (updates.brokerCompany !== undefined) dbUpdates.broker_company = updates.brokerCompany;
       if (updates.brokerEmail !== undefined) dbUpdates.broker_email = updates.brokerEmail;
@@ -402,7 +403,7 @@ export function useInsurance() {
     if (!user) return;
 
     try {
-      const updates: Record<string, any> = { status };
+      const updates: TablesUpdate<'insurance_change_log'> = { status };
       if (status === 'sent') {
         updates.sent_at = new Date().toISOString();
       } else if (status === 'confirmed') {
