@@ -30,32 +30,54 @@ export default function ResetPassword() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user has a valid recovery session
+    // Recovery links arrive in two shapes depending on the auth flow:
+    //  - implicit: tokens in the URL hash (#access_token=...&type=recovery)
+    //  - PKCE:     a code in the query string (?code=... or ?token_hash=...)
+    // The PKCE code is exchanged asynchronously by the client, so we must not
+    // declare the link invalid before that exchange has had a chance to finish.
+    const hash = window.location.hash;
+    const search = window.location.search;
+    const hasRecoveryToken =
+      hash.includes('access_token') ||
+      hash.includes('type=recovery') ||
+      search.includes('code=') ||
+      search.includes('token_hash=');
+
+    let cancelled = false;
+
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      // A recovery session will have a user but no regular session
-      // The hash fragment contains the access_token for password recovery
-      const hash = window.location.hash;
-      const hasRecoveryToken = hash.includes('access_token') || hash.includes('type=recovery');
-      
+      if (cancelled) return;
+
       if (session || hasRecoveryToken) {
         setIsValidSession(true);
-      } else {
-        setIsValidSession(false);
+        return;
       }
+
+      // No session and no token in the URL — give the client a brief window in
+      // case a code exchange is still in flight, then fail closed.
+      setTimeout(async () => {
+        if (cancelled) return;
+        const { data: { session: retry } } = await supabase.auth.getSession();
+        if (!cancelled) setIsValidSession(!!retry);
+      }, 1500);
     };
 
     checkSession();
 
-    // Listen for auth changes (recovery link triggers this)
+    // Recovery links trigger PASSWORD_RECOVERY (implicit) or SIGNED_IN (PKCE).
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setIsValidSession(true);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
