@@ -97,18 +97,6 @@ export function LoginForm({ onForgotPassword, signIn, checkRateLimit }: LoginFor
 
       const { error } = await signIn(email, password);
       if (error) {
-        // TEMPORARY DIAGNOSTIC — logs the SHAPE of the submitted credentials only,
-        // never the password itself. Remove once the login issue is resolved.
-        console.log("[login-diagnostic]", {
-          emailSubmitted: email,
-          emailLength: email.length,
-          emailHasWhitespace: email !== email.trim(),
-          emailIsLowercase: email === email.toLowerCase(),
-          passwordLength: password.length,
-          passwordHasLeadingSpace: password !== password.replace(/^\s+/, ""),
-          passwordHasTrailingSpace: password !== password.replace(/\s+$/, ""),
-          errorMessage: error.message,
-        });
 
         if (error.message.includes("Invalid login credentials")) {
           toast({
