@@ -45,7 +45,7 @@ interface InsuredRegisterTabProps {
   equipment: InsuredEquipment[];
   settings: InsuranceSettings | null;
   userProfile: { fullName: string; companyName: string; email: string } | null;
-  onUpdateInsurance?: (id: string, declaredValue: number, notes: string) => Promise<void>;
+  onUpdateInsurance?: (id: string, declaredValue: number, notes: string, annualPremium?: number | null) => Promise<void>;
   onRemoveFromInsurance?: (id: string) => Promise<void>;
 }
 
@@ -64,6 +64,7 @@ export function InsuredRegisterTab({
   const [selectedEquipment, setSelectedEquipment] = useState<InsuredEquipment | null>(null);
   const [editDeclaredValue, setEditDeclaredValue] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editPremium, setEditPremium] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const totalValue = equipment.reduce((sum, e) => sum + e.declaredValue, 0);
@@ -73,6 +74,7 @@ export function InsuredRegisterTab({
     setSelectedEquipment(item);
     setEditDeclaredValue(item.declaredValue.toString());
     setEditNotes(item.insuranceNotes || '');
+    setEditPremium(item.annualPremium != null ? String(item.annualPremium) : '');
     setEditModalOpen(true);
   };
 
@@ -89,9 +91,16 @@ export function InsuredRegisterTab({
       return;
     }
 
+    const premiumText = editPremium.trim();
+    const annualPremium = premiumText === '' ? null : parseFloat(premiumText);
+    if (annualPremium !== null && (isNaN(annualPremium) || annualPremium < 0)) {
+      toast({ title: "Invalid premium", description: "Please enter a valid annual premium.", variant: "destructive" });
+      return;
+    }
+
     setIsSaving(true);
     try {
-      await onUpdateInsurance(selectedEquipment.id, declaredValue, editNotes);
+      await onUpdateInsurance(selectedEquipment.id, declaredValue, editNotes, annualPremium);
       setEditModalOpen(false);
       setSelectedEquipment(null);
     } finally {
@@ -174,6 +183,26 @@ export function InsuredRegisterTab({
             className="pl-7 font-mono-nums"
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="annualPremium">Annual Premium</Label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+          <Input
+            id="annualPremium"
+            type="number"
+            min="0"
+            step="1"
+            value={editPremium}
+            onChange={(e) => setEditPremium(e.target.value)}
+            placeholder="Leave blank to use the category estimate"
+            className="pl-7 font-mono-nums"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          The yearly premium for this unit. If blank, EquipIQ estimates it from the category % of the declared value.
+        </p>
       </div>
 
       <div className="space-y-2">

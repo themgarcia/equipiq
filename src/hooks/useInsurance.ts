@@ -78,7 +78,7 @@ export function useInsurance() {
     try {
       const { data, error } = await supabase
         .from('equipment')
-        .select('id, name, category, serial_vin, is_insured, insurance_declared_value, purchase_price, financing_type, insurance_notes, insurance_reviewed_at, status')
+        .select('id, name, category, serial_vin, is_insured, insurance_declared_value, purchase_price, financing_type, insurance_notes, insurance_reviewed_at, status, insurance_annual_premium')
         .eq('user_id', user.id)
         .eq('is_insured', true)
         .eq('status', 'Active');
@@ -91,6 +91,7 @@ export function useInsurance() {
         category: e.category,
         serialVin: e.serial_vin,
         declaredValue: Number(e.insurance_declared_value) || Number(e.purchase_price),
+        annualPremium: e.insurance_annual_premium == null ? null : Number(e.insurance_annual_premium),
         purchasePrice: Number(e.purchase_price),
         financingType: e.financing_type,
         insuranceNotes: e.insurance_notes,
@@ -108,7 +109,7 @@ export function useInsurance() {
     try {
       const { data, error } = await supabase
         .from('equipment')
-        .select('id, name, category, serial_vin, is_insured, insurance_declared_value, purchase_price, financing_type, insurance_notes, insurance_reviewed_at, status')
+        .select('id, name, category, serial_vin, is_insured, insurance_declared_value, purchase_price, financing_type, insurance_notes, insurance_reviewed_at, status, insurance_annual_premium')
         .eq('user_id', user.id)
         .is('is_insured', null)
         .eq('status', 'Active');
@@ -121,6 +122,7 @@ export function useInsurance() {
         category: e.category,
         serialVin: e.serial_vin,
         declaredValue: Number(e.insurance_declared_value) || Number(e.purchase_price),
+        annualPremium: e.insurance_annual_premium == null ? null : Number(e.insurance_annual_premium),
         purchasePrice: Number(e.purchase_price),
         financingType: e.financing_type,
         insuranceNotes: e.insurance_notes,
@@ -209,6 +211,7 @@ export function useInsurance() {
           insurance_declared_value: declaredValue,
           insurance_notes: notes || null,
           insurance_reviewed_at: new Date().toISOString(),
+          ...(annualPremium !== undefined ? { insurance_annual_premium: annualPremium } : {}),
         })
         .eq('id', equipmentId)
         .eq('user_id', user.id);
@@ -282,7 +285,8 @@ export function useInsurance() {
   const updateInsuredEquipment = useCallback(async (
     equipmentId: string,
     declaredValue: number,
-    notes?: string
+    notes?: string,
+    annualPremium?: number | null
   ) => {
     if (!user) return;
 
