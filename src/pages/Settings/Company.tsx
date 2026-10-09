@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useCompanySettings, CompanySettings } from '@/hooks/useCompanySettings';
 import { useEquipment } from '@/contexts/EquipmentContext';
+import { ServiceDivisionsCard } from '@/components/settings/ServiceDivisionsCard';
 import { annualRecovery, formatCurrency, RecoveryBasis } from '@/lib/calculations';
 
 function parseOptional(v: string): number | null {
@@ -200,6 +201,8 @@ export default function CompanySettingsPage() {
               Save settings
             </Button>
           </div>
+
+          <ServiceDivisionsCard />
         </div>
       </div>
     </Layout>
