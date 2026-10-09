@@ -29,7 +29,7 @@ The rest of this document specifies all three, so the design hangs together. App
 - Each one has a name (matching an LMN budget), a season length in months (1–12), optional season start and end months (display only, to show overlap), an optional expected events per season (for per-event pricing, item 8), and a sort order.
 - They are managed in a new "Service divisions" card in Company Settings, with plain-language help: "Name these to match your LMN budgets. Fleet and Shop are support, not services — leave them out."
 - A division can be archived but not deleted while units are allocated to it.
-- No starter list is seeded. Flag: should we offer one-click suggestions (Maintenance, Construction, Snow)? I won't invent names unless you say so.
+- No seeded list and no suggestion chips. The list starts blank with only the helper text, because the names have to match the contractor's own LMN element budgets.
 
 ## Item 2 — Per-unit allocation (9A)
 
@@ -102,7 +102,7 @@ A) All $20k calendar, shares 7/12 and 5/12 (your framing)
    Snow          20,000 x 5/12 =  8,333 /   150 hrs  = $55.56/hr
    Snow per season = $8,333 ; at 20 events = $416.67/event
 
-B) Same, months entered 8 + 5, proportional normalisation
+B) Months entered 8 + 5 -> "13 months" message; user accepts the suggested shares
    Construction  20,000 x 8/13 = 12,308 / 1,200      = $10.26/hr
    Snow          20,000 x 5/13 =  7,692 /   150      = $51.28/hr
 
