@@ -35,6 +35,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { EquipmentFormContent } from '@/components/EquipmentFormContent';
 import { EquipmentDocumentsContent } from '@/components/EquipmentDocumentsContent';
 import { EquipmentAttachmentsContent } from '@/components/EquipmentAttachmentsContent';
+import { OperatingCostsPanel } from '@/components/equipment/OperatingCostsPanel';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
 import { parseLocalDate } from '@/lib/utils';
 
@@ -123,6 +124,7 @@ export function EquipmentDetailsSheet({
                 onDocuments={() => setSheetView('documents')}
                 onAttachments={() => setSheetView('attachments')}
                 onConfirmDelete={handleConfirmDelete}
+                onUpdate={onUpdate}
               />
             )}
 
@@ -176,6 +178,7 @@ interface EquipmentDetailsViewProps {
   onDocuments: () => void;
   onAttachments: () => void;
   onConfirmDelete: () => void;
+  onUpdate: (id: string, data: Omit<Equipment, 'id'>) => void;
 }
 
 function EquipmentDetailsView({
@@ -183,6 +186,7 @@ function EquipmentDetailsView({
   onDocuments,
   onAttachments,
   onConfirmDelete,
+  onUpdate,
 }: EquipmentDetailsViewProps) {
   // Calculate financing status line
   const getFinancingStatus = () => {
@@ -254,6 +258,10 @@ function EquipmentDetailsView({
           <span className="text-sm font-medium">{getFinancingStatus()}</span>
         </div>
       </div>
+
+      <Separator />
+
+      <OperatingCostsPanel equipment={equipment} onUpdate={onUpdate} />
 
       <Separator />
 

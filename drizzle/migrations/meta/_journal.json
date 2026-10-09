@@ -15,6 +15,13 @@
       "when": 1791572674069,
       "tag": "0001_company_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791575535996,
+      "tag": "0002_equipment_operating_cost_fields",
+      "breakpoints": true
     }
   ]
 }

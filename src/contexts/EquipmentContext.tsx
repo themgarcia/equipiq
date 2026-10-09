@@ -71,6 +71,12 @@ function dbToEquipment(record: any): Equipment {
     purchaseCondition: record.purchase_condition || 'new',
     allocationType: record.allocation_type || 'operational',
     lmnRecoveryMethod: record.lmn_recovery_method || 'owned',
+    maintenanceAnnualOverride: record.maintenance_annual_override == null ? null : Number(record.maintenance_annual_override),
+    licensingAnnualOverride: record.licensing_annual_override == null ? null : Number(record.licensing_annual_override),
+    fuelConsumptionLphOverride: record.fuel_consumption_lph_override == null ? null : Number(record.fuel_consumption_lph_override),
+    insuranceAnnualPremium: record.insurance_annual_premium == null ? null : Number(record.insurance_annual_premium),
+    isInsured: record.is_insured ?? undefined,
+    insuranceDeclaredValue: record.insurance_declared_value == null ? undefined : Number(record.insurance_declared_value),
   };
 }
 
@@ -327,6 +333,9 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (updatesWithName.purchaseCondition !== undefined) dbUpdates.purchase_condition = updatesWithName.purchaseCondition;
       if (updatesWithName.allocationType !== undefined) dbUpdates.allocation_type = updatesWithName.allocationType;
       if (updatesWithName.lmnRecoveryMethod !== undefined) dbUpdates.lmn_recovery_method = updatesWithName.lmnRecoveryMethod;
+      if (updatesWithName.maintenanceAnnualOverride !== undefined) dbUpdates.maintenance_annual_override = updatesWithName.maintenanceAnnualOverride;
+      if (updatesWithName.licensingAnnualOverride !== undefined) dbUpdates.licensing_annual_override = updatesWithName.licensingAnnualOverride;
+      if (updatesWithName.fuelConsumptionLphOverride !== undefined) dbUpdates.fuel_consumption_lph_override = updatesWithName.fuelConsumptionLphOverride;
 
       const { error } = await supabase
         .from('equipment')
