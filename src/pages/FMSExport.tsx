@@ -3,7 +3,8 @@ import { useEquipment } from '@/contexts/EquipmentContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { Layout } from '@/components/Layout';
-import { formatCurrency } from '@/lib/calculations';
+import { formatCurrency, annualRecovery } from '@/lib/calculations';
+import { useCompanySettings, RECOVERY_BASIS_LABEL } from '@/hooks/useCompanySettings';
 import { differenceInMonths, parseISO } from 'date-fns';
 import { rollupEquipment, rollupToCSV, RollupLine, RollupTotals } from '@/lib/rollupEngine';
 import { getCategoryDefaults } from '@/data/categoryDefaults';
@@ -115,6 +116,7 @@ function isPaymentComplete(item: EquipmentCalculated): boolean {
 }
 
 function CashGapSummary({ calculatedEquipment }: { calculatedEquipment: EquipmentCalculated[] }) {
+  const { recoveryBasis } = useCompanySettings();
   const gapItems = useMemo(() => {
     const items: CashGapItem[] = [];
     for (const item of calculatedEquipment) {
@@ -123,8 +125,7 @@ function CashGapSummary({ calculatedEquipment }: { calculatedEquipment: Equipmen
       if ((item as any).lmnRecoveryMethod === 'leased') continue;
       if (isPaymentComplete(item)) continue;
       
-      const life = item.usefulLifeUsed || 1;
-      const ownedRecovery = (item.replacementCostUsed - item.expectedResaleUsed) / life;
+      const ownedRecovery = annualRecovery(item, recoveryBasis);
       const depositAmort = item.termMonths > 0 ? (item.depositAmount * 12 / item.termMonths) : 0;
       const actualLeaseCost = (item.monthlyPayment * 12) + depositAmort;
       const gap = actualLeaseCost - ownedRecovery;
@@ -134,7 +135,7 @@ function CashGapSummary({ calculatedEquipment }: { calculatedEquipment: Equipmen
       }
     }
     return items;
-  }, [calculatedEquipment]);
+  }, [calculatedEquipment, recoveryBasis]);
 
   if (gapItems.length === 0) return null;
 
@@ -152,7 +153,7 @@ function CashGapSummary({ calculatedEquipment }: { calculatedEquipment: Equipmen
         </p>
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
-            <p className="text-muted-foreground text-xs">Annual Recovery</p>
+            <p className="text-muted-foreground text-xs">Annual Recovery ({RECOVERY_BASIS_LABEL[recoveryBasis]})</p>
             <p className="font-mono-nums font-medium">{formatCurrency(totalRecovery)}</p>
           </div>
           <div>
@@ -183,6 +184,7 @@ interface CostComparisonTooltipProps {
 }
 
 function CostComparisonTooltip({ line, mode, calculatedEquipment, onToggleRecovery }: CostComparisonTooltipProps) {
+  const { recoveryBasis } = useCompanySettings();
   // Get per-item data for this category
   const categoryItems = useMemo(() => {
     return calculatedEquipment.filter(
@@ -194,8 +196,7 @@ function CostComparisonTooltip({ line, mode, calculatedEquipment, onToggleRecove
 
   // Per-item calculations
   const itemBreakdowns = categoryItems.map(item => {
-    const life = item.usefulLifeUsed || 1;
-    const ownedRecovery = (item.replacementCostUsed - item.expectedResaleUsed) / life;
+    const ownedRecovery = annualRecovery(item, recoveryBasis);
     const paidOff = isPaymentComplete(item);
     const depositAmort = item.termMonths > 0 ? (item.depositAmount * 12 / item.termMonths) : 0;
     const actualLeaseCost = paidOff ? 0 : (item.monthlyPayment * 12) + depositAmort;
@@ -657,6 +658,7 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
 
 export default function FMSExport() {
   const { calculatedEquipment, updateEquipment } = useEquipment();
+  const { recoveryBasis } = useCompanySettings();
   const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'phone' || deviceType === 'tablet';
@@ -671,7 +673,7 @@ export default function FMSExport() {
   }, [markStepComplete]);
 
   const rollupResult = useMemo(() => {
-    return rollupEquipment(calculatedEquipment);
+    return rollupEquipment(calculatedEquipment, recoveryBasis);
   }, [calculatedEquipment]);
 
   const copyCell = async (id: string, value: string) => {
