@@ -107,6 +107,110 @@ export type Database = {
         }
         Relationships: []
       }
+      category_consumables: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          interval_hours: number | null
+          name: string
+          source_note: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          interval_hours?: number | null
+          name: string
+          source_note: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          interval_hours?: number | null
+          name?: string
+          source_note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_consumables_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "category_defaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      category_defaults: {
+        Row: {
+          annual_usage_max: number | null
+          annual_usage_min: number | null
+          category: string
+          created_at: string
+          default_allocation: string
+          default_lmn_unit: Database["public"]["Enums"]["lmn_unit"]
+          division: string
+          fuel_consumption_lph: number | null
+          id: string
+          insurance_pct: number
+          licensing_annual: number | null
+          lifetime_usage_max: number | null
+          lifetime_usage_min: number | null
+          maintenance_repair_pct: number
+          notes: string
+          resale_pct: number
+          sort_order: number
+          updated_at: string
+          usage_basis: Database["public"]["Enums"]["usage_basis"]
+          useful_life_years: number
+        }
+        Insert: {
+          annual_usage_max?: number | null
+          annual_usage_min?: number | null
+          category: string
+          created_at?: string
+          default_allocation: string
+          default_lmn_unit: Database["public"]["Enums"]["lmn_unit"]
+          division: string
+          fuel_consumption_lph?: number | null
+          id?: string
+          insurance_pct: number
+          licensing_annual?: number | null
+          lifetime_usage_max?: number | null
+          lifetime_usage_min?: number | null
+          maintenance_repair_pct: number
+          notes?: string
+          resale_pct: number
+          sort_order?: number
+          updated_at?: string
+          usage_basis: Database["public"]["Enums"]["usage_basis"]
+          useful_life_years: number
+        }
+        Update: {
+          annual_usage_max?: number | null
+          annual_usage_min?: number | null
+          category?: string
+          created_at?: string
+          default_allocation?: string
+          default_lmn_unit?: Database["public"]["Enums"]["lmn_unit"]
+          division?: string
+          fuel_consumption_lph?: number | null
+          id?: string
+          insurance_pct?: number
+          licensing_annual?: number | null
+          lifetime_usage_max?: number | null
+          lifetime_usage_min?: number | null
+          maintenance_repair_pct?: number
+          notes?: string
+          resale_pct?: number
+          sort_order?: number
+          updated_at?: string
+          usage_basis?: Database["public"]["Enums"]["usage_basis"]
+          useful_life_years?: number
+        }
+        Relationships: []
+      }
       email_preferences: {
         Row: {
           budgeting_season_reminders: boolean
@@ -930,6 +1034,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      lmn_unit: "hours" | "days"
+      usage_basis: "hours" | "miles" | "calendar"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1058,6 +1164,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      lmn_unit: ["hours", "days"],
+      usage_basis: ["hours", "miles", "calendar"],
     },
   },
 } as const
