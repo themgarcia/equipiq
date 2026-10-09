@@ -31,12 +31,11 @@ Caveat: `replacementCostUsed` already includes attachments. So the maintenance a
 ## 3. Insurance resolution
 
 Order:
-1. Unit is insured and has a premium → **premium from the Insurance page** ("Actual premium").
-2. Unit is insured, no premium yet → **category default %** × replacement cost today ("Estimated — enter your premium on the Insurance page").
-3. Unit not insured (`is_insured = false`) → **$0** ("Not insured").
-4. Insured status not set yet (null, the unreviewed state) → category default, labelled as an estimate.
+1. A premium has been entered (any unit, including 0) → **the entered premium** ("Actual premium" or "Entered").
+2. Unit is insured, no premium yet → **estimate = insurance % × base**, where the base is **declared value** if `insurance_declared_value` is set, otherwise replacement cost today. The derivation names the base, e.g. "Estimate: 1.5% of $58,200 declared value = $873/yr" or "Estimate: 1.5% of $55,369 replacement cost today (no declared value) = $831/yr".
+3. Unit not on the insured register (`is_insured` false or null), no premium → **Not set** (null), shown as "Not set — not separately scheduled (may be under blanket coverage)". Same treatment as licensing and fuel.
 
-Why: if the default applied to uninsured units, cost would show up that nobody pays. A flat zero for unreviewed units would hide real cost. The equipment record reads the premium directly from its own `insurance_annual_premium` column, so nothing is copied. The equipment detail view shows it read-only, with a link that says "Edit on Insurance page".
+Why: premiums are priced off declared value, which can be well above or below replacement cost. Unscheduled units are often covered by a blanket policy, so $0 would understate them. Null keeps "unknown" apart from "zero". No company-level setting is added. The equipment record reads the premium straight from its own `insurance_annual_premium` column, so nothing is copied. The equipment detail view shows it read-only, with an "Edit on Insurance page" link. The premium field can be edited on the Insurance page for both scheduled and unscheduled units, so blanket coverage can be split across units.
 
 ## 4. Showing the derivation
 
@@ -58,16 +57,19 @@ New category fields (licensing, fuel) exist only in the table. Maintenance and i
 
 ## 6. Worked example — 2014 Bobcat 324
 
-Replacement cost today = $55,369 (from the audit). Insurance status depends on what's set on its Insurance record today, so both cases are shown.
+Replacement cost today = $55,369 (from the audit). Its insurance status and declared value will be read during the build, so every case is shown.
 
 | Field | Override | Category default | Effective | Derivation shown |
 |---|---|---|---|---|
-| Maintenance + repair | none | 5% | **$2,768/yr** | 5% of $55,369 = $2,768.45 |
-| Insurance (insured, no premium) | — | 1.5% | **$831/yr** | Estimate: 1.5% of $55,369 = $830.54 |
+| Maintenance + repair | none | 5% | **$2,768/yr** | 5% of $55,369 replacement cost today = $2,768.45 |
+| Insurance (insured, declared value D, no premium) | — | 1.5% | **1.5% × D** | Estimate: 1.5% of $D declared value |
+| Insurance (insured, no declared value, no premium) | — | 1.5% | **$831/yr** | Estimate: 1.5% of $55,369 replacement cost today (no declared value) = $830.54 |
 | Insurance (premium entered, e.g. $900) | — | — | **$900/yr** | Actual premium from Insurance page |
-| Insurance (not insured) | — | — | **$0/yr** | Not insured |
+| Insurance (not on register, no premium) | — | — | **Not set** | Not separately scheduled |
 | Licensing | none | none | **Not set** | No category default yet |
 | Fuel L/hr | none | none | **Not set** | No category default yet |
+
+Cross-check against your example, the 2022 Silverado: $58,200 declared → 1.5% = **$873/yr** (that's your figure; the Fleet truck % will be read from the table at build time).
 
 For comparison, the Buy vs Rent method on purchase price would give $2,000 and $600.
 
@@ -84,5 +86,5 @@ For comparison, the Buy vs Rent method on purchase price would give $2,000 and $
 - `src/types/equipment.ts`: add `maintenanceAnnualOverride`, `licensingAnnualOverride`, `fuelConsumptionLphOverride`, `insuranceAnnualPremium`. Map them in the `EquipmentContext` load and save.
 - New pure module `src/lib/operatingCosts.ts`: `resolveOperatingCosts(item, categoryRow)` returns `{ value, source, derivation }` for each field. Not imported by calculations.ts, rollupEngine, cashflow or the FMS export.
 - `useInsurance` and `InsuredRegisterTab`: the update payload gets the premium.
-- Tests in `src/lib/operatingCosts.test.ts`: Bobcat maintenance = 2768.45; insured without premium = 830.54; uninsured = 0; premium beats the default; override beats the default; licensing and fuel with no data = null.
+- Tests in `src/lib/operatingCosts.test.ts`: Bobcat maintenance = 2768.45; insured, no declared value = 830.54; insured with $58,200 declared at 1.5% = 873; not on register = null; premium of 0 entered = 0; premium beats the estimate; override beats the default; licensing and fuel with no data = null.
 - `AGENTS.md`: per-unit operating costs resolve only via `resolveOperatingCosts`; the insurance premium lives on the equipment row and is edited only from the Insurance page.
