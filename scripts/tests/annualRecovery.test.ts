@@ -1,6 +1,6 @@
-// Run: bun test src/lib/annualRecovery.test.ts
+// Run: bun test scripts/tests/annualRecovery.test.ts
 import { test, expect } from 'bun:test';
-import { annualRecovery } from './calculations';
+import { annualRecovery } from '../../src/lib/calculations';
 
 // 2014 Bobcat 324: replacement $55,369, resale 25% = $13,842, life 8 yrs
 const bobcat = { replacementCostUsed: 55369, expectedResaleUsed: 13842, usefulLifeUsed: 8 } as const;
