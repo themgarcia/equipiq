@@ -211,7 +211,6 @@ export function useInsurance() {
           insurance_declared_value: declaredValue,
           insurance_notes: notes || null,
           insurance_reviewed_at: new Date().toISOString(),
-          ...(annualPremium !== undefined ? { insurance_annual_premium: annualPremium } : {}),
         })
         .eq('id', equipmentId)
         .eq('user_id', user.id);
