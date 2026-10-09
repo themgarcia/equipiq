@@ -1,6 +1,34 @@
 {
   "entries": [
     {
+      "version": "1.4.0",
+      "date": "2026-10-09",
+      "changes": [
+        {
+          "type": "added",
+          "userFacing": [
+            "New Company Settings page (account menu) for fuel price per litre, market finance rate, default hours per day, and recovery basis",
+            "Fuel price and market finance rate are stored for the upcoming LMN Equipment Catalog export and are not used in any calculation yet"
+          ],
+          "technical": [
+            "company_settings table scoped per user with reserved org_id column; RLS own-row only, no deletes",
+            "useCompanySettings React Query hook with defaults when no row exists"
+          ]
+        },
+        {
+          "type": "changed",
+          "userFacing": [
+            "Annual Recovery is now calculated one way everywhere, set by your recovery basis (default: net of resale)",
+            "Cashflow Analysis figures change: expected resale is now subtracted, so Annual Recovery and Surplus/Shortfall are lower than before (e.g. a $55,369 machine with $13,842 resale over 8 years goes from $6,921/yr to $5,191/yr)",
+            "Choose 'Gross' in Company Settings to keep the old Cashflow numbers — the FMS Export recovery figures will then follow the same basis"
+          ],
+          "technical": [
+            "annualRecovery(item, basis) in calculations.ts is the single formula; used by calculateEquipmentCashflow, calculatePaybackTimeline, rollupEngine buildLine, FMSExport CashGapSummary and CostComparisonTooltip"
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.3.7",
       "date": "2026-02-16",
       "changes": [
@@ -172,13 +200,21 @@
       "changes": [
         {
           "type": "fixed",
-          "userFacing": ["Notification bell now visible in both light and dark modes"],
-          "technical": ["Fixed NotificationBell using incorrect sidebar color tokens in content area"]
+          "userFacing": [
+            "Notification bell now visible in both light and dark modes"
+          ],
+          "technical": [
+            "Fixed NotificationBell using incorrect sidebar color tokens in content area"
+          ]
         },
         {
           "type": "improved",
-          "userFacing": ["Smarter color coding for financial values - green and red indicators now only appear on performance metrics"],
-          "technical": ["Semantic color coding for financial values - green/red indicators now only apply to performance-based metrics"]
+          "userFacing": [
+            "Smarter color coding for financial values - green and red indicators now only appear on performance metrics"
+          ],
+          "technical": [
+            "Semantic color coding for financial values - green/red indicators now only apply to performance-based metrics"
+          ]
         }
       ]
     },
@@ -205,8 +241,12 @@
       "changes": [
         {
           "type": "added",
-          "userFacing": ["In-app Change Log page accessible from sidebar under Reference section"],
-          "technical": ["In-app Change Log page accessible from sidebar under Reference section"]
+          "userFacing": [
+            "In-app Change Log page accessible from sidebar under Reference section"
+          ],
+          "technical": [
+            "In-app Change Log page accessible from sidebar under Reference section"
+          ]
         },
         {
           "type": "changed",
@@ -221,8 +261,12 @@
         },
         {
           "type": "improved",
-          "userFacing": ["More relevant cashflow visualizations that only show years that matter for your portfolio"],
-          "technical": ["More relevant cashflow visualizations that only show years that matter for your portfolio"]
+          "userFacing": [
+            "More relevant cashflow visualizations that only show years that matter for your portfolio"
+          ],
+          "technical": [
+            "More relevant cashflow visualizations that only show years that matter for your portfolio"
+          ]
         }
       ]
     },
@@ -244,7 +288,9 @@
         },
         {
           "type": "security",
-          "userFacing": ["Enhanced account security protections"],
+          "userFacing": [
+            "Enhanced account security protections"
+          ],
           "technical": [
             "Rate limiting on login (5 attempts per 15 minutes)",
             "Rate limiting on signup (3 attempts per hour)",

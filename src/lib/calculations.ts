@@ -139,3 +139,23 @@ export function formatCurrency(value: number): string {
 export function formatPercent(value: number): string {
   return `${value.toFixed(0)}%`;
 }
+
+export type RecoveryBasis = 'net_of_resale' | 'gross';
+export const DEFAULT_RECOVERY_BASIS: RecoveryBasis = 'net_of_resale';
+
+/**
+ * Single source of truth for annual recovery. Every screen that shows
+ * "Annual Recovery" must call this so the figures can never diverge.
+ * - net_of_resale: (replacement − expected resale) ÷ useful life
+ * - gross: replacement ÷ useful life
+ */
+export function annualRecovery(
+  item: Pick<EquipmentCalculated, 'replacementCostUsed' | 'expectedResaleUsed' | 'usefulLifeUsed'>,
+  basis: RecoveryBasis = DEFAULT_RECOVERY_BASIS
+): number {
+  if (!item.usefulLifeUsed || item.usefulLifeUsed <= 0) return 0;
+  const recoverable = basis === 'gross'
+    ? item.replacementCostUsed
+    : item.replacementCostUsed - item.expectedResaleUsed;
+  return recoverable / item.usefulLifeUsed;
+}

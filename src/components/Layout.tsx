@@ -17,6 +17,7 @@ import {
   Shield,
   ShieldCheck,
   CreditCard,
+  Building2,
   History,
   Rocket,
   MessageSquarePlus
@@ -344,6 +345,12 @@ function AppSidebar() {
                   Billing
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/settings/company">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Company Settings
+                </Link>
+              </DropdownMenuItem>
               {isAdmin && (
                 <>
                   <DropdownMenuSeparator />
@@ -524,6 +531,12 @@ function PhoneHeader() {
                     <Link to="/settings/billing">
                       <CreditCard className="h-4 w-4 mr-2" />
                       Billing
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings/company">
+                      <Building2 className="h-4 w-4 mr-2" />
+                      Company Settings
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin && (

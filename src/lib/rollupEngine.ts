@@ -1,5 +1,6 @@
 import { EquipmentCalculated, FinancingType, AllocationType } from '@/types/equipment';
 import { getCategoryDefaults } from '@/data/categoryDefaults';
+import { annualRecovery, RecoveryBasis, DEFAULT_RECOVERY_BASIS } from '@/lib/calculations';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -101,7 +102,7 @@ function getGroupKey(item: EquipmentCalculated, isField: boolean): string {
   return `${item.category}|||${recoveryMethod}`;
 }
 
-function buildLine(items: EquipmentCalculated[], recoveryMethod: LmnRecoveryMethod): RollupLine {
+function buildLine(items: EquipmentCalculated[], recoveryMethod: LmnRecoveryMethod, basis: RecoveryBasis): RollupLine {
   const qty = items.length;
   const categoryDef = getCategoryDefaults(items[0].category);
 
@@ -109,10 +110,7 @@ function buildLine(items: EquipmentCalculated[], recoveryMethod: LmnRecoveryMeth
   const avgUsefulLife = items.reduce((sum, i) => sum + i.usefulLifeUsed, 0) / qty;
   const avgEndValue = items.reduce((sum, i) => sum + i.expectedResaleUsed, 0) / qty;
 
-  const totalAnnualRecovery = items.reduce((sum, i) => {
-    const life = i.usefulLifeUsed || 1;
-    return sum + (i.replacementCostUsed - i.expectedResaleUsed) / life;
-  }, 0);
+  const totalAnnualRecovery = items.reduce((sum, i) => sum + annualRecovery(i, basis), 0);
 
   const totalCogs = items.reduce((sum, i) => sum + i.cogsAllocatedCost, 0);
   const totalOverhead = items.reduce((sum, i) => sum + i.overheadAllocatedCost, 0);
@@ -162,7 +160,7 @@ function computeTotals(lines: RollupLine[]): RollupTotals {
   };
 }
 
-export function rollupEquipment(calculatedEquipment: EquipmentCalculated[]): RollupResult {
+export function rollupEquipment(calculatedEquipment: EquipmentCalculated[], basis: RecoveryBasis = DEFAULT_RECOVERY_BASIS): RollupResult {
   // Only active equipment
   const active = calculatedEquipment.filter(e => e.status === 'Active');
 
@@ -192,13 +190,13 @@ export function rollupEquipment(calculatedEquipment: EquipmentCalculated[]): Rol
   const fieldLines: RollupLine[] = [];
   for (const [key, items] of fieldGroups) {
     const recoveryMethod = key.split('|||')[1] as LmnRecoveryMethod;
-    fieldLines.push(buildLine(items, recoveryMethod));
+    fieldLines.push(buildLine(items, recoveryMethod, basis));
   }
 
   const overheadLines: RollupLine[] = [];
   for (const [key, items] of overheadGroups) {
     const recoveryMethod = key.split('|||')[1] as LmnRecoveryMethod;
-    overheadLines.push(buildLine(items, recoveryMethod));
+    overheadLines.push(buildLine(items, recoveryMethod, basis));
   }
 
   // Sort alphabetically by category

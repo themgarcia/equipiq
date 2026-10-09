@@ -211,6 +211,42 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          created_at: string
+          default_hours_per_day: number
+          fuel_price_per_litre: number | null
+          id: string
+          market_finance_rate_pct: number | null
+          org_id: string | null
+          recovery_basis: Database["public"]["Enums"]["recovery_basis"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_hours_per_day?: number
+          fuel_price_per_litre?: number | null
+          id?: string
+          market_finance_rate_pct?: number | null
+          org_id?: string | null
+          recovery_basis?: Database["public"]["Enums"]["recovery_basis"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_hours_per_day?: number
+          fuel_price_per_litre?: number | null
+          id?: string
+          market_finance_rate_pct?: number | null
+          org_id?: string | null
+          recovery_basis?: Database["public"]["Enums"]["recovery_basis"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_preferences: {
         Row: {
           budgeting_season_reminders: boolean
@@ -1035,6 +1071,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       lmn_unit: "hours" | "days"
+      recovery_basis: "net_of_resale" | "gross"
       usage_basis: "hours" | "miles" | "calendar"
     }
     CompositeTypes: {
@@ -1165,6 +1202,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       lmn_unit: ["hours", "days"],
+      recovery_basis: ["net_of_resale", "gross"],
       usage_basis: ["hours", "miles", "calendar"],
     },
   },

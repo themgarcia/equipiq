@@ -17,6 +17,7 @@ import {
 } from '@/types/equipment';
 import { addMonths, format } from 'date-fns';
 import { parseLocalDate } from '@/lib/utils';
+import { annualRecovery, RecoveryBasis, DEFAULT_RECOVERY_BASIS } from '@/lib/calculations';
 
 /**
  * Calculate cashflow metrics for a single equipment item.
@@ -24,7 +25,8 @@ import { parseLocalDate } from '@/lib/utils';
  */
 export function calculateEquipmentCashflow(
   equipment: Equipment,
-  calculated: EquipmentCalculated
+  calculated: EquipmentCalculated,
+  basis: RecoveryBasis = DEFAULT_RECOVERY_BASIS
 ): EquipmentCashflow {
   // For owned equipment, the "deposit" is the total cost basis (cash paid upfront)
   // For financed/leased, use the actual deposit amount
@@ -54,11 +56,9 @@ export function calculateEquipmentCashflow(
   // Remaining cash obligations = remaining payments × monthly + buyout
   const remainingCashObligations = (remainingPayments * equipment.monthlyPayment) + equipment.buyoutAmount;
   
-  // Annual economic recovery = replacement value ÷ useful life
+  // Annual economic recovery — basis set in Company Settings (see annualRecovery)
   // This represents how much value is "recovered" through job pricing annually
-  const annualEconomicRecovery = calculated.usefulLifeUsed > 0 
-    ? calculated.replacementCostUsed / calculated.usefulLifeUsed 
-    : 0;
+  const annualEconomicRecovery = annualRecovery(calculated, basis);
   
   // Annual surplus/shortfall = recovery - outflow
   const annualSurplusShortfall = annualEconomicRecovery - annualCashOutflow;
@@ -193,7 +193,8 @@ export function calculatePortfolioCashflow(
  */
 export function calculatePaybackTimeline(
   equipment: Equipment,
-  calculated: EquipmentCalculated
+  calculated: EquipmentCalculated,
+  basis: RecoveryBasis = DEFAULT_RECOVERY_BASIS
 ): { timeline: PaybackTimelinePoint[]; paybackMonth: number | null } {
   const timeline: PaybackTimelinePoint[] = [];
   
@@ -203,9 +204,7 @@ export function calculatePaybackTimeline(
     : equipment.depositAmount;
   
   // Monthly recovery = annual recovery ÷ 12
-  const monthlyRecovery = calculated.usefulLifeUsed > 0 
-    ? calculated.replacementCostUsed / calculated.usefulLifeUsed / 12 
-    : 0;
+  const monthlyRecovery = annualRecovery(calculated, basis) / 12;
   
   // Determine timeline length: max of term or useful life in months
   const usefulLifeMonths = calculated.usefulLifeUsed * 12;
