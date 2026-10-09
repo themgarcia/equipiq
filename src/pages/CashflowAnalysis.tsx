@@ -40,6 +40,7 @@ import {
 import { formatCurrency } from '@/lib/calculations';
 import { useCompanySettings, RECOVERY_BASIS_LABEL } from '@/hooks/useCompanySettings';
 import { X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { 
   calculateEquipmentCashflow, 
   calculatePortfolioCashflow, 

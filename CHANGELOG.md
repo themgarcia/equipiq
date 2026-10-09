@@ -5,6 +5,15 @@ All notable changes to EquipIQ will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-10-09
+
+### Added
+- company_settings table scoped per user with reserved org_id column; RLS own-row only, no deletes
+- useCompanySettings React Query hook with defaults when no row exists
+
+### Changed
+- annualRecovery(item, basis) in calculations.ts is the single formula; used by calculateEquipmentCashflow, calculatePaybackTimeline, rollupEngine buildLine, FMSExport CashGapSummary and CostComparisonTooltip
+
 ## [1.3.7] - 2026-02-16
 
 ### Added
@@ -14,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New Definitions accordion entry with #lease-recovery anchor and auto-open on hash navigation
 
 ### Improved
-- Updated EquipmentFormContent radio labels with descriptive text and "Which should I choose?" link to /definitions#lease-recovery
+- Updated EquipmentFormContent radio labels with descriptive text and 'Which should I choose?' link to /definitions#lease-recovery
 - isPaymentComplete helper excludes finished leases from CashGapSummary and both tooltip variants
 
 ## [1.3.6] - 2026-02-11
@@ -97,7 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Cashflow projection chart now dynamically adjusts based on actual equipment payoff dates (ends 2 years after last payoff, minimum 3 years)
-- Added "Today" marker on x-axis of cashflow projection chart for clearer timeline orientation
+- Added 'Today' marker on x-axis of cashflow projection chart for clearer timeline orientation
 
 ### Improved
 - More relevant cashflow visualizations that only show years that matter for your portfolio
@@ -115,7 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rate limiting on password reset (3 attempts per hour)
 - Enhanced RLS policies for auth_rate_limits table
 
-## [1.2.0] - Previous Release
+## [1.2.0] - 2026-01-05
 
 ### Added
 - Insurance Control module with full broker email integration
@@ -129,7 +138,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced equipment form with insurance-specific fields
 - Improved attachment management with insurance value tracking
 
-## [1.1.0] - Earlier Release
+## [1.1.0] - 2025-12-20
 
 ### Added
 - Demo mode for showcasing features without requiring an account
@@ -144,7 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved mobile navigation with sheet-based menu
 - Enhanced sidebar with collapsible state persistence
 
-## [1.0.0] - Initial Release
+## [1.0.0] - 2025-12-01
 
 ### Added
 - Equipment tracking with full CRUD operations
