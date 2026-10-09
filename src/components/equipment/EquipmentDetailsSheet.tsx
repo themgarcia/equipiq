@@ -36,6 +36,7 @@ import { EquipmentFormContent } from '@/components/EquipmentFormContent';
 import { EquipmentDocumentsContent } from '@/components/EquipmentDocumentsContent';
 import { EquipmentAttachmentsContent } from '@/components/EquipmentAttachmentsContent';
 import { OperatingCostsPanel } from '@/components/equipment/OperatingCostsPanel';
+import { DivisionAllocationPanel } from '@/components/equipment/DivisionAllocationPanel';
 import { formatCurrency, formatPercent } from '@/lib/calculations';
 import { parseLocalDate } from '@/lib/utils';
 
@@ -262,6 +263,10 @@ function EquipmentDetailsView({
       <Separator />
 
       <OperatingCostsPanel equipment={equipment} onUpdate={onUpdate} />
+
+      <Separator />
+
+      <DivisionAllocationPanel equipment={equipment} />
 
       <Separator />
 
