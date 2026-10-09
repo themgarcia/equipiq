@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { formatBenchmarkRange } from '@/lib/benchmarkUtils';
 import { useDistanceUnit } from '@/hooks/useDistanceUnit';
+import { useCategoryDefaultsTable } from '@/hooks/useCategoryDefaultsTable';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Layout } from '@/components/Layout';
@@ -29,11 +30,25 @@ import { CategoryDefaults } from '@/types/equipment';
 import { useDeviceType } from '@/hooks/use-mobile';
 
 export default function CategoryLifespans() {
-  const { categoryDefaults, updateCategoryDefaults } = useEquipment();
+  const { categoryDefaults: sessionDefaults, updateCategoryDefaults } = useEquipment();
+  const { data: tableData } = useCategoryDefaultsTable();
   const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isPhone = deviceType === 'phone';
   const { distanceUnit } = useDistanceUnit();
+
+  // List, order and benchmarks come from the database table. Editable fields
+  // (life, resale, notes) keep today's in-session edit behaviour on top.
+  const categoryDefaults = useMemo(() => {
+    const base = tableData?.rows ?? sessionDefaults;
+    const session = new Map(sessionDefaults.map((c) => [c.category, c]));
+    return base.map((row) => {
+      const s = session.get(row.category);
+      return s
+        ? { ...row, defaultUsefulLife: s.defaultUsefulLife, defaultResalePercent: s.defaultResalePercent, notes: s.notes }
+        : row;
+    });
+  }, [tableData, sessionDefaults]);
   
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<CategoryDefaults>>({});
