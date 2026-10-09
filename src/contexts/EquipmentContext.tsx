@@ -157,11 +157,36 @@ async function fetchAttachmentsData(userId: string): Promise<Record<string, Equi
 }
 
 export function EquipmentProvider({ children }: { children: React.ReactNode }) {
-  const [categoryDefaultsState, setCategoryDefaults] = useState<CategoryDefaults[]>(defaultCategories);
   const { user } = useAuth();
   const { adminModeActive, demoDataEnabled, demoPlan } = useAdminMode();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Per-user category overrides (Category Lifespans edits), merged over the shared defaults
+  const { data: categoryOverrides = {}, refetch: refetchOverrides } = useQuery({
+    queryKey: ['user_category_overrides', user?.id],
+    enabled: !!user,
+    queryFn: async (): Promise<Record<string, Partial<CategoryDefaults>>> => {
+      const { data, error } = await supabase
+        .from('user_category_overrides')
+        .select('category, useful_life_years, resale_pct, notes')
+        .eq('user_id', user!.id);
+      if (error) throw error;
+      const map: Record<string, Partial<CategoryDefaults>> = {};
+      for (const r of data ?? []) {
+        const o: Partial<CategoryDefaults> = {};
+        if (r.useful_life_years !== null) o.defaultUsefulLife = r.useful_life_years;
+        if (r.resale_pct !== null) o.defaultResalePercent = Number(r.resale_pct);
+        if (r.notes !== null) o.notes = r.notes;
+        map[r.category] = o;
+      }
+      return map;
+    },
+  });
+  const categoryDefaultsState = useMemo<CategoryDefaults[]>(
+    () => defaultCategories.map(c => (categoryOverrides[c.category] ? { ...c, ...categoryOverrides[c.category] } : c)),
+    [categoryOverrides]
+  );
 
   // Determine if we're showing demo data
   const isDemoData = adminModeActive && demoDataEnabled;
@@ -443,11 +468,28 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     await deleteEquipmentMutation.mutateAsync(id);
   }, [user, isImpersonating, isDemoData, deleteEquipmentMutation, toast]);
 
-  const updateCategoryDefaults = useCallback((category: string, updates: Partial<CategoryDefaults>) => {
-    setCategoryDefaults(prev =>
-      prev.map(c => c.category === category ? { ...c, ...updates } : c)
-    );
-  }, []);
+  const updateCategoryDefaults = useCallback(async (category: string, updates: Partial<CategoryDefaults>) => {
+    if (!user) return;
+    if (isDemoData || isImpersonating) {
+      toast({ title: "Not saved", description: "Category edits can't be saved in demo or support mode.", variant: "destructive" });
+      return;
+    }
+    const prev = categoryOverrides[category] ?? {};
+    const row = {
+      user_id: user.id,
+      category,
+      useful_life_years: updates.defaultUsefulLife ?? prev.defaultUsefulLife ?? null,
+      resale_pct: updates.defaultResalePercent ?? prev.defaultResalePercent ?? null,
+      notes: updates.notes ?? prev.notes ?? null,
+    };
+    const { error } = await supabase.from('user_category_overrides').upsert(row, { onConflict: 'user_id,category' });
+    if (error) {
+      toast({ title: "Could not save category", description: "Please try again.", variant: "destructive" });
+      return;
+    }
+    await refetchOverrides();
+    toast({ title: "Category saved" });
+  }, [user, isDemoData, isImpersonating, categoryOverrides, refetchOverrides, toast]);
 
   const refetch = useCallback(async () => {
     await refetchEquipmentQuery();

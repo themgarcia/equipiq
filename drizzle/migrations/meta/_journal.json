@@ -22,6 +22,13 @@
       "when": 1791575535996,
       "tag": "0002_equipment_operating_cost_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791579835605,
+      "tag": "0003_step9a_divisions_and_category_overrides",
+      "breakpoints": true
     }
   ]
 }

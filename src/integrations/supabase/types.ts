@@ -471,6 +471,63 @@ export type Database = {
           },
         ]
       }
+      equipment_division_allocations: {
+        Row: {
+          created_at: string
+          equipment_id: string
+          expected_hours: number | null
+          id: string
+          months_committed: number | null
+          rate_basis: string
+          recovery_method: string
+          service_division_id: string | null
+          share_of_year: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          equipment_id: string
+          expected_hours?: number | null
+          id?: string
+          months_committed?: number | null
+          rate_basis?: string
+          recovery_method?: string
+          service_division_id?: string | null
+          share_of_year: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          equipment_id?: string
+          expected_hours?: number | null
+          id?: string
+          months_committed?: number | null
+          rate_basis?: string
+          recovery_method?: string
+          service_division_id?: string | null
+          share_of_year?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_division_allocations_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_division_allocations_service_division_id_fkey"
+            columns: ["service_division_id"]
+            isOneToOne: false
+            referencedRelation: "service_divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment_documents: {
         Row: {
           equipment_id: string
@@ -889,6 +946,51 @@ export type Database = {
         }
         Relationships: []
       }
+      service_divisions: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          events_per_season: number | null
+          id: string
+          name: string
+          org_id: string | null
+          season_end_month: number | null
+          season_months: number
+          season_start_month: number | null
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          events_per_season?: number | null
+          id?: string
+          name: string
+          org_id?: string | null
+          season_end_month?: number | null
+          season_months: number
+          season_start_month?: number | null
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          events_per_season?: number | null
+          id?: string
+          name?: string
+          org_id?: string | null
+          season_end_month?: number | null
+          season_months?: number
+          season_start_month?: number | null
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           beta_access: boolean
@@ -1009,6 +1111,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_category_overrides: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          notes: string | null
+          resale_pct: number | null
+          updated_at: string
+          useful_life_years: number | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resale_pct?: number | null
+          updated_at?: string
+          useful_life_years?: number | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          resale_pct?: number | null
+          updated_at?: string
+          useful_life_years?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_notifications: {
         Row: {
           created_at: string
@@ -1078,6 +1213,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      replace_equipment_allocations: {
+        Args: { _equipment_id: string; _rows: Json }
+        Returns: undefined
       }
     }
     Enums: {
