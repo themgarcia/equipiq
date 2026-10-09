@@ -38,6 +38,9 @@ import {
   ArrowDown,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/calculations';
+import { useCompanySettings, RECOVERY_BASIS_LABEL } from '@/hooks/useCompanySettings';
+import { Link } from 'react-router-dom';
+import { X } from 'lucide-react';
 import { 
   calculateEquipmentCashflow, 
   calculatePortfolioCashflow, 
@@ -93,7 +96,8 @@ interface PaybackDialogProps {
 }
 
 function PaybackDialog({ equipment, calculated, open, onOpenChange }: PaybackDialogProps) {
-  const { timeline, paybackMonth } = calculatePaybackTimeline(equipment, calculated);
+  const { recoveryBasis } = useCompanySettings();
+  const { timeline, paybackMonth } = calculatePaybackTimeline(equipment, calculated, recoveryBasis);
   
   // Sample every 12th month for cleaner display, plus key points
   const chartData = timeline.filter((_, i) => i % 12 === 0 || i === timeline.length - 1);
@@ -225,6 +229,15 @@ function PaybackDialog({ equipment, calculated, open, onOpenChange }: PaybackDia
 
 export default function CashflowAnalysis() {
   const { equipment, calculatedEquipment, loading } = useEquipment();
+  const { recoveryBasis } = useCompanySettings();
+  const basisNoticeKey = 'equipiq:recovery-basis-notice-dismissed:v1';
+  const [basisNoticeDismissed, setBasisNoticeDismissed] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem(basisNoticeKey) === '1'
+  );
+  const dismissBasisNotice = () => {
+    localStorage.setItem(basisNoticeKey, '1');
+    setBasisNoticeDismissed(true);
+  };
   const { canUseCashflow, effectivePlan, subscription } = useSubscription();
   const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
@@ -247,10 +260,10 @@ export default function CashflowAnalysis() {
   const equipmentWithCashflow = useMemo(() => {
     return equipment.map((eq, index) => {
       const calculated = calculatedEquipment[index];
-      const cashflow = calculateEquipmentCashflow(eq, calculated);
+      const cashflow = calculateEquipmentCashflow(eq, calculated, recoveryBasis);
       return { equipment: eq, calculated, cashflow };
     });
-  }, [equipment, calculatedEquipment]);
+  }, [equipment, calculatedEquipment, recoveryBasis]);
   
   // Filter equipment
   const filteredEquipment = useMemo(() => {
@@ -529,6 +542,23 @@ export default function CashflowAnalysis() {
           </div>
         </div>
         
+        {!basisNoticeDismissed && (
+          <div className="mb-6 rounded-lg border border-warning/30 bg-warning/10 p-4 flex gap-3 items-start">
+            <Info className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+            <div className="text-sm flex-1 space-y-1">
+              <p className="font-medium text-foreground">Annual Recovery is now calculated the same way everywhere</p>
+              <p className="text-muted-foreground">
+                Annual Recovery now uses your recovery basis setting (currently <strong>{RECOVERY_BASIS_LABEL[recoveryBasis]}</strong>), the same as the FMS Export.
+                {recoveryBasis === 'net_of_resale' && ' Expected resale is now subtracted, so Annual Recovery and Surplus/Shortfall are lower than before.'}
+                {' '}You can change this in <Link to="/settings/company" className="text-primary hover:underline">Company Settings</Link>.
+              </p>
+            </div>
+            <button onClick={dismissBasisNotice} aria-label="Dismiss notice" className="text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* Portfolio Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card>
@@ -543,7 +573,7 @@ export default function CashflowAnalysis() {
                 {formatCurrency(portfolioSummary.totalAnnualRecovery)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Value being recovered through job pricing
+                Value being recovered through job pricing · {RECOVERY_BASIS_LABEL[recoveryBasis]}
               </p>
             </CardContent>
           </Card>

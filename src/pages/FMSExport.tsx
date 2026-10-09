@@ -674,7 +674,7 @@ export default function FMSExport() {
 
   const rollupResult = useMemo(() => {
     return rollupEquipment(calculatedEquipment, recoveryBasis);
-  }, [calculatedEquipment]);
+  }, [calculatedEquipment, recoveryBasis]);
 
   const copyCell = async (id: string, value: string) => {
     await navigator.clipboard.writeText(value);
