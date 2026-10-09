@@ -298,12 +298,16 @@ export type Database = {
           financing_start_date: string | null
           financing_type: string
           freight_setup: number
+          fuel_consumption_lph_override: number | null
           id: string
+          insurance_annual_premium: number | null
           insurance_declared_value: number | null
           insurance_notes: string | null
           insurance_reviewed_at: string | null
           is_insured: boolean | null
+          licensing_annual_override: number | null
           lmn_recovery_method: string | null
+          maintenance_annual_override: number | null
           make: string
           model: string
           monthly_payment: number
@@ -339,12 +343,16 @@ export type Database = {
           financing_start_date?: string | null
           financing_type?: string
           freight_setup?: number
+          fuel_consumption_lph_override?: number | null
           id?: string
+          insurance_annual_premium?: number | null
           insurance_declared_value?: number | null
           insurance_notes?: string | null
           insurance_reviewed_at?: string | null
           is_insured?: boolean | null
+          licensing_annual_override?: number | null
           lmn_recovery_method?: string | null
+          maintenance_annual_override?: number | null
           make: string
           model: string
           monthly_payment?: number
@@ -380,12 +388,16 @@ export type Database = {
           financing_start_date?: string | null
           financing_type?: string
           freight_setup?: number
+          fuel_consumption_lph_override?: number | null
           id?: string
+          insurance_annual_premium?: number | null
           insurance_declared_value?: number | null
           insurance_notes?: string | null
           insurance_reviewed_at?: string | null
           is_insured?: boolean | null
+          licensing_annual_override?: number | null
           lmn_recovery_method?: string | null
+          maintenance_annual_override?: number | null
           make?: string
           model?: string
           monthly_payment?: number
