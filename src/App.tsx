@@ -38,6 +38,7 @@ const Changelog = lazy(() => import("./pages/Changelog"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Billing = lazy(() => import("./pages/Settings/Billing"));
+const CompanySettings = lazy(() => import("./pages/Settings/Company"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const InsuranceControl = lazy(() => import("./pages/InsuranceControl"));
 
@@ -120,6 +121,11 @@ const App = () => (
                           <Route path="/settings/billing" element={
                             <ProtectedRoute>
                               <Billing />
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/settings/company" element={
+                            <ProtectedRoute>
+                              <CompanySettings />
                             </ProtectedRoute>
                           } />
                           <Route path="/feedback" element={
