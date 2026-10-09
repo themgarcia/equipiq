@@ -35,8 +35,17 @@ The rest of this document specifies all three, so the design hangs together. App
 
 - Each unit is either **year-round shared** (one blended 12-month rate, a deliberate choice) or **allocated** across one or more service divisions.
 - Each allocation row has the division, months committed (entered), share of the year (stored, 0–1), expected hours in the division, and recovery method.
-- **Months to share rule.** Months committed are entered and pre-filled from the division's season length. Shares = months for that division ÷ total months entered, so overlaps (8 + 5 = 13) normalise to 100% and months are never just summed. The UI shows the resulting share beside each row, and the share can be overridden directly. The database rejects saving unless shares sum to 100% (±0.1%).
-- **Flag, important for your arithmetic check.** Your target numbers (9.72 / 55.56) imply shares of 7/12 and 5/12. Entering construction as 8 months (April–November) and snow as 5 gives 8/13 and 5/13 under this rule, which is **10.26 / 51.28**. Both are "by availability". The difference is how the one overlapping month (November) is split. Options: (a) proportional normalisation, as above (the default I propose); (b) the user decides who owns overlap months, so they enter 7 + 5 directly. The share override supports (b) either way. Tell me which should be the default.
+- **Overlap is the user's call every time. No rule resolves it.**
+  - Months committed are entered for each division and pre-filled from that division's season length.
+  - Each row shows the resulting share of the year, and the share is directly editable.
+  - A row total is shown against 100%.
+  - Proportional normalisation (months ÷ total months entered) only **suggests** pre-filled shares. It is never silently applied as the answer.
+  - If the months entered add up to exactly 12 (for example a clean 8 + 4), the shares are months ÷ 12, there's no message, and no action is needed.
+  - If they add up to more than 12, say so plainly: "You've committed 13 months across a 12-month year. Adjust the shares to decide who carries the overlap."
+  - If they add up to less than 12: "You've committed 10 months of a 12-month year. Adjust the shares so the whole year is carried."
+  - Shares aren't saved until the user confirms them. Save stays disabled until shares total 100% (±0.1%), and the database enforces the same check.
+  - Changing months later updates the suggestion but never overwrites shares the user has already confirmed without asking.
+- Your example: 8 + 5 shows the 13-month message with suggested shares of 61.5% / 38.5% (10.26 / 51.28). Setting them to 7/12 and 5/12 gives 9.72 / 55.56. Either is valid. The contractor decides.
 - Units with no allocation yet are treated as "Unallocated". They keep today's behaviour and are listed as incomplete.
 - UI: a new "Divisions" section on the equipment form, plus a bulk "Allocate" action from the category grid in 9C.
 
@@ -45,7 +54,7 @@ The rest of this document specifies all three, so the design hangs together. App
 - `lmn_recovery_method` moves onto each allocation row.
 - Migration: for every existing unit, create one **year-round shared** allocation row (share 1.0, hours null) carrying the unit's current `lmn_recovery_method`. Every unit keeps its exact current behaviour until the user allocates it.
 - The old column stays in place and is marked deprecated. It isn't dropped.
-- Flag: today's method values are `owned | leased` (the lease recovery path). "Hourly vs seasonal" is a different axis. I propose two fields per row: `recovery_method` (owned/leased, migrated as-is) and `rate_basis` (hourly / seasonal / per_event, default hourly). Please confirm this reading of "recovered hourly in construction and seasonally in snow".
+- Confirmed: these are two separate fields per row. `recovery_method` (owned/leased) is the financing structure and is migrated as-is. `rate_basis` (hourly / seasonal / per_event) is the rate denominator and defaults to hourly.
 
 ## Item 4 — Cost allocation rule (9B)
 
@@ -122,8 +131,10 @@ Case A lands exactly on 9.72 / 55.56. Under the full rule (C), any usage-driven 
 
 **Code (9B/9C):** new `src/lib/divisionAllocation.ts` (pure, tested with the loader cases A/B/C as fixed assertions); `rollupEngine` key adds division; the FMS Export grid; `resolveOperatingCosts` gains a category-level layer. Buy vs Rent is untouched.
 
-**Tests:** 9A: shares sum rule, normalisation (8+5 → 0.615/0.385), backfill preserves method. 9B: cases A, B, C above to the cent.
+**Tests:** 9A: shares must total 100% to save; 8+4 suggests 8/12 and 4/12 with no warning; 8+5 suggests 0.615/0.385 and flags 13 months; 7+4 flags 11 months; edited shares are never overwritten by a months change; backfill preserves the method and sets rate_basis to hourly. 9B: cases A, B, C above to the cent.
 
 **Lint:** confirm the count stays at 8 after each migration.
 
-**Open decisions for you:** overlap default (proportional vs owner-assigned); recovery_method vs rate_basis reading; financing = interest only, or excluded; fuel wiring go-ahead (9B); suggested division names, yes or no.
+**Decided:** overlap is a user judgment (suggestion only); recovery_method and rate_basis are two separate fields; no seeded or suggested division names.
+
+**Open, returns with 9B:** financing treatment (interest only, or excluded); go-ahead for fuel wiring.
