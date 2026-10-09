@@ -31,12 +31,11 @@ Caveat: `replacementCostUsed` already includes attachments. So the maintenance a
 ## 3. Insurance resolution
 
 Order:
-1. Unit is insured and has a premium → **premium from the Insurance page** ("Actual premium").
-2. Unit is insured, no premium yet → **category default %** × replacement cost today ("Estimated — enter your premium on the Insurance page").
-3. Unit not insured (`is_insured = false`) → **$0** ("Not insured").
-4. Insured status not set yet (null, the unreviewed state) → category default, labelled as an estimate.
+1. A premium has been entered (any unit, including 0) → **the entered premium** ("Actual premium" or "Entered").
+2. Unit is insured, no premium yet → **estimate = insurance % × base**, where the base is **declared value** if `insurance_declared_value` is set, otherwise replacement cost today. The derivation names the base, e.g. "Estimate: 1.5% of $58,200 declared value = $873/yr" or "Estimate: 1.5% of $55,369 replacement cost today (no declared value) = $831/yr".
+3. Unit not on the insured register (`is_insured` false or null), no premium → **Not set** (null), shown as "Not set — not separately scheduled (may be under blanket coverage)". Same treatment as licensing and fuel.
 
-Why: if the default applied to uninsured units, cost would show up that nobody pays. A flat zero for unreviewed units would hide real cost. The equipment record reads the premium directly from its own `insurance_annual_premium` column, so nothing is copied. The equipment detail view shows it read-only, with a link that says "Edit on Insurance page".
+Why: premiums are priced off declared value, which can be well above or below replacement cost. Unscheduled units are often covered by a blanket policy, so $0 would understate them. Null keeps "unknown" apart from "zero". No company-level setting is added. The equipment record reads the premium straight from its own `insurance_annual_premium` column, so nothing is copied. The equipment detail view shows it read-only, with an "Edit on Insurance page" link. The premium field can be edited on the Insurance page for both scheduled and unscheduled units, so blanket coverage can be split across units.
 
 ## 4. Showing the derivation
 
