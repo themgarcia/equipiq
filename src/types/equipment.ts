@@ -95,6 +95,12 @@ export interface Equipment {
 
   // LMN Recovery Method (only meaningful when financingType === 'leased')
   lmnRecoveryMethod?: 'owned' | 'leased';
+
+  // Per-unit operating costs (display only; null/undefined = use default / Not set)
+  maintenanceAnnualOverride?: number | null;
+  licensingAnnualOverride?: number | null;
+  fuelConsumptionLphOverride?: number | null;
+  insuranceAnnualPremium?: number | null; // edited only from the Insurance page
 }
 
 // Calculated fields (derived from Equipment)
