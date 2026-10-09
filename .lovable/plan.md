@@ -2,7 +2,7 @@
 
 No calculation logic changes. The client-side array stays in place. Nothing switches over until the comparison check passes.
 
-## Findings that change the brief (please confirm)
+## Findings that change the brief (confirmed)
 
 1. **The array has 94 categories, not 93.** "Construction — Vacuum Lifter" was added recently; the header comment still says 93. The check will expect 94.
 2. **The benchmarks are not in the notes text.** Each category already has its own `benchmarkType` (hours / miles / calendar) and `benchmarkRange` (for example "4,000–6,000 hrs"). The notes hold model and brand keywords that AI matching uses. So usage parsing will read the existing benchmark fields. Notes are copied over unchanged.
@@ -26,7 +26,8 @@ category_defaults (1) ──< category_consumables (many)
 - `default_allocation` text not null (operational / overhead_only), carried over so the table is a full copy
 - `notes` text not null: verbatim
 - `maintenance_repair_pct` numeric not null, `insurance_pct` numeric not null
-- `licensing_annual` numeric null, `fuel_consumption_lph` numeric null, `default_hours_per_day` numeric null: all null for now, because no source exists
+- `licensing_annual` numeric null, `fuel_consumption_lph` numeric null: both null for all 94 for now, because no source exists
+- No `default_hours_per_day`. Workday length is a company setting and will be added in a later step.
 - `default_lmn_unit` enum `lmn_unit` (hours, days) not null
 - `usage_basis` enum `usage_basis` (hours, miles, calendar) not null
 - `lifetime_usage_min/max`, `annual_usage_min/max` numeric null
@@ -56,7 +57,7 @@ Parsing results:
 | Hours, lifetime parsed cleanly | 56 | all with an hours benchmark |
 | Miles, lifetime parsed cleanly | 9 | Fleet trucks (7) and vans (2) |
 | Calendar, no usage figures | 29 | trailers, plows, spreaders, "Other", etc. |
-| Annual parsed cleanly | 1 | Lawn — Mower — Zero Turn: 600–1,000 hrs/yr |
+| Annual parsed cleanly | 2 | Lawn — Mower — Zero Turn: 600–1,000 hrs/yr; Snow — Blower: 50–150 (basis stays calendar) |
 
 The full 94-row review table (category, life, resale %, maint %, ins %, unit, basis, lifetime min/max, annual min/max) will be delivered with the seed, generated from the same script.
 
@@ -68,16 +69,15 @@ The full 94-row review table (category, life, resale %, maint %, ins %, unit, ba
 | Construction — Saw — Cut-Off | Blades | null | "Blades consumable" |
 | Irrigation — Trencher — Walk-Behind | Chain/teeth | null | "Chain/teeth consumable" |
 | Tree — Stump Grinder | Teeth | null | "Teeth consumable" |
-| Construction — Loader — CTL | Track undercarriage | 2000 | "Track undercarriage at ~2,000 hrs is major cost" |
+| Construction — Loader — CTL | Track undercarriage | 2000 | "Track undercarriage at ~2,000 hrs is major cost" (the source note keeps the approximation visible) |
 
-## 4. Needs your call (left null or not inserted)
+## 4. Resolved decisions
 
-1. **Snow — Blower:** the benchmark is calendar, but the notes say "50–150 hrs/yr". Should the basis be hours with an annual figure, or stay calendar? Left as calendar with annual null.
-2. **CTL undercarriage:** "~2,000" is approximate. Is 2000 acceptable as the interval, or should it be null?
-3. **Lawn — Sprayer — Tank:** "Pump rebuild extends life" describes a major repair, not a consumable. Should it be inserted? Not inserted.
-4. **Shop — Pressure Washer:** "Pump wear is limiting factor". Should this be a consumable? Not inserted.
-5. **Snow — Sidewalk Machine:** "Salt exposure accelerates wear" is a condition, not a part. Not inserted.
-6. **`default_hours_per_day`, `licensing_annual`, `fuel_consumption_lph`:** no source data, null for all 94.
+1. **Snow — Blower:** basis stays calendar, with annual_usage_min 50 and annual_usage_max 150.
+2. **CTL undercarriage:** 2000 interval hours, with the source note kept word for word.
+3. **Excluded as major repairs, not consumables:** Lawn — Sprayer — Tank ("Pump rebuild extends life") and Shop — Pressure Washer ("Pump wear is limiting factor").
+4. **Excluded as a condition:** Snow — Sidewalk Machine ("Salt exposure accelerates wear").
+5. **`licensing_annual` and `fuel_consumption_lph`:** null for all 94. `default_hours_per_day` is dropped.
 
 ## 5. Verification, then cutover
 
