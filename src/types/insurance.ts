@@ -43,7 +43,7 @@ export interface InsuredEquipment {
   category: string;
   serialVin: string | null;
   declaredValue: number;
-  annualPremium: number | null;
+  annualPremium?: number | null;
   purchasePrice: number;
   financingType: string;
   insuranceNotes: string | null;
