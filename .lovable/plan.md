@@ -57,16 +57,19 @@ New category fields (licensing, fuel) exist only in the table. Maintenance and i
 
 ## 6. Worked example — 2014 Bobcat 324
 
-Replacement cost today = $55,369 (from the audit). Insurance status depends on what's set on its Insurance record today, so both cases are shown.
+Replacement cost today = $55,369 (from the audit). Its insurance status and declared value will be read during the build, so every case is shown.
 
 | Field | Override | Category default | Effective | Derivation shown |
 |---|---|---|---|---|
-| Maintenance + repair | none | 5% | **$2,768/yr** | 5% of $55,369 = $2,768.45 |
-| Insurance (insured, no premium) | — | 1.5% | **$831/yr** | Estimate: 1.5% of $55,369 = $830.54 |
+| Maintenance + repair | none | 5% | **$2,768/yr** | 5% of $55,369 replacement cost today = $2,768.45 |
+| Insurance (insured, declared value D, no premium) | — | 1.5% | **1.5% × D** | Estimate: 1.5% of $D declared value |
+| Insurance (insured, no declared value, no premium) | — | 1.5% | **$831/yr** | Estimate: 1.5% of $55,369 replacement cost today (no declared value) = $830.54 |
 | Insurance (premium entered, e.g. $900) | — | — | **$900/yr** | Actual premium from Insurance page |
-| Insurance (not insured) | — | — | **$0/yr** | Not insured |
+| Insurance (not on register, no premium) | — | — | **Not set** | Not separately scheduled |
 | Licensing | none | none | **Not set** | No category default yet |
 | Fuel L/hr | none | none | **Not set** | No category default yet |
+
+Cross-check against your example, the 2022 Silverado: $58,200 declared → 1.5% = **$873/yr** (that's your figure; the Fleet truck % will be read from the table at build time).
 
 For comparison, the Buy vs Rent method on purchase price would give $2,000 and $600.
 
@@ -83,5 +86,5 @@ For comparison, the Buy vs Rent method on purchase price would give $2,000 and $
 - `src/types/equipment.ts`: add `maintenanceAnnualOverride`, `licensingAnnualOverride`, `fuelConsumptionLphOverride`, `insuranceAnnualPremium`. Map them in the `EquipmentContext` load and save.
 - New pure module `src/lib/operatingCosts.ts`: `resolveOperatingCosts(item, categoryRow)` returns `{ value, source, derivation }` for each field. Not imported by calculations.ts, rollupEngine, cashflow or the FMS export.
 - `useInsurance` and `InsuredRegisterTab`: the update payload gets the premium.
-- Tests in `src/lib/operatingCosts.test.ts`: Bobcat maintenance = 2768.45; insured without premium = 830.54; uninsured = 0; premium beats the default; override beats the default; licensing and fuel with no data = null.
+- Tests in `src/lib/operatingCosts.test.ts`: Bobcat maintenance = 2768.45; insured, no declared value = 830.54; insured with $58,200 declared at 1.5% = 873; not on register = null; premium of 0 entered = 0; premium beats the estimate; override beats the default; licensing and fuel with no data = null.
 - `AGENTS.md`: per-unit operating costs resolve only via `resolveOperatingCosts`; the insurance premium lives on the equipment row and is edited only from the Insurance page.
