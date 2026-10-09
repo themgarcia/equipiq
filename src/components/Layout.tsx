@@ -17,6 +17,7 @@ import {
   Shield,
   ShieldCheck,
   CreditCard,
+  Building2,
   History,
   Rocket,
   MessageSquarePlus
