@@ -25,13 +25,13 @@ import {
 } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Check, X, Pencil, ChevronRight } from 'lucide-react';
+import { Check, X, Pencil, ChevronRight, RotateCcw } from 'lucide-react';
 import { CategoryDefaults } from '@/types/equipment';
 import { useDeviceType } from '@/hooks/use-mobile';
 import { parseRequiredNumber, bigLifeChangeWarning } from '@/lib/numericInput';
 
 export default function CategoryLifespans() {
-  const { categoryDefaults: sessionDefaults, updateCategoryDefaults } = useEquipment();
+  const { categoryDefaults: sessionDefaults, updateCategoryDefaults, categoryOverrides, resetCategoryField } = useEquipment();
   const { data: tableData } = useCategoryDefaultsTable();
   const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
@@ -58,6 +58,25 @@ export default function CategoryLifespans() {
   const [lifeWarning, setLifeWarning] = useState<string | null>(null);
   const sharedDefaultLife = (cat: string | null | undefined) =>
     (tableData?.rows ?? []).find(r => r.category === cat)?.defaultUsefulLife;
+  const sharedRow = (cat: string | null | undefined) =>
+    (tableData?.rows ?? []).find(r => r.category === cat);
+  // Same pattern and wording as the Operating Costs rows: show the shared default and a reset link.
+  const defaultNote = (cat: string, field: 'life' | 'resale') => {
+    const o = categoryOverrides[cat];
+    const has = field === 'life' ? o?.defaultUsefulLife !== undefined : o?.defaultResalePercent !== undefined;
+    const shared = sharedRow(cat);
+    if (!has || !shared) return null;
+    const label = field === 'life' ? `${shared.defaultUsefulLife} yrs` : `${shared.defaultResalePercent}%`;
+    return (
+      <div className="mt-1 flex flex-col items-center gap-0.5">
+        <span className="text-xs text-muted-foreground">Category default: {label}</span>
+        <button type="button" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"
+          onClick={(e) => { e.stopPropagation(); resetCategoryField(cat, field); }}>
+          <RotateCcw className="h-3 w-3" /> Reset to default
+        </button>
+      </div>
+    );
+  };
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryDefaults | null>(null);
 
@@ -187,6 +206,7 @@ export default function CategoryLifespans() {
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {formatBenchmarkRange(category.benchmarkType, category.benchmarkRange, distanceUnit)}
                         </p>
+                        {defaultNote(category.category, 'life')}
                       </div>
                     )}
                   </TableCell>
@@ -200,7 +220,10 @@ export default function CategoryLifespans() {
                         className="w-20 mx-auto text-center"
                       />
                     ) : (
-                      <span className="font-mono-nums">{category.defaultResalePercent}%</span>
+                      <div>
+                        <span className="font-mono-nums">{category.defaultResalePercent}%</span>
+                        {defaultNote(category.category, 'resale')}
+                      </div>
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -309,6 +332,7 @@ export default function CategoryLifespans() {
                 value={editValues.life}
                 onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, life: v })); setLifeWarning(null); }}
               />
+              {selectedCategory && defaultNote(selectedCategory.category, 'life')}
             </div>
             <div className="space-y-2">
               <Label htmlFor="resalePercent">Resale %</Label>
@@ -319,6 +343,7 @@ export default function CategoryLifespans() {
                 value={editValues.resale}
                 onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, resale: v })); }}
               />
+              {selectedCategory && defaultNote(selectedCategory.category, 'resale')}
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes & Assumptions</Label>
