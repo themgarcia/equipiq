@@ -102,9 +102,6 @@ export default function CompanySettingsPage() {
   const notYetUsed = (
     <Badge variant="outline" className="text-xs font-normal">For the upcoming LMN catalog export — not used in any calculation yet</Badge>
   );
-  const usedInBudget = (
-    <Badge variant="outline" className="text-xs font-normal">Sent with the FMS budget export</Badge>
-  );
 
   return (
     <Layout>
