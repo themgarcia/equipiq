@@ -21,6 +21,9 @@ interface EquipmentContextType {
   updateEquipment: (id: string, updates: Partial<Equipment>) => Promise<void>;
   deleteEquipment: (id: string) => Promise<void>;
   updateCategoryDefaults: (category: string, updates: Partial<CategoryDefaults>) => void;
+  /** The user's own saved category values (only fields they changed). */
+  categoryOverrides: Record<string, Partial<CategoryDefaults>>;
+  resetCategoryField: (category: string, field: 'life' | 'resale') => Promise<void>;
   refetch: () => Promise<void>;
   refetchAttachments: () => Promise<void>;
   // Document management
@@ -475,11 +478,15 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const prev = categoryOverrides[category] ?? {};
+    // A value equal to the shared default is stored as null, so it stays "using the default".
+    const shared = defaultCategories.find(c => c.category === category);
+    const life = updates.defaultUsefulLife ?? prev.defaultUsefulLife ?? null;
+    const resale = updates.defaultResalePercent ?? prev.defaultResalePercent ?? null;
     const row = {
       user_id: user.id,
       category,
-      useful_life_years: updates.defaultUsefulLife ?? prev.defaultUsefulLife ?? null,
-      resale_pct: updates.defaultResalePercent ?? prev.defaultResalePercent ?? null,
+      useful_life_years: shared && life === shared.defaultUsefulLife ? null : life,
+      resale_pct: shared && resale === shared.defaultResalePercent ? null : resale,
       notes: updates.notes ?? prev.notes ?? null,
     };
     const { error } = await supabase.from('user_category_overrides').upsert(row, { onConflict: 'user_id,category' });
@@ -490,6 +497,22 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     await refetchOverrides();
     toast({ title: "Category saved" });
   }, [user, isDemoData, isImpersonating, categoryOverrides, refetchOverrides, toast]);
+
+  const resetCategoryField = useCallback(async (category: string, field: 'life' | 'resale') => {
+    if (!user) return;
+    if (isDemoData || isImpersonating) {
+      toast({ title: "Not saved", description: "Category edits can't be saved in demo or support mode.", variant: "destructive" });
+      return;
+    }
+    const patch = field === 'life' ? { useful_life_years: null } : { resale_pct: null };
+    const { error } = await supabase.from('user_category_overrides').update(patch).eq('user_id', user.id).eq('category', category);
+    if (error) {
+      toast({ title: "Could not reset", description: "Please try again.", variant: "destructive" });
+      return;
+    }
+    await refetchOverrides();
+    toast({ title: "Reset to default" });
+  }, [user, isDemoData, isImpersonating, refetchOverrides, toast]);
 
   const refetch = useCallback(async () => {
     await refetchEquipmentQuery();
