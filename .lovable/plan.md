@@ -1,64 +1,65 @@
-# 9C-Budget.2: Name what the LMN rate means, and settle the two-rate problem
+# 9C-Budget.2: One rate, a paste-only export table, and the explanation moved
 
-## What the code does today (checked)
+## Checked in the code and data
 
-- **Backward 3% is hardcoded.** `ANNUAL_INFLATION_RATE = 0.03` is a private constant in `src/lib/calculations.ts`. No setting, no database column, no way to change it.
-- **One place uses it:** `calculateEquipment` when building Replacement Cost (Today). It is skipped for units with a manual replacement cost entered "as of" this year; manual costs from earlier years still get 3% per year up to today.
-- **Everything downstream inherits it:** replacement value, expected resale (a % of replacement), annual recovery on Cashflow and FMS Export, the LMN preview, Operating Costs maintenance % and Dashboard totals.
-- **The "3%" is also written out as text** in Definitions (formula and worked examples) and in the replacement cost placeholder on both equipment forms. Those must follow any change.
-- **The forward rate** is `market_finance_rate_pct`, read only by the FMS Export (LMN preview and the copied Inflation/Interest value). The Settings text currently calls it cost of money.
+- The backward 3% is hardcoded (`ANNUAL_INFLATION_RATE` in `src/lib/calculations.ts`). There is no setting for it. Only `calculateEquipment` reads it, but everything that depends on replacement value inherits it: resale, annual recovery, Cashflow, the FMS Export, maintenance % and Dashboard totals. The "3%" is also written as text in Definitions and in the replacement-cost placeholder on both equipment forms.
+- The market finance rate is read only by the FMS Export.
+- **Accounts with a market finance rate set: 1 of 1 settings rows, and it's yours, at 5.5%.** No other account has saved company settings, so all of them already use 3% in both directions.
 
-So your reading is right. If a user means "inflation" for both directions, the product holds two numbers for one idea, and they can only change one.
+## 1. One rate setting, default 3%
 
-## Proposal
+There will be one company setting, **"Equipment price inflation (% per year)"**. It drives both:
+- the backward step to Replacement Cost (Today), replacing the hardcoded constant, and
+- the Inflation/Interest value on the LMN budget export.
 
-### 1. Make the forward rate an explicit choice (Company Settings, Costs & rates)
+Plain helper text: "How much equipment prices rise each year. EquipIQ uses it to bring what you paid up to today's replacement cost, and LMN uses the same number to carry that cost forward over the machine's life. Default 3%."
 
-Replace the bare finance-rate box with one question: **"What should LMN's Inflation/Interest rate stand for?"**
+The market finance rate box comes off Company Settings. The column stays in the database, marked deprecated, and nothing reads it.
 
-- **Replacement cost inflation**: "What this machine will cost to buy again." Uses the company inflation rate (see 2).
-- **Cost of capital**: "What tying money up in equipment costs you, including the return you're not earning elsewhere." Uses the market finance rate you enter.
+### Migration: recommended option is to take 3%, as you leaned
+- **Option 1, take 3% (recommended):** no replacement value, resale, recovery or Cashflow figure moves in any account. The only number that changes is the rate on your export, which drops from 5.5% to 3%. That makes LMN's own annual lower for your rows when you next paste the rate. One account is affected (yours).
+- **Option 2, take 5.5%:** every inflation-adjusted replacement value in your account rises (Bobcat 324: $55,369 becomes about $72,300), and so do resale, recovery, Cashflow and the export. This would need a full before-and-after table. I don't recommend it.
 
-Under the choice there is a **live preview** on your own fleet, recalculated as you pick:
-- Total yearly recovery: EquipIQ figure, LMN figure under each option, and the % gap.
-- Three example rows (largest, longest-life, a typical one) so you can see that long lives compound the most.
-- Nothing is saved until you press Save. Same pattern as the gross / net-of-resale choice.
+With option 1, a one-time notice appears on Company Settings and the FMS Export for any account whose old finance rate wasn't 3% (today, only yours): "Your finance rate of 5.5% has been replaced by one equipment price inflation rate (now 3%). It's used both for today's replacement cost and for the rate sent to LMN. Change it here." It can be dismissed and is stored per user.
 
-Stored as a new setting `lmn_rate_basis` (`inflation` | `cost_of_capital`). The FMS Export reads the rate through one resolver, and each owned row's tooltip shows which rate is being used and why.
+### Changing the rate later moves numbers, so it gets a review
+Saving a new rate opens a before-and-after table of every affected unit: replacement today, resale and annual recovery, old and new, with totals and a count of unaffected units (manual cost entered this year). It saves only on a second confirm. This is the same review the recovery-basis change got. Nothing stored is rewritten, because the figures are recalculated from the setting.
 
-**Default for existing users: cost of capital**, because that is what 9C-Budget.1 sends today, so publishing doesn't change any number already on the page. New users must pick before the LMN figure shows. Until then they see a "Choose what this rate means" prompt, not a silent default. The Grindstone 2% is noted as a hint that contractors may lean towards inflation. It is not used to pick the default.
+## 2. The owned table only shows what you paste into LMN
 
-### 2. One inflation number in the product (recommended)
+| Column | Pasted into LMN? | Decision |
+|---|---|---|
+| Category | Yes, as the row name | Keep |
+| Qty | Yes, NUMBER OF | Keep |
+| Avg Replacement | Yes, replacement value | Keep |
+| Life (Yrs) | Yes, years owned | Keep |
+| Avg Resale | Yes, end-of-life value | Keep. It's also no longer hidden on small screens, because it's a paste field. |
+| Months/Yr | Yes, months used | Keep |
+| Rate % | Yes, but the same value on every row | **Move into the table header** as one copyable line: "Inflation/Interest rate for every row: 3% [copy]" |
+| Annual per unit | No | **Remove** |
+| Type (Owned/Leased) | No | **Remove.** The owned and leased tables are already separate sections, so the badge adds nothing. |
 
-Add a setting `inflation_rate_pct` (default **3.0**), labelled "Equipment price inflation: how much machine prices rise each year." It drives:
-- the **backward** step (purchase price to replacement cost today), replacing the hardcoded constant, and
-- the **forward** LMN rate when "Replacement cost inflation" is chosen.
+That leaves six columns. The detail slide-out keeps the item list and the per-row breakdown for anyone checking.
 
-Why I recommend this over keeping them separate: keeping them separate only makes sense under the cost-of-capital reading, and the choice in (1) already covers that case. Leaving 3% fixed while the user picks "inflation" at 2% is the exact inconsistency you described.
+The CSV gets the same change: no annual column, and the rate goes in a single header line.
 
-### 3. This changes numbers only if the user changes the rate
+## 3. Where the LMN-versus-EquipIQ difference is explained
 
-- The default stays 3.0, so **no existing replacement value moves on release**. I'll confirm this with a before/after check on all three accounts (expect zero differences).
-- If a user changes it, every inflation-adjusted replacement value, resale, recovery and LMN figure moves. So editing the rate gets its own review before saving: a before/after table of the affected units (replacement today, resale, annual recovery), totals and the count of units unaffected (manual cost entered this year). The user must confirm in a second step, the same way the big-change warning on Category Lifespans works.
-- No data migration rewrites stored values. Replacement cost is calculated each time, so the change is only the setting.
+**Recommended: on Cashflow Analysis**, next to EquipIQ's annual recovery, because that is the only page where our annual figure appears. It gets a short "Why LMN shows a higher yearly figure" note (an expandable line), with your largest unit worked through: "EquipIQ: $5,191/yr, the cost to replace it at today's price. LMN: about $7,037/yr, because it also carries the replacement cost forward 8 years at 3%. Both are right; they answer different questions."
 
-Cost: one migration (two nullable or defaulted columns on `company_settings`), a rate parameter threaded through `calculateEquipment` (around 6 callers, via context), the settings card with preview and review, and copy updates in Definitions and both forms. Medium-small, and none of it touches Buy vs Rent.
+The FMS Export also gets one line in its info box linking to that note, so a user who notices the gap inside LMN has somewhere to go. The figures are not repeated in the table.
 
-### 4. Before publish: version and changelog
+## 4. Before publish
 - Version **1.5.0**.
-- Changelog, in plain words first: "The FMS Export now shows LMN's yearly figure next to EquipIQ's. They differ on purpose: EquipIQ shows today's cost to recover, while LMN carries the replacement value forward over the machine's life at your Inflation/Interest rate. Long-lived machines show the biggest gap." Plus the months-per-year, Category Lifespans reset/default and leased Months Used fixes from 9C-Budget.1, and this step's rate choice.
+- Changelog, plain words first: the FMS Export now sends what LMN needs, and LMN works out its own yearly figure, which is higher than EquipIQ's because it carries cost forward over the machine's life (explained on Cashflow). Also: one equipment price inflation setting replaces the fixed 3% and the finance rate; the export table is narrower; plus the 9C-Budget.1 fixes (months per year, Category Lifespans reset/default, leased Months Used).
 
 ## Tests (kept in project)
-- Inflation 3% gives the same replacement value as today's constant (Bobcat 324: $55,369).
-- Inflation 2% gives a lower value: $40,000 × 1.02^11 = $49,947.
-- Forward rate resolver: `inflation` returns the inflation rate, `cost_of_capital` returns the finance rate, unset returns null (no figure shown).
-- LMN preview at 5.5% versus 2% for the excavator row ($8,892 at 5.5%).
-
-## Open questions
-- Should the cost-of-capital option be allowed to be blank? Today a blank rate means no LMN figure. I propose keeping that.
-- Do you agree with the default of cost of capital for existing users, given it preserves what is on the page now?
+- Rate 3% reproduces the current Bobcat 324 replacement value of $55,369.
+- Rate 2%: $40,000 × 1.02^11 = $49,947.
+- The export rate equals the company inflation setting.
+- Excavator Mini at 3%: LMN annual about $7,037; EquipIQ $5,191.
 
 ## Technical notes
-- New columns: `company_settings.inflation_rate_pct numeric not null default 3.0`, `company_settings.lmn_rate_basis text null` (check constraint on the two values; existing rows backfilled to `cost_of_capital`).
-- `calculateEquipment(equipment, overrides, attachmentTotal, inflationPct = 3)`; `EquipmentContext` passes the setting. Record in AGENTS.md: inflation resolves only from `company_settings`.
+- Migration: add `company_settings.inflation_rate_pct numeric not null default 3.0` and `rate_merge_notice_dismissed_at timestamptz null`, and keep the old rate's value visible to the notice through `market_finance_rate_pct` (read-only). Run `COMMENT ... DEPRECATED` on `market_finance_rate_pct`. Existing rows take 3.0.
+- `calculateEquipment(..., inflationPct)`. `EquipmentContext` passes it from `useCompanySettings`, and it falls back to 3 only when no row exists. Update AGENTS.md: inflation resolves only from `company_settings`.
 - No SECURITY DEFINER functions; the linter count stays at 8.
