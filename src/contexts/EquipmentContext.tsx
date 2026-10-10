@@ -757,6 +757,8 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       updateEquipment,
       deleteEquipment,
       updateCategoryDefaults,
+      categoryOverrides,
+      resetCategoryField,
       refetch,
       refetchAttachments,
       getDocuments,
