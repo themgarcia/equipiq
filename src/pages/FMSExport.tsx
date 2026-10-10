@@ -401,12 +401,12 @@ function RollupSection({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table className="table-fixed min-w-[1180px]">
+            <Table className="table-fixed min-w-[960px]">
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="table-header-cell whitespace-nowrap w-[260px]">Category</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[70px]">Qty</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[150px]">Avg Replacement</TableHead>
+                  <TableHead className="table-header-cell whitespace-nowrap w-[200px]">Category</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[60px]">Qty</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[130px]">Avg Replacement</TableHead>
                   <TableHead className="table-header-cell text-right whitespace-nowrap w-[100px]">
                     <TooltipProvider>
                       <Tooltip>
@@ -422,10 +422,10 @@ function RollupSection({
                       </Tooltip>
                     </TooltipProvider>
                   </TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap hidden md:table-cell w-[140px]">Avg Resale Value</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[100px]">Months/Yr</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[90px]">Rate %</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[170px]">Annual per unit</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap hidden md:table-cell w-[120px]">Avg Resale</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[90px]">Months/Yr</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[80px]">Rate %</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[140px]">Annual per unit</TableHead>
                   {showType && <TableHead className="table-header-cell text-center whitespace-nowrap w-[80px]">Type</TableHead>}
                 </TableRow>
               </TableHeader>
