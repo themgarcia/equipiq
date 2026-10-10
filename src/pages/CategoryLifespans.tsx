@@ -71,7 +71,7 @@ export default function CategoryLifespans() {
       <div className="mt-1 flex flex-col items-center gap-0.5">
         <span className="text-xs text-muted-foreground">Category default: {label}</span>
         <button type="button" className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1"
-          onClick={(e) => { e.stopPropagation(); resetCategoryField(cat, field); }}>
+          onClick={(e) => { e.stopPropagation(); resetCategoryField(cat, field); cancelEdit(); }}>
           <RotateCcw className="h-3 w-3" /> Reset to default
         </button>
       </div>
