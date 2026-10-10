@@ -14,6 +14,8 @@ There will be one company setting, **"Equipment price inflation (% per year)"**.
 
 Plain helper text: "How much equipment prices rise each year. EquipIQ uses it to bring what you paid up to today's replacement cost, and LMN uses the same number to carry that cost forward over the machine's life. Default 3%."
 
+**Merging makes this an inflation rate.** One rate that also brings a 2015 purchase price up to today's cost has to mean price inflation, because a cost of capital would be meaningless for that step. So the helper text describes inflation only, not "either". The accepted trade-off: a contractor who wants a cost of capital in LMN's Inflation/Interest field can no longer set it separately. They would have to raise the single rate and accept that their replacement costs inflate at that rate too.
+
 The market finance rate box comes off Company Settings. The column stays in the database, marked deprecated, and nothing reads it.
 
 ### Starting value: 3% for everyone
@@ -31,7 +33,7 @@ Every account starts at 3%, which is the value the app uses today, so no figure 
 | Months/Yr | Yes, months used | Keep |
 | Rate % | Yes, but the same value on every row | **Move into the table header** as one copyable line: "Inflation/Interest rate for every row: 3% [copy]" |
 | Annual per unit | No | **Remove** |
-| Type (Owned/Leased) | No | **Remove.** The owned and leased tables are already separate sections, so the badge adds nothing. |
+| Type (Owned/Leased) | No | **Remove.** Checked: the badge is display only. The "Switch to Lease Pass-Through / Owned Recovery" control is in the info icon beside the category name, in the Category column, and it stays where it is. |
 
 That leaves six columns. The detail slide-out keeps the item list and the per-row breakdown for anyone checking.
 
@@ -49,7 +51,7 @@ The FMS Export also gets one line in its info box linking to that note, so a use
 
 ## Tests (kept in project)
 - Rate 3% reproduces the current Bobcat 324 replacement value of $55,369.
-- Rate 2%: $40,000 × 1.02^11 = $49,947.
+- Rate 2%: $40,000 × 1.02^11 = $49,735 (1.02^11 = 1.2433743, which is $49,734.97 at full precision).
 - The export rate equals the company inflation setting.
 - Excavator Mini at 3%: LMN annual about $7,037; EquipIQ $5,191.
 
