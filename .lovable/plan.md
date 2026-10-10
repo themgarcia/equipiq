@@ -41,11 +41,10 @@ Checked against the live data before revising:
 - **Per-event:** shown as a divisor only in 9B ("$8,333 a season; at 12 events $694, at 20 events $417"). It has no column.
 - **rate_basis:** removed from the panel, no longer read or written, and the column is marked DEPRECATED. It isn't dropped, because that would break the live app. Its 37 "hourly" values are left alone.
 
-**Does EquipIQ need to hold Hours/Days at all?** Yes, though only for price-list rows, and only once EquipIQ outputs a rate.
-- Today the export sends annual totals plus the unit, copied across as a label. EquipIQ never computes a per-hour or per-day figure.
-- From 9C-PRICELIST onward, cost per day = cost per hour x hours per day, the Step 7 setting. The output number depends on the unit, so your reasoning holds there.
-- For budget-routed rows the unit means nothing, and they won't carry one.
-- **Not verified:** whether LMN's Equipment Catalog takes an annual cost and divides it itself, or expects the rate typed in. That's open until checked against LMN.
+**Does EquipIQ need to hold Hours/Days at all? Revised after your LMN findings: barely.**
+- An LMN item stores **cost per hour + hours per day**, and LMN computes cost per day itself. EquipIQ always outputs per hour, so **no EquipIQ number depends on the Hours/Days unit**. Your earlier reasoning ("we must know which to output") no longer holds, because we never output per day.
+- What does matter is **hours per day** (see section 9).
+- The unit stays only as the existing category label (`default_lmn_unit`), pre-filling LMN's Units field. It needs no new column. The per-division unit override proposed earlier is **removed**.
 
 ---
 
@@ -150,30 +149,27 @@ The router decides the section per row, so the same loader can sit in Constructi
 
 ## 7b. Every row is tagged with its service division (both exports)
 
-What holds regardless of how LMN picks a budget: cost per division differs, markup per division differs, and EquipIQ's job is to emit cost rows clearly labelled by division so they never get crossed.
+**How LMN works (observed by you, authoritative):**
+- The budget is a **lens**: the price list page dropdown re-renders every rate with that budget's overhead and profit. Inside each estimate the user picks the budget for that division. Price list items hold cost only.
+- **A service division is a production season, not a budget.** One division can sit under several budgets, for example Commercial and Residential Construction over the same "Construction" items. There's no division-to-budget mapping, and the user is never asked to name a division per budget.
+- EquipIQ never carries, stores or predicts markup, overhead or profit.
 
-- **Budget export:** rows are grouped under a heading for each service division, using the contractor's own division name: "Snow — Overhead Budget", "Construction — Equipment Budget". Every row and every CSV line also carries the division name, so a row copied on its own still says where it goes.
-- **Price list export (9C-PRICELIST):** a category serving two divisions produces two items with distinguishable names.
-- **Proposed naming convention, for you to approve.** It isn't built until you choose:
-  - **Recommended:** `<Category> (<Service division>)`, e.g. "Construction — Loader — Wheel (Snow)" and "Construction — Loader — Wheel (Construction)".
-    - It keeps the em-dash category exactly as it is today, so it still matches everywhere.
-    - The division goes in parentheses at the end, so it survives truncated pick-lists less well than a prefix but reads naturally.
-  - **Alternative:** a prefix, "[Snow] Construction — Loader — Wheel". This sorts by division in a list and survives truncation, but it reads worse.
-  - The division part is always the contractor's own division name, verbatim. Rows that are year-round shared get no suffix (see below).
-- **Stop point: unallocated and year-round-shared rows.** These have no single division, so they can't honestly be tagged to one budget.
-  - Today they go into a single blended budget, and in 9C-BUDGET they keep appearing exactly as today, under "Not allocated to a division".
-  - Where they *should* go depends on how LMN selects budgets (per estimate, per price list item, or both). That is the question you are checking, so the spec stops here rather than picking an answer.
-  - Meanwhile they count as incomplete, with a page-level count ("3 machines not allocated to a division").
-- Nothing in either export depends on whether LMN selects the budget per estimate or per item.
+**Naming, decided:** `<Service division> - <Category item name>`, e.g. "Construction - Loader", "Snow - Loader", "Maintenance - Pickup Truck".
+- The prefix is the **service division name**, never a budget name.
+- The item name is the category's last part(s). The em-dash category stays unchanged inside EquipIQ for matching, and only the exported name uses " - ".
+  - Example: "Construction — Loader — Wheel" in Snow exports as "Snow - Loader — Wheel". Whether to flatten the category's own em-dashes in the exported name (e.g. "Snow - Wheel Loader") is a formatting choice for you. It doesn't change the convention.
+- The names are generated, never typed, so the same category x division always gets the same name. That prevents the drifting, duplicate and [SAMPLE] mess you found.
 
-## 7c. Cross-division warning: worth building, cost-only
+**Budget export:** a heading per service division, with the division name on every row and CSV line.
 
-EquipIQ can't see how items are used inside LMN, so it can't detect the misuse itself. What it can show, within our lane:
+**Unallocated / year-round shared rows:** the open question is now answered in principle. They have no production season, so they get no division prefix.
+- The budget export keeps them under "Not allocated to a division", as today, and counts them as incomplete.
+- The price list export lists them by category name only, flagged "Not allocated — this item will be used under every budget".
+- Neither export guesses a division for them.
 
-- **On the price list export, per category served by more than one division:** "This category costs $9.72/hr in Construction and $55.56/hr in Snow (5.7x apart). Set these up as two separate LMN items. Using one item for both prices one division with the other's cost and markup."
-- It is shown only when the costs differ by more than a set threshold (proposed: 10%). Below that it's noise.
-- It states cost facts only, never a markup or price. Where it lives: the 9C-PRICELIST completeness grid, as a flag on the row.
-- It is worth building because it's cheap (one comparison per category) and it prevents an error LMN doesn't warn about. It is **not** built in 9A.1 or 9C-BUDGET.
+## 7c. Cross-division warning: dropped
+
+The naming solves it. The budget is chosen per estimate, not stored per item, so the only way to cross wires is to pick the wrong *item*. With one item per division, each named with its division first, the right pick is the obvious one. A separate warning would repeat what the name already says, so it won't be built.
 
 ## 8. Split 9C in two, and order: agreed, with one change
 
