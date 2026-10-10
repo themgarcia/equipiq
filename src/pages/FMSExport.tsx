@@ -340,7 +340,7 @@ interface RollupSectionProps {
   distanceUnit: 'mi' | 'km';
   calculatedEquipment: EquipmentCalculated[];
   onToggleRecovery?: (category: string, itemCount: number) => void;
-  financeRatePct: number | null;
+  financeRatePct: number;
   recoveryBasis: RecoveryBasis;
 }
 
@@ -373,6 +373,15 @@ function RollupSection({
         <Badge variant="secondary" className="ml-1">{totals.totalQty} items</Badge>
       </div>
       
+      <div className="flex flex-wrap items-center gap-2 text-sm bg-muted/40 border rounded-md px-3 py-2">
+        <span className="text-muted-foreground">Inflation/Interest rate for every row:</span>
+        <span className="relative inline-flex items-center font-mono-nums font-medium pr-6">
+          {financeRatePct}%
+          <CopyButton cellId={`${title}-rate`} value={String(financeRatePct)} copiedCell={copiedCell} onCopy={onCopyCell} />
+        </span>
+        <a href="/settings/company" className="text-xs text-primary hover:underline">Change rate</a>
+      </div>
+
       <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
         {isMobile ? (
           <div className="divide-y">
@@ -401,7 +410,7 @@ function RollupSection({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table className="table-fixed min-w-[960px]">
+            <Table className="table-fixed min-w-[720px]">
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="table-header-cell whitespace-nowrap w-[200px]">Category</TableHead>
@@ -422,11 +431,8 @@ function RollupSection({
                       </Tooltip>
                     </TooltipProvider>
                   </TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap hidden md:table-cell w-[120px]">Avg Resale</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[120px]">Avg Resale</TableHead>
                   <TableHead className="table-header-cell text-right whitespace-nowrap w-[90px]">Months/Yr</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[80px]">Rate %</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[140px]">Annual per unit</TableHead>
-                  {showType && <TableHead className="table-header-cell text-center whitespace-nowrap w-[80px]">Type</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -485,7 +491,7 @@ function RollupSection({
                           </Tooltip>
                         </TooltipProvider>
                       </TableCell>
-                      <TableCell className="text-right font-mono-nums hidden md:table-cell">
+                      <TableCell className="text-right font-mono-nums">
                         <div className="relative inline-flex justify-end">
                           <span>{formatCurrency(line.avgEndValue)}</span>
                           <CopyButton cellId={`${lineId}-ev`} value={String(Math.round(line.avgEndValue))} copiedCell={copiedCell} onCopy={onCopyCell} />
@@ -682,7 +688,7 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
 export default function FMSExport() {
   const { calculatedEquipment, updateEquipment } = useEquipment();
   const { recoveryBasis, settings: companySettings } = useCompanySettings();
-  const financeRatePct = companySettings.market_finance_rate_pct;
+  const financeRatePct = companySettings.inflation_rate_pct;
   const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'phone' || deviceType === 'tablet';
