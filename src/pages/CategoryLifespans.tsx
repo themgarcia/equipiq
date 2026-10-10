@@ -28,6 +28,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Check, X, Pencil, ChevronRight } from 'lucide-react';
 import { CategoryDefaults } from '@/types/equipment';
 import { useDeviceType } from '@/hooks/use-mobile';
+import { parseRequiredNumber, bigLifeChangeWarning } from '@/lib/numericInput';
 
 export default function CategoryLifespans() {
   const { categoryDefaults: sessionDefaults, updateCategoryDefaults } = useEquipment();
@@ -51,7 +52,12 @@ export default function CategoryLifespans() {
   }, [tableData, sessionDefaults]);
   
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<Partial<CategoryDefaults>>({});
+  // Text as typed; converted only on save so fast typing is never lost or turned into 0.
+  const [editValues, setEditValues] = useState<{ life: string; resale: string; notes: string }>({ life: '', resale: '', notes: '' });
+  const [editError, setEditError] = useState<string | null>(null);
+  const [lifeWarning, setLifeWarning] = useState<string | null>(null);
+  const sharedDefaultLife = (cat: string | null | undefined) =>
+    (tableData?.rows ?? []).find(r => r.category === cat)?.defaultUsefulLife;
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryDefaults | null>(null);
 
@@ -64,34 +70,47 @@ export default function CategoryLifespans() {
     if (isPhone) {
       setSelectedCategory(category);
       setEditValues({
-        defaultUsefulLife: category.defaultUsefulLife,
-        defaultResalePercent: category.defaultResalePercent,
+        life: String(category.defaultUsefulLife),
+        resale: String(category.defaultResalePercent),
         notes: category.notes,
       });
+      setEditError(null);
+      setLifeWarning(null);
       setEditSheetOpen(true);
     } else {
       setEditingCategory(category.category);
       setEditValues({
-        defaultUsefulLife: category.defaultUsefulLife,
-        defaultResalePercent: category.defaultResalePercent,
+        life: String(category.defaultUsefulLife),
+        resale: String(category.defaultResalePercent),
         notes: category.notes,
       });
+      setEditError(null);
+      setLifeWarning(null);
     }
   };
 
   const cancelEdit = () => {
     setEditingCategory(null);
-    setEditValues({});
+    setEditValues({ life: '', resale: '', notes: '' });
+    setEditError(null);
+    setLifeWarning(null);
     setEditSheetOpen(false);
     setSelectedCategory(null);
   };
 
   const saveEdit = () => {
     const categoryName = isPhone ? selectedCategory?.category : editingCategory;
-    if (categoryName) {
-      updateCategoryDefaults(categoryName, editValues);
-      cancelEdit();
-    }
+    if (!categoryName) return;
+    const life = parseRequiredNumber(editValues.life, 1, 30, 'Useful life');
+    if (life.ok === false) { setEditError(life.error); return; }
+    if (!Number.isInteger(life.value)) { setEditError('Useful life must be whole years.'); return; }
+    const resale = parseRequiredNumber(editValues.resale, 0, 100, 'Resale %');
+    if (resale.ok === false) { setEditError(resale.error); return; }
+    // Ask once before saving a big change from the shared default (catches 10 typed as 1).
+    const warning = bigLifeChangeWarning(life.value, sharedDefaultLife(categoryName));
+    if (warning && lifeWarning !== warning) { setLifeWarning(warning); setEditError(null); return; }
+    updateCategoryDefaults(categoryName, { defaultUsefulLife: life.value, defaultResalePercent: resale.value, notes: editValues.notes });
+    cancelEdit();
   };
 
   // Mobile card view
@@ -156,14 +175,10 @@ export default function CategoryLifespans() {
                   <TableCell className="text-center">
                     {isEditing ? (
                       <Input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={editValues.defaultUsefulLife || ''}
-                        onChange={(e) => setEditValues(prev => ({ 
-                          ...prev, 
-                          defaultUsefulLife: parseInt(e.target.value) || 0 
-                        }))}
+                        inputMode="numeric"
+                        aria-label="Useful life (years)"
+                        value={editValues.life}
+                        onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, life: v })); setLifeWarning(null); }}
                         className="w-20 mx-auto text-center"
                       />
                     ) : (
@@ -178,14 +193,10 @@ export default function CategoryLifespans() {
                   <TableCell className="text-center">
                     {isEditing ? (
                       <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={editValues.defaultResalePercent || ''}
-                        onChange={(e) => setEditValues(prev => ({ 
-                          ...prev, 
-                          defaultResalePercent: parseInt(e.target.value) || 0 
-                        }))}
+                        inputMode="decimal"
+                        aria-label="Resale %"
+                        value={editValues.resale}
+                        onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, resale: v })); }}
                         className="w-20 mx-auto text-center"
                       />
                     ) : (
@@ -195,11 +206,8 @@ export default function CategoryLifespans() {
                   <TableCell className="hidden md:table-cell">
                     {isEditing ? (
                       <Input
-                        value={editValues.notes || ''}
-                        onChange={(e) => setEditValues(prev => ({ 
-                          ...prev, 
-                          notes: e.target.value 
-                        }))}
+                        value={editValues.notes}
+                        onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, notes: v })); }}
                         className="w-full"
                       />
                     ) : (
@@ -269,7 +277,12 @@ export default function CategoryLifespans() {
         </div>
 
         {/* Content */}
-        {isPhone ? <MobileCardView /> : <DesktopTableView />}
+        {(editError || lifeWarning) && (
+          <div role="alert" className={`mb-4 rounded-md border p-3 text-sm ${editError ? 'border-destructive/30 bg-destructive/10 text-destructive' : 'border-warning/30 bg-warning/10'}`}>
+            {editError ?? <>{lifeWarning} Press the check mark again to save anyway.</>}
+          </div>
+        )}
+                {isPhone ? MobileCardView() : DesktopTableView()}
 
         {/* Footer Note */}
         <p className="mt-4 text-xs sm:text-sm text-muted-foreground">
@@ -291,43 +304,37 @@ export default function CategoryLifespans() {
               <Label htmlFor="usefulLife">Useful Life (years)</Label>
               <Input
                 id="usefulLife"
-                type="number"
-                min="1"
-                max="20"
-                value={editValues.defaultUsefulLife || ''}
-                onChange={(e) => setEditValues(prev => ({ 
-                  ...prev, 
-                  defaultUsefulLife: parseInt(e.target.value) || 0 
-                }))}
+                inputMode="numeric"
+                aria-label="Useful life (years)"
+                value={editValues.life}
+                onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, life: v })); setLifeWarning(null); }}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="resalePercent">Resale %</Label>
               <Input
                 id="resalePercent"
-                type="number"
-                min="0"
-                max="100"
-                value={editValues.defaultResalePercent || ''}
-                onChange={(e) => setEditValues(prev => ({ 
-                  ...prev, 
-                  defaultResalePercent: parseInt(e.target.value) || 0 
-                }))}
+                inputMode="decimal"
+                aria-label="Resale %"
+                value={editValues.resale}
+                onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, resale: v })); }}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes & Assumptions</Label>
               <Textarea
                 id="notes"
-                value={editValues.notes || ''}
-                onChange={(e) => setEditValues(prev => ({ 
-                  ...prev, 
-                  notes: e.target.value 
-                }))}
+                value={editValues.notes}
+                onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, notes: v })); }}
                 rows={3}
               />
             </div>
           </div>
+          {(editError || lifeWarning) && (
+            <p role="alert" className={`text-sm pb-2 ${editError ? 'text-destructive' : ''}`}>
+              {editError ?? <>{lifeWarning} Tap Save again to save anyway.</>}
+            </p>
+          )}
           <SheetFooter className="flex-row gap-2">
             <Button variant="outline" onClick={cancelEdit} className="flex-1">
               Cancel

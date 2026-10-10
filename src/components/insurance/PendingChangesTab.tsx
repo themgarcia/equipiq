@@ -319,9 +319,9 @@ export function PendingChangesTab({
               )}
             </div>
           ) : isPhone ? (
-            <MobileCardView />
+            MobileCardView()
           ) : (
-            <DesktopTableView />
+            DesktopTableView()
           )}
         </CardContent>
       </Card>

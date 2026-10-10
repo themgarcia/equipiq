@@ -49,19 +49,21 @@ export function UnreviewedAssetsTab({
   
   const [insureModalOpen, setInsureModalOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<InsuredEquipment | null>(null);
-  const [declaredValue, setDeclaredValue] = useState<number>(0);
+  const [declaredValue, setDeclaredValue] = useState<string>("");
   const [notes, setNotes] = useState<string>('');
 
   const handleOpenInsureModal = (item: InsuredEquipment) => {
     setSelectedEquipment(item);
-    setDeclaredValue(item.purchasePrice);
+    setDeclaredValue(String(item.purchasePrice));
     setNotes('');
     setInsureModalOpen(true);
   };
 
   const handleConfirmInsure = async () => {
     if (!selectedEquipment) return;
-    await onMarkAsInsured(selectedEquipment.id, declaredValue, notes || undefined);
+    const v = Number(declaredValue.trim());
+    if (declaredValue.trim() === "" || !Number.isFinite(v) || v < 0) return;
+    await onMarkAsInsured(selectedEquipment.id, v, notes || undefined);
     setInsureModalOpen(false);
     setSelectedEquipment(null);
   };
@@ -95,7 +97,8 @@ export function UnreviewedAssetsTab({
           id="declaredValue"
           type="number"
           value={declaredValue}
-          onChange={(e) => setDeclaredValue(parseFloat(e.target.value) || 0)}
+          onChange={(e) => setDeclaredValue(e.target.value)}
+          inputMode="decimal"
         />
         <p className="text-xs text-muted-foreground">
           Defaults to purchase price (${Math.ceil(selectedEquipment?.purchasePrice || 0).toLocaleString()})
@@ -235,9 +238,9 @@ export function UnreviewedAssetsTab({
               <p className="text-sm mt-1">New equipment will appear here for insurance review.</p>
             </div>
           ) : isPhone ? (
-            <MobileCardView />
+            MobileCardView()
           ) : (
-            <DesktopTableView />
+            DesktopTableView()
           )}
         </CardContent>
       </Card>
@@ -252,7 +255,7 @@ export function UnreviewedAssetsTab({
                 Set the declared value and optional notes for {selectedEquipment?.name}
               </SheetDescription>
             </SheetHeader>
-            <InsureFormContent />
+            {InsureFormContent()}
             <SheetFooter className="flex-row gap-2">
               <Button variant="outline" onClick={() => setInsureModalOpen(false)} className="flex-1">
                 Cancel
@@ -273,7 +276,7 @@ export function UnreviewedAssetsTab({
                 Set the declared value and optional notes for {selectedEquipment?.name}
               </DialogDescription>
             </DialogHeader>
-            <InsureFormContent />
+            {InsureFormContent()}
             <DialogFooter>
               <Button variant="outline" onClick={() => setInsureModalOpen(false)}>
                 Cancel

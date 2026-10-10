@@ -356,9 +356,9 @@ export function InsuredRegisterTab({
             <p className="text-sm mt-1">Review your unreviewed assets to add equipment to your insured list.</p>
           </div>
         ) : isPhone ? (
-          <MobileCardView />
+          MobileCardView()
         ) : (
-          <DesktopTableView />
+          DesktopTableView()
         )}
       </CardContent>
 
@@ -372,7 +372,7 @@ export function InsuredRegisterTab({
                 {selectedEquipment?.category} • {selectedEquipment?.serialVin || 'No serial/VIN'}
               </SheetDescription>
             </SheetHeader>
-            <EditFormContent />
+            {EditFormContent()}
             <SheetFooter className="flex-col gap-2">
               <Button onClick={handleSave} disabled={isSaving || !onUpdateInsurance} className="w-full">
                 <Pencil className="h-4 w-4 mr-2" />
@@ -403,7 +403,7 @@ export function InsuredRegisterTab({
                 {selectedEquipment?.category} • {selectedEquipment?.serialVin || 'No serial/VIN'}
               </DialogDescription>
             </DialogHeader>
-            <EditFormContent />
+            {EditFormContent()}
             <DialogFooter className="flex flex-col-reverse gap-2 pt-4 sm:flex-col-reverse sm:space-x-0 sm:justify-start">
               <Button
                 variant="destructive"

@@ -211,6 +211,53 @@ export type Database = {
         }
         Relationships: []
       }
+      category_division_allocations: {
+        Row: {
+          allocation_type: string | null
+          category: string
+          created_at: string
+          expected_hours_per_unit: number | null
+          id: string
+          months_committed: number | null
+          service_division_id: string | null
+          share_of_year: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allocation_type?: string | null
+          category: string
+          created_at?: string
+          expected_hours_per_unit?: number | null
+          id?: string
+          months_committed?: number | null
+          service_division_id?: string | null
+          share_of_year: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allocation_type?: string | null
+          category?: string
+          created_at?: string
+          expected_hours_per_unit?: number | null
+          id?: string
+          months_committed?: number | null
+          service_division_id?: string | null
+          share_of_year?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_division_allocations_service_division_id_fkey"
+            columns: ["service_division_id"]
+            isOneToOne: false
+            referencedRelation: "service_divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_settings: {
         Row: {
           created_at: string
@@ -473,10 +520,12 @@ export type Database = {
       }
       equipment_division_allocations: {
         Row: {
+          allocation_type: string | null
           created_at: string
           equipment_id: string
           expected_hours: number | null
           id: string
+          is_override: boolean
           months_committed: number | null
           rate_basis: string
           recovery_method: string
@@ -486,10 +535,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          allocation_type?: string | null
           created_at?: string
           equipment_id: string
           expected_hours?: number | null
           id?: string
+          is_override?: boolean
           months_committed?: number | null
           rate_basis?: string
           recovery_method?: string
@@ -499,10 +550,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          allocation_type?: string | null
           created_at?: string
           equipment_id?: string
           expected_hours?: number | null
           id?: string
+          is_override?: boolean
           months_committed?: number | null
           rate_basis?: string
           recovery_method?: string
@@ -1048,6 +1101,36 @@ export type Database = {
         }
         Relationships: []
       }
+      taxonomy_division_mappings: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          service_division_ids: string[]
+          taxonomy_division: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          service_division_ids?: string[]
+          taxonomy_division: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          service_division_ids?: string[]
+          taxonomy_division?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       usage_tracking: {
         Row: {
           ai_parsing_cost: number
@@ -1214,8 +1297,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      replace_category_allocations: {
+        Args: { _category: string; _rows: Json }
+        Returns: undefined
+      }
       replace_equipment_allocations: {
         Args: { _equipment_id: string; _rows: Json }
+        Returns: undefined
+      }
+      reset_equipment_allocations_to_inherit: {
+        Args: { _equipment_id: string }
         Returns: undefined
       }
     }

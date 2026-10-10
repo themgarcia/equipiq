@@ -29,7 +29,7 @@
  * DATA TABLES
  *   Use useDeviceType() hook from @/hooks/use-mobile
  *   Render MobileCardView on phones, Table on tablet+
- *   Pattern: {isPhone ? <MobileCardView /> : <DesktopTable />}
+ *   Pattern: {isPhone ? MobileCardView() : DesktopTable()}  (call as functions — never <Inner /> for components defined inside render; they remount and drop keystrokes)
  * 
  * SECTION HEADERS
  *   text-sm font-medium (Title Case, no uppercase/tracking-wider)
