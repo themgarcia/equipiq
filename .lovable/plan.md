@@ -103,8 +103,28 @@ The condition: under reading (ii), months-per-year is the bottom number of the d
 
 **Removed from the spec:** share-scaled dollars and the "5/12 of $X" labelling.
 
+## 8. Fix first (9A.1 follow-ups, ship before 9C-Budget.1)
+
+**8a. Category Lifespans: show the default and allow a reset.**
+- When a row has your own setting for useful life or resale %, show the shared default under that field. Same wording and look as the Operating Costs rows: "Category default: 10 yrs" / "Category default: 25%".
+- Add a "Reset to default" link on the row, with the same icon and wording as Operating Costs. It clears only your own setting for that field and goes back to the researched default. Life and resale reset separately. Notes keep your text.
+- Rows using the default look exactly as they do now.
+- No third pattern. This reuses the Operating Costs and Divisions wording.
+
+**8b. Company Settings save bar actually stays on screen.**
+- Right now the bar sits at the end of the form, so it scrolls off-screen. Change it to stay fixed at the bottom of the window, inside the page's content column so it doesn't cover the sidebar. Add bottom space so it never hides the last field.
+- Check in a test browser: change a value, scroll to the very top, and confirm the bar is visible. Repeat on a phone-size screen.
+
+## 9. On hold: the Fleet case
+
+All four Fleet categories in your account show "Not set" and fall back to year-round shared, because the Fleet matching question has no answer. This waits until the LMN months test in point 5 is done.
+
+The allocator has to handle heavy overlap as normal. Your divisions add up to 20 months in a 12-month year: Landscaping 8, Maintenance 7, Snow & Ice 5. Whatever the test shows, months that add up to more than 12 must never be treated as an error.
+
 ## Technical notes
 - New nullable `months_per_year_used` columns: on `equipment` (unit override) and on a per-user category table (the existing `user_category_overrides`, or a new column next to the category allocation).
 - Resolve it in one helper, next to `resolveAllocation`, and add tests for the 12 fallback and for overrides.
 - `rollupEngine` group key gains months-per-year. `RollupLine.monthsUsed` stops being a constant.
 - No new security-definer functions. The lint count stays at 8. Buy vs Rent doesn't change.
+- 8a: the reset writes null to `user_category_overrides.useful_life_years` / `resale_pct` for that category, merged in `EquipmentContext`. The default comes from the shared `category_defaults` values. No database change.
+- 8b: the save bar becomes `fixed bottom-4` and lines up with the main content column. The tab content keeps `pb-24` padding at the bottom.
