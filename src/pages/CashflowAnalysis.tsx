@@ -37,7 +37,8 @@ import {
   ArrowUp,
   ArrowDown,
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/calculations';
+import { formatCurrency, annualRecovery } from '@/lib/calculations';
+import { lmnBudgetAnnual } from '@/lib/lmnBudget';
 import { useCompanySettings, RECOVERY_BASIS_LABEL } from '@/hooks/useCompanySettings';
 import { X } from 'lucide-react';
 import { Link } from 'react-router-dom';
