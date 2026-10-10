@@ -268,6 +268,9 @@ function EquipmentDetailsView({
       <Separator />
 
       <MonthsPerYearPanel equipment={equipment} />
+
+      <Separator />
+
       <DivisionAllocationPanel equipment={equipment} />
 
       <Separator />

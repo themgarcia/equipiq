@@ -53,7 +53,7 @@ export default function CategoryLifespans() {
   
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   // Text as typed; converted only on save so fast typing is never lost or turned into 0.
-  const [editValues, setEditValues] = useState<{ life: string; resale: string; notes: string }>({ life: '', resale: '', notes: '' });
+  const [editValues, setEditValues] = useState<{ life: string; resale: string; notes: string; months: string }>({ life: '', resale: '', notes: '', months: '' });
   const [editError, setEditError] = useState<string | null>(null);
   const [lifeWarning, setLifeWarning] = useState<string | null>(null);
   const sharedDefaultLife = (cat: string | null | undefined) =>
@@ -92,6 +92,7 @@ export default function CategoryLifespans() {
         life: String(category.defaultUsefulLife),
         resale: String(category.defaultResalePercent),
         notes: category.notes,
+        months: categoryOverrides[category.category]?.monthsPerYearUsed != null ? String(categoryOverrides[category.category]!.monthsPerYearUsed) : '',
       });
       setEditError(null);
       setLifeWarning(null);
@@ -102,6 +103,7 @@ export default function CategoryLifespans() {
         life: String(category.defaultUsefulLife),
         resale: String(category.defaultResalePercent),
         notes: category.notes,
+        months: categoryOverrides[category.category]?.monthsPerYearUsed != null ? String(categoryOverrides[category.category]!.monthsPerYearUsed) : '',
       });
       setEditError(null);
       setLifeWarning(null);
@@ -110,7 +112,7 @@ export default function CategoryLifespans() {
 
   const cancelEdit = () => {
     setEditingCategory(null);
-    setEditValues({ life: '', resale: '', notes: '' });
+    setEditValues({ life: '', resale: '', notes: '', months: '' });
     setEditError(null);
     setLifeWarning(null);
     setEditSheetOpen(false);
@@ -125,10 +127,16 @@ export default function CategoryLifespans() {
     if (!Number.isInteger(life.value)) { setEditError('Useful life must be whole years.'); return; }
     const resale = parseRequiredNumber(editValues.resale, 0, 100, 'Resale %');
     if (resale.ok === false) { setEditError(resale.error); return; }
+    let months: number | null = null;
+    if (editValues.months.trim() !== '') {
+      const m = parseRequiredNumber(editValues.months, 1, 12, 'Months per year');
+      if (m.ok === false) { setEditError(m.error); return; }
+      months = m.value;
+    }
     // Ask once before saving a big change from the shared default (catches 10 typed as 1).
     const warning = bigLifeChangeWarning(life.value, sharedDefaultLife(categoryName));
     if (warning && lifeWarning !== warning) { setLifeWarning(warning); setEditError(null); return; }
-    updateCategoryDefaults(categoryName, { defaultUsefulLife: life.value, defaultResalePercent: resale.value, notes: editValues.notes });
+    updateCategoryDefaults(categoryName, { defaultUsefulLife: life.value, defaultResalePercent: resale.value, notes: editValues.notes, monthsPerYearUsed: months ?? undefined });
     cancelEdit();
   };
 
@@ -180,6 +188,7 @@ export default function CategoryLifespans() {
               <TableHead className="table-header-cell min-w-[150px]">Category</TableHead>
               <TableHead className="table-header-cell text-center min-w-[100px] whitespace-nowrap">Useful Life (yrs)</TableHead>
               <TableHead className="table-header-cell text-center min-w-[80px] whitespace-nowrap">Resale %</TableHead>
+              <TableHead className="table-header-cell text-center min-w-[90px] whitespace-nowrap">Months/yr used</TableHead>
               <TableHead className="table-header-cell min-w-[200px] hidden md:table-cell">Notes & Assumptions</TableHead>
               <TableHead className="table-header-cell w-[80px]"></TableHead>
             </TableRow>
@@ -224,6 +233,22 @@ export default function CategoryLifespans() {
                         <span className="font-mono-nums">{category.defaultResalePercent}%</span>
                         {defaultNote(category.category, 'resale')}
                       </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {isEditing ? (
+                      <Input
+                        inputMode="decimal"
+                        aria-label="Months per year used"
+                        placeholder="12"
+                        value={editValues.months}
+                        onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, months: v })); }}
+                        className="w-20 mx-auto text-center"
+                      />
+                    ) : categoryOverrides[category.category]?.monthsPerYearUsed != null ? (
+                      <span className="font-mono-nums">{categoryOverrides[category.category]!.monthsPerYearUsed}</span>
+                    ) : (
+                      <span className="font-mono-nums text-muted-foreground" title="Not set — the budget export uses 12">12</span>
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -344,6 +369,17 @@ export default function CategoryLifespans() {
                 onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, resale: v })); }}
               />
               {selectedCategory && defaultNote(selectedCategory.category, 'resale')}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="monthsPerYear">Months per year used</Label>
+              <Input
+                id="monthsPerYear"
+                inputMode="decimal"
+                placeholder="12"
+                value={editValues.months}
+                onChange={(e) => { const v = e.target.value; setEditValues(prev => ({ ...prev, months: v })); }}
+              />
+              <p className="text-xs text-muted-foreground">Leave blank for 12. Sent to the LMN budget.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes & Assumptions</Label>
