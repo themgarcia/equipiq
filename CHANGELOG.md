@@ -5,6 +5,20 @@ All notable changes to EquipIQ will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-10-10
+
+### Added
+- lmnBudgetAnnual in src/lib/lmnBudget.ts, tested against observed LMN rows
+- months_per_year_used on equipment and user_category_overrides; rollup groups by resolved months
+
+### Changed
+- company_settings.inflation_rate_pct (default 3) replaces ANNUAL_INFLATION_RATE; market_finance_rate_pct deprecated
+- Removed Annual per unit and Type columns from the owned export table and CSV
+
+### Fixed
+- Category Lifespans shows the default beside your value and can reset a field back to it
+- Leased rows on the FMS Export use the machine's months used per year instead of always 12
+
 ## [1.4.0] - 2026-10-09
 
 ### Added

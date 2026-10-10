@@ -37,19 +37,19 @@ export default function CompanySettingsPage() {
 
   const reset = () => {
     setFuel(settings.fuel_price_per_litre?.toString() ?? '');
-    setRate(settings.market_finance_rate_pct?.toString() ?? '');
+    setRate(settings.inflation_rate_pct.toString());
     setHours(settings.default_hours_per_day.toString());
     setBasis(settings.recovery_basis);
   };
   const dirty =
     fuel !== (settings.fuel_price_per_litre?.toString() ?? '') ||
-    rate !== (settings.market_finance_rate_pct?.toString() ?? '') ||
+    rate !== (settings.inflation_rate_pct.toString()) ||
     hours !== settings.default_hours_per_day.toString() ||
     basis !== settings.recovery_basis;
 
   useEffect(() => {
     setFuel(settings.fuel_price_per_litre?.toString() ?? '');
-    setRate(settings.market_finance_rate_pct?.toString() ?? '');
+    setRate(settings.inflation_rate_pct.toString());
     setHours(settings.default_hours_per_day.toString());
     setBasis(settings.recovery_basis);
   }, [settings]);
@@ -61,14 +61,14 @@ export default function CompanySettingsPage() {
 
   const handleSave = async () => {
     const fuelN = parseOptional(fuel);
-    const rateN = parseOptional(rate);
+    const rateN = Number(rate);
     const hoursN = Number(hours);
     if (Number.isNaN(fuelN) || (fuelN !== null && fuelN <= 0)) {
       toast({ title: 'Check fuel price', description: 'Enter a price above 0, or leave it blank.', variant: 'destructive' });
       return;
     }
-    if (Number.isNaN(rateN) || (rateN !== null && (rateN < 0 || rateN > 100))) {
-      toast({ title: 'Check finance rate', description: 'Enter a percentage between 0 and 100, or leave it blank.', variant: 'destructive' });
+    if (rate.trim() === '' || !Number.isFinite(rateN) || rateN < 0 || rateN > 25) {
+      toast({ title: 'Check inflation rate', description: 'Enter a percentage between 0 and 25. The usual value is 3.', variant: 'destructive' });
       return;
     }
     if (!Number.isFinite(hoursN) || hoursN <= 0 || hoursN > 24) {
@@ -77,7 +77,7 @@ export default function CompanySettingsPage() {
     }
     const next: CompanySettings = {
       fuel_price_per_litre: fuelN,
-      market_finance_rate_pct: rateN,
+      inflation_rate_pct: rateN,
       default_hours_per_day: hoursN,
       recovery_basis: basis,
     };
@@ -101,9 +101,6 @@ export default function CompanySettingsPage() {
 
   const notYetUsed = (
     <Badge variant="outline" className="text-xs font-normal">For the upcoming LMN catalog export — not used in any calculation yet</Badge>
-  );
-  const usedInBudget = (
-    <Badge variant="outline" className="text-xs font-normal">Sent with the FMS budget export</Badge>
   );
 
   return (
@@ -192,17 +189,17 @@ export default function CompanySettingsPage() {
           <Card>
             <CardHeader>
               <div className="flex flex-wrap items-center gap-2">
-                <CardTitle className="text-lg">Market finance rate</CardTitle>
-                {usedInBudget}
+                <CardTitle className="text-lg">Equipment price inflation</CardTitle>
+                <Badge variant="outline" className="text-xs font-normal">Used for replacement cost and sent to LMN</Badge>
               </div>
               <CardDescription>
-                The rate your business as a whole would pay to borrow money, or would expect to earn on it — your cost of money. This is not the interest rate on any single machine's loan or lease. LMN uses this as the inflation/interest rate on budget equipment rows, carrying each machine's replacement value forward over its life.
+                How much equipment prices rise each year. EquipIQ uses it to bring what you paid up to today's replacement cost, and LMN uses the same number in its Inflation/Interest field to carry that cost forward over the machine's life. Default 3%. Changing it changes every replacement cost worked out from a purchase price, so export to LMN again afterwards.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Label htmlFor="rate" className="sr-only">Market finance rate</Label>
+              <Label htmlFor="rate" className="sr-only">Equipment price inflation</Label>
               <div className="flex items-center gap-2 max-w-xs">
-                <Input id="rate" inputMode="decimal" placeholder="e.g. 7.5" value={rate} onChange={e => setRate(e.target.value)} />
+                <Input id="rate" inputMode="decimal" placeholder="3" value={rate} onChange={e => setRate(e.target.value)} />
                 <span className="text-muted-foreground text-sm">%</span>
               </div>
             </CardContent>

@@ -43,6 +43,13 @@
       "when": 1791660181631,
       "tag": "0005_months_per_year_used",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791662572850,
+      "tag": "0006_company_inflation_rate",
+      "breakpoints": true
     }
   ]
 }

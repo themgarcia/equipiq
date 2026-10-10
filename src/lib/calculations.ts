@@ -2,15 +2,17 @@ import { Equipment, EquipmentCalculated, FMSExportData, CategoryDefaults } from 
 import { getCategoryDefaults as getStaticCategoryDefaults } from '@/data/categoryDefaults';
 import { parseLocalDate } from '@/lib/utils';
 
-const ANNUAL_INFLATION_RATE = 0.03; // 3% annual inflation
+/** Fallback only when no company_settings row exists. The live value is company_settings.inflation_rate_pct. */
+export const DEFAULT_INFLATION_RATE_PCT = 3;
 
-function calculateInflationAdjustedCost(
+export function calculateInflationAdjustedCost(
   originalCost: number, 
   fromYear: number, 
-  toYear: number
+  toYear: number,
+  inflationPct: number = DEFAULT_INFLATION_RATE_PCT
 ): number {
   const years = Math.max(0, toYear - fromYear);
-  return originalCost * Math.pow(1 + ANNUAL_INFLATION_RATE, years);
+  return originalCost * Math.pow(1 + inflationPct / 100, years);
 }
 
 /** Months per year used: unit value, then the user's category value, then 12. */
@@ -26,7 +28,8 @@ export function resolveMonthsPerYear(
 export function calculateEquipment(
   equipment: Equipment, 
   categoryDefaultsOverrides?: CategoryDefaults[],
-  attachmentTotal: number = 0
+  attachmentTotal: number = 0,
+  inflationPct: number = DEFAULT_INFLATION_RATE_PCT
 ): EquipmentCalculated {
   // Use overrides if provided, otherwise fall back to static defaults
   const categoryDefaults = categoryDefaultsOverrides 
@@ -66,7 +69,7 @@ export function calculateEquipment(
   const purchaseDate = parseLocalDate(equipment.purchaseDate);
   const purchaseYear = purchaseDate.getFullYear();
   
-  // Replacement Cost - apply 3% annual inflation
+  // Replacement Cost - apply the company inflation rate
   let replacementCostUsed: number;
   let replacementCostSource: 'manual' | 'inflationAdjusted';
   let inflationYears: number;
@@ -78,7 +81,7 @@ export function calculateEquipment(
       ? parseLocalDate(equipment.replacementCostAsOfDate).getFullYear() 
       : currentYear;
     inflationYears = Math.max(0, currentYear - asOfYear);
-    const inflatedEquipmentCost = calculateInflationAdjustedCost(equipment.replacementCostNew, asOfYear, currentYear);
+    const inflatedEquipmentCost = calculateInflationAdjustedCost(equipment.replacementCostNew, asOfYear, currentYear, inflationPct);
     // Add attachments at current value (no inflation needed as they're stored at current value)
     replacementCostUsed = inflatedEquipmentCost + attachmentTotal;
     replacementCostSource = 'manual';
@@ -88,7 +91,7 @@ export function calculateEquipment(
     // For new equipment, inflate from purchase year
     const inflationBaseYear = equipment.purchaseCondition === 'used' ? modelYear : purchaseYear;
     inflationYears = Math.max(0, currentYear - inflationBaseYear);
-    replacementCostUsed = calculateInflationAdjustedCost(totalCostBasis, inflationBaseYear, currentYear);
+    replacementCostUsed = calculateInflationAdjustedCost(totalCostBasis, inflationBaseYear, currentYear, inflationPct);
     replacementCostSource = 'inflationAdjusted';
   }
   

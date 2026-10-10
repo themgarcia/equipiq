@@ -7,7 +7,6 @@ import { formatCurrency, annualRecovery } from '@/lib/calculations';
 import { useCompanySettings, RECOVERY_BASIS_LABEL } from '@/hooks/useCompanySettings';
 import { differenceInMonths, parseISO } from 'date-fns';
 import { rollupEquipment, rollupToCSV, RollupLine, RollupTotals } from '@/lib/rollupEngine';
-import { lmnBudgetAnnual } from '@/lib/lmnBudget';
 import type { RecoveryBasis } from '@/lib/calculations';
 import { getCategoryDefaults } from '@/data/categoryDefaults';
 import { formatBenchmarkRange } from '@/lib/benchmarkUtils';
@@ -185,23 +184,6 @@ interface CostComparisonTooltipProps {
   onToggleRecovery?: (category: string, itemCount: number) => void;
 }
 
-/** EquipIQ's annual figure and LMN's budget-calculator figure for one line, from the values copied into LMN. */
-function compareAnnual(line: RollupLine, ratePct: number | null, basis: RecoveryBasis) {
-  const rv = Math.round(line.avgReplacementValue);
-  const ev = Math.round(line.avgEndValue);
-  const life = Math.round(line.avgUsefulLife);
-  const ours = annualRecovery({ replacementCostUsed: rv, expectedResaleUsed: ev, usefulLifeUsed: life }, basis);
-  const lmn = ratePct == null ? null : lmnBudgetAnnual(rv, ev, life, ratePct);
-  let sentence: string;
-  if (ratePct == null) {
-    sentence = `EquipIQ: ${formatCurrency(ours)}/yr in today's dollars. Set a market finance rate in Company Settings to preview LMN's figure.`;
-  } else {
-    const basisNote = basis === 'gross' ? ' (gross, resale not deducted)' : '';
-    sentence = `EquipIQ: ${formatCurrency(ours)}/yr in today's dollars${basisNote}. LMN will show ${formatCurrency(lmn?.annual ?? 0)}/yr because it adds ${ratePct}% forward over ${life} years.`;
-  }
-  return { ours, lmn: lmn?.annual ?? null, sentence };
-}
-
 function CostComparisonTooltip({ line, mode, calculatedEquipment, onToggleRecovery }: CostComparisonTooltipProps) {
   const { recoveryBasis } = useCompanySettings();
   // Get per-item data for this category
@@ -340,7 +322,7 @@ interface RollupSectionProps {
   distanceUnit: 'mi' | 'km';
   calculatedEquipment: EquipmentCalculated[];
   onToggleRecovery?: (category: string, itemCount: number) => void;
-  financeRatePct: number | null;
+  financeRatePct: number;
   recoveryBasis: RecoveryBasis;
 }
 
@@ -373,6 +355,15 @@ function RollupSection({
         <Badge variant="secondary" className="ml-1">{totals.totalQty} items</Badge>
       </div>
       
+      <div className="flex flex-wrap items-center gap-2 text-sm bg-muted/40 border rounded-md px-3 py-2">
+        <span className="text-muted-foreground">Inflation/Interest rate for every row:</span>
+        <span className="relative inline-flex items-center font-mono-nums font-medium pr-6">
+          {financeRatePct}%
+          <CopyButton cellId={`${title}-rate`} value={String(financeRatePct)} copiedCell={copiedCell} onCopy={onCopyCell} />
+        </span>
+        <a href="/settings/company" className="text-xs text-primary hover:underline">Change rate</a>
+      </div>
+
       <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
         {isMobile ? (
           <div className="divide-y">
@@ -401,7 +392,7 @@ function RollupSection({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table className="table-fixed min-w-[960px]">
+            <Table className="table-fixed min-w-[720px]">
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="table-header-cell whitespace-nowrap w-[200px]">Category</TableHead>
@@ -422,11 +413,8 @@ function RollupSection({
                       </Tooltip>
                     </TooltipProvider>
                   </TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap hidden md:table-cell w-[120px]">Avg Resale</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[120px]">Avg Resale</TableHead>
                   <TableHead className="table-header-cell text-right whitespace-nowrap w-[90px]">Months/Yr</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[80px]">Rate %</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[140px]">Annual per unit</TableHead>
-                  {showType && <TableHead className="table-header-cell text-center whitespace-nowrap w-[80px]">Type</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -485,7 +473,7 @@ function RollupSection({
                           </Tooltip>
                         </TooltipProvider>
                       </TableCell>
-                      <TableCell className="text-right font-mono-nums hidden md:table-cell">
+                      <TableCell className="text-right font-mono-nums">
                         <div className="relative inline-flex justify-end">
                           <span>{formatCurrency(line.avgEndValue)}</span>
                           <CopyButton cellId={`${lineId}-ev`} value={String(Math.round(line.avgEndValue))} copiedCell={copiedCell} onCopy={onCopyCell} />
@@ -497,48 +485,10 @@ function RollupSection({
                           <CopyButton cellId={`${lineId}-mpy`} value={String(line.monthsUsed)} copiedCell={copiedCell} onCopy={onCopyCell} />
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-mono-nums">
-                        {financeRatePct == null ? (
-                          <span className="text-xs text-muted-foreground">Not set</span>
-                        ) : (
-                          <div className="relative inline-flex justify-end">
-                            <span>{financeRatePct}%</span>
-                            <CopyButton cellId={`${lineId}-rate`} value={String(financeRatePct)} copiedCell={copiedCell} onCopy={onCopyCell} />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-mono-nums">
-                        {(() => {
-                          const c = compareAnnual(line, financeRatePct, recoveryBasis);
-                          return (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="cursor-help text-xs leading-tight">
-                                    <div>EquipIQ {formatCurrency(c.ours)}</div>
-                                    <div className="text-muted-foreground">LMN {c.lmn == null ? '—' : formatCurrency(c.lmn)}</div>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-xs">
-                                  <p>{c.sentence}</p>
-                                  <p className="mt-1 text-muted-foreground">Preview only — LMN works this out itself. Nothing here needs to be pasted.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          );
-                        })()}
-                      </TableCell>
-                      {showType && (
-                        <TableCell className="text-center">
-                          <Badge variant={line.financingType === 'leased' ? 'outline' : 'secondary'} className="text-[10px]">
-                            {line.financingType === 'leased' ? 'Leased' : 'Owned'}
-                          </Badge>
-                        </TableCell>
-                      )}
                     </TableRow>
                     {expandedLines.has(lineId) && line.itemNames && line.itemNames.length > 0 && (
                       <TableRow className="bg-muted/20">
-                        <TableCell colSpan={showType ? 9 : 8} className="py-2 pl-8">
+                        <TableCell colSpan={6} className="py-2 pl-8">
                           <p className="text-sm text-muted-foreground">
                             {line.itemNames.join(', ')}
                           </p>
@@ -555,9 +505,8 @@ function RollupSection({
                   <TableCell className="text-right font-mono-nums">{totals.totalQty}</TableCell>
                   <TableCell className="text-right" />
                   <TableCell className="text-right" />
-                  <TableCell className="text-right hidden md:table-cell" />
-                  <TableCell /><TableCell /><TableCell />
-                  {showType && <TableCell />}
+                  <TableCell className="text-right" />
+                  <TableCell />
                 </TableRow>
               </TableFooter>
             </Table>
@@ -721,7 +670,7 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
 export default function FMSExport() {
   const { calculatedEquipment, updateEquipment } = useEquipment();
   const { recoveryBasis, settings: companySettings } = useCompanySettings();
-  const financeRatePct = companySettings.market_finance_rate_pct;
+  const financeRatePct = companySettings.inflation_rate_pct;
   const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'phone' || deviceType === 'tablet';
@@ -853,6 +802,10 @@ export default function FMSExport() {
                   Items in the same category are combined into one line with averaged values. Replacement values include attachments.
                   Machines used a different number of months per year get their own line. Leave LMN's "additional purchase fees, taxes or admin" field blank: replacement values already include tax and delivery when EquipIQ worked them out from your purchase records, and a replacement cost you typed in should include them too.
                 </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  LMN works out its own yearly figure from these values, and it will be higher than EquipIQ's.{' '}
+                  <a href="/cashflow#why-lmn-higher" className="text-primary hover:underline">Why LMN shows a higher yearly figure</a>
+                </p>
               </div>
             </div>
 
@@ -867,7 +820,7 @@ export default function FMSExport() {
                 icon={<Truck className="h-5 w-5 text-primary" />}
                 lines={rollupResult.fieldOwnedLines}
                 totals={rollupResult.fieldOwnedTotals}
-                showType={true}
+                showType={false}
                 copiedCell={copiedCell}
                 onCopyCell={copyCell}
                 onSelectLine={setSelectedLine}
@@ -900,7 +853,7 @@ export default function FMSExport() {
                 icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
                 lines={rollupResult.overheadOwnedLines}
                 totals={rollupResult.overheadOwnedTotals}
-                showType={true}
+                showType={false}
                 copiedCell={copiedCell}
                 onCopyCell={copyCell}
                 onSelectLine={setSelectedLine}
