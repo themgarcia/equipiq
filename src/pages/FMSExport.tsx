@@ -7,6 +7,8 @@ import { formatCurrency, annualRecovery } from '@/lib/calculations';
 import { useCompanySettings, RECOVERY_BASIS_LABEL } from '@/hooks/useCompanySettings';
 import { differenceInMonths, parseISO } from 'date-fns';
 import { rollupEquipment, rollupToCSV, RollupLine, RollupTotals } from '@/lib/rollupEngine';
+import { lmnBudgetAnnual } from '@/lib/lmnBudget';
+import type { RecoveryBasis } from '@/lib/calculations';
 import { getCategoryDefaults } from '@/data/categoryDefaults';
 import { formatBenchmarkRange } from '@/lib/benchmarkUtils';
 import { useDistanceUnit } from '@/hooks/useDistanceUnit';
@@ -181,6 +183,25 @@ interface CostComparisonTooltipProps {
   mode: 'owned' | 'leased';
   calculatedEquipment: EquipmentCalculated[];
   onToggleRecovery?: (category: string, itemCount: number) => void;
+  financeRatePct: number | null;
+  recoveryBasis: RecoveryBasis;
+}
+
+/** EquipIQ's annual figure and LMN's budget-calculator figure for one line, from the values copied into LMN. */
+function compareAnnual(line: RollupLine, ratePct: number | null, basis: RecoveryBasis) {
+  const rv = Math.round(line.avgReplacementValue);
+  const ev = Math.round(line.avgEndValue);
+  const life = Math.round(line.avgUsefulLife);
+  const ours = annualRecovery({ replacementCostUsed: rv, expectedResaleUsed: ev, usefulLifeUsed: life }, basis);
+  const lmn = ratePct == null ? null : lmnBudgetAnnual(rv, ev, life, ratePct);
+  let sentence: string;
+  if (ratePct == null) {
+    sentence = `EquipIQ: ${formatCurrency(ours)}/yr in today's dollars. Set a market finance rate in Company Settings to preview LMN's figure.`;
+  } else {
+    const basisNote = basis === 'gross' ? ' (gross, resale not deducted)' : '';
+    sentence = `EquipIQ: ${formatCurrency(ours)}/yr in today's dollars${basisNote}. LMN will show ${formatCurrency(lmn?.annual ?? 0)}/yr because it adds ${ratePct}% forward over ${life} years.`;
+  }
+  return { ours, lmn: lmn?.annual ?? null, sentence };
 }
 
 function CostComparisonTooltip({ line, mode, calculatedEquipment, onToggleRecovery }: CostComparisonTooltipProps) {
@@ -324,7 +345,7 @@ interface RollupSectionProps {
 }
 
 function RollupSection({ 
-  title, icon, lines, totals, showType, copiedCell, onCopyCell, onSelectLine, isMobile, emptyMessage, emptyHint, distanceUnit, calculatedEquipment, onToggleRecovery 
+  title, icon, lines, totals, showType, copiedCell, onCopyCell, onSelectLine, isMobile, emptyMessage, emptyHint, distanceUnit, calculatedEquipment, onToggleRecovery, financeRatePct, recoveryBasis 
 }: RollupSectionProps) {
   const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
   const toggleExpand = (lineId: string) => {
@@ -402,6 +423,9 @@ function RollupSection({
                     </TooltipProvider>
                   </TableHead>
                   <TableHead className="table-header-cell text-right whitespace-nowrap hidden md:table-cell w-[140px]">Avg Resale Value</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[100px]">Months/Yr</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[90px]">Rate %</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[170px]">Annual per unit</TableHead>
                   {showType && <TableHead className="table-header-cell text-center whitespace-nowrap w-[80px]">Type</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -467,6 +491,43 @@ function RollupSection({
                           <CopyButton cellId={`${lineId}-ev`} value={String(Math.round(line.avgEndValue))} copiedCell={copiedCell} onCopy={onCopyCell} />
                         </div>
                       </TableCell>
+                      <TableCell className="text-right font-mono-nums">
+                        <div className="relative inline-flex justify-end">
+                          <span>{line.monthsUsed}</span>
+                          <CopyButton cellId={`${lineId}-mpy`} value={String(line.monthsUsed)} copiedCell={copiedCell} onCopy={onCopyCell} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums">
+                        {financeRatePct == null ? (
+                          <span className="text-xs text-muted-foreground">Not set</span>
+                        ) : (
+                          <div className="relative inline-flex justify-end">
+                            <span>{financeRatePct}%</span>
+                            <CopyButton cellId={`${lineId}-rate`} value={String(financeRatePct)} copiedCell={copiedCell} onCopy={onCopyCell} />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-mono-nums">
+                        {(() => {
+                          const c = compareAnnual(line, financeRatePct, recoveryBasis);
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="cursor-help text-xs leading-tight">
+                                    <div>EquipIQ {formatCurrency(c.ours)}</div>
+                                    <div className="text-muted-foreground">LMN {c.lmn == null ? '—' : formatCurrency(c.lmn)}</div>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs">
+                                  <p>{c.sentence}</p>
+                                  <p className="mt-1 text-muted-foreground">Preview only — LMN works this out itself. Nothing here needs to be pasted.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
+                      </TableCell>
                       {showType && (
                         <TableCell className="text-center">
                           <Badge variant={line.financingType === 'leased' ? 'outline' : 'secondary'} className="text-[10px]">
@@ -477,7 +538,7 @@ function RollupSection({
                     </TableRow>
                     {expandedLines.has(lineId) && line.itemNames && line.itemNames.length > 0 && (
                       <TableRow className="bg-muted/20">
-                        <TableCell colSpan={showType ? 6 : 5} className="py-2 pl-8">
+                        <TableCell colSpan={showType ? 9 : 8} className="py-2 pl-8">
                           <p className="text-sm text-muted-foreground">
                             {line.itemNames.join(', ')}
                           </p>
@@ -495,6 +556,7 @@ function RollupSection({
                   <TableCell className="text-right" />
                   <TableCell className="text-right" />
                   <TableCell className="text-right hidden md:table-cell" />
+                  <TableCell /><TableCell /><TableCell />
                   {showType && <TableCell />}
                 </TableRow>
               </TableFooter>
@@ -658,7 +720,8 @@ function LeasedRollupSection({ lines, totals, copiedCell, onCopyCell, onSelectLi
 
 export default function FMSExport() {
   const { calculatedEquipment, updateEquipment } = useEquipment();
-  const { recoveryBasis } = useCompanySettings();
+  const { recoveryBasis, settings: companySettings } = useCompanySettings();
+  const financeRatePct = companySettings.market_finance_rate_pct;
   const { markStepComplete } = useOnboarding();
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'phone' || deviceType === 'tablet';
@@ -721,7 +784,7 @@ export default function FMSExport() {
   };
 
   const exportCSV = () => {
-    const csvContent = rollupToCSV(rollupResult);
+    const csvContent = rollupToCSV(rollupResult, financeRatePct);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -788,6 +851,7 @@ export default function FMSExport() {
                 <p className="text-sm text-muted-foreground">
                   Equipment is rolled up by category to match how LMN expects data. Click <Copy className="h-3 w-3 inline mx-1" /> to copy individual values.
                   Items in the same category are combined into one line with averaged values. Replacement values include attachments.
+                  Machines used a different number of months per year get their own line. Leave LMN's "additional purchase fees, taxes or admin" field blank: replacement values already include tax and delivery when EquipIQ worked them out from your purchase records, and a replacement cost you typed in should include them too.
                 </p>
               </div>
             </div>
@@ -797,6 +861,8 @@ export default function FMSExport() {
               <CashGapSummary calculatedEquipment={calculatedEquipment} />
               
               <RollupSection
+                financeRatePct={financeRatePct}
+                recoveryBasis={recoveryBasis}
                 title="Field Equipment — LMN Equipment Budget"
                 icon={<Truck className="h-5 w-5 text-primary" />}
                 lines={rollupResult.fieldOwnedLines}
@@ -828,6 +894,8 @@ export default function FMSExport() {
             {/* Overhead Equipment Section */}
             <div className="space-y-4">
               <RollupSection
+                financeRatePct={financeRatePct}
+                recoveryBasis={recoveryBasis}
                 title="Overhead Equipment — LMN Overhead Budget"
                 icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
                 lines={rollupResult.overheadOwnedLines}
