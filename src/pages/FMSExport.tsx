@@ -183,8 +183,6 @@ interface CostComparisonTooltipProps {
   mode: 'owned' | 'leased';
   calculatedEquipment: EquipmentCalculated[];
   onToggleRecovery?: (category: string, itemCount: number) => void;
-  financeRatePct: number | null;
-  recoveryBasis: RecoveryBasis;
 }
 
 /** EquipIQ's annual figure and LMN's budget-calculator figure for one line, from the values copied into LMN. */
@@ -342,6 +340,8 @@ interface RollupSectionProps {
   distanceUnit: 'mi' | 'km';
   calculatedEquipment: EquipmentCalculated[];
   onToggleRecovery?: (category: string, itemCount: number) => void;
+  financeRatePct: number | null;
+  recoveryBasis: RecoveryBasis;
 }
 
 function RollupSection({ 
