@@ -102,10 +102,10 @@ export default function CategoryLifespans() {
     const categoryName = isPhone ? selectedCategory?.category : editingCategory;
     if (!categoryName) return;
     const life = parseRequiredNumber(editValues.life, 1, 30, 'Useful life');
-    if (!life.ok) { setEditError(life.error); return; }
+    if (life.ok === false) { setEditError(life.error); return; }
     if (!Number.isInteger(life.value)) { setEditError('Useful life must be whole years.'); return; }
     const resale = parseRequiredNumber(editValues.resale, 0, 100, 'Resale %');
-    if (!resale.ok) { setEditError(resale.error); return; }
+    if (resale.ok === false) { setEditError(resale.error); return; }
     // Ask once before saving a big change from the shared default (catches 10 typed as 1).
     const warning = bigLifeChangeWarning(life.value, sharedDefaultLife(categoryName));
     if (warning && lifeWarning !== warning) { setLifeWarning(warning); setEditError(null); return; }
