@@ -37,7 +37,7 @@ Checked against the live data before revising:
 
 **Corrected model:**
 - **The allocation flag is the router.** It sits per unit x division and decides which export that share of the machine goes to. Field Equipment goes to the price list (a rate, and a unit applies). Overhead or Owner Perk goes to that division's overhead budget (no rate, and no unit at all). It is backfilled from each unit's current flag, so behaviour is unchanged. The unit-level flag stays, synced, and is marked deprecated until 9C.
-- **LMN unit (Hours/Days):** the category's `default_lmn_unit`, overridable per category x division and per unit x division. It is only shown and stored for Field Equipment rows. Overhead rows hide it.
+- **LMN unit (Hours/Days):** the category's existing `default_lmn_unit`, used only as a label. It isn't overridden and no number depends on it (see below).
 - **Per-event:** shown as a divisor only in 9B ("$8,333 a season; at 12 events $694, at 20 events $417"). It has no column.
 - **rate_basis:** removed from the panel, no longer read or written, and the column is marked DEPRECATED. It isn't dropped, because that would break the live app. Its 37 "hourly" values are left alone.
 
@@ -57,7 +57,7 @@ Effective allocation for a unit =
   3. else Year-round shared (today's behaviour)
 ```
 
-- A category default holds the same thing a unit allocation holds: divisions, months committed, share of year, expected hours per machine, the router flag, and an optional Hours/Days override. Or it holds "Year-round shared".
+- A category default holds the same thing a unit allocation holds: divisions, months committed, share of year, expected hours per machine, and the router flag. Or it holds "Year-round shared".
 - The overlap rule is unchanged: months suggest shares, the user confirms, and Save requires 100%.
 - Owned/leased stays per unit, because it's that machine's financing.
 - Each unit shows where its allocation came from, like the Step 8 rows: "From category default: Fleet — Truck → Lawn 58.3% / Snow 41.7%" with **Override for this unit**, or "Set for this unit" with **Reset to category default**, or "Year-round shared (no category default)".
@@ -189,19 +189,59 @@ That gets the budget side done first for the Grindstone engagement, and leaves t
 - your choice of naming convention (needed for PRICELIST; the budget export uses division headings)
 - a changelog entry
 
+## 9. What your LMN findings change
+
+**9A.1 itself: almost nothing.** It's still allocation, mapping, the Settings UI and the input bug. Only three small things change, and all of them shrink or reword:
+- The per-division Hours/Days override is **removed** (one fewer column, one fewer control).
+- The service divisions helper text stops saying "match your LMN budgets". It now says a division is a production season that can sit under several budgets.
+- No division-to-budget mapping is added anywhere.
+
+**Hours per day: Step 6 was wrong, and this is where it belongs.**
+- Your data (10 on trucks and the snow loader, 8 on excavators, 7 on the plow and salter) shows hours per day is a per-machine-type value. Dropping `default_hours_per_day` in Step 6 was a mistake.
+- **Where it belongs:** the LMN item is one per category x service division, so hours/day has to resolve at that level.
+- Proposed resolution order:
+
+```text
+category x division override  ->  category (user_category_overrides)  ->  company setting (Step 7)
+```
+
+- **Not per unit, and I'm pushing back on that part of your ask.** Several units roll into one LMN item, and that item has only one hours/day. A per-unit value would have nothing to land on except an average, and an average quietly invents a number. If two machines in one category genuinely run different days, that's a sign they belong in different categories.
+- No shared default is added to `category_defaults`, because there's no sourced value to seed. A category with no setting falls back to the company figure, labelled "Company default: 8 hrs".
+- **Timing:** this is entered and used only in 9C-PRICELIST, so the columns are added there, not in 9A.1.
+
+**Acquisition value:** removed from everything we source. LMN computes it, and we never send it or try to reproduce it.
+- **Flag for the breakdown:** our cost per hour uses EquipIQ's own recovery, (replacement − resale) ÷ life. LMN's acquisition value includes a finance component neither of us can derive yet (the $60,375 gap on your 350,000 example).
+- So a user who types our breakdown into LMN's calculator will get a **different** hourly figure from ours. The breakdown must say so plainly rather than imply the two will match.
+
+**Fuel:** LMN wants consumption **per day** plus a price per unit. We hold L/hr, so we export L/hr x hours/day as "per day". This needs the fuel go-ahead that's still open for 9B.
+
+**Purchase date:** closed. LMN has no field for it, so it isn't exported.
+
+**9C-PRICELIST gets much smaller.**
+- **Headline per item:** name (division - category), **cost per hour**, **hours per day**. That's two numbers.
+- **Breakdown underneath, read-only, for auditing:** our annual recovery share, annual maintenance+repair, insurance and licensing (x life = LMN's "Total Operating Costs for Term"), forecast billable hours/yr, expected life, and fuel per day + price. Each line shows where it came from, using the Step 8 derivations.
+- **The editable category grid is no longer the right surface.** Inputs already have homes (Lifespans, Operating Costs, Divisions, Settings), and a second place to edit them would recreate the duplicated mess you found in that LMN catalog.
+- **Simpler surface:** a read-only list grouped by service division. Each row has the generated name, the two headline numbers with copy buttons, a completeness chip ("Missing: hours"), and an expand arrow for the breakdown. Fixing a gap links to where that input lives.
+- **Rough size:** 9C-PRICELIST drops from about the size of 9C-BUDGET plus a grid to roughly half that. The grid's editing, its per-cell saving and its category-level input table all go away (`user_category_division_inputs` is no longer needed). What remains is the hours/day columns, one pure function for cost per hour, the list, and its tests.
+
+**Design rule carried forward:** clean, consistently named output is the product.
+- Names are generated from category + division, never typed.
+- Exactly one row per category x division.
+- There are no sample rows.
+- A test fails if two output rows share a name.
+
 ---
 
 ## Technical section
 
 **Migration (additive only; GRANTs, per-user RLS with `auth.uid() IS NOT NULL`, no new SECURITY DEFINER functions, so the lint count stays at 8):**
-- `category_division_allocations`: user_id, category, service_division_id (null = shared), months_committed, share_of_year, expected_hours_per_unit, allocation_type (nullable; null = the unit's own flag), lmn_unit (nullable `lmn_unit` enum; null = category default). unique(user_id, category, service_division_id). Plain invoker total-100% trigger. Saved through an invoker `replace_category_allocations`.
+- `category_division_allocations`: user_id, category, service_division_id (null = shared), months_committed, share_of_year, expected_hours_per_unit, allocation_type (nullable; null = the unit's own flag). unique(user_id, category, service_division_id). Plain invoker total-100% trigger. Saved through an invoker `replace_category_allocations`.
 - `taxonomy_division_mappings`: user_id, taxonomy_division (CHECK, one of 7), service_division_ids uuid[], confirmed_at. unique(user_id, taxonomy_division).
 - `equipment_division_allocations` adds:
   - `is_override boolean DEFAULT false`, backfilled true for rows with a division or created after the 9A backfill
   - `allocation_type`, backfilled from `equipment.allocation_type` and synced by extending the existing default-allocation trigger
-  - `lmn_unit`, nullable
 - Comments:
-  - `COMMENT ON COLUMN ... rate_basis IS 'DEPRECATED: unit is lmn_unit; seasonal is allocation_type'`
+  - `COMMENT ON COLUMN ... rate_basis IS 'DEPRECATED: unit is category default_lmn_unit; seasonal is allocation_type'`
   - `COMMENT ON COLUMN equipment.allocation_type IS 'DEPRECATED at 9C: per-division value lives on allocation rows'`
 - `replace_equipment_allocations` stops taking rate_basis and sets is_override. A new invoker `reset_equipment_allocations_to_inherit`.
 
@@ -213,7 +253,8 @@ That gets the budget side done first for the Grindstone engagement, and leaves t
 - Hooks `useCategoryAllocations` and `useTaxonomyMappings`.
 - Shared `ConfidenceBadge`, `SourceBadge` and `ConflictBanner` moved out of `EquipmentImportReview.tsx`.
 - Settings tabs plus a sticky bar.
-- The panel shows a summary with source, uses the router flag instead of the rate dropdown, and shows Hours/Days only on Field rows.
+- The panel shows a summary with source, and uses the router flag instead of the rate dropdown. There's no unit control.
+- `ServiceDivisionsCard` helper text changes to: "A service division is a production season — a block of the year your machines are committed to one kind of work (e.g. Construction, Maintenance, Snow). One division can sit under several LMN budgets. Fleet and Shop are support, not services — leave them out."
 - `AGENTS.md`: the resolution-order rule, the router rule (replacing the rate_basis wording), and the "no inner components holding inputs" rule.
 
 **Tests:**
@@ -225,4 +266,4 @@ That gets the budget side done first for the Grindstone engagement, and leaves t
 - seasons 8 and 5 propose 61.5% / 38.5% and flag 13 months
 - a proposal never overwrites without the conflict step
 - the allocation_type backfill matches 34 / 3 / 0
-- the unit is hidden or null on overhead rows
+- the service divisions helper text no longer says divisions match budgets
