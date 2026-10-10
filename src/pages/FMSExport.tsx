@@ -802,6 +802,10 @@ export default function FMSExport() {
                   Items in the same category are combined into one line with averaged values. Replacement values include attachments.
                   Machines used a different number of months per year get their own line. Leave LMN's "additional purchase fees, taxes or admin" field blank: replacement values already include tax and delivery when EquipIQ worked them out from your purchase records, and a replacement cost you typed in should include them too.
                 </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  LMN works out its own yearly figure from these values, and it will be higher than EquipIQ's.{' '}
+                  <a href="/cashflow#why-lmn-higher" className="text-primary hover:underline">Why LMN shows a higher yearly figure</a>
+                </p>
               </div>
             </div>
 
