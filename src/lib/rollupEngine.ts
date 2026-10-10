@@ -234,13 +234,16 @@ export function rollupEquipment(calculatedEquipment: EquipmentCalculated[], basi
 
 // ─── CSV Export ──────────────────────────────────────────────────
 
-export function rollupToCSV(result: RollupResult, marketFinanceRatePct: number | null = null): string {
+export function rollupToCSV(result: RollupResult, inflationRatePct: number | null = null): string {
   const rows: string[][] = [];
-  const rateCell = marketFinanceRatePct == null ? '' : String(marketFinanceRatePct);
+  if (inflationRatePct != null) {
+    rows.push(['Inflation/Interest rate for every row (%)', String(inflationRatePct)]);
+    rows.push([]);
+  }
 
   // Field Equipment — Owned Section
   rows.push(['FIELD EQUIPMENT — LMN Equipment Budget — Owned']);
-  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Additional Fees', 'Life (Yrs)', 'Avg Resale Value', 'Months/Yr Used', 'Inflation/Interest %', 'Type']);
+  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Additional Fees', 'Life (Yrs)', 'Avg Resale Value', 'Months/Yr Used']);
 
   for (const line of result.fieldOwnedLines) {
     rows.push([
@@ -251,12 +254,10 @@ export function rollupToCSV(result: RollupResult, marketFinanceRatePct: number |
       String(Math.round(line.avgUsefulLife)),
       String(Math.round(line.avgEndValue)),
       String(line.monthsUsed),
-      rateCell,
-      line.financingType === 'leased' ? 'Leased' : 'Owned',
     ]);
   }
 
-  rows.push(['Total', String(result.fieldOwnedTotals.totalQty), '', '', '', '', '', '', '']);
+  rows.push(['Total', String(result.fieldOwnedTotals.totalQty), '', '', '', '', '']);
   rows.push([]); // blank row
 
   // Field Equipment — Leased Section (only if items exist)
@@ -280,7 +281,7 @@ export function rollupToCSV(result: RollupResult, marketFinanceRatePct: number |
 
   // Overhead Equipment — Owned Section
   rows.push(['OVERHEAD EQUIPMENT — LMN Overhead Budget — Owned']);
-  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Additional Fees', 'Life (Yrs)', 'Avg Resale Value', 'Months/Yr Used', 'Inflation/Interest %']);
+  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Additional Fees', 'Life (Yrs)', 'Avg Resale Value', 'Months/Yr Used']);
 
   for (const line of result.overheadOwnedLines) {
     rows.push([
@@ -291,11 +292,10 @@ export function rollupToCSV(result: RollupResult, marketFinanceRatePct: number |
       String(Math.round(line.avgUsefulLife)),
       String(Math.round(line.avgEndValue)),
       String(line.monthsUsed),
-      rateCell,
     ]);
   }
 
-  rows.push(['Total', String(result.overheadOwnedTotals.totalQty), '', '', '', '', '', '']);
+  rows.push(['Total', String(result.overheadOwnedTotals.totalQty), '', '', '', '', '']);
   rows.push([]);
   rows.push(['Additional Fees is left blank on purpose: replacement values already include tax and delivery when EquipIQ worked them out, and hand-entered replacement costs should include them.']);
 

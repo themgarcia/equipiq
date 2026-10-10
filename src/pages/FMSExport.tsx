@@ -7,7 +7,6 @@ import { formatCurrency, annualRecovery } from '@/lib/calculations';
 import { useCompanySettings, RECOVERY_BASIS_LABEL } from '@/hooks/useCompanySettings';
 import { differenceInMonths, parseISO } from 'date-fns';
 import { rollupEquipment, rollupToCSV, RollupLine, RollupTotals } from '@/lib/rollupEngine';
-import { lmnBudgetAnnual } from '@/lib/lmnBudget';
 import type { RecoveryBasis } from '@/lib/calculations';
 import { getCategoryDefaults } from '@/data/categoryDefaults';
 import { formatBenchmarkRange } from '@/lib/benchmarkUtils';
@@ -183,23 +182,6 @@ interface CostComparisonTooltipProps {
   mode: 'owned' | 'leased';
   calculatedEquipment: EquipmentCalculated[];
   onToggleRecovery?: (category: string, itemCount: number) => void;
-}
-
-/** EquipIQ's annual figure and LMN's budget-calculator figure for one line, from the values copied into LMN. */
-function compareAnnual(line: RollupLine, ratePct: number | null, basis: RecoveryBasis) {
-  const rv = Math.round(line.avgReplacementValue);
-  const ev = Math.round(line.avgEndValue);
-  const life = Math.round(line.avgUsefulLife);
-  const ours = annualRecovery({ replacementCostUsed: rv, expectedResaleUsed: ev, usefulLifeUsed: life }, basis);
-  const lmn = ratePct == null ? null : lmnBudgetAnnual(rv, ev, life, ratePct);
-  let sentence: string;
-  if (ratePct == null) {
-    sentence = `EquipIQ: ${formatCurrency(ours)}/yr in today's dollars. Set a market finance rate in Company Settings to preview LMN's figure.`;
-  } else {
-    const basisNote = basis === 'gross' ? ' (gross, resale not deducted)' : '';
-    sentence = `EquipIQ: ${formatCurrency(ours)}/yr in today's dollars${basisNote}. LMN will show ${formatCurrency(lmn?.annual ?? 0)}/yr because it adds ${ratePct}% forward over ${life} years.`;
-  }
-  return { ours, lmn: lmn?.annual ?? null, sentence };
 }
 
 function CostComparisonTooltip({ line, mode, calculatedEquipment, onToggleRecovery }: CostComparisonTooltipProps) {
@@ -834,7 +816,7 @@ export default function FMSExport() {
                 icon={<Truck className="h-5 w-5 text-primary" />}
                 lines={rollupResult.fieldOwnedLines}
                 totals={rollupResult.fieldOwnedTotals}
-                showType={true}
+                showType={false}
                 copiedCell={copiedCell}
                 onCopyCell={copyCell}
                 onSelectLine={setSelectedLine}
@@ -867,7 +849,7 @@ export default function FMSExport() {
                 icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
                 lines={rollupResult.overheadOwnedLines}
                 totals={rollupResult.overheadOwnedTotals}
-                showType={true}
+                showType={false}
                 copiedCell={copiedCell}
                 onCopyCell={copyCell}
                 onSelectLine={setSelectedLine}
