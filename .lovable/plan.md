@@ -54,6 +54,6 @@ The FMS Export also gets one line in its info box linking to that note, so a use
 - Excavator Mini at 3%: LMN annual about $7,037; EquipIQ $5,191.
 
 ## Technical notes
-- Migration: add `company_settings.inflation_rate_pct numeric not null default 3.0` and `rate_merge_notice_dismissed_at timestamptz null`, and keep the old rate's value visible to the notice through `market_finance_rate_pct` (read-only). Run `COMMENT ... DEPRECATED` on `market_finance_rate_pct`. Existing rows take 3.0.
+- Migration: add `company_settings.inflation_rate_pct numeric not null default 3.0` (existing rows take 3.0) and run `COMMENT ... DEPRECATED` on `market_finance_rate_pct`.
 - `calculateEquipment(..., inflationPct)`. `EquipmentContext` passes it from `useCompanySettings`, and it falls back to 3 only when no row exists. Update AGENTS.md: inflation resolves only from `company_settings`.
 - No SECURITY DEFINER functions; the linter count stays at 8.
