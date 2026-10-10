@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Equipment, EquipmentCalculated, CategoryDefaults, EquipmentDocument, EquipmentAttachment } from '@/types/equipment';
 import { categoryDefaults as defaultCategories } from '@/data/categoryDefaults';
 import { calculateEquipment } from '@/lib/calculations';
+import { useCompanySettings } from '@/hooks/useCompanySettings';
 import { supabase } from '@/integrations/supabase/client';
 import type { TablesUpdate } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
@@ -255,13 +256,15 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     }
   }, [effectiveEquipment]);
 
+  const { settings: companySettings } = useCompanySettings();
+  const inflationPct = companySettings.inflation_rate_pct;
   const calculatedEquipment = useMemo(() => 
     effectiveEquipment.map(e => {
       const attachments = effectiveAttachmentsByEquipmentId[e.id] || [];
       const attachmentTotal = attachments.reduce((sum, a) => sum + a.value, 0);
-      return calculateEquipment(e, categoryDefaultsState, attachmentTotal);
+      return calculateEquipment(e, categoryDefaultsState, attachmentTotal, inflationPct);
     }),
-    [effectiveEquipment, categoryDefaultsState, effectiveAttachmentsByEquipmentId]
+    [effectiveEquipment, categoryDefaultsState, effectiveAttachmentsByEquipmentId, inflationPct]
   );
 
   const loading = equipmentLoading;
