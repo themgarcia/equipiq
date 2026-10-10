@@ -497,48 +497,10 @@ function RollupSection({
                           <CopyButton cellId={`${lineId}-mpy`} value={String(line.monthsUsed)} copiedCell={copiedCell} onCopy={onCopyCell} />
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-mono-nums">
-                        {financeRatePct == null ? (
-                          <span className="text-xs text-muted-foreground">Not set</span>
-                        ) : (
-                          <div className="relative inline-flex justify-end">
-                            <span>{financeRatePct}%</span>
-                            <CopyButton cellId={`${lineId}-rate`} value={String(financeRatePct)} copiedCell={copiedCell} onCopy={onCopyCell} />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-mono-nums">
-                        {(() => {
-                          const c = compareAnnual(line, financeRatePct, recoveryBasis);
-                          return (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="cursor-help text-xs leading-tight">
-                                    <div>EquipIQ {formatCurrency(c.ours)}</div>
-                                    <div className="text-muted-foreground">LMN {c.lmn == null ? '—' : formatCurrency(c.lmn)}</div>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-xs">
-                                  <p>{c.sentence}</p>
-                                  <p className="mt-1 text-muted-foreground">Preview only — LMN works this out itself. Nothing here needs to be pasted.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          );
-                        })()}
-                      </TableCell>
-                      {showType && (
-                        <TableCell className="text-center">
-                          <Badge variant={line.financingType === 'leased' ? 'outline' : 'secondary'} className="text-[10px]">
-                            {line.financingType === 'leased' ? 'Leased' : 'Owned'}
-                          </Badge>
-                        </TableCell>
-                      )}
                     </TableRow>
                     {expandedLines.has(lineId) && line.itemNames && line.itemNames.length > 0 && (
                       <TableRow className="bg-muted/20">
-                        <TableCell colSpan={showType ? 9 : 8} className="py-2 pl-8">
+                        <TableCell colSpan={6} className="py-2 pl-8">
                           <p className="text-sm text-muted-foreground">
                             {line.itemNames.join(', ')}
                           </p>
@@ -555,9 +517,8 @@ function RollupSection({
                   <TableCell className="text-right font-mono-nums">{totals.totalQty}</TableCell>
                   <TableCell className="text-right" />
                   <TableCell className="text-right" />
-                  <TableCell className="text-right hidden md:table-cell" />
-                  <TableCell /><TableCell /><TableCell />
-                  {showType && <TableCell />}
+                  <TableCell className="text-right" />
+                  <TableCell />
                 </TableRow>
               </TableFooter>
             </Table>
