@@ -33,7 +33,28 @@ Reading confirmed: it's stored in Company Settings, shown with a "not used yet" 
 
 This is not double inflation. Our 3% inflation runs backward, from the purchase or as-of year up to today, to get replacement cost today. LMN's rate runs forward over the machine's life. They cover different years.
 
-Proposal: send the market finance rate in this field, and rewrite its helper text to say "LMN uses this as the inflation/interest rate on budget equipment rows". If you'd rather LMN get a forward inflation rate instead, that would be a separate setting. Tell me which one you mean.
+**Decided:** send the market finance rate in this field. Remove the "not used yet" badge and rewrite the helper text to say "LMN uses this as the inflation/interest rate on budget equipment rows." Each contractor's own setting is what exports for them.
+
+## 3b. The LMN budget formula, shown next to ours
+
+This is the formula you confirmed to the cent on two rows. It's for the **budget export only**. It doesn't apply to the price list or Acquisition Value: $350,000 at 2% over 15 years with $52,500 resale gives $418,554 by this method, but LMN shows $357,875.
+
+- Interest/inflation value = replacement × ((1 + rate)^years − 1). It compounds on the full replacement value, and the end value is not taken off first.
+- LMN Annual = (replacement − end value + interest value) ÷ years. No months term, because months-per-year alone doesn't scale it.
+- Built as a separate tested formula, with fixed checks:
+  - Row A: $15,000 / $1,500 / 7 yrs / 2% gives interest value $2,230.29 and annual $2,247.18
+  - Row B: $6,000 / $600 / 7 yrs / 2% gives interest value $892.11 and annual $898.87
+- Marked "confirmed on 2 rows (same rate, life and 10% end ratio)". Still to do: check a third row with a different rate and life.
+- If no market finance rate is set, the LMN figure is shown as "Set a market finance rate to preview LMN's figure", never worked out at 0%.
+
+**On the FMS Export (owned rows):** show both numbers, labelled, with one plain sentence, for example:
+"EquipIQ: $1,929/yr in today's dollars. LMN will show $2,247/yr because it adds 2% forward over 7 years."
+
+They're not supposed to match. Ours stops at today, and LMN's carries forward to the replacement date. Same approach as the Step 5 lease tooltips.
+
+Our own figure keeps following the recovery basis setting. The sentence names the basis when it's Gross.
+
+The LMN figure is a preview only and goes into the copy view. It's not a value to paste into LMN, since LMN works it out itself.
 
 ## 4. Does Replacement Cost (Today) already include tax, freight and admin?
 
@@ -93,6 +114,8 @@ The condition: under reading (ii), months-per-year is the bottom number of the d
   - Additional Fees (always blank, with a note explaining why)
 - Leased rows use the real months-per-year instead of the hardcoded 12.
 - Remove the "not used yet" badge from market finance rate and update its helper text.
+- Show the LMN figure next to ours with the one-sentence explanation (point 3b). Shared formula in `src/lib/lmnBudget.ts`, tested with Rows A and B. Budget export only.
+- Point 5 test, sharpened: the base is now predictable exactly, so any difference from the formula is the effect of the division field.
 - Before/after table on the page and in the changelog: existing rows are unchanged unless a months value is set.
 
 **9C-Budget.2: division rows. Blocked on the LMN test in point 5.**
