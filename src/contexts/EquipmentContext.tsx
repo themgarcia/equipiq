@@ -78,6 +78,7 @@ function dbToEquipment(record: any): Equipment {
     licensingAnnualOverride: record.licensing_annual_override == null ? null : Number(record.licensing_annual_override),
     fuelConsumptionLphOverride: record.fuel_consumption_lph_override == null ? null : Number(record.fuel_consumption_lph_override),
     insuranceAnnualPremium: record.insurance_annual_premium == null ? null : Number(record.insurance_annual_premium),
+    monthsPerYearUsed: record.months_per_year_used == null ? null : Number(record.months_per_year_used),
     isInsured: record.is_insured ?? undefined,
     insuranceDeclaredValue: record.insurance_declared_value == null ? undefined : Number(record.insurance_declared_value),
   };
@@ -172,7 +173,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
     queryFn: async (): Promise<Record<string, Partial<CategoryDefaults>>> => {
       const { data, error } = await supabase
         .from('user_category_overrides')
-        .select('category, useful_life_years, resale_pct, notes')
+        .select('category, useful_life_years, resale_pct, notes, months_per_year_used')
         .eq('user_id', user!.id);
       if (error) throw error;
       const map: Record<string, Partial<CategoryDefaults>> = {};
@@ -181,6 +182,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
         if (r.useful_life_years !== null) o.defaultUsefulLife = r.useful_life_years;
         if (r.resale_pct !== null) o.defaultResalePercent = Number(r.resale_pct);
         if (r.notes !== null) o.notes = r.notes;
+        if (r.months_per_year_used !== null) o.monthsPerYearUsed = Number(r.months_per_year_used);
         map[r.category] = o;
       }
       return map;
@@ -363,6 +365,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       if (updatesWithName.lmnRecoveryMethod !== undefined) dbUpdates.lmn_recovery_method = updatesWithName.lmnRecoveryMethod;
       if (updatesWithName.maintenanceAnnualOverride !== undefined) dbUpdates.maintenance_annual_override = updatesWithName.maintenanceAnnualOverride;
       if (updatesWithName.licensingAnnualOverride !== undefined) dbUpdates.licensing_annual_override = updatesWithName.licensingAnnualOverride;
+      if (updatesWithName.monthsPerYearUsed !== undefined) dbUpdates.months_per_year_used = updatesWithName.monthsPerYearUsed;
       if (updatesWithName.fuelConsumptionLphOverride !== undefined) dbUpdates.fuel_consumption_lph_override = updatesWithName.fuelConsumptionLphOverride;
 
       const { error } = await supabase
@@ -488,6 +491,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       useful_life_years: shared && life === shared.defaultUsefulLife ? null : life,
       resale_pct: shared && resale === shared.defaultResalePercent ? null : resale,
       notes: updates.notes ?? prev.notes ?? null,
+      months_per_year_used: updates.monthsPerYearUsed !== undefined ? updates.monthsPerYearUsed : (prev.monthsPerYearUsed ?? null),
     };
     const { error } = await supabase.from('user_category_overrides').upsert(row, { onConflict: 'user_id,category' });
     if (error) {

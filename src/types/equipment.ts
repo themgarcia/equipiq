@@ -29,6 +29,8 @@ export interface CategoryDefaults {
   insurancePercent: number;
   benchmarkType: BenchmarkType;
   benchmarkRange: string | null;
+  /** User's category value for months per year used (LMN budget). Undefined = 12. */
+  monthsPerYearUsed?: number;
 }
 
 // Entry source for tracking how equipment was added
@@ -101,6 +103,9 @@ export interface Equipment {
   licensingAnnualOverride?: number | null;
   fuelConsumptionLphOverride?: number | null;
   insuranceAnnualPremium?: number | null; // edited only from the Insurance page
+
+  // Months per year the unit is used (LMN budget calculator). null = category value, then 12.
+  monthsPerYearUsed?: number | null;
 }
 
 // Calculated fields (derived from Equipment)
@@ -121,6 +126,9 @@ export interface EquipmentCalculated extends Equipment {
   roiPercent?: number;
   // Attachment total value (for display purposes)
   attachmentTotalValue?: number;
+  /** Resolved months per year used: unit, then category, then 12. */
+  monthsPerYearUsedResolved: number;
+  monthsPerYearSource: 'unit' | 'category' | 'default';
 }
 
 // FMS Export format
