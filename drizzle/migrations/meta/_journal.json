@@ -36,6 +36,13 @@
       "when": 1791656013439,
       "tag": "0004_category_division_allocations_and_router",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791660181631,
+      "tag": "0005_months_per_year_used",
+      "breakpoints": true
     }
   ]
 }

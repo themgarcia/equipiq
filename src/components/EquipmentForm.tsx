@@ -474,7 +474,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
                   placeholder={formData.purchaseCondition === 'used' ? 'What would a new equivalent cost today?' : 'Auto-calculated with 3% inflation'}
                   className={formData.purchaseCondition === 'used' && !formData.replacementCostNew ? 'border-warning/50' : ''}
                 />
-                <p className="text-xs text-muted-foreground mt-1">Leave empty for inflation-adjusted estimate</p>
+                <p className="text-xs text-muted-foreground mt-1">Leave empty for inflation-adjusted estimate. If you enter one, include tax and delivery — the LMN budget export sends it as one all-in figure.</p>
               </div>
 
               <div>

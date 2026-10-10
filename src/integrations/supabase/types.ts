@@ -358,6 +358,7 @@ export type Database = {
           make: string
           model: string
           monthly_payment: number
+          months_per_year_used: number | null
           name: string
           other_cap_ex: number
           purchase_condition: string
@@ -403,6 +404,7 @@ export type Database = {
           make: string
           model: string
           monthly_payment?: number
+          months_per_year_used?: number | null
           name: string
           other_cap_ex?: number
           purchase_condition?: string
@@ -448,6 +450,7 @@ export type Database = {
           make?: string
           model?: string
           monthly_payment?: number
+          months_per_year_used?: number | null
           name?: string
           other_cap_ex?: number
           purchase_condition?: string
@@ -1199,6 +1202,7 @@ export type Database = {
           category: string
           created_at: string
           id: string
+          months_per_year_used: number | null
           notes: string | null
           resale_pct: number | null
           updated_at: string
@@ -1209,6 +1213,7 @@ export type Database = {
           category: string
           created_at?: string
           id?: string
+          months_per_year_used?: number | null
           notes?: string | null
           resale_pct?: number | null
           updated_at?: string
@@ -1219,6 +1224,7 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          months_per_year_used?: number | null
           notes?: string | null
           resale_pct?: number | null
           updated_at?: string

@@ -13,6 +13,16 @@ function calculateInflationAdjustedCost(
   return originalCost * Math.pow(1 + ANNUAL_INFLATION_RATE, years);
 }
 
+/** Months per year used: unit value, then the user's category value, then 12. */
+export function resolveMonthsPerYear(
+  unit: number | null | undefined,
+  category: number | null | undefined
+): { months: number; source: 'unit' | 'category' | 'default' } {
+  if (unit != null && unit > 0) return { months: unit, source: 'unit' };
+  if (category != null && category > 0) return { months: category, source: 'category' };
+  return { months: 12, source: 'default' };
+}
+
 export function calculateEquipment(
   equipment: Equipment, 
   categoryDefaultsOverrides?: CategoryDefaults[],
@@ -87,6 +97,8 @@ export function calculateEquipment(
   const expectedResaleDefault = (defaultResalePercent / 100) * replacementCostUsed;
   const expectedResaleUsed = equipment.expectedResaleOverride ?? expectedResaleDefault;
   
+  const months = resolveMonthsPerYear(equipment.monthsPerYearUsed, categoryDefaults.monthsPerYearUsed);
+
   // ROI (if sold)
   let roiPercent: number | undefined;
   if (equipment.status === 'Sold' && equipment.salePrice !== undefined) {
@@ -110,6 +122,8 @@ export function calculateEquipment(
     inflationYears,
     roiPercent,
     attachmentTotalValue: attachmentTotal,
+    monthsPerYearUsedResolved: months.months,
+    monthsPerYearSource: months.source,
   };
 }
 

@@ -102,6 +102,9 @@ export default function CompanySettingsPage() {
   const notYetUsed = (
     <Badge variant="outline" className="text-xs font-normal">For the upcoming LMN catalog export — not used in any calculation yet</Badge>
   );
+  const usedInBudget = (
+    <Badge variant="outline" className="text-xs font-normal">Sent with the FMS budget export</Badge>
+  );
 
   return (
     <Layout>
@@ -190,10 +193,10 @@ export default function CompanySettingsPage() {
             <CardHeader>
               <div className="flex flex-wrap items-center gap-2">
                 <CardTitle className="text-lg">Market finance rate</CardTitle>
-                {notYetUsed}
+                {usedInBudget}
               </div>
               <CardDescription>
-                The rate your business as a whole would pay to borrow money, or would expect to earn on it — your cost of money. This is not the interest rate on any single machine's loan or lease.
+                The rate your business as a whole would pay to borrow money, or would expect to earn on it — your cost of money. This is not the interest rate on any single machine's loan or lease. LMN uses this as the inflation/interest rate on budget equipment rows, carrying each machine's replacement value forward over its life.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -222,7 +225,7 @@ export default function CompanySettingsPage() {
           </Card>
 
             {dirty && (
-              <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-lg border bg-card p-3 shadow-lg">
+              <div role="region" aria-label="Unsaved changes" className="fixed bottom-4 left-4 right-4 md:left-auto md:w-full md:max-w-xl z-40 flex items-center justify-between gap-3 rounded-lg border bg-card p-3 shadow-lg">
                 <span className="text-sm">You have unsaved changes</span>
                 <div className="flex gap-2">
                   <Button variant="ghost" onClick={reset} disabled={saving}>Discard</Button>
