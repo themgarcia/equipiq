@@ -1,6 +1,42 @@
 {
   "entries": [
     {
+      "version": "1.5.0",
+      "date": "2026-10-10",
+      "changes": [
+        {
+          "type": "added",
+          "userFacing": [
+            "The FMS Export now sends everything LMN's budget calculator needs: replacement value, life, resale, months used per year and one inflation rate. LMN works out its own yearly figure from these, and it is higher than EquipIQ's on purpose. EquipIQ shows what it takes to replace a machine at today's price, while LMN also carries that cost forward over the machine's life. Cashflow Analysis explains the difference with one of your own machines.",
+            "Months per year used, set per category on Category Lifespans or per machine"
+          ],
+          "technical": [
+            "lmnBudgetAnnual in src/lib/lmnBudget.ts, tested against observed LMN rows",
+            "months_per_year_used on equipment and user_category_overrides; rollup groups by resolved months"
+          ]
+        },
+        {
+          "type": "changed",
+          "userFacing": [
+            "One equipment price inflation rate (Company Settings, default 3%) now sets both today's replacement cost and the rate sent to LMN. It replaces the fixed 3% and the market finance rate. It starts at 3%, so none of your current numbers change.",
+            "The FMS Export table now shows only what you paste into LMN. The inflation rate appears once above each table instead of on every row."
+          ],
+          "technical": [
+            "company_settings.inflation_rate_pct (default 3) replaces ANNUAL_INFLATION_RATE; market_finance_rate_pct deprecated",
+            "Removed Annual per unit and Type columns from the owned export table and CSV"
+          ]
+        },
+        {
+          "type": "fixed",
+          "userFacing": [
+            "Category Lifespans shows the default beside your value and can reset a field back to it",
+            "Leased rows on the FMS Export use the machine's months used per year instead of always 12"
+          ],
+          "technical": []
+        }
+      ]
+    },
+    {
       "version": "1.4.0",
       "date": "2026-10-09",
       "changes": [

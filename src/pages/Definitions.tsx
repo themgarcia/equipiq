@@ -231,14 +231,14 @@ Use the calculator as a starting point, then apply your judgment for factors the
     icon: TrendingUp,
     title: 'Inflation-Adjusted Replacement Cost',
     content: `
-**All replacement costs are automatically adjusted for inflation at 3% annually.**
+**All replacement costs are automatically adjusted for inflation at your equipment price inflation rate (Company Settings, default 3% a year).**
 
 This ensures your replacement cost estimates stay current without manual updates. Here's how it works:
 
 **When you DON'T enter a replacement cost:**
 - The system uses your total cost basis (purchase price + tax + freight + other)
 - It inflates this amount from your purchase year to the current year
-- Formula: Replacement Cost = Total Cost Basis × (1.03)^years
+- Formula: Replacement Cost = Total Cost Basis × (1 + rate)^years
 
 **When you DO enter a replacement cost:**
 - Your entered value is treated as the baseline
@@ -246,7 +246,7 @@ This ensures your replacement cost estimates stay current without manual updates
 - It inflates from that entry date to the current year
 - This keeps manual entries current as time passes
 
-**Example calculations (3% annual inflation):**
+**Example calculations (at the default 3%):**
 
 | Scenario | Base Value | From Year | Years | Today's Value |
 |----------|------------|-----------|-------|---------------|
@@ -255,10 +255,9 @@ This ensures your replacement cost estimates stay current without manual updates
 | Manual entry | $45,000 | Jan 2024 | 2 | $47,732 |
 | Manual entry | $30,000 | Jan 2026 | 0 | $30,000 |
 
-**Why 3%?**
-- This is the historical average inflation rate for equipment
-- It's conservative enough to avoid overestimating
-- It's high enough to keep values realistic over time
+**Why 3% by default?**
+- It's close to the long-run average for equipment prices
+- You can change it in Company Settings. The same rate is sent to LMN's Inflation/Interest field, so one inflation assumption is used for both today's replacement cost and LMN's forward figure
 
 **The benefit:** You never have to remember to update replacement costs. Whether you entered a value 3 years ago or the system calculated it from your purchase, it automatically stays current.
     `.trim(),

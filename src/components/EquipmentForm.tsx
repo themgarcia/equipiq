@@ -471,7 +471,7 @@ export function EquipmentForm({ open, onOpenChange, equipment, onSubmit }: Equip
                   value={getNumericInputValue('replacementCostNew', formData.replacementCostNew)}
                   onChange={(e) => handleNumericInputChange('replacementCostNew', e.target.value)}
                   onBlur={() => handleNumericInputBlur('replacementCostNew')}
-                  placeholder={formData.purchaseCondition === 'used' ? 'What would a new equivalent cost today?' : 'Auto-calculated with 3% inflation'}
+                  placeholder={formData.purchaseCondition === 'used' ? 'What would a new equivalent cost today?' : 'Auto-calculated with your inflation rate'}
                   className={formData.purchaseCondition === 'used' && !formData.replacementCostNew ? 'border-warning/50' : ''}
                 />
                 <p className="text-xs text-muted-foreground mt-1">Leave empty for inflation-adjusted estimate. If you enter one, include tax and delivery — the LMN budget export sends it as one all-in figure.</p>
