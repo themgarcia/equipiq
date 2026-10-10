@@ -1,0 +1,3 @@
+ALTER TABLE public.company_settings ADD COLUMN IF NOT EXISTS inflation_rate_pct numeric NOT NULL DEFAULT 3.0;
+ALTER TABLE public.company_settings ADD CONSTRAINT company_settings_inflation_rate_range CHECK (inflation_rate_pct >= 0 AND inflation_rate_pct <= 25);
+COMMENT ON COLUMN public.company_settings.market_finance_rate_pct IS 'DEPRECATED: replaced by inflation_rate_pct (one rate drives backward escalation and the LMN forward rate)';

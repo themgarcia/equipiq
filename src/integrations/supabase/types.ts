@@ -264,6 +264,7 @@ export type Database = {
           default_hours_per_day: number
           fuel_price_per_litre: number | null
           id: string
+          inflation_rate_pct: number
           market_finance_rate_pct: number | null
           org_id: string | null
           recovery_basis: Database["public"]["Enums"]["recovery_basis"]
@@ -275,6 +276,7 @@ export type Database = {
           default_hours_per_day?: number
           fuel_price_per_litre?: number | null
           id?: string
+          inflation_rate_pct?: number
           market_finance_rate_pct?: number | null
           org_id?: string | null
           recovery_basis?: Database["public"]["Enums"]["recovery_basis"]
@@ -286,6 +288,7 @@ export type Database = {
           default_hours_per_day?: number
           fuel_price_per_litre?: number | null
           id?: string
+          inflation_rate_pct?: number
           market_finance_rate_pct?: number | null
           org_id?: string | null
           recovery_basis?: Database["public"]["Enums"]["recovery_basis"]
