@@ -35,8 +35,12 @@ export interface RollupLine {
   totalMonthlyPayment: number;
   /** Payments per year — default 12 */
   paymentsPerYear: number;
-  /** Months used per year — default 12 */
+  /** Months per year used — resolved per unit (unit, category, then 12); same for every unit in the line */
   monthsUsed: number;
+  /** True when at least one unit's replacement cost was typed in by hand (may or may not include tax/freight) */
+  hasManualReplacement: boolean;
+  /** True when at least one unit's replacement cost was inflated from its cost basis (already includes tax/freight) */
+  hasInflatedReplacement: boolean;
   /** Count of items where financingType === 'leased' */
   leasedItemCount: number;
   /** Sum of monthly payments only from leased items */
@@ -94,12 +98,11 @@ function getRecoveryMethod(item: EquipmentCalculated): LmnRecoveryMethod {
   return 'owned';
 }
 
-function getGroupKey(item: EquipmentCalculated, isField: boolean): string {
+// Units with different months per year become separate lines, so the
+// months value on each line is true for every unit in it (never averaged).
+function getGroupKey(item: EquipmentCalculated, _isField: boolean): string {
   const recoveryMethod = getRecoveryMethod(item);
-  if (isField) {
-    return `${item.category}|||${recoveryMethod}`;
-  }
-  return `${item.category}|||${recoveryMethod}`;
+  return `${item.category}|||${recoveryMethod}|||${item.monthsPerYearUsedResolved ?? 12}`;
 }
 
 function buildLine(items: EquipmentCalculated[], recoveryMethod: LmnRecoveryMethod, basis: RecoveryBasis): RollupLine {
@@ -143,7 +146,9 @@ function buildLine(items: EquipmentCalculated[], recoveryMethod: LmnRecoveryMeth
     lmnRecoveryMethod: recoveryMethod,
     totalMonthlyPayment,
     paymentsPerYear: 12,
-    monthsUsed: 12,
+    monthsUsed: items[0].monthsPerYearUsedResolved ?? 12,
+    hasManualReplacement: items.some(i => i.replacementCostSource === 'manual'),
+    hasInflatedReplacement: items.some(i => i.replacementCostSource === 'inflationAdjusted'),
     leasedItemCount,
     leasedItemMonthlyPayment,
     leasedItemDepositTotal,
@@ -201,7 +206,7 @@ export function rollupEquipment(calculatedEquipment: EquipmentCalculated[], basi
 
   // Sort alphabetically by category
   const sortFn = (a: RollupLine, b: RollupLine) => 
-    a.category.localeCompare(b.category) || a.lmnRecoveryMethod.localeCompare(b.lmnRecoveryMethod);
+    a.category.localeCompare(b.category) || a.lmnRecoveryMethod.localeCompare(b.lmnRecoveryMethod) || b.monthsUsed - a.monthsUsed;
   fieldLines.sort(sortFn);
   overheadLines.sort(sortFn);
 
@@ -229,25 +234,29 @@ export function rollupEquipment(calculatedEquipment: EquipmentCalculated[], basi
 
 // ─── CSV Export ──────────────────────────────────────────────────
 
-export function rollupToCSV(result: RollupResult): string {
+export function rollupToCSV(result: RollupResult, marketFinanceRatePct: number | null = null): string {
   const rows: string[][] = [];
+  const rateCell = marketFinanceRatePct == null ? '' : String(marketFinanceRatePct);
 
   // Field Equipment — Owned Section
   rows.push(['FIELD EQUIPMENT — LMN Equipment Budget — Owned']);
-  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg Resale Value', 'Type']);
+  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Additional Fees', 'Life (Yrs)', 'Avg Resale Value', 'Months/Yr Used', 'Inflation/Interest %', 'Type']);
 
   for (const line of result.fieldOwnedLines) {
     rows.push([
       line.category,
       String(line.qty),
       String(Math.round(line.avgReplacementValue)),
+      '',
       String(Math.round(line.avgUsefulLife)),
       String(Math.round(line.avgEndValue)),
+      String(line.monthsUsed),
+      rateCell,
       line.financingType === 'leased' ? 'Leased' : 'Owned',
     ]);
   }
 
-  rows.push(['Total', String(result.fieldOwnedTotals.totalQty), '', '', '', '']);
+  rows.push(['Total', String(result.fieldOwnedTotals.totalQty), '', '', '', '', '', '', '']);
   rows.push([]); // blank row
 
   // Field Equipment — Leased Section (only if items exist)
@@ -271,19 +280,24 @@ export function rollupToCSV(result: RollupResult): string {
 
   // Overhead Equipment — Owned Section
   rows.push(['OVERHEAD EQUIPMENT — LMN Overhead Budget — Owned']);
-  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Life (Yrs)', 'Avg Resale Value']);
+  rows.push(['Category', 'Qty', 'Avg Replacement Value', 'Additional Fees', 'Life (Yrs)', 'Avg Resale Value', 'Months/Yr Used', 'Inflation/Interest %']);
 
   for (const line of result.overheadOwnedLines) {
     rows.push([
       line.category,
       String(line.qty),
       String(Math.round(line.avgReplacementValue)),
+      '',
       String(Math.round(line.avgUsefulLife)),
       String(Math.round(line.avgEndValue)),
+      String(line.monthsUsed),
+      rateCell,
     ]);
   }
 
-  rows.push(['Total', String(result.overheadOwnedTotals.totalQty), '', '', '']);
+  rows.push(['Total', String(result.overheadOwnedTotals.totalQty), '', '', '', '', '', '']);
+  rows.push([]);
+  rows.push(['Additional Fees is left blank on purpose: replacement values already include tax and delivery when EquipIQ worked them out, and hand-entered replacement costs should include them.']);
 
   // Overhead Equipment — Leased Section (only if items exist)
   if (result.overheadLeasedLines.length > 0) {
