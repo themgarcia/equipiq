@@ -491,7 +491,7 @@ export function EquipmentProvider({ children }: { children: React.ReactNode }) {
       useful_life_years: shared && life === shared.defaultUsefulLife ? null : life,
       resale_pct: shared && resale === shared.defaultResalePercent ? null : resale,
       notes: updates.notes ?? prev.notes ?? null,
-      months_per_year_used: updates.monthsPerYearUsed !== undefined ? updates.monthsPerYearUsed : (prev.monthsPerYearUsed ?? null),
+      months_per_year_used: 'monthsPerYearUsed' in updates ? (updates.monthsPerYearUsed ?? null) : (prev.monthsPerYearUsed ?? null),
     };
     const { error } = await supabase.from('user_category_overrides').upsert(row, { onConflict: 'user_id,category' });
     if (error) {
