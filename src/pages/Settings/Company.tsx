@@ -11,6 +11,10 @@ import { toast } from '@/hooks/use-toast';
 import { useCompanySettings, CompanySettings } from '@/hooks/useCompanySettings';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import { ServiceDivisionsCard } from '@/components/settings/ServiceDivisionsCard';
+import { DivisionMappingCard } from '@/components/settings/DivisionMappingCard';
+import { CategoryAllocationsCard } from '@/components/settings/CategoryAllocationsCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useSearchParams } from 'react-router-dom';
 import { annualRecovery, formatCurrency, RecoveryBasis } from '@/lib/calculations';
 
 function parseOptional(v: string): number | null {
@@ -28,6 +32,20 @@ export default function CompanySettingsPage() {
   const [rate, setRate] = useState('');
   const [hours, setHours] = useState('8');
   const [basis, setBasis] = useState<RecoveryBasis>('net_of_resale');
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'divisions' ? 'divisions' : 'costs';
+
+  const reset = () => {
+    setFuel(settings.fuel_price_per_litre?.toString() ?? '');
+    setRate(settings.market_finance_rate_pct?.toString() ?? '');
+    setHours(settings.default_hours_per_day.toString());
+    setBasis(settings.recovery_basis);
+  };
+  const dirty =
+    fuel !== (settings.fuel_price_per_litre?.toString() ?? '') ||
+    rate !== (settings.market_finance_rate_pct?.toString() ?? '') ||
+    hours !== settings.default_hours_per_day.toString() ||
+    basis !== settings.recovery_basis;
 
   useEffect(() => {
     setFuel(settings.fuel_price_per_litre?.toString() ?? '');
@@ -94,6 +112,14 @@ export default function CompanySettingsPage() {
             <h1 className="text-2xl sm:text-3xl font-bold">Company Settings</h1>
             <p className="text-muted-foreground mt-1">Numbers that apply to your whole business, not to one machine.</p>
           </div>
+
+          <Tabs value={tab} onValueChange={v => setParams(v === 'divisions' ? { tab: 'divisions' } : {}, { replace: true })}>
+            <TabsList>
+              <TabsTrigger value="costs">Costs &amp; rates</TabsTrigger>
+              <TabsTrigger value="divisions">Service divisions</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="costs" className="space-y-6 pb-24">
 
           <Card>
             <CardHeader>
@@ -195,14 +221,26 @@ export default function CompanySettingsPage() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Save settings
-            </Button>
-          </div>
+            {dirty && (
+              <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-lg border bg-card p-3 shadow-lg">
+                <span className="text-sm">You have unsaved changes</span>
+                <div className="flex gap-2">
+                  <Button variant="ghost" onClick={reset} disabled={saving}>Discard</Button>
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Save settings
+                  </Button>
+                </div>
+              </div>
+            )}
+            </TabsContent>
 
-          <ServiceDivisionsCard />
+            <TabsContent value="divisions" className="space-y-6">
+              <ServiceDivisionsCard />
+              <DivisionMappingCard />
+              <CategoryAllocationsCard />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </Layout>

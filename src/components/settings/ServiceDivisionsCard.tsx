@@ -42,7 +42,7 @@ export function ServiceDivisionsCard() {
       <CardHeader>
         <CardTitle className="text-lg">Service divisions</CardTitle>
         <CardDescription>
-          Name these to match your LMN budgets. Fleet and Shop are support, not services — leave them out.
+          A service division is a production season — a block of the year your machines are committed to one kind of work (e.g. Construction, Maintenance, Snow). One division can sit under several LMN budgets. Fleet and Shop are support, not services — leave them out.
           Season length is how many months of the year the division runs.
         </CardDescription>
       </CardHeader>
