@@ -16,14 +16,8 @@ Plain helper text: "How much equipment prices rise each year. EquipIQ uses it to
 
 The market finance rate box comes off Company Settings. The column stays in the database, marked deprecated, and nothing reads it.
 
-### Migration: recommended option is to take 3%, as you leaned
-- **Option 1, take 3% (recommended):** no replacement value, resale, recovery or Cashflow figure moves in any account. The only number that changes is the rate on your export, which drops from 5.5% to 3%. That makes LMN's own annual lower for your rows when you next paste the rate. One account is affected (yours).
-- **Option 2, take 5.5%:** every inflation-adjusted replacement value in your account rises (Bobcat 324: $55,369 becomes about $72,300), and so do resale, recovery, Cashflow and the export. This would need a full before-and-after table. I don't recommend it.
-
-With option 1, a one-time notice appears on Company Settings and the FMS Export for any account whose old finance rate wasn't 3% (today, only yours): "Your finance rate of 5.5% has been replaced by one equipment price inflation rate (now 3%). It's used both for today's replacement cost and for the rate sent to LMN. Change it here." It can be dismissed and is stored per user.
-
-### Changing the rate later moves numbers, so it gets a review
-Saving a new rate opens a before-and-after table of every affected unit: replacement today, resale and annual recovery, old and new, with totals and a count of unaffected units (manual cost entered this year). It saves only on a second confirm. This is the same review the recovery-basis change got. Nothing stored is rewritten, because the figures are recalculated from the setting.
+### Starting value: 3% for everyone
+Every account starts at 3%, which is the value the app uses today, so no figure on screen changes when this is published. The old finance rate never fed a published calculation, so there's no notice and no before-and-after table. If a user changes the rate later, their numbers update and they export again, which is the setting working as intended.
 
 ## 2. The owned table only shows what you paste into LMN
 
