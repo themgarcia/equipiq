@@ -227,6 +227,42 @@ function PaybackDialog({ equipment, calculated, open, onOpenChange }: PaybackDia
   );
 }
 
+/** Explains why LMN's yearly figure is higher than EquipIQ's, worked on the user's largest active unit. */
+function LmnDifferenceNote({ calculatedEquipment }: { calculatedEquipment: EquipmentCalculated[] }) {
+  const { settings, recoveryBasis } = useCompanySettings();
+  const rate = settings.inflation_rate_pct;
+  const example = useMemo(
+    () => calculatedEquipment
+      .filter(e => e.status === 'Active' && e.usefulLifeUsed > 0)
+      .sort((a, b) => b.replacementCostUsed - a.replacementCostUsed)[0],
+    [calculatedEquipment]
+  );
+  const startOpen = typeof window !== 'undefined' && window.location.hash === '#why-lmn-higher';
+  if (!example) return null;
+  const rv = Math.round(example.replacementCostUsed);
+  const ev = Math.round(example.expectedResaleUsed);
+  const life = Math.round(example.usefulLifeUsed);
+  const ours = annualRecovery({ replacementCostUsed: rv, expectedResaleUsed: ev, usefulLifeUsed: life }, recoveryBasis);
+  const lmn = lmnBudgetAnnual(rv, ev, life, rate);
+  return (
+    <details id="why-lmn-higher" open={startOpen} className="mb-6 rounded-lg border bg-card px-4 py-3 text-sm scroll-mt-20">
+      <summary className="cursor-pointer font-medium">Why LMN shows a higher yearly figure</summary>
+      <div className="mt-2 space-y-2 text-muted-foreground">
+        <p>
+          EquipIQ's Annual Recovery is what it takes to replace a machine at today's price. LMN starts from the same values you paste in,
+          then also carries the replacement cost forward over the machine's life at your {rate}% inflation rate. Both are right; they answer different questions.
+        </p>
+        {lmn && (
+          <p>
+            Example, {example.name}: EquipIQ <strong className="text-foreground">{formatCurrency(ours)}/yr</strong>.
+            LMN about <strong className="text-foreground">{formatCurrency(lmn.annual)}/yr</strong>, because it carries {formatCurrency(rv)} forward {life} years at {rate}%.
+          </p>
+        )}
+      </div>
+    </details>
+  );
+}
+
 export default function CashflowAnalysis() {
   const { equipment, calculatedEquipment, loading } = useEquipment();
   const { recoveryBasis } = useCompanySettings();
@@ -558,6 +594,8 @@ export default function CashflowAnalysis() {
             </button>
           </div>
         )}
+
+        <LmnDifferenceNote calculatedEquipment={calculatedEquipment} />
 
         {/* Portfolio Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
