@@ -63,9 +63,13 @@ export default function CategoryLifespans() {
   // Same pattern and wording as the Operating Costs rows: show the shared default and a reset link.
   const defaultNote = (cat: string, field: 'life' | 'resale') => {
     const o = categoryOverrides[cat];
-    const has = field === 'life' ? o?.defaultUsefulLife !== undefined : o?.defaultResalePercent !== undefined;
     const shared = sharedRow(cat);
-    if (!has || !shared) return null;
+    if (!shared) return null;
+    // Only rows whose own value differs from the shared default show it.
+    const has = field === 'life'
+      ? o?.defaultUsefulLife !== undefined && o.defaultUsefulLife !== shared.defaultUsefulLife
+      : o?.defaultResalePercent !== undefined && o.defaultResalePercent !== shared.defaultResalePercent;
+    if (!has) return null;
     const label = field === 'life' ? `${shared.defaultUsefulLife} yrs` : `${shared.defaultResalePercent}%`;
     return (
       <div className="mt-1 flex flex-col items-center gap-0.5">

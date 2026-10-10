@@ -401,12 +401,12 @@ function RollupSection({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table className="table-fixed">
+            <Table className="table-fixed min-w-[1180px]">
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="table-header-cell whitespace-nowrap">Category</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[80px]">Qty</TableHead>
-                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[160px]">Avg Replacement</TableHead>
+                  <TableHead className="table-header-cell whitespace-nowrap w-[260px]">Category</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[70px]">Qty</TableHead>
+                  <TableHead className="table-header-cell text-right whitespace-nowrap w-[150px]">Avg Replacement</TableHead>
                   <TableHead className="table-header-cell text-right whitespace-nowrap w-[100px]">
                     <TooltipProvider>
                       <Tooltip>
