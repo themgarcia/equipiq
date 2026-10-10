@@ -122,7 +122,7 @@ Total                         ~68             ~29-32
 - Values are copied cell by cell or downloaded as one CSV (`rollupToCSV`).
 - There's a per-category toggle to switch leased units between Owned Recovery and Lease Pass-Through.
 
-## 7. Division split in the budget export: confirmed, with one decision for you
+## 7. Division split in the budget export: confirmed, dollars scaled by share
 
 **You are right.** LMN budgets are per division, and the export currently sums across them. A unit split 7/12 Construction and 5/12 Snow must become separate rows in the separate budgets, never one blended row. Each section gains a division level:
 
@@ -140,11 +140,40 @@ The router decides the section per row, so the same loader can sit in Constructi
 - Rows are grouped by division first, the CSV gains a division column, and the copy view gets a division heading per block.
 - It uses only the share of year and the router flag from 9A/9A.1. It needs **no hours, no unit and no 9B cost engine**.
 
-**The decision you need to make: how does a share of a machine go into an LMN budget?** LMN takes qty, replacement value, life and end value, then works out recovery itself. There are two honest options:
-- **(a) Scale the dollars by share.** Replacement value and end value x 5/12, life unchanged, qty stays whole. LMN's recovery comes out at exactly 5/12 of the machine. Leased rows: monthly payment x share.
-- **(b) Fractional qty.** Qty 0.42 with full values. This only works if LMN accepts decimal quantities, which is **unverified**.
+**Decided: scale the dollars by share (option a). Fractional qty is not built and not offered as a toggle.**
+- Replacement value and end value are each multiplied by the division's share. Life is unchanged and qty stays whole. Lease rows: monthly payment x share.
+- **Every scaled figure says so on its face**, in the copy view, the CSV and the before/after table:
+  - **Copy view:** under the value, "5/12 of $180,000 — this machine's Snow share". When a row rolls up several machines with different shares, it reads "Share-weighted across 2 machines", and the row's expand list shows each machine's share and full price.
+  - **CSV:** a Division column plus a "Share basis" column (e.g. "5/12 of $180,000", or "2 machines, shares vary — see detail"). Only the value column gets copied into LMN. The basis column is there so the number is never read as a price.
+  - **Before/after table:** shows full price, share and scaled value side by side.
+- The arithmetic holds: qty x average scaled value = the sum of each machine's share. Across divisions the shares total the full machine, so nothing is lost or double-counted, and a test checks this.
 
-I recommend (a), because it doesn't depend on LMN accepting decimals. The catch is that the "replacement value" shown per division is then a share, not the machine's price, and the row has to say so ("5/12 of $180,000").
+## 7b. Every row is tagged with its service division (both exports)
+
+What holds regardless of how LMN picks a budget: cost per division differs, markup per division differs, and EquipIQ's job is to emit cost rows clearly labelled by division so they never get crossed.
+
+- **Budget export:** rows are grouped under a heading for each service division, using the contractor's own division name: "Snow — Overhead Budget", "Construction — Equipment Budget". Every row and every CSV line also carries the division name, so a row copied on its own still says where it goes.
+- **Price list export (9C-PRICELIST):** a category serving two divisions produces two items with distinguishable names.
+- **Proposed naming convention, for you to approve.** It isn't built until you choose:
+  - **Recommended:** `<Category> (<Service division>)`, e.g. "Construction — Loader — Wheel (Snow)" and "Construction — Loader — Wheel (Construction)".
+    - It keeps the em-dash category exactly as it is today, so it still matches everywhere.
+    - The division goes in parentheses at the end, so it survives truncated pick-lists less well than a prefix but reads naturally.
+  - **Alternative:** a prefix, "[Snow] Construction — Loader — Wheel". This sorts by division in a list and survives truncation, but it reads worse.
+  - The division part is always the contractor's own division name, verbatim. Rows that are year-round shared get no suffix (see below).
+- **Stop point: unallocated and year-round-shared rows.** These have no single division, so they can't honestly be tagged to one budget.
+  - Today they go into a single blended budget, and in 9C-BUDGET they keep appearing exactly as today, under "Not allocated to a division".
+  - Where they *should* go depends on how LMN selects budgets (per estimate, per price list item, or both). That is the question you are checking, so the spec stops here rather than picking an answer.
+  - Meanwhile they count as incomplete, with a page-level count ("3 machines not allocated to a division").
+- Nothing in either export depends on whether LMN selects the budget per estimate or per item.
+
+## 7c. Cross-division warning: worth building, cost-only
+
+EquipIQ can't see how items are used inside LMN, so it can't detect the misuse itself. What it can show, within our lane:
+
+- **On the price list export, per category served by more than one division:** "This category costs $9.72/hr in Construction and $55.56/hr in Snow (5.7x apart). Set these up as two separate LMN items. Using one item for both prices one division with the other's cost and markup."
+- It is shown only when the costs differ by more than a set threshold (proposed: 10%). Below that it's noise.
+- It states cost facts only, never a markup or price. Where it lives: the 9C-PRICELIST completeness grid, as a flag on the row.
+- It is worth building because it's cheap (one comparison per category) and it prevents an error LMN doesn't warn about. It is **not** built in 9A.1 or 9C-BUDGET.
 
 ## 8. Split 9C in two, and order: agreed, with one change
 
@@ -159,8 +188,9 @@ I recommend (a), because it doesn't depend on LMN accepting decimals. The catch 
 That gets the budget side done first for the Grindstone engagement, and leaves the open 9B decisions (fuel wiring, financing treatment) where they are. The one dependency to watch: 9C-PRICELIST must read the same router, so Field rows don't land in both exports. The rollup takes each unit x division row exactly once, and a test checks that.
 
 **9C-BUDGET will need:**
-- a before/after table for your 12 machines, where unallocated rows stay byte-identical
-- the decision on (a) or (b)
+- a before/after table for your 12 machines (full price, share, scaled value), where unallocated rows stay byte-identical
+- a division tag on every row and CSV line, plus the share basis on every scaled figure
+- your choice of naming convention (needed for PRICELIST; the budget export uses division headings)
 - a changelog entry
 
 ---
