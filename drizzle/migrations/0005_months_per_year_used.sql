@@ -1,0 +1,4 @@
+ALTER TABLE public.equipment ADD COLUMN IF NOT EXISTS months_per_year_used numeric NULL CHECK (months_per_year_used IS NULL OR (months_per_year_used > 0 AND months_per_year_used <= 12));
+ALTER TABLE public.user_category_overrides ADD COLUMN IF NOT EXISTS months_per_year_used numeric NULL CHECK (months_per_year_used IS NULL OR (months_per_year_used > 0 AND months_per_year_used <= 12));
+COMMENT ON COLUMN public.equipment.months_per_year_used IS 'Unit override: months per year the machine is used (LMN budget calculator). Null = use category value, then 12.';
+COMMENT ON COLUMN public.user_category_overrides.months_per_year_used IS 'Per-user category value for months per year used. Null = 12.';
