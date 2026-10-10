@@ -2,15 +2,17 @@ import { Equipment, EquipmentCalculated, FMSExportData, CategoryDefaults } from 
 import { getCategoryDefaults as getStaticCategoryDefaults } from '@/data/categoryDefaults';
 import { parseLocalDate } from '@/lib/utils';
 
-const ANNUAL_INFLATION_RATE = 0.03; // 3% annual inflation
+/** Fallback only when no company_settings row exists. The live value is company_settings.inflation_rate_pct. */
+export const DEFAULT_INFLATION_RATE_PCT = 3;
 
-function calculateInflationAdjustedCost(
+export function calculateInflationAdjustedCost(
   originalCost: number, 
   fromYear: number, 
-  toYear: number
+  toYear: number,
+  inflationPct: number = DEFAULT_INFLATION_RATE_PCT
 ): number {
   const years = Math.max(0, toYear - fromYear);
-  return originalCost * Math.pow(1 + ANNUAL_INFLATION_RATE, years);
+  return originalCost * Math.pow(1 + inflationPct / 100, years);
 }
 
 /** Months per year used: unit value, then the user's category value, then 12. */
